@@ -1,0 +1,7 @@
+{
+  "threshold": 3,
+  "reporters": ["console"],
+  "ignore": ["node_modules", "dist", "drizzle", "**/*.lock", "**/*.test.ts", "**/*.test.tsx"],
+  "absolute": true,
+  "exitCode": 1
+}

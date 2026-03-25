@@ -1,0 +1,58 @@
+import type { UnitData } from "../types";
+
+export const CHURCH_UNITS: Record<string, UnitData> = {
+  squire: {
+    id: "squire",
+    name: "見習い従騎士",
+    baseAtk: 1,
+    baseHp: 2,
+    tier: 1,
+    skillText: "死亡: 後ろの味方に+1/+1",
+    lore: "教義を妄信する若き騎士。異端を狩るためなら自らの命も惜しまない。",
+  },
+  inquisitor: {
+    id: "inquisitor",
+    name: "異端審問官",
+    baseAtk: 3,
+    baseHp: 1,
+    tier: 1,
+    skillText: "開戦: 敵前衛に1ダメージ",
+    lore: "異端を焼き払う松明を持つ者。彼らの目に慈悲はない。",
+  },
+  church_hound: {
+    id: "church_hound",
+    name: "異端狩りの白犬",
+    baseAtk: 3,
+    baseHp: 1,
+    tier: 1,
+    skillText: "死亡: 1/1頭部を召喚",
+    lore: "純白の毛並みを持つ教団の猟犬。痛覚を麻痺させる聖水を与えられており、首を落とされても噛み付き続ける。",
+  },
+  priest: {
+    id: "priest",
+    name: "従軍司祭",
+    baseAtk: 2,
+    baseHp: 2,
+    tier: 2,
+    skillText: "死亡: 味方全体を+0/+1",
+    lore: "神聖な祈りで騎士たちを鼓舞し、癒しを与える聖職者。",
+  },
+  templar: {
+    id: "templar",
+    name: "聖堂騎士",
+    baseAtk: 4,
+    baseHp: 3,
+    tier: 2,
+    skillText: "被弾: 自身に+1/+0",
+    lore: "分厚い信仰の鎧に身を包んだ、教団のエリート戦士。",
+  },
+  church_beast: {
+    id: "church_beast",
+    name: "偽りの天使",
+    baseAtk: 2,
+    baseHp: 2,
+    tier: 2,
+    skillText: "死亡: 2/2幼子を召喚",
+    lore: "教団が『天使の降臨』と呼ぶ何か。その純白の腹の中には、さらに悍ましい『祝福』が詰まっている。",
+  },
+};
