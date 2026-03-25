@@ -6,7 +6,7 @@ import {
   handleEquipDeath,
   handleBeelzebubSpawns,
 } from "./battle-deaths-handlers";
-import { DEATH_CASCADE_LIMIT, ALTAR_BUFF } from "./constants";
+import { DEATH_CASCADE_LIMIT, ALTAR_BUFF, FRAME_DELAY_DEATH_CHAIN } from "./constants";
 
 // --- Altar buff for tokens ---
 
@@ -29,6 +29,7 @@ function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleCont
         {
           [u.uid]: { type: "buff", value: `+${atkBuff}/+${hpBuff}` },
         },
+        FRAME_DELAY_DEATH_CHAIN,
       );
     });
     u.altarBuffed = true;
@@ -57,13 +58,18 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   const dead = board[bestIdx];
   invariant(dead, "dead unit must exist at bestIdx");
   const mult = getMult(board, bestIdx);
+
+  // 死亡フレームをsplice前にpush（ユニットがボード上に残った状態でスナップショット → 死亡アニメ再生用）
+  const prefix = enemyPrefix(isPlayer);
+  pushFrame(ctx, "death", `${prefix}[${dead.name}] は無残に引き裂かれた。`, "death", {
+    [dead.uid]: { type: "death" },
+  });
+
   board.splice(bestIdx, 1);
   const insertIdx = bestIdx;
   // successor をループ前にキャプチャ（splice 後のボード状態で、spawn による変更前）
   const successor = insertIdx < board.length ? (board[insertIdx] ?? null) : null;
   const successor2 = insertIdx + 1 < board.length ? (board[insertIdx + 1] ?? null) : null;
-  const prefix = enemyPrefix(isPlayer);
-  pushFrame(ctx, "death", `${prefix}[${dead.name}] は無残に引き裂かれた。`, "death");
 
   const handler = UNIT_DEATH_HANDLERS[dead.id];
   for (let m = 0; m < mult; m++) {

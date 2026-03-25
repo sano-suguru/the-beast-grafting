@@ -28,22 +28,25 @@ export function BattleScreen() {
 
   useEffect(() => {
     if (frameIdx >= frames.length - 1) return;
-    const timer = setTimeout(
-      () => {
-        const nextIdx = frameIdx + 1;
-        currentFrameIdx.value = nextIdx;
-        const logType = frames[nextIdx]?.log?.type;
-        const se = logType ? SE_MAP[logType] : undefined;
-        if (se) playSE(se);
-      },
-      ff ? FRAME_DELAY_FAST : FRAME_DELAY_NORMAL,
-    );
+    const nextFrame = frames[frameIdx + 1];
+    const delay = ff ? FRAME_DELAY_FAST : (nextFrame?.delay ?? FRAME_DELAY_NORMAL);
+    const timer = setTimeout(() => {
+      currentFrameIdx.value = frameIdx + 1;
+      const logType = nextFrame?.log?.type;
+      const se = logType ? SE_MAP[logType] : undefined;
+      if (se) playSE(se);
+    }, delay);
     return () => clearTimeout(timer);
   }, [frameIdx, frames, ff]);
 
   return (
     <div className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300">
-      <BattleVisualizer currentFrame={currentFrame} ff={ff} frameIdx={frameIdx} />
+      <BattleVisualizer
+        currentFrame={currentFrame}
+        prevFrame={frameIdx > 0 ? frames[frameIdx - 1] : undefined}
+        ff={ff}
+        frameIdx={frameIdx}
+      />
       <BattleLog frames={frames} frameIdx={frameIdx} />
       <BattleFooter isFinished={isFinished} />
     </div>

@@ -113,7 +113,7 @@ export type IconType =
   | "skull";
 
 export interface BattleAction {
-  type: "clash" | "damage" | "buff" | "heal" | "skill" | "defend";
+  type: "clash" | "damage" | "buff" | "heal" | "skill" | "defend" | "summon" | "death";
   value?: string;
 }
 
@@ -129,6 +129,8 @@ export interface BattleFrame {
   eBoard: UnitInstance[];
   log: BattleLogEntry;
   actions: Record<string, BattleAction>;
+  /** フレーム再生遅延 (ms)。未指定なら通常速度 */
+  delay?: number;
 }
 
 export type BattleResult = "WIN" | "LOSE" | "DRAW" | null;

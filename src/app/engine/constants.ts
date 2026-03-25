@@ -4,7 +4,8 @@ export const UNIT_COST = 3;
 // --- バトル制限 ---
 export const DEATH_CASCADE_LIMIT = 20;
 export const COMBAT_ROUND_LIMIT = 500;
-export const MAX_OPS = 10_000;
+/** 無限ループ防止用安全上限。死亡アニメフレーム等の視覚フレームを含め余裕を持たせる */
+export const MAX_OPS = 15_000;
 export const FLY_SPAWN_CAP = 3;
 export const HUNDRED_ARMS_SAFETY = 10;
 
@@ -43,3 +44,4 @@ export const MACHINE_BUFF = { atk: 2, hp: 2 } as const;
 // --- アニメーション (ms) ---
 export const FRAME_DELAY_NORMAL = 700;
 export const FRAME_DELAY_FAST = 150;
+export const FRAME_DELAY_DEATH_CHAIN = 300;

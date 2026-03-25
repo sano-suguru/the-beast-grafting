@@ -41,6 +41,7 @@ export function pushFrame(
   logText: string,
   iconType: IconType,
   actions: Record<string, BattleAction> = {},
+  delay?: number,
 ) {
   ctx.opCount++;
   if (ctx.opCount > MAX_OPS) {
@@ -53,6 +54,7 @@ export function pushFrame(
     eBoard: ctx.eBoard.map(cloneBattleUnit),
     log: { id: `log-${ctx.logCounter}`, type: logType, text: logText, icon: iconType },
     actions,
+    ...(delay != null && { delay }),
   });
 }
 

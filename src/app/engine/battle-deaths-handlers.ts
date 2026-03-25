@@ -14,6 +14,7 @@ import {
   CHURCH_BEAST_TOKEN,
   MAGGOT_TOKEN,
   DEATH_CURSE_TOKEN,
+  FRAME_DELAY_DEATH_CHAIN,
 } from "./constants";
 
 // --- Death handler type ---
@@ -58,6 +59,7 @@ function applyZealotBuff(
     {
       [tokenUid]: { type: "buff", value: `+${buffAmount}/+0` },
     },
+    FRAME_DELAY_DEATH_CHAIN,
   );
 }
 
@@ -77,9 +79,16 @@ function spawnTokenOnDeath(
   const token = createToken(tokenName, atk, hp, dead.isChurch);
   board.splice(idx, 0, token);
   const prefix = enemyPrefix(isPlayer);
-  pushFrame(ctx, "skill", `${prefix}${message}`, "skill", {
-    [token.uid]: { type: "buff" },
-  });
+  pushFrame(
+    ctx,
+    "skill",
+    `${prefix}${message}`,
+    "skill",
+    {
+      [token.uid]: { type: "summon" },
+    },
+    FRAME_DELAY_DEATH_CHAIN,
+  );
   applyZealotBuff(board, token.uid, isPlayer, ctx);
 }
 
@@ -99,6 +108,7 @@ function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
     {
       [target.uid]: { type: "buff", value: "+1/+1" },
     },
+    FRAME_DELAY_DEATH_CHAIN,
   );
 }
 
@@ -142,7 +152,8 @@ function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
     "skill",
     `${prefix}[${dead.name}]の腹から[${summoned.name}]が這い出した！ (${BEAST_SUMMON.atk}/${BEAST_SUMMON.hp} 召喚)`,
     "skill",
-    { [summoned.uid]: { type: "buff" } },
+    { [summoned.uid]: { type: "summon" } },
+    FRAME_DELAY_DEATH_CHAIN,
   );
   applyZealotBuff(board, summoned.uid, isPlayer, ctx);
 }
@@ -174,6 +185,7 @@ function handleSquireDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
     {
       [successor.uid]: { type: "buff", value: "+1/+1" },
     },
+    FRAME_DELAY_DEATH_CHAIN,
   );
 }
 
@@ -189,6 +201,7 @@ function handlePriestDeath({ dead, board, isPlayer, ctx }: DeathContext) {
     `${prefix}[${dead.name}]の祈りが味方全体を癒す！ (+1)`,
     "skill",
     actionMap,
+    FRAME_DELAY_DEATH_CHAIN,
   );
 }
 
@@ -204,6 +217,7 @@ function handleMaidenDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
     {
       [successor.uid]: { type: "defend", value: "盾" },
     },
+    FRAME_DELAY_DEATH_CHAIN,
   );
 }
 
@@ -222,6 +236,7 @@ function handleMartyrDeath({ dead, isPlayer, ctx, successor, successor2 }: Death
       {
         [target.uid]: { type: "buff", value: "+1/+1" },
       },
+      FRAME_DELAY_DEATH_CHAIN,
     );
   }
 }
@@ -259,8 +274,9 @@ export function handleEquipDeath(
       `${prefix}[${dead.name}]の傷口から蛆虫が這い出した！ (1/1 召喚)`,
       "skill",
       {
-        [token.uid]: { type: "buff" },
+        [token.uid]: { type: "summon" },
       },
+      FRAME_DELAY_DEATH_CHAIN,
     );
     applyZealotBuff(board, token.uid, isPlayer, ctx);
   }
@@ -278,8 +294,9 @@ export function handleEquipDeath(
       `${prefix}[${dead.name}]の呪符が発動！ 怨念が肉体を繋ぎ止める！ (1/1 蘇生)`,
       "skill",
       {
-        [token.uid]: { type: "buff" },
+        [token.uid]: { type: "summon" },
       },
+      FRAME_DELAY_DEATH_CHAIN,
     );
     applyZealotBuff(board, token.uid, isPlayer, ctx);
   }
@@ -321,8 +338,9 @@ export function handleBeelzebubSpawns(
         `${prefix}[${beelzebub.name}]の瘴気が死肉に群がる蠅を呼ぶ！ (${FLY_TOKEN.atk}/${FLY_TOKEN.hp} 蠅召喚)`,
         "skill",
         {
-          [token.uid]: { type: "buff" },
+          [token.uid]: { type: "summon" },
         },
+        FRAME_DELAY_DEATH_CHAIN,
       );
       applyZealotBuff(board, token.uid, isPlayer, ctx);
     }

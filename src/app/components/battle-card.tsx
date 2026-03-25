@@ -9,6 +9,14 @@ interface BattleCardProps {
   actionObj?: BattleAction | undefined;
   fastForward?: boolean | undefined;
   frameIdx?: number | undefined;
+  /** ATK の base との差分（永続色用） */
+  atkBaseDiff?: number;
+  /** HP の base との差分（永続色用） */
+  hpBaseDiff?: number;
+  /** ATK のフレーム間差分（パルスアニメ用） */
+  atkDelta?: number;
+  /** HP のフレーム間差分（パルスアニメ用） */
+  hpDelta?: number;
 }
 
 const ACTION_STYLES: Record<string, { transform: string; anim: string }> = {
@@ -32,6 +40,14 @@ const ACTION_STYLES: Record<string, { transform: string; anim: string }> = {
     transform: "scale-95 z-20",
     anim: "bg-zinc-700 border-zinc-300 shadow-[0_0_20px_rgba(161,161,170,0.7)]",
   },
+  summon: {
+    transform: "scale-110 z-20",
+    anim: "bg-violet-950/90 border-violet-400 shadow-[0_0_30px_rgba(139,92,246,0.8)]",
+  },
+  death: {
+    transform: "scale-90 z-0",
+    anim: "bg-zinc-950 border-red-900/60 shadow-[0_0_15px_rgba(220,38,38,0.4)]",
+  },
 };
 
 function getStyles(actionType: string | undefined, side: "p" | "e") {
@@ -51,7 +67,11 @@ function getStyles(actionType: string | undefined, side: "p" | "e") {
   return { transform: "z-10", anim: defaultAnim };
 }
 
-const FLOAT_COLORS: Record<string, string> = { damage: "text-red-500", defend: "text-zinc-400" };
+const FLOAT_COLORS: Record<string, string> = {
+  damage: "text-red-500",
+  defend: "text-zinc-400",
+  summon: "text-violet-400",
+};
 
 function FloatingText({
   text,
@@ -81,7 +101,17 @@ function getSkullColor(side: string): string {
   return side === "p" ? "text-zinc-600" : "text-red-900/60";
 }
 
-export function BattleCard({ unit, side, actionObj, fastForward, frameIdx }: BattleCardProps) {
+export function BattleCard({
+  unit,
+  side,
+  actionObj,
+  fastForward,
+  frameIdx,
+  atkBaseDiff,
+  hpBaseDiff,
+  atkDelta,
+  hpDelta,
+}: BattleCardProps) {
   if (!unit) return null;
   const actionType = actionObj?.type;
   const { transform, anim } = getStyles(actionType, side);
@@ -89,10 +119,23 @@ export function BattleCard({ unit, side, actionObj, fastForward, frameIdx }: Bat
   const skullColor = unit.isChurch ? "text-amber-700/50" : getSkullColor(side);
   const statColor = side === "p" ? "text-zinc-400" : "text-red-500/80";
 
+  const extraAnim =
+    actionType === "death"
+      ? "animate-death"
+      : actionType === "summon"
+        ? "animate-summon"
+        : actionType === "skill"
+          ? "animate-skill"
+          : "";
+
   return (
     <div
-      style={{ transitionDuration: fastForward ? "150ms" : "300ms" }}
-      className={`relative flex aspect-[2/3] max-w-[72px] min-w-[50px] flex-1 flex-col rounded p-1 transition-all ease-out ${anim} ${transform}`}
+      style={{
+        transitionDuration: fastForward ? "150ms" : "300ms",
+        animationDuration: fastForward ? "0.12s" : undefined,
+      }}
+      data-uid={unit.uid}
+      className={`relative flex aspect-[2/3] max-w-[72px] min-w-[50px] flex-1 flex-col rounded p-1 transition-all ease-out ${anim} ${transform} ${extraAnim}`}
     >
       {actionType === "damage" && (
         <div
@@ -113,8 +156,22 @@ export function BattleCard({ unit, side, actionObj, fastForward, frameIdx }: Bat
         <Skull size={18} className={skullColor} />
       </div>
       <div className="relative z-10 flex items-center justify-between rounded bg-zinc-950 px-1">
-        <StatBadge icon={Swords} value={unit.atk} className={statColor} />
-        <StatBadge icon={Shield} value={unit.hp} className={statColor} />
+        <StatBadge
+          icon={Swords}
+          value={unit.atk}
+          className={statColor}
+          baseDiff={atkBaseDiff}
+          frameDelta={atkDelta}
+          frameIdx={frameIdx}
+        />
+        <StatBadge
+          icon={Shield}
+          value={unit.hp}
+          className={statColor}
+          baseDiff={hpBaseDiff}
+          frameDelta={hpDelta}
+          frameIdx={frameIdx}
+        />
       </div>
     </div>
   );
