@@ -19,8 +19,7 @@
       "WebFetch",
       "WebSearch",
 
-      "mcp__context7__query-docs",
-      "mcp__context7__resolve-library-id",
+      "Bash(pnpm dlx ctx7:*)",
 
       "Bash(pnpm build:*)",
       "Bash(pnpm check:*)",
