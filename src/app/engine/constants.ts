@@ -1,15 +1,14 @@
-// --- ショップ ---
 export const UNIT_COST = 3;
 
-// --- バトル制限 ---
 export const DEATH_CASCADE_LIMIT = 20;
 export const COMBAT_ROUND_LIMIT = 500;
 /** 無限ループ防止用安全上限。死亡アニメフレーム等の視覚フレームを含め余裕を持たせる */
 export const MAX_OPS = 15_000;
 export const FLY_SPAWN_CAP = 3;
 export const HUNDRED_ARMS_SAFETY = 10;
+/** SAP準拠: 攻撃前スキルは前衛の直後（support位置）のみ発動 */
+export const SUPPORT_IDX = 1;
 
-// --- トークンステータス ---
 export const HOUND_TOKEN = { atk: 1, hp: 1 } as const;
 export const BEAST_SUMMON = { atk: 2, hp: 2 } as const;
 export const CHURCH_BEAST_TOKEN = { atk: 2, hp: 2 } as const;
@@ -17,7 +16,6 @@ export const FLY_TOKEN = { atk: 4, hp: 4 } as const;
 export const MAGGOT_TOKEN = { atk: 1, hp: 1 } as const;
 export const DEATH_CURSE_TOKEN = { atk: 1, hp: 1 } as const;
 
-// --- スキル値 ---
 export const BAT_DAMAGE = 1;
 export const BANSHEE_DAMAGE = 8;
 export const EVANGELIST_HP_RATIO = 0.33;
@@ -40,7 +38,6 @@ export const REVENANT_MAX_TARGETS = 3;
 export const ROT_RING_MAX_USES = 4;
 export const MACHINE_BUFF = { atk: 2, hp: 2 } as const;
 
-// --- アニメーション (ms) ---
 export const FRAME_DELAY_NORMAL = 700;
 export const FRAME_DELAY_FAST = 150;
 export const FRAME_DELAY_DEATH_CHAIN = 300;

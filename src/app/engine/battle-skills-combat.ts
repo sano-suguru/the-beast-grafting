@@ -9,8 +9,6 @@ import {
   HUNDRED_ARMS_SAFETY,
 } from "./constants";
 
-// --- Acid splash ---
-
 export function applyAcidSplash(
   attacker: BattleUnit,
   targetBoard: BattleUnit[],
@@ -28,8 +26,6 @@ export function applyAcidSplash(
   });
   resolveDeaths(ctx);
 }
-
-// --- Hundred-Arms knockout trigger (SAP: Rhino) ---
 
 export function processHundredArmsKnockout(
   attacker: BattleUnit,

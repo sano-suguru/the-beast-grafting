@@ -16,8 +16,6 @@ import {
   FRAME_DELAY_DEATH_CHAIN,
 } from "./constants";
 
-// --- Death handler type ---
-
 type DeathContext = {
   dead: BattleUnit;
   board: BattleUnit[];
@@ -29,8 +27,6 @@ type DeathContext = {
 };
 
 type DeathHandler = (context: DeathContext) => void;
-
-// --- Zealot buff (used by spawn helpers) ---
 
 function applyZealotBuff(
   boardArray: BattleUnit[],
@@ -62,8 +58,6 @@ function applyZealotBuff(
   );
 }
 
-// --- Spawn token helper ---
-
 function spawnTokenOnDeath(
   dead: BattleUnit,
   board: BattleUnit[],
@@ -90,8 +84,6 @@ function spawnTokenOnDeath(
   );
   applyZealotBuff(board, token.uid, isPlayer, ctx);
 }
-
-// --- Unit death effect handlers ---
 
 function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
   if (board.length === 0) return;
@@ -229,8 +221,6 @@ function handleMartyrDeath({ dead, isPlayer, ctx, successor, successor2 }: Death
   }
 }
 
-// --- Handler map ---
-
 export const UNIT_DEATH_HANDLERS: Record<string, DeathHandler> = {
   rat: handleRatDeath,
   hound: handleHoundDeath,
@@ -242,8 +232,6 @@ export const UNIT_DEATH_HANDLERS: Record<string, DeathHandler> = {
   priest: handlePriestDeath,
   maiden: handleMaidenDeath,
 };
-
-// --- Equip death effect handler ---
 
 export function handleEquipDeath(
   dead: BattleUnit,
@@ -290,7 +278,25 @@ export function handleEquipDeath(
   }
 }
 
-// --- Beelzebub fly spawn ---
+function collectBeelzebubSpawns(
+  board: BattleUnit[],
+  flyCount: number,
+): { spawns: { beelzebub: BattleUnit; count: number }[]; totalSpawned: number } {
+  const spawns: { beelzebub: BattleUnit; count: number }[] = [];
+  let remaining = FLY_SPAWN_CAP - flyCount;
+  for (let i = 0; i < board.length; i++) {
+    const u = board[i];
+    if (!u || u.id !== "beelzebub") continue;
+    const mult = getMult(board, i);
+    const count = Math.min(mult, remaining);
+    if (count <= 0) continue;
+    spawns.push({ beelzebub: u, count });
+    remaining -= count;
+    if (remaining <= 0) break;
+  }
+  const totalSpawned = spawns.reduce((sum, s) => sum + s.count, 0);
+  return { spawns, totalSpawned };
+}
 
 export function handleBeelzebubSpawns(
   board: BattleUnit[],
@@ -300,22 +306,8 @@ export function handleBeelzebubSpawns(
 ) {
   const flyCountKey = isPlayer ? "pFlyCount" : "eFlyCount";
   const prefix = enemyPrefix(isPlayer);
+  const { spawns, totalSpawned } = collectBeelzebubSpawns(board, ctx[flyCountKey]);
 
-  // Phase 1: スキャン（配列変更なし）
-  const spawns: { beelzebub: BattleUnit; count: number }[] = [];
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i];
-    if (!u || u.id !== "beelzebub") continue;
-    const mult = getMult(board, i);
-    const available = FLY_SPAWN_CAP - ctx[flyCountKey];
-    const count = Math.min(mult, available);
-    if (count <= 0) continue;
-    spawns.push({ beelzebub: u, count });
-    ctx[flyCountKey] += count;
-    if (ctx[flyCountKey] >= FLY_SPAWN_CAP) break;
-  }
-
-  // Phase 2: ミューテーション（スキャン完了後に実行）
   for (const { beelzebub, count } of spawns) {
     for (let m = 0; m < count; m++) {
       const token = createToken("腐肉の蠅", FLY_TOKEN.atk, FLY_TOKEN.hp, beelzebub.isChurch);
@@ -333,4 +325,5 @@ export function handleBeelzebubSpawns(
       applyZealotBuff(board, token.uid, isPlayer, ctx);
     }
   }
+  ctx[flyCountKey] += totalSpawned;
 }

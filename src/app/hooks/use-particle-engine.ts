@@ -22,7 +22,7 @@ export function useParticleEngine(): UseParticleEngineResult {
   const dprRef = useRef(1);
   const tickRef = useRef<(now: number) => void>(noop);
 
-  // rAF ループ — tickRef 経由で常に最新クロージャを参照
+  // tickRef 経由で常に最新クロージャを参照
   tickRef.current = (now: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -55,7 +55,6 @@ export function useParticleEngine(): UseParticleEngineResult {
     rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
   }, []);
 
-  // Canvas リサイズ
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -77,10 +76,8 @@ export function useParticleEngine(): UseParticleEngineResult {
     return () => ro.disconnect();
   }, []);
 
-  // クリーンアップ
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
-  // エフェクト生成 — actions と ff は引数で受け取るため ref 不要
   const spawnEffects = useCallback(
     (actions: Record<string, BattleAction>, ff: boolean) => {
       const canvas = canvasRef.current;

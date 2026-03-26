@@ -1,4 +1,3 @@
-// --- Game Phase ---
 export type GamePhase =
   | "TITLE"
   | "ORIGIN"
@@ -9,7 +8,6 @@ export type GamePhase =
   | "RESULT"
   | "LORE";
 
-// --- Unit ---
 export type UnitId = string;
 
 export interface UnitData {
@@ -53,7 +51,6 @@ export type EquipType =
 
 export type EquipId = EquipType | null;
 
-// --- Item ---
 export interface ItemData {
   id: string;
   name: string;
@@ -65,7 +62,6 @@ export interface ItemData {
   lore: string;
 }
 
-// --- Origin ---
 export type OriginId = "thief" | "inquisitor" | "surgeon" | "cultist";
 
 export interface OriginData {
@@ -75,7 +71,6 @@ export interface OriginData {
   lore: string;
 }
 
-// --- Shop ---
 export interface ShopSlot {
   unit: UnitInstance;
   frozen: boolean;
@@ -95,14 +90,12 @@ export type HighlightKind = "graft" | "swap" | "move" | false;
 
 export type OnboardingStep = "buy" | "graft" | "roll" | "battle" | null;
 
-// --- Enemy ---
 export interface EnemyTeam {
   teamName: string;
   teamType: string;
   units: UnitInstance[];
 }
 
-// --- Battle ---
 export type LogType = "info" | "clash" | "damage" | "skill" | "death" | "defend" | "result";
 export type IconType =
   | "info"
@@ -137,7 +130,6 @@ export interface BattleFrame {
 
 export type BattleResult = "WIN" | "LOSE" | "DRAW" | null;
 
-// --- Undo ---
 export interface ShopSnapshot {
   blood: number;
   sanity: number;
@@ -151,7 +143,6 @@ export interface ShopSnapshot {
   rotRingUses: number;
 }
 
-// --- Lore ---
 export interface LoreEntry {
   seen: boolean;
   mastered: boolean;
@@ -159,7 +150,6 @@ export interface LoreEntry {
 
 export type LoreDb = Record<string, LoreEntry>;
 
-// --- Sound ---
 export type SoundType =
   | "select"
   | "error"
@@ -171,7 +161,6 @@ export type SoundType =
   | "skill"
   | "death";
 
-// --- Equip Info ---
 export interface EquipInfo {
   name: string;
   desc: string;

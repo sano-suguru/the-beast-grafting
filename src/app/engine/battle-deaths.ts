@@ -8,8 +8,6 @@ import {
 } from "./battle-deaths-handlers";
 import { DEATH_CASCADE_LIMIT, ALTAR_BUFF, FRAME_DELAY_DEATH_CHAIN } from "./constants";
 
-// --- Altar buff for tokens ---
-
 function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
   const prefix = enemyPrefix(isPlayer);
   board.forEach((u) => {
@@ -35,8 +33,6 @@ function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleCont
     u.altarBuffed = true;
   });
 }
-
-// --- Process one side's deaths ---
 
 function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext): boolean {
   // SAP準拠: ATK降順で死亡解決（同値ならHP降順、さらに同値なら均一ランダム）
@@ -81,8 +77,6 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   }
   return true;
 }
-
-// --- Main resolve deaths loop ---
 
 export function resolveDeaths(ctx: BattleContext) {
   let loopSafety = 0;

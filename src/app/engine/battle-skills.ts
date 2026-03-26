@@ -16,9 +16,8 @@ import {
   INFECTION_EXTRA_DAMAGE,
   NUMBNESS_REDUCTION,
   MIN_EQUIPMENT_DAMAGE,
+  SUPPORT_IDX,
 } from "./constants";
-
-// --- Start-of-battle skills ---
 
 type SkillContext = {
   u: BattleUnit;
@@ -161,8 +160,6 @@ export function runStartSkills(
   });
 }
 
-// --- Cholera before-attack (1 use per battle) ---
-
 export function applyCholeraBeforeAttack(
   board: BattleUnit[],
   targetArr: BattleUnit[],
@@ -178,8 +175,6 @@ export function applyCholeraBeforeAttack(
   }
 }
 
-// --- Before-attack skills (index 1 only) ---
-
 export function applyBeforeAttackSkills(
   board: BattleUnit[],
   enemyBoard: BattleUnit[],
@@ -187,9 +182,9 @@ export function applyBeforeAttackSkills(
   ctx: BattleContext,
 ) {
   if (board.length <= 1) return;
-  const u = mustGet(board, 1, "before-attack board[1]");
+  const u = mustGet(board, SUPPORT_IDX, "before-attack board[SUPPORT_IDX]");
   const prefix = enemyPrefix(isPlayer);
-  const mult = getMult(board, 1);
+  const mult = getMult(board, SUPPORT_IDX);
 
   for (let m = 0; m < mult; m++) {
     if (u.id === "parasite") {
@@ -228,8 +223,6 @@ export function applyBeforeAttackSkills(
   }
 }
 
-// --- On-hit skills (triggered when a unit takes damage) ---
-
 export function applyOnHitSkills(
   defender: BattleUnit,
   board: BattleUnit[],
@@ -251,8 +244,6 @@ export function applyOnHitSkills(
     }
   }
 }
-
-// --- Equipment combat effects ---
 
 function applyBerserkBonus(unit: BattleUnit, ctx: BattleContext, prefix: string): number {
   if (unit.equip !== "berserk") return 0;

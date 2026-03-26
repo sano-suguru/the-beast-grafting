@@ -4,10 +4,6 @@ import { clamp01, easeOutQuad, easeOutCubic, easeInCubic } from "../easing";
 
 let nextId = 0;
 
-// ---------------------------------------------------------------------------
-// 共通ヘルパー
-// ---------------------------------------------------------------------------
-
 interface ParticleSpec {
   x: number;
   y: number;
@@ -101,10 +97,6 @@ function polar(angle: number, speed: number): { vx: number; vy: number } {
   return { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
 }
 
-// ---------------------------------------------------------------------------
-// damage — 血飛沫 + 斬撃線
-// ---------------------------------------------------------------------------
-
 function createDamage(x: number, y: number, fast: boolean): EffectInstance {
   const ps: Particle[] = [];
   const n = fast ? 8 : 15;
@@ -183,10 +175,6 @@ function drawSlashFlash(ox: number, oy: number): EffectInstance["drawOverlay"] {
   };
 }
 
-// ---------------------------------------------------------------------------
-// clash — 衝撃波リング
-// ---------------------------------------------------------------------------
-
 function createClash(x: number, y: number, fast: boolean): EffectInstance {
   const ps: Particle[] = [];
   for (let i = 0; i < (fast ? 6 : 12); i++) {
@@ -257,10 +245,6 @@ function drawShockwave(ox: number, oy: number): EffectInstance["drawOverlay"] {
   };
 }
 
-// ---------------------------------------------------------------------------
-// skill — 呪文陣 + 瘴気
-// ---------------------------------------------------------------------------
-
 function createSkill(x: number, y: number, fast: boolean): EffectInstance {
   const ps: Particle[] = [];
   const particleCount = fast ? 10 : 22;
@@ -327,10 +311,6 @@ function drawRuneCircle(ox: number, oy: number): EffectInstance["drawOverlay"] {
     }
   };
 }
-
-// ---------------------------------------------------------------------------
-// summon — 裂け目 + 紫霧
-// ---------------------------------------------------------------------------
 
 function createSummon(x: number, y: number, fast: boolean): EffectInstance {
   const ps: Particle[] = [];
@@ -399,10 +379,6 @@ function drawRift(ox: number, oy: number): EffectInstance["drawOverlay"] {
   };
 }
 
-// ---------------------------------------------------------------------------
-// death — 魂の散逸
-// ---------------------------------------------------------------------------
-
 function createDeath(x: number, y: number, fast: boolean): EffectInstance {
   const ps: Particle[] = [];
   for (let i = 0; i < (fast ? 7 : 14); i++) {
@@ -461,10 +437,6 @@ function drawSoulRing(ox: number, oy: number): EffectInstance["drawOverlay"] {
   };
 }
 
-// ---------------------------------------------------------------------------
-// buff / heal — 上昇する光粒子
-// ---------------------------------------------------------------------------
-
 function createBuffHeal(x: number, y: number, fast: boolean, isHeal: boolean): EffectInstance {
   const ps: Particle[] = [];
   for (let i = 0; i < (fast ? 7 : 16); i++) {
@@ -513,10 +485,6 @@ function createBuffHeal(x: number, y: number, fast: boolean, isHeal: boolean): E
 
   return makeInstance(isHeal ? "heal" : "buff", ps, fast ? 0.18 : 0.55, x, y, overlay);
 }
-
-// ---------------------------------------------------------------------------
-// エクスポート
-// ---------------------------------------------------------------------------
 
 type Gen = (x: number, y: number, config: { fast: boolean }) => EffectInstance;
 

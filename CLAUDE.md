@@ -42,6 +42,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - UI層（`screens/`）では `console.warn` + graceful degradation は許容。エンジン層（`engine/`）では黙って飲み込まない。
   - 外部入力（localStorage, Worker message, API response）のフォールバックは正当。
 
+### Comments
+
+- **コードで語れないことだけコメントする**: WHATコメント（コードの動作説明）は書かない。まず関数名・定数名・型で意図を表現し、それでも伝わらない設計由来（例: SAP準拠の理由）のみWHYコメントを書く。
+- **セクションディバイダー禁止**: `// --- XXX ---` や罫線コメントは使わない。関数定義と空行で区切る。
+- **JSDocはAPI境界に限定**: 公開関数・型フィールドの説明に使う。内部実装の逐次説明には使わない。
+
 ### Configs
 
 以下の設定は各設定ファイルを参照: @package.json, @.oxlintrc.json, @vite.config.ts, @tsconfig.app.json, @.dependency-cruiser.cjs

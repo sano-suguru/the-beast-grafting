@@ -10,6 +10,10 @@ export function easeOutCubic(t: number): number {
   return 1 - (1 - t) ** 3;
 }
 
+export function easeInQuad(t: number): number {
+  return t * t;
+}
+
 export function easeInCubic(t: number): number {
   return t ** 3;
 }

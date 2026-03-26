@@ -1,8 +1,9 @@
 import type { EffectInstance, Particle } from "./types";
-import { lerp, easeOutQuad } from "./easing";
+import { lerp, easeInQuad, easeOutQuad } from "./easing";
 import { release } from "./pool";
 
 const MAX_PARTICLES = 200;
+const HIDDEN = { r: 0, g: 0, b: 0, a: 0, size: 0 } as const;
 
 /** 全エフェクトのパーティクルを物理更新し、寿命切れを除去する */
 export function updateEffects(effects: EffectInstance[], dt: number): void {
@@ -68,15 +69,14 @@ export function interpolated(p: Particle): {
   a: number;
   size: number;
 } {
-  const raw = 1 - p.life / p.maxLife;
-  // delay 中（raw < 0）は非表示
-  if (raw < 0) return { r: 0, g: 0, b: 0, a: 0, size: 0 };
-  const tAlpha = raw * raw; // easeIn — ゆっくり薄くなり最後に急速消滅
-  const tSize = easeOutQuad(raw); // easeOut — 素早く縮み始める
+  const progress = 1 - p.life / p.maxLife;
+  if (progress < 0) return HIDDEN;
+  const tAlpha = easeInQuad(progress);
+  const tSize = easeOutQuad(progress);
   return {
-    r: lerp(p.r, p.rEnd, raw),
-    g: lerp(p.g, p.gEnd, raw),
-    b: lerp(p.b, p.bEnd, raw),
+    r: lerp(p.r, p.rEnd, progress),
+    g: lerp(p.g, p.gEnd, progress),
+    b: lerp(p.b, p.bEnd, progress),
     a: lerp(p.a, p.aEnd, tAlpha),
     size: lerp(p.size, p.sizeEnd, tSize),
   };
