@@ -40,7 +40,7 @@ export function BattleScreen() {
   }, [frameIdx, frames, ff]);
 
   return (
-    <div className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300">
+    <main className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300">
       <BattleVisualizer
         currentFrame={currentFrame}
         prevFrame={frameIdx > 0 ? frames[frameIdx - 1] : undefined}
@@ -49,6 +49,6 @@ export function BattleScreen() {
       />
       <BattleLog frames={frames} frameIdx={frameIdx} />
       <BattleFooter isFinished={isFinished} />
-    </div>
+    </main>
   );
 }

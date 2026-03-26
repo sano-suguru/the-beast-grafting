@@ -18,8 +18,8 @@ beforeEach(() => {
 
 describe("UnitCard", () => {
   it("renders empty slot when unit is null", () => {
-    const { container } = render(<UnitCard unit={null} type="BOARD_SLOT" index={0} />);
-    expect(container.querySelector("[class*=dashed]")).not.toBeNull();
+    render(<UnitCard unit={null} type="BOARD_SLOT" index={0} />);
+    expect(screen.getByRole("button", { name: "空きスロット" })).toBeInTheDocument();
   });
 
   it("renders unit name", () => {
@@ -49,8 +49,8 @@ describe("UnitCard", () => {
 
   it("calls handleCardClick on click", () => {
     const unit = makeUnit();
-    const { container } = render(<UnitCard unit={unit} type="SHOP_UNIT" index={2} />);
-    fireEvent.click(container.firstElementChild!);
+    render(<UnitCard unit={unit} type="SHOP_UNIT" index={2} />);
+    fireEvent.click(screen.getByRole("button", { name: unit.name }));
     expect(handleCardClick).toHaveBeenCalledWith("SHOP_UNIT", 2, unit);
   });
 

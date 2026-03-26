@@ -5,7 +5,7 @@ import { concludeBattle } from "../../state/battle-actions";
 export function BattleFooter({ isFinished }: { isFinished: boolean }) {
   if (!isFinished) {
     return (
-      <div className="flex shrink-0 justify-center border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
+      <footer className="flex shrink-0 justify-center border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
         <button
           onClick={() => {
             fastForward.value = true;
@@ -14,17 +14,17 @@ export function BattleFooter({ isFinished }: { isFinished: boolean }) {
         >
           <FastForward size={14} /> 早送り
         </button>
-      </div>
+      </footer>
     );
   }
   return (
-    <div className="flex shrink-0 justify-center border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
+    <footer className="flex shrink-0 justify-center border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
       <button
         onClick={concludeBattle}
         className="flex cursor-pointer items-center gap-2 rounded border border-red-900 bg-red-950/30 px-6 py-2 text-xs font-bold tracking-widest text-red-500 transition-all hover:bg-red-950/50 active:scale-95"
       >
         血を拭き取る (次の夜へ) <ArrowRight size={14} className="ml-1 inline" />
       </button>
-    </div>
+    </footer>
   );
 }

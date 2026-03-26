@@ -19,7 +19,7 @@ beforeEach(() => {
 describe("ItemCard", () => {
   it("renders empty slot when item is null", () => {
     const { container } = render(<ItemCard item={null} index={0} />);
-    expect(container.querySelector("[class*=dashed]")).not.toBeNull();
+    expect(container.querySelector("[class*=dashed]")).not.toBeNull(); // 空アイテムスロットは非インタラクティブ
   });
 
   it("renders item name", () => {
@@ -29,8 +29,8 @@ describe("ItemCard", () => {
 
   it("calls handleCardClick on click", () => {
     const item = ITEMS["bile"]!;
-    const { container } = render(<ItemCard item={item} index={1} />);
-    fireEvent.click(container.firstElementChild!);
+    render(<ItemCard item={item} index={1} />);
+    fireEvent.click(screen.getByRole("button", { name: item.name }));
     expect(handleCardClick).toHaveBeenCalledWith("SHOP_ITEM", 1, item);
   });
 

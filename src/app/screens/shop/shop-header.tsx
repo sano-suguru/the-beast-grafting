@@ -12,7 +12,7 @@ export function ShopHeader() {
   const currentSanity = sanity.value;
   const isTutorialActive = !!onboardingStep.value;
   return (
-    <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 p-2 md:p-3">
+    <header className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 p-2 md:p-3">
       <div className="flex items-center gap-2">
         <div className="flex flex-col">
           <span className="text-base font-bold tracking-wider text-zinc-100 md:text-lg">
@@ -51,6 +51,6 @@ export function ShopHeader() {
           <span className="text-[10px] font-bold text-red-600 md:text-xs">{blood.value}</span>
         </div>
       </div>
-    </div>
+    </header>
   );
 }

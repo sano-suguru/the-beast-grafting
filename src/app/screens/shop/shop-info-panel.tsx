@@ -45,16 +45,17 @@ export function ShopInfoPanel({ sel, currentSanity }: ShopInfoPanelProps) {
     !sel && currentSanity <= 1 ? "bg-red-950/20 border-red-900/50" : "bg-[#0a0a0a] border-zinc-800";
 
   return (
-    <div
+    <section
+      aria-label="情報パネル"
       className={`mb-3 flex min-h-[85px] shrink-0 flex-col justify-center rounded border p-2 transition-all md:min-h-[100px] md:p-3 ${borderClass}`}
     >
       {sel ? (
         <SelectedItemInfo sel={sel} />
       ) : (
-        <div className="relative z-10">
+        <div aria-live={currentSanity <= 1 ? "assertive" : "polite"}>
           <ShopNarrative currentSanity={currentSanity} />
         </div>
       )}
-    </div>
+    </section>
   );
 }

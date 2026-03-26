@@ -22,7 +22,7 @@ export function TitleScreen() {
   const totalUnits = Object.values(UNITS).filter((u) => u.tier > 0).length;
 
   return (
-    <div className="relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-4 font-serif text-zinc-300">
+    <main className="relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-4 font-serif text-zinc-300">
       <div className="mb-12 animate-pulse text-center">
         <Skull size={64} className="mx-auto mb-4 text-zinc-600" />
         <h1 className="mb-2 text-3xl font-black tracking-widest text-zinc-100 drop-shadow-lg md:text-5xl">
@@ -57,6 +57,6 @@ export function TitleScreen() {
           </span>
         </button>
       </div>
-    </div>
+    </main>
   );
 }

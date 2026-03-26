@@ -25,5 +25,5 @@ export function EquipIcon({ equipId }: { equipId: string | null }) {
   const entry = EQUIP_ICONS[equipId];
   if (!entry) return null;
   const { Icon, className } = entry;
-  return <Icon size={14} className={`${className} absolute top-1 left-1`} />;
+  return <Icon size={14} className={`${className} absolute top-1 left-1`} aria-hidden="true" />;
 }

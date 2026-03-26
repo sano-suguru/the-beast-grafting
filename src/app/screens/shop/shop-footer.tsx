@@ -48,7 +48,7 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
   const battleDisabled = isBattleDisabled(hasUnit, currentOnboarding);
 
   return (
-    <div className="relative z-20 grid shrink-0 grid-cols-2 gap-2 border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
+    <footer className="relative z-20 grid shrink-0 grid-cols-2 gap-2 border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
       <div className="flex gap-1 md:gap-2">
         <button
           onClick={rollShop}
@@ -73,6 +73,6 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
       >
         狂宴へ向かう <Play size={14} />
       </button>
-    </div>
+    </footer>
   );
 }

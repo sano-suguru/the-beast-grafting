@@ -36,7 +36,7 @@ export function StatBadge({
 
   return (
     <div className="flex items-center gap-0.5 font-bold">
-      <Icon size={12} className={color} />
+      <Icon size={12} className={color} aria-hidden="true" />
       <span
         key={frameDelta != null && frameDelta !== 0 ? `s-${frameIdx}` : undefined}
         className={`text-[10px] md:text-xs ${color} ${flashClass}`}

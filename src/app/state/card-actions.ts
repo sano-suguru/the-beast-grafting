@@ -1,5 +1,5 @@
 import { batch } from "@preact/signals";
-import type { UnitInstance, ItemData, Selection } from "../types";
+import type { UnitInstance, ItemData, Selection, HighlightKind } from "../types";
 import { initAudio, playSE } from "../engine/audio";
 import {
   graftUnits,
@@ -230,31 +230,36 @@ export function handleCardClick(
 function canHighlightForItem(
   sel: Extract<Selection, { type: "SHOP_ITEM" }>,
   unit: UnitInstance | null,
-): boolean {
-  return blood.value >= sel.item.cost && !!unit;
+): HighlightKind {
+  return blood.value >= sel.item.cost && !!unit ? "graft" : false;
 }
 
 function canHighlightForUnit(
   sel: Extract<Selection, { type: "SHOP_UNIT" }>,
   unit: UnitInstance | null,
-): boolean {
+): HighlightKind {
   if (blood.value < UNIT_COST) return false;
-  return !unit || (unit.id === sel.item.id && unit.level < 3);
+  if (!unit) return "move";
+  if (unit.id === sel.item.id && unit.level < 3) return "graft";
+  return false;
 }
 
 function canHighlightForBoardUnit(
   sel: Extract<Selection, { type: "BOARD_UNIT" }>,
   index: number,
   unit: UnitInstance | null,
-): boolean {
-  return sel.index !== index && (!unit || (unit.id === sel.item.id && unit.level < 3));
+): HighlightKind {
+  if (sel.index === index) return false;
+  if (!unit) return "move";
+  if (unit.id === sel.item.id && unit.level < 3) return "graft";
+  return "swap"; // 全占有スロットはswap可能 — 視覚は最も控えめ
 }
 
 export function checkHighlight(
   targetType: string,
   index: number,
   unit: UnitInstance | null,
-): boolean {
+): HighlightKind {
   if (targetType !== "BOARD_SLOT") return false;
   const sel = selection.value;
   if (!sel) return false;

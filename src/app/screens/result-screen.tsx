@@ -6,9 +6,9 @@ function WinContent() {
   return (
     <>
       <Trophy size={64} className="mb-6 text-zinc-500" />
-      <h2 className="mb-4 text-2xl font-bold tracking-widest text-zinc-100 md:text-3xl">
+      <h1 className="mb-4 text-2xl font-bold tracking-widest text-zinc-100 md:text-3xl">
         傑作の完成
-      </h2>
+      </h1>
       <div className="max-w-md space-y-4 px-4 text-xs leading-relaxed text-zinc-400 md:text-sm">
         <p>最後の激突が終わった。</p>
         <p>
@@ -26,7 +26,7 @@ function LossContent() {
   return (
     <>
       <Flame size={64} className="mb-6 text-red-800" />
-      <h2 className="mb-4 text-2xl font-bold tracking-widest text-red-700 md:text-3xl">異端認定</h2>
+      <h1 className="mb-4 text-2xl font-bold tracking-widest text-red-700 md:text-3xl">異端認定</h1>
       <div className="max-w-md space-y-4 px-4 text-xs leading-relaxed text-zinc-400 md:text-sm">
         {isChurch ? (
           <>
@@ -52,7 +52,7 @@ export function ResultScreen() {
   const isWin = trophy.value >= 10;
 
   return (
-    <div className="animate-fade-in relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-4 text-center font-serif text-zinc-300">
+    <main className="animate-fade-in relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-4 text-center font-serif text-zinc-300">
       {isWin ? <WinContent /> : <LossContent />}
       <button
         onClick={() => {
@@ -65,6 +65,6 @@ export function ResultScreen() {
       >
         別の遺体安置所を探す
       </button>
-    </div>
+    </main>
   );
 }

@@ -4,7 +4,7 @@ vi.mock("../state/shop-actions", () => ({
   handleFreezeClick: vi.fn(),
 }));
 
-import { render, fireEvent } from "@testing-library/preact";
+import { render, screen, fireEvent } from "@testing-library/preact";
 import { FreezeButton } from "./freeze-button";
 import { handleFreezeClick } from "../state/shop-actions";
 
@@ -13,19 +13,21 @@ beforeEach(() => {
 });
 
 describe("FreezeButton", () => {
-  it("shows frozen style when isFrozen is true", () => {
-    const { container } = render(<FreezeButton isUnit index={0} isFrozen />);
-    expect(container.innerHTML).toContain("bg-red-950");
+  it("shows frozen state when isFrozen is true", () => {
+    render(<FreezeButton isUnit index={0} isFrozen />);
+    const toggle = screen.getByRole("switch", { name: "凍結" });
+    expect(toggle).toHaveAttribute("aria-checked", "true");
   });
 
-  it("shows unfrozen style when isFrozen is false", () => {
-    const { container } = render(<FreezeButton isUnit index={0} isFrozen={false} />);
-    expect(container.innerHTML).toContain("bg-zinc-800");
+  it("shows unfrozen state when isFrozen is false", () => {
+    render(<FreezeButton isUnit index={0} isFrozen={false} />);
+    const toggle = screen.getByRole("switch", { name: "凍結" });
+    expect(toggle).toHaveAttribute("aria-checked", "false");
   });
 
   it("calls handleFreezeClick with correct args on click", () => {
-    const { container } = render(<FreezeButton isUnit={false} index={2} />);
-    fireEvent.click(container.querySelector("button")!);
+    render(<FreezeButton isUnit={false} index={2} />);
+    fireEvent.click(screen.getByRole("switch", { name: "凍結" }));
     expect(handleFreezeClick).toHaveBeenCalledWith(false, 2);
   });
 });

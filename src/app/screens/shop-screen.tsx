@@ -14,6 +14,7 @@ import { undoLastAction } from "../state/undo-actions";
 import { checkHighlight } from "../state/card-actions";
 import { UnitCard } from "../components/unit-card";
 import { ItemCard } from "../components/item-card";
+import { FreezeButton } from "../components/freeze-button";
 import { OnboardingTooltip } from "../components/onboarding-tooltip";
 import { ShopHeader } from "./shop/shop-header";
 import { ShopInfoPanel } from "./shop/shop-info-panel";
@@ -26,7 +27,7 @@ export function ShopScreen() {
   const currentOnboarding = onboardingStep.value;
 
   return (
-    <div className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300 select-none">
+    <main className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300 select-none">
       <OnboardingOverlays step={currentOnboarding} />
       <ShopHeader />
 
@@ -41,7 +42,7 @@ export function ShopScreen() {
       </div>
 
       <ShopFooter currentOnboarding={currentOnboarding} />
-    </div>
+    </main>
   );
 }
 
@@ -78,25 +79,29 @@ function OnboardingOverlays({ step }: { step: OnboardingStep }) {
 
 function BoardSection({ board: b }: { board: (UnitInstance | null)[] }) {
   return (
-    <div className="mb-3 shrink-0">
+    <section aria-label="解剖台" className="mb-3 shrink-0">
       <div className="mb-1 flex items-end justify-between px-1 md:mb-2">
         <span className="text-xs font-bold text-zinc-400 md:text-sm">解剖台</span>
         <span className="flex items-center gap-1 text-[10px] font-normal text-zinc-600">
           後衛 <ChevronRight size={10} className="inline text-zinc-500" /> 前衛
         </span>
       </div>
-      <div className="flex w-full justify-between gap-1 rounded border border-zinc-900 bg-zinc-900/20 p-1 md:gap-2 md:p-2">
+      <ul
+        role="list"
+        className="flex w-full justify-between gap-1 rounded border border-zinc-900 bg-zinc-900/20 p-1 md:gap-2 md:p-2"
+      >
         {b.map((u, i) => (
-          <UnitCard
-            key={`board-${i}`}
-            unit={u}
-            type="BOARD_SLOT"
-            index={i}
-            isHighlight={checkHighlight("BOARD_SLOT", i, u)}
-          />
+          <li key={`board-${i}`} className="flex min-w-0 flex-1">
+            <UnitCard
+              unit={u}
+              type="BOARD_SLOT"
+              index={i}
+              isHighlight={checkHighlight("BOARD_SLOT", i, u)}
+            />
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }
 
@@ -139,7 +144,7 @@ function UndoButton() {
 
 function ShopSection() {
   return (
-    <div className="relative z-0 flex min-h-0 flex-1 flex-col pb-4">
+    <section aria-label="闇市場" className="relative z-0 flex min-h-0 flex-1 flex-col pb-4">
       <span className="relative z-10 mb-1 block flex items-center gap-1 px-1 text-xs font-bold text-zinc-400 md:mb-2 md:text-sm">
         闇市場{" "}
         <span className="text-[10px] font-normal text-zinc-500">
@@ -147,35 +152,34 @@ function ShopSection() {
         </span>
       </span>
       <div className="relative z-0 flex flex-1 items-start gap-2 md:gap-4">
-        <div className="flex min-w-0 flex-1 gap-1 md:gap-2">
+        <ul role="list" className="flex min-w-0 flex-1 gap-1 md:gap-2">
           {shopUnits.value.map((item, i) => (
-            <UnitCard
-              key={`shop-u-${i}`}
-              unit={item?.unit ?? null}
-              type="SHOP_UNIT"
-              index={i}
-              onFreeze={!!item}
-              isFrozen={item?.frozen}
-              isHighlight={
-                checkHighlight("SHOP_UNIT", i, item?.unit ?? null) ||
-                (onboardingStep.value === "buy" && !!item)
-              }
-            />
+            <li key={`shop-u-${i}`} className="relative flex min-w-0 flex-1">
+              <UnitCard
+                unit={item?.unit ?? null}
+                type="SHOP_UNIT"
+                index={i}
+                isHighlight={
+                  checkHighlight("SHOP_UNIT", i, item?.unit ?? null) ||
+                  (onboardingStep.value === "buy" && !!item ? "move" : false)
+                }
+              />
+              {!!item && <FreezeButton isUnit={true} index={i} isFrozen={item.frozen} />}
+            </li>
           ))}
-        </div>
-        <div className="z-10 mx-0.5 h-24 w-px shrink-0 bg-zinc-800 md:mx-1" />
-        <div className="z-10 flex shrink-0 gap-1 md:gap-2">
+        </ul>
+        <div className="z-10 mx-0.5 h-24 w-px shrink-0 bg-zinc-800 md:mx-1" aria-hidden="true" />
+        <ul role="list" className="z-10 flex shrink-0 gap-1 md:gap-2">
           {shopItems.value.map((item, i) => (
-            <ItemCard
-              key={`shop-i-${i}`}
-              item={item?.item ?? null}
-              index={i}
-              onFreeze={!!item}
-              isFrozen={item?.frozen}
-            />
+            <li key={`shop-i-${i}`} className="relative flex shrink-0">
+              <ItemCard item={item?.item ?? null} index={i} />
+              {!!item && (
+                <FreezeButton isUnit={false} index={i} isFrozen={item.frozen} iconSize={10} />
+              )}
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
-    </div>
+    </section>
   );
 }

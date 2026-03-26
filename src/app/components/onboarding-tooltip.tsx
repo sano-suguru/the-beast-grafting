@@ -8,6 +8,7 @@ interface OnboardingTooltipProps {
 export function OnboardingTooltip({ text, positionClass }: OnboardingTooltipProps) {
   return (
     <div
+      role="tooltip"
       className={`absolute ${positionClass} animate-tooltip pointer-events-none z-50 w-full max-w-[200px]`}
     >
       <div className="relative rounded border border-red-800 bg-red-950 p-2.5 text-center text-red-100 shadow-[0_4px_15px_rgba(153,27,27,0.5)]">

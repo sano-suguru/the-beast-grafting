@@ -12,27 +12,24 @@ test.describe("Shop Interactions", () => {
   });
 
   test("buy unit places it on board", async ({ page }) => {
-    // Click a shop unit card
-    const shopCards = page.locator(
-      "[class*='max-w-\\[72px\\]'][class*='bg-zinc-900']:not([class*='dashed'])",
-    );
-    await shopCards.first().click();
+    const shop = page.getByRole("region", { name: "闇市場" });
+    const board = page.getByRole("region", { name: "解剖台" });
 
-    // Click empty board slot
-    const emptySlots = page.locator("[class*='dashed']");
-    await emptySlots.first().click();
+    // Click a shop unit card, then an empty board slot
+    await shop.getByRole("list").first().getByRole("button").first().click();
+    await board.getByRole("button", { name: "空きスロット" }).first().click();
 
-    // Verify purchase happened - board should have fewer empty dashed slots
-    const remainingEmpty = page.locator("[class*='dashed']");
+    // Verify purchase happened - board should have fewer empty slots
+    const remainingEmpty = board.getByRole("button", { name: "空きスロット" });
     const count = await remainingEmpty.count();
     expect(count).toBeGreaterThan(0);
   });
 
   test("roll button is visible", async ({ page }) => {
-    await expect(page.getByText(/墓暴き/)).toBeVisible();
+    await expect(page.getByRole("button", { name: /墓暴き/ })).toBeVisible();
   });
 
   test("battle button is visible", async ({ page }) => {
-    await expect(page.getByText("狂宴へ向かう")).toBeVisible();
+    await expect(page.getByRole("button", { name: "狂宴へ向かう" })).toBeVisible();
   });
 });

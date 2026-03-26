@@ -3,7 +3,7 @@ import { startActualBattle } from "../state/battle-actions";
 
 export function PreBattleScreen() {
   return (
-    <div className="animate-fade-in relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-6 text-center font-serif text-zinc-300">
+    <main className="animate-fade-in relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-6 text-center font-serif text-zinc-300">
       <div className="max-w-md space-y-6 text-xs leading-loose tracking-wide text-zinc-400 md:text-base">
         <p>解剖台の血を洗い流し、あなたは外の暗闇へ目を向ける。</p>
         <p>完成した不完全なキメラたちは、新鮮な肉を求めて夜の街へと這い出していった。</p>
@@ -22,6 +22,6 @@ export function PreBattleScreen() {
       >
         結果を見届ける
       </button>
-    </div>
+    </main>
   );
 }

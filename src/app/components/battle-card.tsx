@@ -129,12 +129,13 @@ export function BattleCard({
           : "";
 
   return (
-    <div
+    <article
       style={{
         transitionDuration: fastForward ? "150ms" : "300ms",
         animationDuration: fastForward ? "0.12s" : undefined,
       }}
       data-uid={unit.uid}
+      aria-label={unit.name}
       className={`relative flex aspect-[2/3] max-w-[72px] min-w-[50px] flex-1 flex-col rounded p-1 transition-all ease-out ${anim} ${transform} ${extraAnim}`}
     >
       {actionType === "damage" && (
@@ -173,6 +174,6 @@ export function BattleCard({
           frameIdx={frameIdx}
         />
       </div>
-    </div>
+    </article>
   );
 }

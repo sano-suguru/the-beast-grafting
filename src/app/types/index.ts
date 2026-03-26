@@ -91,6 +91,8 @@ export type Selection =
   | { type: "SHOP_ITEM"; index: number; item: ItemData }
   | { type: "BOARD_UNIT"; index: number; item: UnitInstance };
 
+export type HighlightKind = "graft" | "swap" | "move" | false;
+
 export type OnboardingStep = "buy" | "graft" | "roll" | "battle" | null;
 
 // --- Enemy ---

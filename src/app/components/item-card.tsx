@@ -1,14 +1,11 @@
 import { Droplet, Activity } from "lucide-preact";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick } from "../state/card-actions";
-import { FreezeButton } from "./freeze-button";
 import type { ItemData } from "../types";
 
 interface ItemCardProps {
   item: ItemData | null;
   index: number;
-  onFreeze?: boolean | undefined;
-  isFrozen?: boolean | undefined;
 }
 
 function getBorderClass(isSelected: boolean, cantAfford: boolean): string {
@@ -37,7 +34,7 @@ function getCostBadgeClass(cantAfford: boolean): string {
   return `absolute -bottom-1 -left-1 bg-zinc-800 text-[8px] px-1 rounded border border-zinc-700 pointer-events-none ${style}`;
 }
 
-export function ItemCard({ item, index, onFreeze, isFrozen }: ItemCardProps) {
+export function ItemCard({ item, index }: ItemCardProps) {
   if (!item) {
     return (
       <div className="aspect-[3/4] w-12 shrink-0 rounded border border-dashed border-zinc-800 bg-zinc-900/50 md:w-16" />
@@ -51,11 +48,12 @@ export function ItemCard({ item, index, onFreeze, isFrozen }: ItemCardProps) {
   const isPureBlood = item.id === "pure_blood";
 
   return (
-    <div
+    <button
+      type="button"
+      aria-label={item.name}
       onClick={() => handleCardClick("SHOP_ITEM", index, item)}
       className={getCardClass(borderClass, cantAfford)}
     >
-      {onFreeze && <FreezeButton isUnit={false} index={index} isFrozen={isFrozen} iconSize={10} />}
       <div className={getContentClass(cantAfford)}>
         <div className={getNameClass(isPureBlood)}>{item.name}</div>
         <div className="pointer-events-none flex flex-1 items-center justify-center">
@@ -67,6 +65,6 @@ export function ItemCard({ item, index, onFreeze, isFrozen }: ItemCardProps) {
         </div>
       </div>
       {cost !== 3 && <div className={getCostBadgeClass(cantAfford)}>{cost}</div>}
-    </div>
+    </button>
   );
 }

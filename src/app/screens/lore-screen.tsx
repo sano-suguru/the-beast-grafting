@@ -8,8 +8,9 @@ import type { UnitData, LoreEntry } from "../types";
 
 function UnseenCard({ id }: { id: string }) {
   return (
-    <div
+    <article
       key={id}
+      aria-label="未発見の素体"
       className="flex gap-3 border border-zinc-800/50 bg-zinc-900/30 p-3 opacity-40 grayscale"
     >
       <div className="flex aspect-[2/3] w-12 shrink-0 items-center justify-center rounded border border-zinc-800 bg-zinc-950 md:w-16">
@@ -23,14 +24,15 @@ function UnseenCard({ id }: { id: string }) {
           解剖台に並べることで記録される。
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
 function LoreUnitCard({ unit, entry }: { unit: UnitData; entry: LoreEntry }) {
   const isMastered = entry.mastered;
   return (
-    <div
+    <article
+      aria-label={unit.name}
       className={`relative flex gap-3 border p-3 transition-all ${isMastered ? "border-red-900/50 bg-red-950/10 shadow-[inset_0_0_20px_rgba(153,27,27,0.05)]" : "border-zinc-800 bg-zinc-900/50"}`}
     >
       {isMastered && (
@@ -71,7 +73,7 @@ function LoreUnitCard({ unit, entry }: { unit: UnitData; entry: LoreEntry }) {
           </div>
         )}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -87,32 +89,41 @@ export function LoreScreen() {
   };
 
   return (
-    <div className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300">
-      <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 p-3 md:p-4">
-        <h2 className="flex items-center gap-2 text-lg font-bold tracking-wider text-zinc-100 md:text-xl">
+    <main className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300">
+      <header className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 p-3 md:p-4">
+        <h1 className="flex items-center gap-2 text-lg font-bold tracking-wider text-zinc-100 md:text-xl">
           <BookOpen className="text-red-800" /> 大解剖録
-        </h2>
+        </h1>
         <button
           onClick={handleClose}
           className="cursor-pointer rounded border border-zinc-700 px-4 py-1.5 text-xs text-zinc-400 transition-all hover:bg-zinc-800 md:text-sm"
         >
           閉じる
         </button>
-      </div>
+      </header>
       <div className="flex-1 space-y-6 overflow-y-auto p-4">
         <p className="mb-6 text-center text-xs leading-relaxed text-zinc-500 md:text-sm">
           歴代の接合術師たちが書き連ねた狂気の図鑑。
           <br />
           究極の形(Lv3)で狂宴を生き延びた時、真の恐ろしさが記述される。
         </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {sortedUnits.map((unit) => {
             const entry = db[unit.id];
-            if (!entry?.seen) return <UnseenCard key={unit.id} id={unit.id} />;
-            return <LoreUnitCard key={unit.id} unit={unit} entry={entry} />;
+            if (!entry?.seen)
+              return (
+                <li key={unit.id}>
+                  <UnseenCard id={unit.id} />
+                </li>
+              );
+            return (
+              <li key={unit.id}>
+                <LoreUnitCard unit={unit} entry={entry} />
+              </li>
+            );
           })}
-        </div>
+        </ul>
       </div>
-    </div>
+    </main>
   );
 }

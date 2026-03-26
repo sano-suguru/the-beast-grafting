@@ -14,7 +14,7 @@ function getLogTextClass(type: string): string {
 }
 
 export function BattleLog({ frames, frameIdx }: BattleLogProps) {
-  const logContainerRef = useRef<HTMLDivElement>(null);
+  const logContainerRef = useRef<HTMLElement>(null);
   const autoScrollRef = useRef(true);
 
   const handleLogScroll = () => {
@@ -30,7 +30,9 @@ export function BattleLog({ frames, frameIdx }: BattleLogProps) {
   }, [frameIdx]);
 
   return (
-    <div
+    <section
+      role="log"
+      aria-label="戦闘ログ"
       ref={logContainerRef}
       onScroll={handleLogScroll}
       className="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto scroll-smooth bg-[#0a0a0a] p-3 pb-8 font-mono text-[10px] leading-relaxed md:p-4 md:text-[11px]"
@@ -43,6 +45,6 @@ export function BattleLog({ frames, frameIdx }: BattleLogProps) {
           </div>
         </div>
       ))}
-    </div>
+    </section>
   );
 }

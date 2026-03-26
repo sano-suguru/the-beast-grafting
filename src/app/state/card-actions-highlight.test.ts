@@ -69,10 +69,10 @@ describe("checkHighlight – basics", () => {
 });
 
 describe("checkHighlight – SHOP_ITEM selected", () => {
-  it("returns true with enough blood and unit present", () => {
+  it("returns 'graft' with enough blood and unit present", () => {
     blood.value = 5;
     selection.value = { type: "SHOP_ITEM", index: 0, item: makeItem({ cost: 3 }) };
-    expect(checkHighlight("BOARD_SLOT", 0, makeUnit())).toBe(true);
+    expect(checkHighlight("BOARD_SLOT", 0, makeUnit())).toBe("graft");
   });
 
   it("returns false with insufficient blood", () => {
@@ -89,16 +89,16 @@ describe("checkHighlight – SHOP_ITEM selected", () => {
 });
 
 describe("checkHighlight – SHOP_UNIT selected", () => {
-  it("returns true for empty slot with enough blood", () => {
+  it("returns 'move' for empty slot with enough blood", () => {
     blood.value = 10;
     selection.value = { type: "SHOP_UNIT", index: 0, item: makeUnit() };
-    expect(checkHighlight("BOARD_SLOT", 0, null)).toBe(true);
+    expect(checkHighlight("BOARD_SLOT", 0, null)).toBe("move");
   });
 
-  it("returns true for same ID unit with level < 3", () => {
+  it("returns 'graft' for same ID unit with level < 3", () => {
     blood.value = 10;
     selection.value = { type: "SHOP_UNIT", index: 0, item: makeUnit({ id: "hound" }) };
-    expect(checkHighlight("BOARD_SLOT", 0, makeUnit({ id: "hound", level: 2 }))).toBe(true);
+    expect(checkHighlight("BOARD_SLOT", 0, makeUnit({ id: "hound", level: 2 }))).toBe("graft");
   });
 
   it("returns false for different ID unit", () => {
@@ -121,9 +121,9 @@ describe("checkHighlight – SHOP_UNIT selected", () => {
 });
 
 describe("checkHighlight – BOARD_UNIT selected", () => {
-  it("returns true for different index empty slot", () => {
+  it("returns 'move' for different index empty slot", () => {
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
-    expect(checkHighlight("BOARD_SLOT", 2, null)).toBe(true);
+    expect(checkHighlight("BOARD_SLOT", 2, null)).toBe("move");
   });
 
   it("returns false for same index", () => {
@@ -131,13 +131,18 @@ describe("checkHighlight – BOARD_UNIT selected", () => {
     expect(checkHighlight("BOARD_SLOT", 0, null)).toBe(false);
   });
 
-  it("returns true for same ID unit at different index", () => {
+  it("returns 'graft' for same ID unit at different index", () => {
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit({ id: "hound" }) };
-    expect(checkHighlight("BOARD_SLOT", 2, makeUnit({ id: "hound", level: 1 }))).toBe(true);
+    expect(checkHighlight("BOARD_SLOT", 2, makeUnit({ id: "hound", level: 1 }))).toBe("graft");
   });
 
-  it("returns false for same ID unit at level 3", () => {
+  it("returns 'swap' for same ID unit at level 3", () => {
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit({ id: "hound" }) };
-    expect(checkHighlight("BOARD_SLOT", 2, makeUnit({ id: "hound", level: 3 }))).toBe(false);
+    expect(checkHighlight("BOARD_SLOT", 2, makeUnit({ id: "hound", level: 3 }))).toBe("swap");
+  });
+
+  it("returns 'swap' for different ID unit at different index", () => {
+    selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit({ id: "hound" }) };
+    expect(checkHighlight("BOARD_SLOT", 2, makeUnit({ id: "bat" }))).toBe("swap");
   });
 });

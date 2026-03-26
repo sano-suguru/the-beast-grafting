@@ -2,26 +2,25 @@ import { Swords, Shield, Dna } from "lucide-preact";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick } from "../state/card-actions";
 import { UNIT_COST } from "../engine/constants";
-import { FreezeButton } from "./freeze-button";
 import { StatBadge } from "./stat-badge";
 import { EquipIcon } from "./equip-icon";
-import type { UnitInstance, Selection } from "../types";
+import type { UnitInstance, Selection, HighlightKind } from "../types";
 
 interface UnitCardProps {
   unit: UnitInstance | null;
   type: Selection["type"] | "BOARD_SLOT";
   index: number;
-  onFreeze?: boolean | undefined;
-  isFrozen?: boolean | undefined;
-  isHighlight?: boolean | undefined;
+  isHighlight?: HighlightKind | undefined;
 }
 
 function getBorderClass(
   isSelected: boolean,
-  isHighlight: boolean | undefined,
+  isHighlight: HighlightKind | undefined,
   cantAfford: boolean,
 ): string {
   if (isSelected) return "border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)] scale-105 z-10";
+  if (isHighlight === "swap")
+    return "border-dashed border-emerald-800 shadow-[0_0_8px_rgba(16,185,129,0.12)]";
   if (isHighlight) return "border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]";
   if (cantAfford) return "border-red-900/30";
   return "border-zinc-700";
@@ -60,18 +59,20 @@ function EmptySlot({
 }: {
   type: Selection["type"] | "BOARD_SLOT";
   index: number;
-  isHighlight?: boolean | undefined;
+  isHighlight?: HighlightKind | undefined;
 }) {
   const isSlot = type === "BOARD_SLOT";
   return (
-    <div
+    <button
+      type="button"
+      aria-label="空きスロット"
       onClick={() => handleCardClick(isSlot ? "BOARD_SLOT" : type, index, null)}
       className={`flex aspect-[2/3] max-w-[72px] min-w-0 flex-1 cursor-pointer items-center justify-center rounded border border-dashed bg-zinc-900/50 transition-colors ${isHighlight ? "border-emerald-700/50 bg-emerald-950/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)] hover:border-emerald-500" : "border-zinc-800"}`}
-    />
+    ></button>
   );
 }
 
-export function UnitCard({ unit, type, index, onFreeze, isFrozen, isHighlight }: UnitCardProps) {
+export function UnitCard({ unit, type, index, isHighlight }: UnitCardProps) {
   if (!unit) return <EmptySlot type={type} index={index} isHighlight={isHighlight} />;
 
   const sel = selection.value;
@@ -82,11 +83,12 @@ export function UnitCard({ unit, type, index, onFreeze, isFrozen, isHighlight }:
   const statClass = getStatClass(isSelected);
 
   return (
-    <div
+    <button
+      type="button"
+      aria-label={unit.name}
       onClick={() => handleCardClick(isSlot ? "BOARD_SLOT" : type, index, unit)}
       className={getCardClass(border, cantAfford)}
     >
-      {onFreeze && <FreezeButton isUnit={true} index={index} isFrozen={isFrozen} />}
       <div className={getContentClass(cantAfford)}>
         <div className={getNameClass(unit.isChurch)}>{unit.name}</div>
         <div className="pointer-events-none flex flex-1 items-center justify-center">
@@ -99,6 +101,6 @@ export function UnitCard({ unit, type, index, onFreeze, isFrozen, isHighlight }:
         </div>
       </div>
       {unit.level > 1 && <div className={getLevelBadgeClass(cantAfford)}>Lv{unit.level}</div>}
-    </div>
+    </button>
   );
 }
