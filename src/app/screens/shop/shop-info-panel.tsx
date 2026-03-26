@@ -10,9 +10,7 @@ interface ShopInfoPanelProps {
 
 function SelectedItemInfo({ sel }: { sel: Selection }) {
   const equipInfo =
-    sel.type === "BOARD_UNIT" && sel.item.equip
-      ? getEquipInfo(sel.item.equip).unwrapOr(null)
-      : null;
+    sel.type === "BOARD_UNIT" && sel.item.equip ? getEquipInfo(sel.item.equip) : null;
 
   return (
     <div className="animate-fade-in relative z-10">

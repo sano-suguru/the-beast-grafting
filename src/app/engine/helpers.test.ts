@@ -1,11 +1,11 @@
 import { createUnit, getShopPool, getItemPool, getEquipInfo, generateEnemyTeam } from "./helpers";
+import { EQUIPS } from "../data/equips";
+import type { EquipType } from "../types";
 import { createSeededRng } from "./rng";
 
 describe("createUnit", () => {
   it("creates a unit from UNITS registry", () => {
-    const result = createUnit("rat");
-    expect(result.isOk()).toBe(true);
-    const unit = result._unsafeUnwrap();
+    const unit = createUnit("rat");
     expect(unit.id).toBe("rat");
     expect(unit.name).toBe("疫病ネズミ");
     expect(unit.atk).toBe(2);
@@ -17,34 +17,20 @@ describe("createUnit", () => {
   });
 
   it("creates a church unit from CHURCH_UNITS registry", () => {
-    const result = createUnit("squire", true);
-    expect(result.isOk()).toBe(true);
-    const unit = result._unsafeUnwrap();
+    const unit = createUnit("squire");
     expect(unit.id).toBe("squire");
     expect(unit.name).toBe("見習い従騎士");
     expect(unit.isChurch).toBe(true);
   });
 
-  it("auto-detects church units even without isChurch flag", () => {
-    const result = createUnit("squire");
-    expect(result.isOk()).toBe(true);
-    expect(result._unsafeUnwrap().id).toBe("squire");
-  });
-
-  it("returns err for unknown unit id", () => {
-    const result = createUnit("nonexistent");
-    expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().type).toBe("NOT_FOUND");
-  });
-
   it("sets atk/hp from baseAtk/baseHp", () => {
-    const unit = createUnit("beast")._unsafeUnwrap();
+    const unit = createUnit("beast");
     expect(unit.atk).toBe(unit.baseAtk);
     expect(unit.hp).toBe(unit.baseHp);
   });
 
   it("generates a uid string", () => {
-    const unit = createUnit("rat")._unsafeUnwrap();
+    const unit = createUnit("rat");
     expect(typeof unit.uid).toBe("string");
     expect(unit.uid.length).toBeGreaterThan(0);
   });
@@ -120,31 +106,16 @@ describe("getItemPool", () => {
 
 describe("getEquipInfo", () => {
   it("returns info for iron", () => {
-    const result = getEquipInfo("iron");
-    expect(result.isOk()).toBe(true);
-    expect(result._unsafeUnwrap().name).toBe("縫合された鉄板");
+    expect(getEquipInfo("iron").name).toBe("縫合された鉄板");
   });
 
-  it("returns ok for all valid equip ids", () => {
-    const equipIds = [
-      "iron",
-      "berserk",
-      "corpse_wax",
-      "infection",
-      "maggot_nest",
-      "numbness",
-      "acid",
-      "death_curse",
-    ];
+  it("returns info for all valid equip ids", () => {
+    const equipIds = Object.keys(EQUIPS) as EquipType[];
     for (const id of equipIds) {
-      expect(getEquipInfo(id).isOk()).toBe(true);
+      const info = getEquipInfo(id);
+      expect(info.name).toBeTruthy();
+      expect(info.desc).toBeTruthy();
     }
-  });
-
-  it("returns err for unknown equip id", () => {
-    const result = getEquipInfo("nonexistent");
-    expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().type).toBe("NOT_FOUND");
   });
 });
 

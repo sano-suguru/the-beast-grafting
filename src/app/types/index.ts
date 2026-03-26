@@ -8,10 +8,53 @@ export type GamePhase =
   | "RESULT"
   | "LORE";
 
-export type UnitId = string;
+export type RegularUnitId =
+  | "rat"
+  | "beggar"
+  | "hound"
+  | "bat"
+  | "zealot"
+  | "martyr"
+  | "beast"
+  | "cholera"
+  | "parasite"
+  | "maiden"
+  | "revenant"
+  | "evangelist"
+  | "altar"
+  | "machine"
+  | "shrieking_throat"
+  | "hundred_arms"
+  | "chalice"
+  | "brains"
+  | "eye"
+  | "beelzebub"
+  | "rot_ring";
+
+export type ChurchUnitId =
+  | "squire"
+  | "inquisitor"
+  | "church_hound"
+  | "priest"
+  | "templar"
+  | "church_beast";
+
+export type TokenId = "token";
+export type UnitId = RegularUnitId | ChurchUnitId | TokenId;
+
+export type ItemId =
+  | "preservative"
+  | "iron_plate"
+  | "bile"
+  | "maggot"
+  | "numbness"
+  | "acid_blood"
+  | "corpse_wax"
+  | "death_curse"
+  | "pure_blood";
 
 export interface UnitData {
-  id: UnitId;
+  id: RegularUnitId | ChurchUnitId;
   name: string;
   baseAtk: number;
   baseHp: number;
@@ -52,7 +95,7 @@ export type EquipType =
 export type EquipId = EquipType | null;
 
 export interface ItemData {
-  id: string;
+  id: ItemId;
   name: string;
   cost: number;
   atk: number;

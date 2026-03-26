@@ -1,11 +1,12 @@
 import { UNITS } from "../data/units";
 import { CHURCH_UNITS } from "../data/church-units";
 import { ITEMS } from "../data/items";
+import { EQUIPS } from "../data/equips";
+import type { EquipType } from "../types";
 import { ORIGINS } from "../data/origins";
 import { UNIT_DEATH_HANDLERS } from "./battle-deaths-handlers";
 import { getUnitsByTier, getShopPool, getItemPool } from "./helpers";
-
-// --- UNITS ---
+import { INERT_UNIT_ID } from "./test-helpers";
 
 describe("UNITS data integrity", () => {
   const entries = Object.entries(UNITS);
@@ -54,8 +55,6 @@ describe("UNITS data integrity", () => {
   });
 });
 
-// --- CHURCH_UNITS ---
-
 describe("CHURCH_UNITS data integrity", () => {
   const entries = Object.entries(CHURCH_UNITS);
 
@@ -84,8 +83,6 @@ describe("CHURCH_UNITS data integrity", () => {
   });
 });
 
-// --- ITEMS ---
-
 describe("ITEMS data integrity", () => {
   const entries = Object.entries(ITEMS);
 
@@ -112,17 +109,7 @@ describe("ITEMS data integrity", () => {
     }
   });
 
-  const VALID_EQUIPS = new Set([
-    "iron",
-    "berserk",
-    "corpse_wax",
-    "infection",
-    "maggot_nest",
-    "numbness",
-    "acid",
-    "death_curse",
-    null,
-  ]);
+  const VALID_EQUIPS = new Set<EquipType | null>([...(Object.keys(EQUIPS) as EquipType[]), null]);
 
   it("every item's equip is a valid EquipType or null", () => {
     for (const [key, data] of entries) {
@@ -134,8 +121,6 @@ describe("ITEMS data integrity", () => {
     expect(ITEMS["pure_blood"]!.cost).toBe(0);
   });
 });
-
-// --- ORIGINS ---
 
 describe("ORIGINS data integrity", () => {
   const entries = Object.entries(ORIGINS);
@@ -159,8 +144,6 @@ describe("ORIGINS data integrity", () => {
     }
   });
 });
-
-// --- Cross-references ---
 
 describe("Cross-reference integrity", () => {
   it("every unit ID in UNIT_DEATH_HANDLERS exists in UNITS or CHURCH_UNITS", () => {
@@ -194,5 +177,12 @@ describe("Cross-reference integrity", () => {
     for (const id of pool) {
       expect(id in ITEMS, `getItemPool returned "${id}" not in ITEMS`).toBe(true);
     }
+  });
+
+  it("token ID has no death handler (tokens are structurally inert)", () => {
+    expect(
+      Object.hasOwn(UNIT_DEATH_HANDLERS, INERT_UNIT_ID),
+      `"${INERT_UNIT_ID}" must not have a death handler`,
+    ).toBe(false);
   });
 });

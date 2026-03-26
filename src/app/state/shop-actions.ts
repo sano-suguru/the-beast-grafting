@@ -32,7 +32,6 @@ function markShopUnitsSeen(slots: (ShopSlot | null)[]): void {
 }
 import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
-import { invariant } from "../../shared/invariant";
 import { captureSnapshot } from "./undo-actions";
 
 function getShopSize(r: number): number {
@@ -48,9 +47,7 @@ function generateShopUnits(r: number, prev: (ShopSlot | null)[]): (ShopSlot | nu
     if (prev[i]?.frozen) return prev[i];
     const id = pool[Math.floor(Math.random() * pool.length)];
     if (!id) return null;
-    const result = createUnit(id);
-    invariant(result.isOk(), `shop unit creation failed: ${id}`);
-    return { unit: result.value, frozen: false };
+    return { unit: createUnit(id), frozen: false };
   });
 }
 
@@ -72,10 +69,8 @@ function applyInquisitorUpgrade(
   if (higherTier.length === 0) return units;
   const newId = higherTier[Math.floor(Math.random() * higherTier.length)];
   if (!newId) return units;
-  const result = createUnit(newId);
-  invariant(result.isOk(), `inquisitor upgrade unit creation failed: ${newId}`);
   const next = [...units];
-  next[targetIdx] = { unit: result.value, frozen: slot.frozen };
+  next[targetIdx] = { unit: createUnit(newId), frozen: slot.frozen };
   return next;
 }
 
@@ -100,16 +95,10 @@ export function setupNight(
 ) {
   let nextShopUnits: (ShopSlot | null)[];
   if (isInitialSetup) {
-    const rat1 = createUnit("rat");
-    invariant(rat1.isOk(), "initial shop unit 'rat' must exist");
-    const rat2 = createUnit("rat");
-    invariant(rat2.isOk(), "initial shop unit 'rat' must exist");
-    const bat = createUnit("bat");
-    invariant(bat.isOk(), "initial shop unit 'bat' must exist");
     nextShopUnits = [
-      { unit: rat1.value, frozen: false },
-      { unit: rat2.value, frozen: false },
-      { unit: bat.value, frozen: false },
+      { unit: createUnit("rat"), frozen: false },
+      { unit: createUnit("rat"), frozen: false },
+      { unit: createUnit("bat"), frozen: false },
     ];
   } else {
     nextShopUnits = generateShopUnits(currentRound, shopUnits.value);

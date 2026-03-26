@@ -8,8 +8,9 @@ import {
   FlaskConical,
   RotateCcw,
 } from "lucide-preact";
+import type { EquipType } from "../types";
 
-const EQUIP_ICONS: Record<string, { Icon: typeof ShieldAlert; className: string }> = {
+const EQUIP_ICONS: Record<EquipType, { Icon: typeof ShieldAlert; className: string }> = {
   iron: { Icon: ShieldAlert, className: "text-zinc-500" },
   corpse_wax: { Icon: Hexagon, className: "text-blue-300/80" },
   berserk: { Icon: Flame, className: "text-red-700" },
@@ -20,10 +21,8 @@ const EQUIP_ICONS: Record<string, { Icon: typeof ShieldAlert; className: string 
   death_curse: { Icon: RotateCcw, className: "text-purple-500" },
 };
 
-export function EquipIcon({ equipId }: { equipId: string | null }) {
+export function EquipIcon({ equipId }: { equipId: EquipType | null }) {
   if (!equipId) return null;
-  const entry = EQUIP_ICONS[equipId];
-  if (!entry) return null;
-  const { Icon, className } = entry;
+  const { Icon, className } = EQUIP_ICONS[equipId];
   return <Icon size={14} className={`${className} absolute top-1 left-1`} aria-hidden="true" />;
 }

@@ -1,19 +1,24 @@
 import { UNITS } from "../data/units";
 import { CHURCH_UNITS } from "../data/church-units";
-import type { UnitInstance, EnemyTeam, EquipInfo } from "../types";
+import { EQUIPS } from "../data/equips";
+import type {
+  UnitInstance,
+  EnemyTeam,
+  EquipType,
+  RegularUnitId,
+  ChurchUnitId,
+  ItemId,
+} from "../types";
 import type { Rng } from "./rng";
 import { createDefaultRng } from "./rng";
-import { ok, err } from "../../shared/errors";
-import type { Result, GameError } from "../../shared/errors";
 import { invariant } from "../../shared/invariant";
 
 export const generateUid = (): string => Math.random().toString(36).substring(2, 11);
 
-export const createUnit = (id: string, isChurch = false): Result<UnitInstance, GameError> => {
-  const db = CHURCH_UNITS[id] ? CHURCH_UNITS : UNITS;
-  const data = db[id];
-  if (!data) return err({ type: "NOT_FOUND", entity: `unit:${id}` });
-  return ok({
+export const createUnit = (id: RegularUnitId | ChurchUnitId): UnitInstance => {
+  const isChurch = Object.hasOwn(CHURCH_UNITS, id);
+  const data = isChurch ? CHURCH_UNITS[id as ChurchUnitId] : UNITS[id as RegularUnitId];
+  return {
     ...data,
     atk: data.baseAtk,
     hp: data.baseHp,
@@ -22,11 +27,11 @@ export const createUnit = (id: string, isChurch = false): Result<UnitInstance, G
     equip: null,
     uid: generateUid(),
     isChurch,
-  });
+  };
 };
 
-export const getShopPool = (round: number): string[] => {
-  const pool = ["rat", "beggar", "hound", "bat", "zealot"];
+export const getShopPool = (round: number): RegularUnitId[] => {
+  const pool: RegularUnitId[] = ["rat", "beggar", "hound", "bat", "zealot"];
   if (round >= 3) pool.push("martyr", "beast", "cholera");
   if (round >= 5) pool.push("parasite", "maiden", "revenant");
   if (round >= 7) pool.push("evangelist", "altar", "machine");
@@ -35,12 +40,18 @@ export const getShopPool = (round: number): string[] => {
   return pool;
 };
 
-export const getUnitsByTier = (tier: number): string[] =>
-  Object.entries(UNITS)
-    .filter(([, data]) => data.tier === tier)
-    .map(([id]) => id);
+const UNITS_BY_TIER = new Map<number, RegularUnitId[]>();
+for (const id of Object.keys(UNITS) as RegularUnitId[]) {
+  const tier = UNITS[id].tier;
+  const list = UNITS_BY_TIER.get(tier);
+  if (list) list.push(id);
+  else UNITS_BY_TIER.set(tier, [id]);
+}
 
-export const getItemPool = (): string[] => [
+export const getUnitsByTier = (tier: number): readonly RegularUnitId[] =>
+  UNITS_BY_TIER.get(tier) ?? [];
+
+export const getItemPool = (): ItemId[] => [
   "preservative",
   "iron_plate",
   "bile",
@@ -51,7 +62,7 @@ export const getItemPool = (): string[] => [
   "death_curse",
 ];
 
-const pickRandom = (arr: string[], rng: Rng): string => {
+const pickRandom = <T>(arr: T[], rng: Rng): T => {
   invariant(arr.length > 0, "pickRandom: empty array");
   return arr[Math.floor(rng.next() * arr.length)]!;
 };
@@ -67,68 +78,53 @@ const generateTeamName = (isCult: boolean, type: string, rng: Rng): string => {
   return `[${type}] ${adj}${noun}`;
 };
 
-function mustCreateUnit(id: string, isChurch = false): UnitInstance {
-  const result = createUnit(id, isChurch);
-  invariant(result.isOk(), `mustCreateUnit failed: ${id}`);
-  return result.value;
-}
-
 const generateCultTeam = (round: number): UnitInstance[] => {
-  if (round === 1) return [mustCreateUnit("squire", true), mustCreateUnit("church_hound", true)];
+  if (round === 1) return [createUnit("squire"), createUnit("church_hound")];
   if (round <= 3)
-    return [
-      mustCreateUnit("priest", true),
-      mustCreateUnit("inquisitor", true),
-      mustCreateUnit("church_hound", true),
-    ];
+    return [createUnit("priest"), createUnit("inquisitor"), createUnit("church_hound")];
   if (round <= 6)
     return [
-      mustCreateUnit("templar", true),
-      mustCreateUnit("priest", true),
-      mustCreateUnit("inquisitor", true),
-      mustCreateUnit("church_beast", true),
-      mustCreateUnit("church_hound", true),
+      createUnit("templar"),
+      createUnit("priest"),
+      createUnit("inquisitor"),
+      createUnit("church_beast"),
+      createUnit("church_hound"),
     ];
   return [
-    mustCreateUnit("templar", true),
-    mustCreateUnit("templar", true),
-    mustCreateUnit("priest", true),
-    mustCreateUnit("church_beast", true),
-    mustCreateUnit("church_beast", true),
+    createUnit("templar"),
+    createUnit("templar"),
+    createUnit("priest"),
+    createUnit("church_beast"),
+    createUnit("church_beast"),
   ];
 };
 
 const generateGrafterTeam = (round: number): UnitInstance[] => {
-  if (round <= 2) return [mustCreateUnit("bat"), mustCreateUnit("rat"), mustCreateUnit("hound")];
+  if (round <= 2) return [createUnit("bat"), createUnit("rat"), createUnit("hound")];
   if (round <= 4)
-    return [
-      mustCreateUnit("martyr"),
-      mustCreateUnit("beast"),
-      mustCreateUnit("hound"),
-      mustCreateUnit("bat"),
-    ];
+    return [createUnit("martyr"), createUnit("beast"), createUnit("hound"), createUnit("bat")];
   if (round <= 7)
     return [
-      mustCreateUnit("parasite"),
-      mustCreateUnit("maiden"),
-      mustCreateUnit("beast"),
-      mustCreateUnit("hound"),
-      mustCreateUnit("martyr"),
+      createUnit("parasite"),
+      createUnit("maiden"),
+      createUnit("beast"),
+      createUnit("hound"),
+      createUnit("martyr"),
     ];
   if (round <= 10)
     return [
-      mustCreateUnit("evangelist"),
-      mustCreateUnit("altar"),
-      mustCreateUnit("parasite"),
-      mustCreateUnit("maiden"),
-      mustCreateUnit("hound"),
+      createUnit("evangelist"),
+      createUnit("altar"),
+      createUnit("parasite"),
+      createUnit("maiden"),
+      createUnit("hound"),
     ];
   return [
-    mustCreateUnit("shrieking_throat"),
-    mustCreateUnit("hundred_arms"),
-    mustCreateUnit("eye"),
-    mustCreateUnit("parasite"),
-    mustCreateUnit("maiden"),
+    createUnit("shrieking_throat"),
+    createUnit("hundred_arms"),
+    createUnit("eye"),
+    createUnit("parasite"),
+    createUnit("maiden"),
   ];
 };
 
@@ -152,18 +148,4 @@ export const generateEnemyTeam = (round: number, rng: Rng = createDefaultRng()):
   return { teamName, teamType: type, units };
 };
 
-const EQUIP_INFO: Record<string, EquipInfo> = {
-  iron: { name: "縫合された鉄板", desc: "【鉄の皮膚】被ダメージ-2(最低2)" },
-  berserk: { name: "狂戦士の胆汁", desc: "【狂乱】攻撃時ダメージ+3" },
-  corpse_wax: { name: "屍蝋の盾", desc: "【屍蝋】一度だけ20ダメージを防ぐ" },
-  infection: { name: "感染", desc: "【感染】被ダメージ+3" },
-  maggot_nest: { name: "腐肉喰いの蛆虫", desc: "【蛆虫の苗床】死亡時、1/1巨大蛆虫を召喚" },
-  numbness: { name: "痛覚麻痺", desc: "【痛覚麻痺】被ダメージ-7(2回, 最低2)" },
-  acid: { name: "酸の血液", desc: "【酸血】攻撃時、敵の後ろに5ダメージ" },
-  death_curse: { name: "道連れの呪符", desc: "【道連れ】死亡時、1/1で蘇生" },
-};
-
-export const getEquipInfo = (equipId: string): Result<EquipInfo, GameError> => {
-  const info = EQUIP_INFO[equipId];
-  return info ? ok(info) : err({ type: "NOT_FOUND", entity: `equip:${equipId}` });
-};
+export const getEquipInfo = (equipId: EquipType) => EQUIPS[equipId];

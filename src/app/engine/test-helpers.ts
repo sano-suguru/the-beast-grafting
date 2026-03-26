@@ -2,8 +2,8 @@ import type { BattleUnit, BattleContext } from "./battle-context";
 import type { UnitInstance, EnemyTeam, BattleResult } from "../types";
 import type { Rng } from "./rng";
 
-/** UNIT_DEATH_HANDLERS に登録されない不活性ユニットID。death handler副作用を避けたいテスト用。 */
-export const INERT_UNIT_ID = "test_inert" as const;
+/** トークンはハンドラ登録が構造的に不可能なため、副作用なしのテスト用IDとして使える */
+export const INERT_UNIT_ID = "token" as const;
 
 export function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
   return {

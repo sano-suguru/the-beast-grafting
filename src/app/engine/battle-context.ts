@@ -5,6 +5,8 @@ import type {
   BattleAction,
   LogType,
   IconType,
+  RegularUnitId,
+  ChurchUnitId,
 } from "../types";
 import type { Rng } from "./rng";
 import { generateUid } from "./helpers";
@@ -86,7 +88,13 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
 }
 
 export function createSummonedUnit(
-  unitData: { id: string; name: string; tier: number; skillText: string; lore: string },
+  unitData: {
+    id: RegularUnitId | ChurchUnitId;
+    name: string;
+    tier: number;
+    skillText: string;
+    lore: string;
+  },
   atk: number,
   hp: number,
   isChurch = false,

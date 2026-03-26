@@ -134,7 +134,7 @@ describe("runStartSkills – cholera infection", () => {
     applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(target.equip).toBe("infection");
     expect(ctx.frames).toHaveLength(2);
-    expect(ctx.frames[0]!.log.text).toContain("侵食");
+    expect(ctx.frames[0]!.log.text).toContain("蝕まれた");
   });
 
   it("cholera does not log overwrite when target has no equipment", () => {

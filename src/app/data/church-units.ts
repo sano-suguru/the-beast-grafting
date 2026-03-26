@@ -1,6 +1,6 @@
-import type { UnitData } from "../types";
+import type { ChurchUnitId, UnitData } from "../types";
 
-export const CHURCH_UNITS: Record<string, UnitData> = {
+export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
   squire: {
     id: "squire",
     name: "見習い従騎士",

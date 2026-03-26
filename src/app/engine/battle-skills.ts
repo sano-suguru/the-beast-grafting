@@ -1,4 +1,4 @@
-import type { BattleAction } from "../types";
+import type { BattleAction, UnitId } from "../types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
@@ -97,7 +97,7 @@ function applyCholeraSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   target.equip = "infection";
   const prefix = enemyPrefix(isPlayer);
   if (prevEquip && prevEquip !== "infection") {
-    pushFrame(ctx, "skill", `[${target.name}]の装備が感染に侵食された！`, "skill", {
+    pushFrame(ctx, "skill", `${prefix}[${target.name}]の装備が疫病に蝕まれた！`, "skill", {
       [target.uid]: { type: "damage", value: "装備消去" },
     });
   }
@@ -139,13 +139,21 @@ function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
   }
 }
 
-const START_SKILL_HANDLERS: Record<string, StartSkillHandler> = {
+const START_SKILL_HANDLERS = {
   bat: applyBatSkill,
   inquisitor: applyBatSkill,
   shrieking_throat: applyBansheeSkill,
   evangelist: applyEvangelistSkill,
   revenant: applyRevenantSkill,
-};
+} satisfies Partial<Record<UnitId, StartSkillHandler>>;
+
+type StartSkillUnitId = keyof typeof START_SKILL_HANDLERS;
+
+function getStartSkillHandler(id: UnitId): StartSkillHandler | undefined {
+  return Object.hasOwn(START_SKILL_HANDLERS, id)
+    ? START_SKILL_HANDLERS[id as StartSkillUnitId]
+    : undefined;
+}
 
 export function runStartSkills(
   boardArr: BattleUnit[],
@@ -154,7 +162,7 @@ export function runStartSkills(
   ctx: BattleContext,
 ) {
   boardArr.forEach((u) => {
-    const handler = START_SKILL_HANDLERS[u.id];
+    const handler = getStartSkillHandler(u.id);
     if (!handler) return;
     handler({ u, targetArr, isPlayer, ctx });
   });
@@ -287,10 +295,10 @@ function applyDefensiveEquip(
     pushFrame(
       ctx,
       "defend",
-      `${prefix}[${unit.name}]の【屍蝋の盾】が破壊された！(ダメ無効)`,
+      `${prefix}[${unit.name}]の【屍蝋の盾】が破壊された！(${CORPSE_WAX_REDUCTION}軽減)`,
       "defend",
       {
-        [unit.uid]: { type: "defend", value: "無効" },
+        [unit.uid]: { type: "defend", value: `${CORPSE_WAX_REDUCTION}軽減` },
       },
     );
   }

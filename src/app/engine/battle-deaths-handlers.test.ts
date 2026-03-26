@@ -1,15 +1,11 @@
-import {
-  UNIT_DEATH_HANDLERS,
-  handleEquipDeath,
-  handleBeelzebubSpawns,
-} from "./battle-deaths-handlers";
+import { getDeathHandler, handleEquipDeath, handleBeelzebubSpawns } from "./battle-deaths-handlers";
+import type { DeathHandlerUnitId } from "./battle-deaths-handlers";
 import { makeBattleUnit, makeContext } from "./test-helpers";
 import type { BattleUnit } from "./battle-context";
-
-// --- Helpers ---
+import { invariant } from "../../shared/invariant";
 
 function callHandler(
-  id: string,
+  id: DeathHandlerUnitId,
   dead: BattleUnit,
   board: BattleUnit[],
   idx: number,
@@ -18,12 +14,10 @@ function callHandler(
   successor: BattleUnit | null = idx < board.length ? (board[idx] ?? null) : null,
   successor2: BattleUnit | null = idx + 1 < board.length ? (board[idx + 1] ?? null) : null,
 ) {
-  const handler = UNIT_DEATH_HANDLERS[id];
-  expect(handler).toBeDefined();
-  handler!({ dead, board, idx, isPlayer, ctx, successor, successor2 });
+  const handler = getDeathHandler(id);
+  invariant(handler, `no death handler for "${id}"`);
+  handler({ dead, board, idx, isPlayer, ctx, successor, successor2 });
 }
-
-// --- handleRatDeath ---
 
 describe("handleRatDeath", () => {
   it("does nothing on empty board", () => {
@@ -65,8 +59,6 @@ describe("handleRatDeath", () => {
   });
 });
 
-// --- handleHoundDeath ---
-
 describe("handleHoundDeath", () => {
   it("spawns 1/1 token at idx 0", () => {
     const ctx = makeContext();
@@ -106,8 +98,6 @@ describe("handleHoundDeath", () => {
   });
 });
 
-// --- handleBeastDeath ---
-
 describe("handleBeastDeath", () => {
   it("spawns a tier-3 unit as 2/2", () => {
     const ctx = makeContext([], [], null, { next: () => 0 });
@@ -137,8 +127,6 @@ describe("handleBeastDeath", () => {
   });
 });
 
-// --- handleChurchBeastDeath ---
-
 describe("handleChurchBeastDeath", () => {
   it("spawns 2/2 token with isChurch=true", () => {
     const ctx = makeContext();
@@ -151,8 +139,6 @@ describe("handleChurchBeastDeath", () => {
     expect(ctx.pBoard[0]!.isChurch).toBe(true);
   });
 });
-
-// --- handleSquireDeath ---
 
 describe("handleSquireDeath", () => {
   it("buffs successor at idx", () => {
@@ -182,8 +168,6 @@ describe("handleSquireDeath", () => {
     expect(ctx.frames).toHaveLength(0);
   });
 });
-
-// --- handlePriestDeath ---
 
 describe("handlePriestDeath", () => {
   it("heals all remaining allies +1 HP", () => {
@@ -217,8 +201,6 @@ describe("handlePriestDeath", () => {
   });
 });
 
-// --- handleMaidenDeath ---
-
 describe("handleMaidenDeath", () => {
   it("grants corpse_wax to immediate successor", () => {
     const next = makeBattleUnit({ equip: null, uid: "next" });
@@ -243,8 +225,6 @@ describe("handleMaidenDeath", () => {
     expect(next.equip).toBe("corpse_wax");
   });
 });
-
-// --- handleMartyrDeath ---
 
 describe("handleMartyrDeath", () => {
   it("buffs next 2 units +1/+1 each", () => {
@@ -290,8 +270,6 @@ describe("handleMartyrDeath", () => {
     expect(ctx.frames).toHaveLength(2);
   });
 });
-
-// --- handleEquipDeath ---
 
 describe("handleEquipDeath", () => {
   it("maggot_nest spawns 1/1 token at death position", () => {
@@ -352,8 +330,6 @@ describe("handleEquipDeath", () => {
   });
 });
 
-// --- handleBeelzebubSpawns ---
-
 describe("handleBeelzebubSpawns", () => {
   it("spawns 4/4 fly when beelzebub is alive", () => {
     const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
@@ -402,8 +378,6 @@ describe("handleBeelzebubSpawns", () => {
     expect(ctx.pFlyCount).toBe(0);
   });
 });
-
-// --- Enemy-side prefix ---
 
 describe("enemy-side prefix", () => {
   it("rat death frame includes 敵の prefix for enemy side", () => {

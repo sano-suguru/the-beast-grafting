@@ -1,6 +1,6 @@
-import type { UnitData } from "../types";
+import type { RegularUnitId, UnitData } from "../types";
 
-export const UNITS: Record<string, UnitData> = {
+export const UNITS: Record<RegularUnitId, UnitData> = {
   // Tier 1
   rat: {
     id: "rat",
@@ -19,7 +19,7 @@ export const UNITS: Record<string, UnitData> = {
     baseAtk: 4,
     baseHp: 1,
     tier: 1,
-    skillText: "解体: 鮮血+1を獲得",
+    skillText: "解体: 鮮血を1多く獲得",
     lore: "教会の施しを受けられず餓死した名もなき者。胃袋を裂けば飲み込んで隠した硬貨が出てくるかもしれない。",
     secretLore:
       "その胃袋から無限に溢れ出る硬貨は、数多の強欲な商人たちを狂わせ、街を凄惨な殺し合いへと発展させた。",
@@ -85,7 +85,7 @@ export const UNITS: Record<string, UnitData> = {
     baseAtk: 4,
     baseHp: 2,
     tier: 2,
-    skillText: "攻撃前: ランダムな敵1体を【感染】(1回/戦)",
+    skillText: "攻撃前: ランダムな敵1体の装備を【感染】(被ダメージ+3)に変える(1回/戦)",
     lore: "隔離病棟から盗み出された遺体。その体液は触れる者すべてを死に至らしめる。",
     secretLore: "その致死の病はついに貴族街へと到達し、豪奢な館はすべて静寂な霊廟へと変わった。",
   },

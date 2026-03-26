@@ -1,4 +1,4 @@
-import type { BattleAction } from "../types";
+import type { BattleAction, UnitId } from "../types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { invariant, mustGet } from "../../shared/invariant";
 import { pushFrame, getMult, createToken, createSummonedUnit, enemyPrefix } from "./battle-context";
@@ -221,7 +221,7 @@ function handleMartyrDeath({ dead, isPlayer, ctx, successor, successor2 }: Death
   }
 }
 
-export const UNIT_DEATH_HANDLERS: Record<string, DeathHandler> = {
+export const UNIT_DEATH_HANDLERS = {
   rat: handleRatDeath,
   hound: handleHoundDeath,
   church_hound: handleHoundDeath,
@@ -231,7 +231,15 @@ export const UNIT_DEATH_HANDLERS: Record<string, DeathHandler> = {
   squire: handleSquireDeath,
   priest: handlePriestDeath,
   maiden: handleMaidenDeath,
-};
+} satisfies Partial<Record<UnitId, DeathHandler>>;
+
+export type DeathHandlerUnitId = keyof typeof UNIT_DEATH_HANDLERS;
+
+export function getDeathHandler(id: UnitId): DeathHandler | undefined {
+  return Object.hasOwn(UNIT_DEATH_HANDLERS, id)
+    ? UNIT_DEATH_HANDLERS[id as DeathHandlerUnitId]
+    : undefined;
+}
 
 export function handleEquipDeath(
   dead: BattleUnit,

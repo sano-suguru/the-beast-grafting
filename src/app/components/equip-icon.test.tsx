@@ -9,11 +9,6 @@ describe("EquipIcon", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("returns null for unknown equipId", () => {
-    const { container } = render(<EquipIcon equipId={"unknown"} />);
-    expect(container.innerHTML).toBe("");
-  });
-
   it("renders an SVG for valid equipId", () => {
     const { container } = render(<EquipIcon equipId="iron" />);
     expect(container.querySelector("svg")).not.toBeNull();

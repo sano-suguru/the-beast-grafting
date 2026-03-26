@@ -1,11 +1,7 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix } from "./battle-context";
 import { invariant } from "../../shared/invariant";
-import {
-  UNIT_DEATH_HANDLERS,
-  handleEquipDeath,
-  handleBeelzebubSpawns,
-} from "./battle-deaths-handlers";
+import { getDeathHandler, handleEquipDeath, handleBeelzebubSpawns } from "./battle-deaths-handlers";
 import { DEATH_CASCADE_LIMIT, ALTAR_BUFF, FRAME_DELAY_DEATH_CHAIN } from "./constants";
 
 function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
@@ -67,7 +63,7 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   const successor = insertIdx < board.length ? (board[insertIdx] ?? null) : null;
   const successor2 = insertIdx + 1 < board.length ? (board[insertIdx + 1] ?? null) : null;
 
-  const handler = UNIT_DEATH_HANDLERS[dead.id];
+  const handler = getDeathHandler(dead.id);
   for (let m = 0; m < mult; m++) {
     if (handler) handler({ dead, board, idx: insertIdx, isPlayer, ctx, successor, successor2 });
     handleEquipDeath(dead, board, insertIdx, isPlayer, ctx);
