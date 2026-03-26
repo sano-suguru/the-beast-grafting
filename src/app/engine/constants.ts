@@ -11,7 +11,6 @@ export const HUNDRED_ARMS_SAFETY = 10;
 
 // --- トークンステータス ---
 export const HOUND_TOKEN = { atk: 1, hp: 1 } as const;
-export const BEAST_FALLBACK = { atk: 2, hp: 2 } as const;
 export const BEAST_SUMMON = { atk: 2, hp: 2 } as const;
 export const CHURCH_BEAST_TOKEN = { atk: 2, hp: 2 } as const;
 export const FLY_TOKEN = { atk: 4, hp: 4 } as const;

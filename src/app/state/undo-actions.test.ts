@@ -109,6 +109,20 @@ describe("captureSnapshot", () => {
     expect(snap.shopUnits).toEqual([]);
     expect(snap.shopItems).toEqual([]);
   });
+
+  it("deep-copies mixed null/non-null shopItems", () => {
+    const item1 = makeShopItemSlot();
+    const item2 = makeShopItemSlot();
+    shopItems.value = [item1, null, item2];
+    captureSnapshot();
+    const snap = undoSnapshot.value!;
+    expect(snap.shopItems[0]).not.toBeNull();
+    expect(snap.shopItems[1]).toBeNull();
+    expect(snap.shopItems[2]).not.toBeNull();
+    // Verify deep copy (different reference)
+    expect(snap.shopItems[0]).not.toBe(item1);
+    expect(snap.shopItems[2]).not.toBe(item2);
+  });
 });
 
 // --- undoLastAction ---

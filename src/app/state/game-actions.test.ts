@@ -4,6 +4,7 @@ vi.mock("../engine/audio", () => ({
 }));
 
 import { startGame } from "./game-actions";
+import { tutorialDone } from "./tutorial";
 import {
   phase,
   origin,
@@ -26,6 +27,7 @@ beforeEach(() => {
   board.value = [null, null, null, null, null];
   lastBattleResult.value = null;
   onboardingStep.value = null;
+  tutorialDone.value = false;
 });
 
 describe("startGame", () => {
@@ -71,9 +73,15 @@ describe("startGame", () => {
     expect(board.value).toEqual([null, null, null, null, null]);
   });
 
-  it("sets onboardingStep to buy", () => {
+  it("sets onboardingStep to buy when tutorial not done", () => {
     startGame("thief");
     expect(onboardingStep.value).toBe("buy");
+  });
+
+  it("sets onboardingStep to null when tutorialDone is true", () => {
+    tutorialDone.value = true;
+    startGame("thief");
+    expect(onboardingStep.value).toBeNull();
   });
 
   it("resets lastBattleResult", () => {

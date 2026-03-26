@@ -184,6 +184,12 @@ describe("handleFreezeClick", () => {
     handleFreezeClick(true, 0);
     expect(selection.value).toBeNull();
   });
+
+  it("does nothing for null item slot", () => {
+    shopItems.value = [null];
+    handleFreezeClick(false, 0);
+    expect(shopItems.value[0]).toBeNull();
+  });
 });
 
 describe("executeSellUnit", () => {
@@ -208,6 +214,14 @@ describe("executeSellUnit", () => {
 
   it("does nothing without BOARD_UNIT selection", () => {
     selection.value = null;
+    blood.value = 5;
+    executeSellUnit();
+    expect(blood.value).toBe(5);
+  });
+
+  it("does nothing when board slot is empty", () => {
+    board.value = [null, null, null, null, null];
+    selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
     blood.value = 5;
     executeSellUnit();
     expect(blood.value).toBe(5);

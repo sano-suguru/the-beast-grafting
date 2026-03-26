@@ -98,3 +98,150 @@ describe("createEffect", () => {
     expect(allRect).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// drawOverlay 振る舞いテスト（Canvas mock）
+// ---------------------------------------------------------------------------
+
+interface MockCtx {
+  ctx: CanvasRenderingContext2D;
+  beginPath: ReturnType<typeof vi.fn>;
+  moveTo: ReturnType<typeof vi.fn>;
+  lineTo: ReturnType<typeof vi.fn>;
+  arc: ReturnType<typeof vi.fn>;
+  stroke: ReturnType<typeof vi.fn>;
+  fill: ReturnType<typeof vi.fn>;
+  quadraticCurveTo: ReturnType<typeof vi.fn>;
+}
+
+function mockCtx(): MockCtx {
+  const beginPath = vi.fn();
+  const moveTo = vi.fn();
+  const lineTo = vi.fn();
+  const arc = vi.fn();
+  const stroke = vi.fn();
+  const fill = vi.fn();
+  const quadraticCurveTo = vi.fn();
+  const ctx = {
+    globalCompositeOperation: "source-over",
+    globalAlpha: 1,
+    shadowBlur: 0,
+    shadowColor: "",
+    strokeStyle: "",
+    fillStyle: "",
+    lineWidth: 1,
+    lineCap: "butt",
+    beginPath,
+    moveTo,
+    lineTo,
+    arc,
+    stroke,
+    fill,
+    quadraticCurveTo,
+  } as unknown as CanvasRenderingContext2D;
+  return { ctx, beginPath, moveTo, lineTo, arc, stroke, fill, quadraticCurveTo };
+}
+
+describe("drawOverlay behaviour", () => {
+  beforeEach(() => {
+    __resetNextId();
+    __clearPool();
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // --- damage: drawSlashFlash ---
+
+  it("damage overlay does not draw when progress > 0.4", () => {
+    const effect = createEffect("damage", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.5, 0.5);
+    expect(m.stroke).not.toHaveBeenCalled();
+  });
+
+  it("damage overlay draws when progress < 0.4", () => {
+    const effect = createEffect("damage", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.2, 0.2);
+    expect(m.stroke).toHaveBeenCalled();
+  });
+
+  // --- clash: drawShockwave ---
+
+  it("clash overlay draws shockwave ring", () => {
+    const effect = createEffect("clash", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.5, 0.5);
+    expect(m.arc).toHaveBeenCalled();
+    expect(m.stroke).toHaveBeenCalled();
+  });
+
+  // --- skill: drawRuneCircle ---
+
+  it("skill overlay draws rune circle", () => {
+    const effect = createEffect("skill", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.5, 1.0);
+    expect(m.arc).toHaveBeenCalled();
+  });
+
+  // --- summon: drawRift ---
+
+  it("summon overlay does not draw when rift is fully closed", () => {
+    const effect = createEffect("summon", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 1.0, 1.0);
+    expect(m.stroke).not.toHaveBeenCalled();
+  });
+
+  it("summon overlay draws when rift is open", () => {
+    const effect = createEffect("summon", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.5, 0.5);
+    expect(m.stroke).toHaveBeenCalled();
+  });
+
+  // --- death: drawSoulRing ---
+
+  it("death overlay draws expanding ring", () => {
+    const effect = createEffect("death", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.5, 0.5);
+    expect(m.arc).toHaveBeenCalled();
+    expect(m.stroke).toHaveBeenCalled();
+  });
+
+  // --- buff/heal inline overlay ---
+
+  it("buff overlay does not draw when radius < 0.5", () => {
+    const effect = createEffect("buff", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.99, 0.99);
+    expect(m.fill).not.toHaveBeenCalled();
+  });
+
+  it("buff overlay draws when progress is in growth phase", () => {
+    const effect = createEffect("buff", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.15, 0.15);
+    expect(m.fill).toHaveBeenCalled();
+    expect(m.arc).toHaveBeenCalled();
+  });
+
+  it("heal overlay draws when progress is in growth phase", () => {
+    const effect = createEffect("heal", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.15, 0.15);
+    expect(m.fill).toHaveBeenCalled();
+    expect(m.arc).toHaveBeenCalled();
+  });
+
+  it("heal overlay does not draw when radius < 0.5", () => {
+    const effect = createEffect("heal", 50, 50, { fast: false })!;
+    const m = mockCtx();
+    effect.drawOverlay!(m.ctx, 0.99, 0.99);
+    expect(m.fill).not.toHaveBeenCalled();
+  });
+});

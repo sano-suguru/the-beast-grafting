@@ -1,5 +1,6 @@
-import { simulateBattle } from "./battle";
-import { makeUnit, makeEnemyTeam } from "./test-helpers";
+import { simulateBattle, runBattle } from "./battle";
+import { makeUnit, makeBattleUnit, makeEnemyTeam, makeContext } from "./test-helpers";
+import { MAX_OPS } from "./constants";
 
 describe("simulateBattle", () => {
   it("returns WIN when player units are stronger", () => {
@@ -59,5 +60,28 @@ describe("simulateBattle", () => {
     const originalOrder = [...enemy.units];
     simulateBattle([makeUnit({ atk: 10, hp: 10 }), null, null, null, null], enemy, 1);
     expect(enemy.units.map((u) => u.uid)).toEqual(originalOrder.map((u) => u.uid));
+  });
+
+  it("returns DRAW and timeout frame when combat round limit is reached", () => {
+    const ctx = makeContext(
+      [makeBattleUnit({ atk: 1, hp: 99999 })],
+      [makeBattleUnit({ atk: 1, hp: 99999 })],
+    );
+    const enemy = makeEnemyTeam([makeUnit({ atk: 1, hp: 99999 })]);
+    const { result, frames } = runBattle(ctx, enemy, 1);
+    expect(result).toBe("DRAW");
+    expect(frames.some((f) => f.log.text.includes("戦闘が長引きすぎた"))).toBe(true);
+  });
+
+  it("returns DRAW when op limit is exceeded", () => {
+    const ctx = makeContext(
+      [makeBattleUnit({ atk: 1, hp: 999 })],
+      [makeBattleUnit({ atk: 1, hp: 999 })],
+    );
+    ctx.opCount = MAX_OPS - 10;
+    const enemy = makeEnemyTeam([makeUnit({ atk: 1, hp: 999 })]);
+    const { result } = runBattle(ctx, enemy, 1);
+    expect(result).toBe("DRAW");
+    expect(ctx.opLimitExceeded).toBe(true);
   });
 });

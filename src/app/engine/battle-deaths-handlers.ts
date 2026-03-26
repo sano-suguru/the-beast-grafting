@@ -9,7 +9,6 @@ import {
   FLY_SPAWN_CAP,
   FLY_TOKEN,
   HOUND_TOKEN,
-  BEAST_FALLBACK,
   BEAST_SUMMON,
   CHURCH_BEAST_TOKEN,
   MAGGOT_TOKEN,
@@ -128,22 +127,11 @@ function handleHoundDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
 
 function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const t3Pool = getUnitsByTier(3);
-  const chosenId = t3Pool[Math.floor(ctx.rng.next() * t3Pool.length)];
-  const unitData = chosenId ? UNITS[chosenId] : undefined;
-  if (!unitData) {
-    spawnTokenOnDeath(
-      dead,
-      board,
-      idx,
-      isPlayer,
-      ctx,
-      "腐肉獣",
-      BEAST_FALLBACK.atk,
-      BEAST_FALLBACK.hp,
-      `[${dead.name}]の腹から怪物が！ (${BEAST_FALLBACK.atk}/${BEAST_FALLBACK.hp})`,
-    );
-    return;
-  }
+  invariant(t3Pool.length > 0, "tier-3 unit pool must not be empty");
+  const chosenIdx = Math.floor(ctx.rng.next() * t3Pool.length);
+  const chosenId = t3Pool[chosenIdx]!;
+  const unitData = UNITS[chosenId];
+  invariant(unitData, `UNITS[${chosenId}] must exist for tier-3 unit`);
   const summoned = createSummonedUnit(unitData, BEAST_SUMMON.atk, BEAST_SUMMON.hp, dead.isChurch);
   board.splice(idx, 0, summoned);
   const prefix = enemyPrefix(isPlayer);

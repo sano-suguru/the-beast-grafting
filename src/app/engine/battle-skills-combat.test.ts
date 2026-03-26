@@ -1,5 +1,5 @@
 import { applyAcidSplash, processHundredArmsKnockout } from "./battle-skills-combat";
-import { makeBattleUnit, makeContext } from "./test-helpers";
+import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
 
 describe("applyAcidSplash", () => {
   it("deals 5 damage to second enemy unit", () => {
@@ -71,5 +71,33 @@ describe("processHundredArmsKnockout", () => {
     const ctx = makeContext(attackerBoard, defenderBoard);
     processHundredArmsKnockout(hundredArms, defenderBoard, attackerBoard, true, ctx);
     expect(defenderBoard[0]!.hp).toBe(10);
+  });
+
+  it("kills front enemy and continues to damage next", () => {
+    const hundredArms = makeBattleUnit({ id: "hundred_arms", atk: 6, hp: 7 });
+    const weak = makeBattleUnit({ id: INERT_UNIT_ID, hp: 3, tier: 3, uid: "weak" });
+    const strong = makeBattleUnit({ id: INERT_UNIT_ID, hp: 10, tier: 3, uid: "strong" });
+    const attackerBoard = [hundredArms];
+    const defenderBoard = [weak, strong];
+    const ctx = makeContext(attackerBoard, defenderBoard);
+    processHundredArmsKnockout(hundredArms, defenderBoard, attackerBoard, true, ctx);
+    expect(defenderBoard.every((u) => u.uid !== "weak")).toBe(true);
+    const remaining = defenderBoard.find((u) => u.uid === "strong");
+    expect(remaining!.hp).toBe(6);
+  });
+
+  it("kills multiple consecutive weak enemies", () => {
+    const hundredArms = makeBattleUnit({ id: "hundred_arms", atk: 6, hp: 7 });
+    const e1 = makeBattleUnit({ id: INERT_UNIT_ID, hp: 1, tier: 3, uid: "e1" });
+    const e2 = makeBattleUnit({ id: INERT_UNIT_ID, hp: 2, tier: 3, uid: "e2" });
+    const e3 = makeBattleUnit({ id: INERT_UNIT_ID, hp: 20, tier: 3, uid: "e3" });
+    const attackerBoard = [hundredArms];
+    const defenderBoard = [e1, e2, e3];
+    const ctx = makeContext(attackerBoard, defenderBoard);
+    processHundredArmsKnockout(hundredArms, defenderBoard, attackerBoard, true, ctx);
+    expect(defenderBoard.some((u) => u.uid === "e1")).toBe(false);
+    expect(defenderBoard.some((u) => u.uid === "e2")).toBe(false);
+    const e3Remaining = defenderBoard.find((u) => u.uid === "e3");
+    expect(e3Remaining!.hp).toBe(16);
   });
 });

@@ -8,21 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-```bash
-pnpm dev              # Start dev server (vite-plus + cloudflare worker)
-pnpm build            # Production build
-pnpm lint             # Lint via vite-plus (type-aware, deny warnings)
-pnpm fmt              # Format via vite-plus
-pnpm test             # Vitest in watch mode
-pnpm test:unit        # Vitest single run
-pnpm test:e2e         # Playwright (chromium, starts dev server automatically)
-pnpm test:coverage    # Vitest with coverage
-pnpm check            # Full CI gate: typecheck + tests + knip + jscpd + similarity + depcruise
-pnpm db:generate      # Generate Drizzle migrations
-pnpm db:migrate       # Apply D1 migrations locally
-```
+コマンド一覧は @package.json scripts を参照。
 
-Run a single test file: `pnpm vitest run src/app/engine/battle.test.ts`
+単一テストファイル実行: `pnpm vitest run src/app/engine/battle.test.ts`
 
 ## Architecture
 
@@ -54,14 +42,16 @@ Run a single test file: `pnpm vitest run src/app/engine/battle.test.ts`
   - UI層（`screens/`）では `console.warn` + graceful degradation は許容。エンジン層（`engine/`）では黙って飲み込まない。
   - 外部入力（localStorage, Worker message, API response）のフォールバックは正当。
 
-### Tech Stack
+### Configs
 
-- **Frontend**: Preact + Preact Signals + Tailwind CSS v4
-- **Backend**: Cloudflare Workers + Hono
-- **Database**: Cloudflare D1 (SQLite) + Drizzle ORM
-- **Testing**: Vitest (unit, jsdom env) + Playwright (e2e)
-- **Build**: Vite + vite-plus + @cloudflare/vite-plugin
-- **Quality**: knip (dead code), jscpd/similarity-ts (duplication), dependency-cruiser
+以下の設定は各設定ファイルを参照: @package.json, @.oxlintrc.json, @vite.config.ts, @tsconfig.app.json, @.dependency-cruiser.cjs
+
+### Testing
+
+- テストヘルパー: `src/app/engine/test-helpers.ts`
+- state テストでは `beforeEach` で全シグナルを初期状態にリセット
+- 外部依存（audio 等）は `vi.mock()` でモック
+- テストファイルは行数制限免除
 
 ## Game Design Reference
 

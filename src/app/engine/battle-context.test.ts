@@ -1,5 +1,7 @@
-import { getMult, createToken } from "./battle-context";
+import { getMult, createToken, pushFrame } from "./battle-context";
 import type { BattleUnit } from "./battle-context";
+import { makeContext } from "./test-helpers";
+import { MAX_OPS } from "./constants";
 
 function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit {
   return {
@@ -92,5 +94,24 @@ describe("createToken", () => {
     const token1 = createToken("a", 1, 1);
     const token2 = createToken("b", 1, 1);
     expect(token1.uid).not.toBe(token2.uid);
+  });
+});
+
+describe("pushFrame", () => {
+  it("sets opLimitExceeded when opCount exceeds MAX_OPS", () => {
+    const ctx = makeContext();
+    ctx.opCount = MAX_OPS;
+    pushFrame(ctx, "info", "test", "info");
+    expect(ctx.opLimitExceeded).toBe(true);
+    expect(ctx.frames).toHaveLength(0);
+  });
+
+  it("adds frame normally at opCount = MAX_OPS - 1", () => {
+    const ctx = makeContext();
+    ctx.opCount = MAX_OPS - 1;
+    pushFrame(ctx, "info", "boundary test", "info");
+    expect(ctx.opLimitExceeded).toBe(false);
+    expect(ctx.frames).toHaveLength(1);
+    expect(ctx.frames[0]!.log.text).toBe("boundary test");
   });
 });

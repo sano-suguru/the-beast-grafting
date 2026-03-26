@@ -125,7 +125,8 @@ function pushResultFrame(ctx: BattleContext, result: BattleResult, enemyTeam: En
   }
 }
 
-function runBattle(
+/** @internal テスト専用 — simulateBattle を介さず BattleContext を直接制御するテスト向け */
+export function runBattle(
   ctx: BattleContext,
   enemyTeam: EnemyTeam,
   round: number,

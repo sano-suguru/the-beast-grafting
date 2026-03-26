@@ -310,3 +310,23 @@ describe("applyEquipmentEffects – offensive and misc", () => {
     expect(eDmg).toBe(4);
   });
 });
+
+describe("applyEquipmentEffects – numbness exhaustion", () => {
+  it("numbness equip is removed after last use (equipUses: 1)", () => {
+    const p = makeBattleUnit({ equip: "numbness", atk: 3, hp: 10, equipUses: 1 });
+    const e = makeBattleUnit({ atk: 10, hp: 10 });
+    const ctx = makeContext([p], [e]);
+    applyEquipmentEffects(p, e, ctx);
+    expect(p.equip).toBeNull();
+    expect(p.equipUses).toBe(0);
+  });
+
+  it("numbness equip persists with equipUses: 2", () => {
+    const p = makeBattleUnit({ equip: "numbness", atk: 3, hp: 10, equipUses: 2 });
+    const e = makeBattleUnit({ atk: 10, hp: 10 });
+    const ctx = makeContext([p], [e]);
+    applyEquipmentEffects(p, e, ctx);
+    expect(p.equip).toBe("numbness");
+    expect(p.equipUses).toBe(1);
+  });
+});

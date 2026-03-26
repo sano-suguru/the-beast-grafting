@@ -4,6 +4,7 @@ vi.mock("../engine/audio", () => ({
 }));
 
 import { startPreBattle, startActualBattle, concludeBattle } from "./battle-actions";
+import * as lore from "./lore";
 import {
   phase,
   round,
@@ -178,5 +179,21 @@ describe("concludeBattle", () => {
     expect(trophy.value).toBe(3);
     expect(round.value).toBe(3);
     expect(phase.value).toBe("SHOP");
+  });
+
+  it("calls markMastered for level 3 non-church units on game clear", () => {
+    const spy = vi.spyOn(lore, "markMastered");
+    battleResult.value = "WIN";
+    trophy.value = 9;
+    board.value = [
+      makeUnit({ id: "beast", level: 3, isChurch: false }),
+      makeUnit({ id: "rat", level: 1, isChurch: false }),
+      makeUnit({ id: "church_beast", level: 3, isChurch: true }),
+      null,
+      null,
+    ];
+    concludeBattle();
+    expect(spy).toHaveBeenCalledWith(["beast"]);
+    spy.mockRestore();
   });
 });
