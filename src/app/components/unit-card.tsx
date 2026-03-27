@@ -1,4 +1,5 @@
-import { Swords, Shield, Dna } from "lucide-preact";
+import { Swords, Shield, Dna, Droplet } from "lucide-preact";
+import type { ComponentChildren } from "preact";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick } from "../state/card-actions";
 import { UNIT_COST } from "../engine/constants";
@@ -11,6 +12,8 @@ interface UnitCardProps {
   type: Selection["type"] | "BOARD_SLOT";
   index: number;
   isHighlight?: HighlightKind | undefined;
+  costOverride?: number | undefined;
+  children?: ComponentChildren;
 }
 
 function getBorderClass(
@@ -30,7 +33,7 @@ const DNA_COLORS: Record<number, string> = { 2: "text-emerald-700", 3: "text-pur
 
 function getCardClass(border: string, cantAfford: boolean): string {
   const hover = cantAfford ? "" : "hover:border-zinc-500";
-  return `flex-1 min-w-0 max-w-[72px] aspect-[2/3] bg-zinc-900 border ${border} rounded relative flex flex-col cursor-pointer transition-all ${hover} select-none`;
+  return `w-full aspect-[2/3] bg-zinc-900 border ${border} rounded relative flex flex-col cursor-pointer transition-all ${hover} select-none`;
 }
 
 function getNameClass(isChurch: boolean): string {
@@ -67,40 +70,63 @@ function EmptySlot({
       type="button"
       aria-label="空きスロット"
       onClick={() => handleCardClick(isSlot ? "BOARD_SLOT" : type, index, null)}
-      className={`flex aspect-[2/3] max-w-[72px] min-w-0 flex-1 cursor-pointer items-center justify-center rounded border border-dashed bg-zinc-900/50 transition-colors ${isHighlight ? "border-emerald-700/50 bg-emerald-950/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)] hover:border-emerald-500" : "border-zinc-800"}`}
+      className={`flex aspect-[2/3] w-full cursor-pointer items-center justify-center rounded border border-dashed bg-zinc-900/50 transition-colors ${isHighlight ? "border-emerald-700/50 bg-emerald-950/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)] hover:border-emerald-500" : "border-zinc-800"}`}
     ></button>
   );
 }
 
-export function UnitCard({ unit, type, index, isHighlight }: UnitCardProps) {
-  if (!unit) return <EmptySlot type={type} index={index} isHighlight={isHighlight} />;
+export function UnitCard({
+  unit,
+  type,
+  index,
+  isHighlight,
+  costOverride,
+  children,
+}: UnitCardProps) {
+  if (!unit) {
+    return (
+      <div className="relative max-w-[72px] min-w-0">
+        <EmptySlot type={type} index={index} isHighlight={isHighlight} />
+      </div>
+    );
+  }
 
   const sel = selection.value;
   const isSlot = type === "BOARD_SLOT";
   const isSelected = sel?.type === type && sel?.index === index;
-  const cantAfford = type === "SHOP_UNIT" && blood.value < UNIT_COST;
+  const cost = type === "SHOP_UNIT" ? (costOverride ?? UNIT_COST) : UNIT_COST;
+  const cantAfford = type === "SHOP_UNIT" && blood.value < cost;
   const border = getBorderClass(isSelected, isHighlight, cantAfford);
   const statClass = getStatClass(isSelected);
 
   return (
-    <button
-      type="button"
-      aria-label={unit.name}
-      onClick={() => handleCardClick(isSlot ? "BOARD_SLOT" : type, index, unit)}
-      className={getCardClass(border, cantAfford)}
-    >
-      <div className={getContentClass(cantAfford)}>
-        <div className={getNameClass(unit.isChurch)}>{unit.name}</div>
-        <div className="pointer-events-none flex flex-1 items-center justify-center">
-          <EquipIcon equipId={unit.equip} />
-          <Dna size={18} className={DNA_COLORS[unit.level] || "text-zinc-600"} />
+    <div className="relative max-w-[72px] min-w-0">
+      <button
+        type="button"
+        aria-label={unit.name}
+        onClick={() => handleCardClick(isSlot ? "BOARD_SLOT" : type, index, unit)}
+        className={getCardClass(border, cantAfford)}
+      >
+        <div className={getContentClass(cantAfford)}>
+          <div className={getNameClass(unit.isChurch)}>{unit.name}</div>
+          <div className="pointer-events-none flex flex-1 items-center justify-center">
+            <EquipIcon equipId={unit.equip} />
+            <Dna size={18} className={DNA_COLORS[unit.level] || "text-zinc-600"} />
+          </div>
+          <div className="pointer-events-none flex items-center justify-between rounded bg-zinc-950 px-1">
+            <StatBadge icon={Swords} value={unit.atk} className={statClass} />
+            <StatBadge icon={Shield} value={unit.hp} className={statClass} />
+          </div>
         </div>
-        <div className="pointer-events-none flex items-center justify-between rounded bg-zinc-950 px-1">
-          <StatBadge icon={Swords} value={unit.atk} className={statClass} />
-          <StatBadge icon={Shield} value={unit.hp} className={statClass} />
-        </div>
-      </div>
-      {unit.level > 1 && <div className={getLevelBadgeClass(cantAfford)}>Lv{unit.level}</div>}
-    </button>
+        {unit.level > 1 && <div className={getLevelBadgeClass(cantAfford)}>Lv{unit.level}</div>}
+        {type === "SHOP_UNIT" && cost !== UNIT_COST && (
+          <div className="pointer-events-none absolute -top-1 -right-1 flex items-center gap-px rounded border border-zinc-600 bg-zinc-800 px-1 text-[8px] font-bold text-zinc-300">
+            {cost}
+            <Droplet size={7} className="text-red-800" />
+          </div>
+        )}
+      </button>
+      {children}
+    </div>
   );
 }

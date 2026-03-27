@@ -1,10 +1,21 @@
 import { RefreshCw, Play } from "lucide-preact";
 import type { OnboardingStep } from "../../types";
-import { blood, origin, freeRoll, cultistUsed, sanity, board } from "../../state/game-store";
+import {
+  blood,
+  origin,
+  freeRoll,
+  cultistUsed,
+  sanity,
+  board,
+  activeEvent,
+  showHelpOverlay,
+} from "../../state/game-store";
+import { OnboardingTooltip } from "../../components/onboarding-tooltip";
 import { rollShop, useCultistAbility } from "../../state/shop-actions";
 import { startPreBattle } from "../../state/battle-actions";
 
 function isRollDisabled(hasFreeRoll: boolean, currentBlood: number, step: OnboardingStep): boolean {
+  if (activeEvent.value?.lockRoll) return true;
   return (!hasFreeRoll && currentBlood < 1) || step === "buy" || step === "graft";
 }
 
@@ -49,7 +60,13 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
 
   return (
     <footer className="relative z-20 grid shrink-0 grid-cols-2 gap-2 border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
-      <div className="flex gap-1 md:gap-2">
+      <div className="relative flex gap-1 md:gap-2">
+        {showHelpOverlay.value && (
+          <OnboardingTooltip
+            text="品揃えを入れ替える"
+            positionClass="bottom-full left-1/2 -translate-x-1/2 mb-2"
+          />
+        )}
         <button
           onClick={rollShop}
           disabled={rollDisabled}
@@ -66,13 +83,21 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
           </button>
         )}
       </div>
-      <button
-        onClick={startPreBattle}
-        disabled={battleDisabled}
-        className={getBattleButtonClass(hasUnit, currentOnboarding)}
-      >
-        狂宴へ向かう <Play size={14} />
-      </button>
+      <div className="relative flex">
+        {showHelpOverlay.value && (
+          <OnboardingTooltip
+            text="準備ができたら狂宴へ"
+            positionClass="bottom-full left-1/2 -translate-x-1/2 mb-2"
+          />
+        )}
+        <button
+          onClick={startPreBattle}
+          disabled={battleDisabled}
+          className={`flex-1 ${getBattleButtonClass(hasUnit, currentOnboarding)}`}
+        >
+          狂宴へ向かう <Play size={14} />
+        </button>
+      </div>
     </footer>
   );
 }

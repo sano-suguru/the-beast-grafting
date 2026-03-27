@@ -1,5 +1,12 @@
 import { batch } from "@preact/signals";
-import type { OriginId, ShopSlot, ShopItemSlot, UnitInstance, Selection } from "../types";
+import type {
+  OriginId,
+  ShopSlot,
+  ShopItemSlot,
+  UnitInstance,
+  Selection,
+  EventData,
+} from "../types";
 import { ITEMS } from "../data/items";
 import { initAudio, playSE } from "../engine/audio";
 import {
@@ -8,7 +15,16 @@ import {
   getItemPool,
   getUnitsByTier,
   generateEnemyTeam,
+  pickRandom,
 } from "../engine/helpers";
+import {
+  isEventRound,
+  selectEvent,
+  buildEventShopUnits,
+  buildEventShopItems,
+} from "../engine/event-helpers";
+import type { Rng } from "../engine/rng";
+import { createDefaultRng } from "../engine/rng";
 import {
   origin,
   blood,
@@ -24,8 +40,11 @@ import {
   onboardingStep,
   undoSnapshot,
   rotRingUses,
+  activeEvent,
+  showHelpOverlay,
 } from "./game-store";
 import { markSeen } from "./lore";
+import { invariant } from "../../shared/invariant";
 
 function markShopUnitsSeen(slots: (ShopSlot | null)[]): void {
   markSeen(slots.filter((s): s is ShopSlot => s !== null).map((s) => s.unit.id));
@@ -40,82 +59,133 @@ function getShopSize(r: number): number {
   return 3;
 }
 
-function generateShopUnits(r: number, prev: (ShopSlot | null)[]): (ShopSlot | null)[] {
+function generateShopUnits(
+  r: number,
+  prev: (ShopSlot | null)[],
+  sizeModifier = 0,
+  rng: Rng = createDefaultRng(),
+): (ShopSlot | null)[] {
   const pool = getShopPool(r);
-  const size = getShopSize(r);
+  const size = Math.max(0, getShopSize(r) + sizeModifier);
   return [...Array(size).keys()].map((i) => {
     if (prev[i]?.frozen) return prev[i];
-    const id = pool[Math.floor(Math.random() * pool.length)];
-    if (!id) return null;
-    return { unit: createUnit(id), frozen: false };
+    return { unit: createUnit(pickRandom(pool, rng)), frozen: false };
   });
 }
 
 function applyInquisitorUpgrade(
   units: (ShopSlot | null)[],
   currentOrigin: OriginId | null,
+  rng: Rng = createDefaultRng(),
 ): (ShopSlot | null)[] {
   if (currentOrigin !== "inquisitor") return units;
-  // Pick a random non-frozen, non-Tier6 slot to upgrade
   const candidates = units
     .map((s, i) => (s && !s.frozen && s.unit.tier < 6 ? i : -1))
     .filter((i) => i >= 0);
   if (candidates.length === 0) return units;
-  const targetIdx = candidates[Math.floor(Math.random() * candidates.length)];
-  if (targetIdx === undefined) return units;
+  const targetIdx = pickRandom(candidates, rng);
   const slot = units[targetIdx];
   if (!slot) return units;
   const higherTier = getUnitsByTier(slot.unit.tier + 1);
   if (higherTier.length === 0) return units;
-  const newId = higherTier[Math.floor(Math.random() * higherTier.length)];
-  if (!newId) return units;
+  const newId = pickRandom([...higherTier], rng);
   const next = [...units];
   next[targetIdx] = { unit: createUnit(newId), frozen: slot.frozen };
   return next;
 }
 
-function generateShopItems(r: number, prev: (ShopItemSlot | null)[]): (ShopItemSlot | null)[] {
+function generateShopItems(
+  r: number,
+  prev: (ShopItemSlot | null)[],
+  rng: Rng = createDefaultRng(),
+): (ShopItemSlot | null)[] {
   const itemPool = getItemPool();
   const size = r >= 7 ? 2 : 1;
   return [...Array(size).keys()].map((i) => {
     const existing = prev[i];
     if (existing?.frozen) return existing;
-    const itemId = itemPool[Math.floor(Math.random() * itemPool.length)];
-    if (!itemId) return null;
-    const item = ITEMS[itemId];
-    if (!item) return null;
+    const item = ITEMS[pickRandom(itemPool, rng)];
     return { item, frozen: false };
   });
+}
+
+function buildShopForRound(
+  currentRound: number,
+  event: EventData | null,
+  currentOrigin: OriginId | null,
+  prevUnits: (ShopSlot | null)[],
+  prevItems: (ShopItemSlot | null)[],
+): { units: (ShopSlot | null)[]; items: (ShopItemSlot | null)[] } {
+  let units: (ShopSlot | null)[];
+  if (event?.replacesShopUnits) {
+    units = buildEventShopUnits(event, currentRound);
+  } else {
+    const sizeModifier = event?.shopSizeModifier ?? 0;
+    units = generateShopUnits(currentRound, prevUnits, sizeModifier);
+    units = applyInquisitorUpgrade(units, currentOrigin);
+  }
+
+  if (event?.shopUnitBuff) {
+    const buff = event.shopUnitBuff;
+    units = units.map((slot) =>
+      slot && !slot.frozen
+        ? {
+            ...slot,
+            unit: { ...slot.unit, atk: slot.unit.atk + buff.atk, hp: slot.unit.hp + buff.hp },
+          }
+        : slot,
+    );
+  }
+
+  const items =
+    event && event.itemOffers.length > 0
+      ? buildEventShopItems(event)
+      : generateShopItems(currentRound, prevItems);
+
+  return { units, items };
 }
 
 export function setupNight(
   currentRound: number,
   currentOrigin: OriginId | null = origin.value,
-  isInitialSetup = false,
+  useTutorialShop = false,
 ) {
-  let nextShopUnits: (ShopSlot | null)[];
-  if (isInitialSetup) {
-    nextShopUnits = [
-      { unit: createUnit("rat"), frozen: false },
-      { unit: createUnit("rat"), frozen: false },
-      { unit: createUnit("bat"), frozen: false },
-    ];
-  } else {
-    nextShopUnits = generateShopUnits(currentRound, shopUnits.value);
-  }
-  nextShopUnits = applyInquisitorUpgrade(nextShopUnits, currentOrigin);
+  const event = !useTutorialShop && isEventRound(currentRound) ? selectEvent() : null;
 
-  const nextShopItems = isInitialSetup
-    ? generateShopItems(currentRound, [])
-    : generateShopItems(currentRound, shopItems.value);
+  let nextShopUnits: (ShopSlot | null)[];
+  let nextShopItems: (ShopItemSlot | null)[];
+
+  if (useTutorialShop) {
+    nextShopUnits = applyInquisitorUpgrade(
+      [
+        { unit: createUnit("rat"), frozen: false },
+        { unit: createUnit("rat"), frozen: false },
+        { unit: createUnit("bat"), frozen: false },
+      ],
+      currentOrigin,
+    );
+    nextShopItems = generateShopItems(currentRound, []);
+  } else {
+    const result = buildShopForRound(
+      currentRound,
+      event,
+      currentOrigin,
+      shopUnits.value,
+      shopItems.value,
+    );
+    nextShopUnits = result.units;
+    nextShopItems = result.items;
+  }
 
   batch(() => {
     undoSnapshot.value = null;
-    blood.value = 10;
-    freeRoll.value = currentOrigin === "thief";
+    blood.value = 10 + (event?.bloodBonus ?? 0);
+    freeRoll.value = (event?.freeRoll ?? false) || currentOrigin === "thief";
     cultistUsed.value = false;
     rotRingUses.value = 0;
     selection.value = null;
+    showHelpOverlay.value = false;
+    activeEvent.value = event;
     currentEnemyTeam.value = generateEnemyTeam(currentRound);
     shopUnits.value = nextShopUnits;
     shopItems.value = nextShopItems;
@@ -137,15 +207,20 @@ function validateRoll(hasFreeRoll: boolean, currentBlood: number): Result<void, 
 
 export function rollShop() {
   initAudio();
+  if (activeEvent.value?.lockRoll) {
+    playSE("error");
+    return;
+  }
   validateRoll(freeRoll.value, blood.value).match(
     () => {
-      captureSnapshot();
       playSE("select");
-      const nextShopUnits = applyInquisitorUpgrade(
-        generateShopUnits(round.value, shopUnits.value),
+      const { units: nextShopUnits, items: nextShopItems } = buildShopForRound(
+        round.value,
+        activeEvent.value,
         origin.value,
+        shopUnits.value,
+        shopItems.value,
       );
-      const nextShopItems = generateShopItems(round.value, shopItems.value);
       batch(() => {
         if (!freeRoll.value) blood.value -= 1;
         freeRoll.value = false;
@@ -160,9 +235,34 @@ export function rollShop() {
   );
 }
 
+export function dismissEvent() {
+  invariant(activeEvent.value !== null, "dismissEvent: no active event");
+  const event = activeEvent.value;
+  initAudio();
+  playSE("select");
+  const currentRound = round.value;
+  const currentOrigin = origin.value;
+  const { units: nextShopUnits, items: nextShopItems } = buildShopForRound(
+    currentRound,
+    null,
+    currentOrigin,
+    [],
+    [],
+  );
+  const bloodBeforeEvent = blood.value - event.bloodBonus;
+  batch(() => {
+    blood.value = Math.max(0, bloodBeforeEvent);
+    activeEvent.value = null;
+    freeRoll.value = currentOrigin === "thief";
+    shopUnits.value = nextShopUnits;
+    shopItems.value = nextShopItems;
+    selection.value = null;
+  });
+  markShopUnitsSeen(nextShopUnits);
+}
+
 export function handleFreezeClick(isUnit: boolean, index: number) {
   initAudio();
-  captureSnapshot();
   playSE("select");
   batch(() => {
     if (isUnit) {

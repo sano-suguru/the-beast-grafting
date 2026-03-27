@@ -77,7 +77,7 @@ export interface UnitInstance {
   hp: number;
   level: number;
   exp: number;
-  equip: EquipId;
+  equip: EquipType | null;
   uid: string;
   isChurch: boolean;
 }
@@ -92,15 +92,13 @@ export type EquipType =
   | "acid"
   | "death_curse";
 
-export type EquipId = EquipType | null;
-
 export interface ItemData {
   id: ItemId;
   name: string;
   cost: number;
   atk: number;
   hp: number;
-  equip: EquipId;
+  equip: EquipType | null;
   skillText: string;
   lore: string;
 }
@@ -114,9 +112,40 @@ export interface OriginData {
   lore: string;
 }
 
+export type EventId = "vial" | "surplus" | "rotting_cargo" | "quiet_night" | "patrol";
+
+export interface EventUnitOffer {
+  unitId: RegularUnitId | "random";
+  tier?: number;
+  cost: number;
+  equipOverride?: EquipType;
+  atkBonus: number;
+  hpBonus: number;
+}
+
+export interface EventItemOffer {
+  itemId: ItemId | "random";
+  cost: number;
+}
+
+export interface EventData {
+  id: EventId;
+  name: string;
+  narrative: string;
+  unitOffers: EventUnitOffer[];
+  itemOffers: EventItemOffer[];
+  bloodBonus: number;
+  shopUnitBuff: { atk: number; hp: number } | null;
+  shopSizeModifier: number;
+  freeRoll: boolean;
+  lockRoll: boolean;
+  replacesShopUnits: boolean;
+}
+
 export interface ShopSlot {
   unit: UnitInstance;
   frozen: boolean;
+  costOverride?: number;
 }
 
 export interface ShopItemSlot {

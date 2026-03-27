@@ -1,16 +1,26 @@
 import { Heart, Trophy, Droplet, HelpCircle } from "lucide-preact";
 import { ORIGINS } from "../../data/origins";
-import { round, origin, sanity, trophy, blood, onboardingStep } from "../../state/game-store";
+import {
+  round,
+  origin,
+  sanity,
+  trophy,
+  blood,
+  showHelpOverlay,
+  onboardingStep,
+} from "../../state/game-store";
 import { playSE } from "../../engine/audio";
 
-function toggleTutorial() {
+function toggleHelp() {
   playSE("select");
-  onboardingStep.value = onboardingStep.value ? null : "buy";
+  const next = !showHelpOverlay.value;
+  showHelpOverlay.value = next;
+  if (next) onboardingStep.value = null;
 }
 
 export function ShopHeader() {
   const currentSanity = sanity.value;
-  const isTutorialActive = !!onboardingStep.value;
+  const isHelpActive = showHelpOverlay.value;
   return (
     <header className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 p-2 md:p-3">
       <div className="flex items-center gap-2">
@@ -23,9 +33,9 @@ export function ShopHeader() {
           </span>
         </div>
         <button
-          onClick={toggleTutorial}
-          className={`cursor-pointer rounded p-1 transition-colors ${isTutorialActive ? "text-red-600" : "text-zinc-600 hover:text-zinc-400"}`}
-          aria-label="チュートリアル"
+          onClick={toggleHelp}
+          className={`cursor-pointer rounded p-1 transition-colors ${isHelpActive ? "text-red-600" : "text-zinc-600 hover:text-zinc-400"}`}
+          aria-label="ヘルプ"
         >
           <HelpCircle size={14} />
         </button>

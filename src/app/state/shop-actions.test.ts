@@ -9,6 +9,7 @@ import {
   handleFreezeClick,
   executeSellUnit,
   useCultistAbility,
+  dismissEvent,
 } from "./shop-actions";
 import {
   origin,
@@ -23,7 +24,10 @@ import {
   shopItems,
   currentEnemyTeam,
   onboardingStep,
+  activeEvent,
+  undoSnapshot,
 } from "./game-store";
+import { EVENTS } from "../data/events";
 import { makeUnit } from "../engine/test-helpers";
 
 beforeEach(() => {
@@ -39,6 +43,8 @@ beforeEach(() => {
   shopItems.value = [];
   currentEnemyTeam.value = null;
   onboardingStep.value = null;
+  activeEvent.value = null;
+  undoSnapshot.value = null;
 });
 
 describe("setupNight – basic setup", () => {
@@ -100,7 +106,7 @@ describe("setupNight – origin effects", () => {
   });
 });
 
-describe("setupNight – initial shop generation", () => {
+describe("setupNight – tutorial shop", () => {
   it("generates initial shop with specific units (rat, rat, bat)", () => {
     setupNight(1, "thief", true);
     const units = shopUnits.value.filter(Boolean);
@@ -310,5 +316,52 @@ describe("useCultistAbility", () => {
     useCultistAbility();
     expect(blood.value).toBe(8);
     expect(sanity.value).toBe(0);
+  });
+});
+
+describe("dismissEvent", () => {
+  it("subtracts bloodBonus from current blood", () => {
+    activeEvent.value = EVENTS.vial;
+    blood.value = 13;
+    round.value = 4;
+    dismissEvent();
+    expect(blood.value).toBe(10);
+  });
+
+  it("clears activeEvent and resets freeRoll", () => {
+    origin.value = "thief";
+    activeEvent.value = EVENTS.quiet_night;
+    blood.value = 10;
+    round.value = 4;
+    freeRoll.value = true;
+    dismissEvent();
+    expect(activeEvent.value).toBeNull();
+    expect(freeRoll.value).toBe(true);
+  });
+
+  it("handles negative bloodBonus (patrol)", () => {
+    activeEvent.value = EVENTS.patrol;
+    blood.value = 9;
+    round.value = 4;
+    dismissEvent();
+    expect(blood.value).toBe(10);
+  });
+
+  it("purchases persist through dismiss (buy during event, no undo)", () => {
+    activeEvent.value = EVENTS.vial;
+    blood.value = 13;
+    round.value = 4;
+    blood.value -= 3;
+    dismissEvent();
+    expect(blood.value).toBe(7);
+  });
+
+  it("purchases persist through dismiss with negative bonus (patrol)", () => {
+    activeEvent.value = EVENTS.patrol;
+    blood.value = 9;
+    round.value = 4;
+    blood.value -= 3;
+    dismissEvent();
+    expect(blood.value).toBe(7);
   });
 });

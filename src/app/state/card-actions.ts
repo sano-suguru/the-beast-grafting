@@ -21,6 +21,10 @@ import type { Result, GameError } from "../../shared/errors";
 import { captureSnapshot } from "./undo-actions";
 import { UNIT_COST } from "../engine/constants";
 
+function getSlotCost(index: number): number {
+  return shopUnits.value[index]?.costOverride ?? UNIT_COST;
+}
+
 type BuyUnitAction =
   | { action: "place"; board: (UnitInstance | null)[] }
   | { action: "graft"; board: (UnitInstance | null)[] };
@@ -31,12 +35,13 @@ function validateBuyUnit(
   targetUnit: UnitInstance | null,
   currentBlood: number,
   currentBoard: (UnitInstance | null)[],
+  cost: number = UNIT_COST,
 ): Result<BuyUnitAction, GameError> {
-  if (currentBlood < UNIT_COST)
+  if (currentBlood < cost)
     return err({
       type: "INSUFFICIENT_RESOURCE",
       resource: "blood",
-      required: UNIT_COST,
+      required: cost,
       current: currentBlood,
     });
   if (!targetUnit) {
@@ -80,7 +85,7 @@ function validateEquipItem(
     ...target,
     atk: target.atk + sel.item.atk,
     hp: target.hp + sel.item.hp,
-    equip: sel.item.equip || target.equip,
+    equip: sel.item.equip ?? target.equip,
   };
   return ok({ board: newBoard });
 }
@@ -105,27 +110,31 @@ function rejectAction() {
   playSE("error");
 }
 
+function advanceOnboarding(action: "place" | "graft", unitId: string) {
+  if (action === "place" && onboardingStep.value === "buy") {
+    const hasSame = board.value.filter((u) => u && u.id === unitId).length > 1;
+    const shopHasSame = shopUnits.value.some((s) => s && s.unit.id === unitId);
+    onboardingStep.value = hasSame || shopHasSame ? "graft" : "roll";
+  }
+  if (action === "graft" && onboardingStep.value === "graft") onboardingStep.value = "roll";
+}
+
 function handleShopUnitToSlot(
   sel: Extract<Selection, { type: "SHOP_UNIT" }>,
   index: number,
   targetUnit: UnitInstance | null,
 ) {
-  validateBuyUnit(sel, index, targetUnit, blood.value, board.value).match(
-    ({ action, board: newBoard }) =>
-      batch(() => {
-        captureSnapshot();
-        playSE(action === "graft" ? "graft" : "buy");
-        blood.value -= UNIT_COST;
-        finalizeShopUnitPurchase(sel, newBoard);
-        if (action === "place" && onboardingStep.value === "buy") {
-          const hasSame = newBoard.filter((u) => u && u.id === sel.item.id).length > 1;
-          const shopHasSame = shopUnits.value.some((s) => s && s.unit.id === sel.item.id);
-          onboardingStep.value = hasSame || shopHasSame ? "graft" : "roll";
-        }
-        if (action === "graft" && onboardingStep.value === "graft") onboardingStep.value = "roll";
-      }),
-    rejectAction,
-  );
+  const cost = getSlotCost(sel.index);
+  const result = validateBuyUnit(sel, index, targetUnit, blood.value, board.value, cost);
+  if (result.isErr()) return rejectAction();
+  const { action, board: newBoard } = result.value;
+  captureSnapshot();
+  playSE(action === "graft" ? "graft" : "buy");
+  batch(() => {
+    blood.value -= cost;
+    finalizeShopUnitPurchase(sel, newBoard);
+    advanceOnboarding(action, sel.item.id);
+  });
 }
 
 function handleShopItemToSlot(
@@ -134,21 +143,21 @@ function handleShopItemToSlot(
   targetUnit: UnitInstance | null,
 ) {
   validateEquipItem(sel, index, targetUnit, blood.value, board.value).match(
-    ({ board: newBoard }) =>
+    ({ board: newBoard }) => {
+      captureSnapshot();
+      playSE("graft");
       batch(() => {
-        captureSnapshot();
-        playSE("graft");
         blood.value -= sel.item.cost;
         board.value = newBoard;
         shopItems.value = shopItems.value.map((u, i) => (i === sel.index ? null : u));
         selection.value = null;
-      }),
+      });
+    },
     rejectAction,
   );
 }
 
 function handleBoardUnitToSlot(sel: Extract<Selection, { type: "BOARD_UNIT" }>, index: number) {
-  captureSnapshot();
   const newBoard = [...board.value];
   const tUnit = newBoard[index] ?? null;
   if (tUnit && tUnit.id === sel.item.id && tUnit.level < 3 && sel.index !== index) {
@@ -238,7 +247,8 @@ function canHighlightForUnit(
   sel: Extract<Selection, { type: "SHOP_UNIT" }>,
   unit: UnitInstance | null,
 ): HighlightKind {
-  if (blood.value < UNIT_COST) return false;
+  const cost = getSlotCost(sel.index);
+  if (blood.value < cost) return false;
   if (!unit) return "move";
   if (unit.id === sel.item.id && unit.level < 3) return "graft";
   return false;

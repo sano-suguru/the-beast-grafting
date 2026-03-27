@@ -15,6 +15,8 @@ import {
   board,
   lastBattleResult,
   onboardingStep,
+  shopUnits,
+  activeEvent,
 } from "./game-store";
 
 beforeEach(() => {
@@ -28,6 +30,8 @@ beforeEach(() => {
   lastBattleResult.value = null;
   onboardingStep.value = null;
   tutorialDone.value = false;
+  activeEvent.value = null;
+  shopUnits.value = [];
 });
 
 describe("startGame", () => {
@@ -88,5 +92,28 @@ describe("startGame", () => {
     lastBattleResult.value = "WIN";
     startGame("thief");
     expect(lastBattleResult.value).toBeNull();
+  });
+
+  it("first-time player gets fixed shop (rat/rat/bat)", () => {
+    tutorialDone.value = false;
+    startGame("thief");
+    const ids = shopUnits.value.filter(Boolean).map((s) => s!.unit.id);
+    expect(ids).toEqual(["rat", "rat", "bat"]);
+  });
+
+  it("returning player gets random shop", () => {
+    tutorialDone.value = true;
+    startGame("thief");
+    expect(shopUnits.value.filter(Boolean).length).toBe(3);
+  });
+
+  it("no event on round 1 regardless of tutorial state", () => {
+    tutorialDone.value = false;
+    startGame("thief");
+    expect(activeEvent.value).toBeNull();
+
+    tutorialDone.value = true;
+    startGame("thief");
+    expect(activeEvent.value).toBeNull();
   });
 });

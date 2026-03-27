@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#0c0a12"/>
+  <!-- horns -->
+  <path d="M10 12C7.5 8 5 6 3 6" stroke="#c4a070" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M22 12c2.5-4 5-6 7-6" stroke="#c4a070" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <!-- skull -->
+  <path d="M16 8c-5.5 0-9 3.5-9 7.5 0 2.5 1.5 4.5 3.5 6v2c0 .5.5 1 1 1h9c.5 0 1-.5 1-1v-2c2-1.5 3.5-3.5 3.5-6C25 11.5 21.5 8 16 8z" fill="#c4a070"/>
+  <!-- eyes -->
+  <path d="M11 15l2-2.5 2 2.5-2 2.5z" fill="#0c0a12"/>
+  <path d="M17 15l2-2.5 2 2.5-2 2.5z" fill="#0c0a12"/>
+  <!-- stitch -->
+  <line x1="7" y1="17" x2="25" y2="17" stroke="#0c0a12" stroke-width="1" stroke-dasharray="2.5 2" opacity=".6"/>
+</svg>

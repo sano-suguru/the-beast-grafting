@@ -60,4 +60,23 @@ describe("UnitCard", () => {
     const { container } = render(<UnitCard unit={unit} type="SHOP_UNIT" index={0} />);
     expect(container.innerHTML).toContain("red-900");
   });
+
+  it("uses costOverride for affordability check", () => {
+    blood.value = 2;
+    const unit = makeUnit();
+    const { container } = render(
+      <UnitCard unit={unit} type="SHOP_UNIT" index={0} costOverride={2} />,
+    );
+    expect(container.innerHTML).not.toContain("red-900");
+  });
+
+  it("shows cost badge when costOverride differs from default", () => {
+    const unit = makeUnit();
+    const { container } = render(
+      <UnitCard unit={unit} type="SHOP_UNIT" index={0} costOverride={2} />,
+    );
+    const badge = container.querySelector(".-top-1.-right-1");
+    expect(badge).not.toBeNull();
+    expect(badge!.textContent).toContain("2");
+  });
 });

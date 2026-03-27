@@ -11,6 +11,7 @@ import type {
   BattleFrame,
   BattleResult,
   ShopSnapshot,
+  EventData,
 } from "../types";
 
 export const phase = signal<GamePhase>("TITLE");
@@ -38,3 +39,5 @@ export const lastBattleResult = signal<BattleResult>(null);
 export const lastEnemyTeamType = signal<string | null>(null);
 
 export const undoSnapshot = signal<ShopSnapshot | null>(null);
+export const activeEvent = signal<EventData | null>(null);
+export const showHelpOverlay = signal(false);

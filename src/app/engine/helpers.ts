@@ -30,13 +30,21 @@ export const createUnit = (id: RegularUnitId | ChurchUnitId): UnitInstance => {
   };
 };
 
+export function getCurrentMaxTier(round: number): number {
+  if (round >= 11) return 6;
+  if (round >= 9) return 5;
+  if (round >= 7) return 4;
+  if (round >= 5) return 3;
+  if (round >= 3) return 2;
+  return 1;
+}
+
 export const getShopPool = (round: number): RegularUnitId[] => {
-  const pool: RegularUnitId[] = ["rat", "beggar", "hound", "bat", "zealot"];
-  if (round >= 3) pool.push("martyr", "beast", "cholera");
-  if (round >= 5) pool.push("parasite", "maiden", "revenant");
-  if (round >= 7) pool.push("evangelist", "altar", "machine");
-  if (round >= 9) pool.push("shrieking_throat", "hundred_arms", "chalice");
-  if (round >= 11) pool.push("brains", "eye", "beelzebub", "rot_ring");
+  const maxTier = getCurrentMaxTier(round);
+  const pool: RegularUnitId[] = [];
+  for (let t = 1; t <= maxTier; t++) {
+    pool.push(...getUnitsByTier(t));
+  }
   return pool;
 };
 
@@ -62,7 +70,7 @@ export const getItemPool = (): ItemId[] => [
   "death_curse",
 ];
 
-const pickRandom = <T>(arr: T[], rng: Rng): T => {
+export const pickRandom = <T>(arr: T[], rng: Rng): T => {
   invariant(arr.length > 0, "pickRandom: empty array");
   return arr[Math.floor(rng.next() * arr.length)]!;
 };

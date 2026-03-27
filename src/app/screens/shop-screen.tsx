@@ -1,4 +1,4 @@
-import { ChevronRight, Trash2, Droplet, Undo2 } from "lucide-preact";
+import { ChevronRight, Trash2, Droplet, Undo2, X } from "lucide-preact";
 import type { OnboardingStep, UnitInstance } from "../types";
 import {
   board,
@@ -8,8 +8,10 @@ import {
   selection,
   onboardingStep,
   undoSnapshot,
+  activeEvent,
+  showHelpOverlay,
 } from "../state/game-store";
-import { executeSellUnit } from "../state/shop-actions";
+import { executeSellUnit, dismissEvent } from "../state/shop-actions";
 import { undoLastAction } from "../state/undo-actions";
 import { checkHighlight } from "../state/card-actions";
 import { UnitCard } from "../components/unit-card";
@@ -28,7 +30,8 @@ export function ShopScreen() {
 
   return (
     <main className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300 select-none">
-      <OnboardingOverlays step={currentOnboarding} />
+      {!showHelpOverlay.value && <OnboardingOverlays step={currentOnboarding} />}
+      {showHelpOverlay.value && <HelpBackdrop />}
       <ShopHeader />
 
       <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto p-2 pb-0 md:p-4">
@@ -77,9 +80,26 @@ function OnboardingOverlays({ step }: { step: OnboardingStep }) {
   );
 }
 
+function HelpBackdrop() {
+  return (
+    <div
+      className="absolute inset-0 z-40 bg-black/60"
+      onClick={() => {
+        showHelpOverlay.value = false;
+      }}
+    />
+  );
+}
+
 function BoardSection({ board: b }: { board: (UnitInstance | null)[] }) {
   return (
-    <section aria-label="解剖台" className="mb-3 shrink-0">
+    <section aria-label="解剖台" className="relative mb-3 shrink-0">
+      {showHelpOverlay.value && (
+        <OnboardingTooltip
+          text="同じ素体を重ねると強くなる"
+          positionClass="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        />
+      )}
       <div className="mb-1 flex items-end justify-between px-1 md:mb-2">
         <span className="text-xs font-bold text-zinc-400 md:text-sm">解剖台</span>
         <span className="flex items-center gap-1 text-[10px] font-normal text-zinc-600">
@@ -143,28 +163,54 @@ function UndoButton() {
 }
 
 function ShopSection() {
+  const event = activeEvent.value;
+  const isEventMode = !!event;
+  const label = event ? event.name : "闇市場";
+
   return (
-    <section aria-label="闇市場" className="relative z-0 flex min-h-0 flex-1 flex-col pb-4">
-      <span className="relative z-10 mb-1 block flex items-center gap-1 px-1 text-xs font-bold text-zinc-400 md:mb-2 md:text-sm">
-        闇市場{" "}
-        <span className="text-[10px] font-normal text-zinc-500">
-          (素体・薬 一律 3<Droplet size={10} className="inline text-red-800" />)
+    <section aria-label={label} className="relative z-0 flex min-h-0 flex-1 flex-col pb-4">
+      {showHelpOverlay.value && (
+        <OnboardingTooltip
+          text="素体を買って解剖台に並べろ"
+          positionClass="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        />
+      )}
+      <div className="relative z-10 mb-1 flex items-center justify-between px-1 md:mb-2">
+        <span className="flex items-center gap-1 text-xs font-bold text-zinc-400 md:text-sm">
+          {label}
+          {!isEventMode && (
+            <span className="text-[10px] font-normal text-zinc-500">
+              (素体・薬 一律 3<Droplet size={10} className="inline text-red-800" />)
+            </span>
+          )}
         </span>
-      </span>
+        {isEventMode && (
+          <button
+            onClick={dismissEvent}
+            className="flex cursor-pointer items-center gap-1 rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[9px] font-bold text-zinc-400 hover:bg-zinc-700 active:scale-95 md:text-[10px]"
+          >
+            <X size={10} /> 見送る
+          </button>
+        )}
+      </div>
       <div className="relative z-0 flex flex-1 items-start gap-2 md:gap-4">
         <ul role="list" className="flex min-w-0 flex-1 gap-1 md:gap-2">
           {shopUnits.value.map((item, i) => (
-            <li key={`shop-u-${i}`} className="relative flex min-w-0 flex-1">
+            <li key={`shop-u-${i}`} className="flex min-w-0 flex-1">
               <UnitCard
                 unit={item?.unit ?? null}
                 type="SHOP_UNIT"
                 index={i}
+                costOverride={item?.costOverride}
                 isHighlight={
                   checkHighlight("SHOP_UNIT", i, item?.unit ?? null) ||
                   (onboardingStep.value === "buy" && !!item ? "move" : false)
                 }
-              />
-              {!!item && <FreezeButton isUnit={true} index={i} isFrozen={item.frozen} />}
+              >
+                {!!item && !isEventMode && (
+                  <FreezeButton isUnit={true} index={i} isFrozen={item.frozen} />
+                )}
+              </UnitCard>
             </li>
           ))}
         </ul>
@@ -173,7 +219,7 @@ function ShopSection() {
           {shopItems.value.map((item, i) => (
             <li key={`shop-i-${i}`} className="relative flex shrink-0">
               <ItemCard item={item?.item ?? null} index={i} />
-              {!!item && (
+              {!!item && !isEventMode && (
                 <FreezeButton isUnit={false} index={i} isFrozen={item.frozen} iconSize={10} />
               )}
             </li>

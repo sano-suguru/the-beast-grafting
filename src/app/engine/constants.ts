@@ -37,6 +37,7 @@ export const HUNDRED_ARMS_DEFAULT_DAMAGE = 4;
 export const REVENANT_MAX_TARGETS = 3;
 export const ROT_RING_MAX_USES = 4;
 export const MACHINE_BUFF = { atk: 2, hp: 2 } as const;
+export const ROTTING_CARGO_CEILING_BONUS = { atk: 2, hp: 2 } as const;
 
 export const FRAME_DELAY_NORMAL = 700;
 export const FRAME_DELAY_FAST = 150;

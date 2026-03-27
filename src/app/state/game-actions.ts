@@ -11,6 +11,7 @@ import {
   board,
   lastBattleResult,
   onboardingStep,
+  showHelpOverlay,
 } from "./game-store";
 import { setupNight } from "./shop-actions";
 import { tutorialDone } from "./tutorial";
@@ -27,7 +28,8 @@ export function startGame(selectedOrigin: OriginId) {
     round.value = 1;
     board.value = [null, null, null, null, null];
     lastBattleResult.value = null;
+    showHelpOverlay.value = false;
     onboardingStep.value = tutorialDone.value ? null : "buy";
   });
-  setupNight(1, selectedOrigin, true);
+  setupNight(1, selectedOrigin, !tutorialDone.value);
 }

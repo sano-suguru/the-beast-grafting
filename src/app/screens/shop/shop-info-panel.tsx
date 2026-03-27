@@ -1,11 +1,25 @@
 import { BookOpen } from "lucide-preact";
-import type { Selection } from "../../types";
+import type { Selection, EventData } from "../../types";
 import { getEquipInfo } from "../../engine/helpers";
 import { ShopNarrative } from "./shop-narrative";
+import { activeEvent } from "../../state/game-store";
 
 interface ShopInfoPanelProps {
   sel: Selection | null;
   currentSanity: number;
+}
+
+function EventNarrative({ event }: { event: EventData }) {
+  return (
+    <div className="animate-fade-in flex flex-col gap-1 text-center">
+      <span className="text-[10px] font-bold tracking-widest text-amber-700 uppercase md:text-xs">
+        {event.name}
+      </span>
+      <p className="text-[10px] leading-relaxed text-zinc-400 italic md:text-xs">
+        {event.narrative}
+      </p>
+    </div>
+  );
 }
 
 function SelectedItemInfo({ sel }: { sel: Selection }) {
@@ -39,6 +53,7 @@ function SelectedItemInfo({ sel }: { sel: Selection }) {
 }
 
 export function ShopInfoPanel({ sel, currentSanity }: ShopInfoPanelProps) {
+  const event = activeEvent.value;
   const borderClass =
     !sel && currentSanity <= 1 ? "bg-red-950/20 border-red-900/50" : "bg-[#0a0a0a] border-zinc-800";
 
@@ -49,6 +64,8 @@ export function ShopInfoPanel({ sel, currentSanity }: ShopInfoPanelProps) {
     >
       {sel ? (
         <SelectedItemInfo sel={sel} />
+      ) : event ? (
+        <EventNarrative event={event} />
       ) : (
         <div aria-live={currentSanity <= 1 ? "assertive" : "polite"}>
           <ShopNarrative currentSanity={currentSanity} />
