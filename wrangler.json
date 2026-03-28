@@ -11,11 +11,15 @@
   "vars": {
     "ALLOWED_ORIGIN": "http://localhost:5173"
   },
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "beast-grafting-db",
-      "database_id": "local"
+      "database_id": "local",
+      "migrations_dir": "./drizzle"
     }
   ]
 }

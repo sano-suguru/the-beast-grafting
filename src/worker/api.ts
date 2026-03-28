@@ -1,24 +1,26 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { error, warn } from "../shared/logger";
+import { drizzle } from "drizzle-orm/d1";
+import { error } from "../shared/logger";
+import auth from "./auth/routes";
+import type { AppEnv } from "./auth/types";
 
-const api = new Hono<{ Bindings: Env }>();
+const api = new Hono<AppEnv>();
 
 api.use("*", async (c, next) => {
-  const origin = c.env?.ALLOWED_ORIGIN;
-  if (!origin) {
-    warn("[api] ALLOWED_ORIGIN is not set — all cross-origin requests will be rejected");
-  }
-  return cors({ origin: origin ?? "https://not-configured.invalid" })(c, next);
+  c.set("db", drizzle(c.env.DB));
+  return cors({ origin: c.env.ALLOWED_ORIGIN, credentials: true })(c, next);
 });
 
 api.onError((err, c) => {
   error("[api]", err);
-  return c.json({ status: "error", message: "内部エラー" }, 500);
+  return c.json({ error: { type: "INTERNAL_ERROR" } }, 500);
 });
 
 api.get("/health", (c) => {
   return c.json({ status: "alive", message: "工房は稼働中だ。" });
 });
+
+api.route("/auth", auth);
 
 export default api;

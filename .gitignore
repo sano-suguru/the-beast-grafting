@@ -6,3 +6,9 @@ dist/
 coverage/
 playwright-report/
 test-results/
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate*
+infra/*.tfvars
+!infra/*.tfvars.example
