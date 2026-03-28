@@ -8,6 +8,7 @@ import type {
   Selection,
   OnboardingStep,
   EnemyTeam,
+  EnemyFaction,
   BattleFrame,
   BattleResult,
   ShopSnapshot,
@@ -36,7 +37,7 @@ export const currentFrameIdx = signal(0);
 export const battleResult = signal<BattleResult>(null);
 export const fastForward = signal(false);
 export const lastBattleResult = signal<BattleResult>(null);
-export const lastEnemyTeamType = signal<string | null>(null);
+export const lastEnemyTeamType = signal<EnemyFaction | null>(null);
 
 export const undoSnapshot = signal<ShopSnapshot | null>(null);
 export const activeEvent = signal<EventData | null>(null);

@@ -4,6 +4,7 @@ import { EQUIPS } from "../data/equips";
 import type {
   UnitInstance,
   EnemyTeam,
+  EnemyFaction,
   EquipType,
   RegularUnitId,
   ChurchUnitId,
@@ -75,15 +76,16 @@ export const pickRandom = <T>(arr: T[], rng: Rng): T => {
   return arr[Math.floor(rng.next() * arr.length)]!;
 };
 
-const generateTeamName = (isCult: boolean, type: string, rng: Rng): string => {
+const generateTeamName = (faction: EnemyFaction, rng: Rng): string => {
   const adjectivesCult = ["純白の", "灰の", "盲目なる", "断罪の"];
   const nounsCult = ["巡礼者部隊", "異端審問隊", "聖騎士団"];
   const adjectivesGrafter = ["貪欲なる", "狂気に飲まれた", "血塗られた", "名もなき"];
   const nounsGrafter = ["地下の接合術師", "解剖医", "死体泥棒"];
 
+  const isCult = faction === "教団";
   const adj = isCult ? pickRandom(adjectivesCult, rng) : pickRandom(adjectivesGrafter, rng);
   const noun = isCult ? pickRandom(nounsCult, rng) : pickRandom(nounsGrafter, rng);
-  return `[${type}] ${adj}${noun}`;
+  return `[${faction}] ${adj}${noun}`;
 };
 
 const generateCultTeam = (round: number): UnitInstance[] => {
@@ -139,7 +141,7 @@ const generateGrafterTeam = (round: number): UnitInstance[] => {
 export const generateEnemyTeam = (round: number, rng: Rng = createDefaultRng()): EnemyTeam => {
   const isCult = rng.next() > round * 0.1;
   const type = isCult ? "教団" : "同業者";
-  const teamName = generateTeamName(isCult, type, rng);
+  const teamName = generateTeamName(type, rng);
 
   let units = isCult ? generateCultTeam(round) : generateGrafterTeam(round);
 

@@ -162,9 +162,18 @@ export type HighlightKind = "graft" | "swap" | "move" | false;
 
 export type OnboardingStep = "buy" | "graft" | "roll" | "battle" | null;
 
+export type SanityTier = "high" | "mid" | "low";
+
+export type EnemyFaction = "教団" | "同業者";
+
+export interface PreBattleText {
+  readonly intro: string;
+  readonly closing: string;
+}
+
 export interface EnemyTeam {
   teamName: string;
-  teamType: string;
+  teamType: EnemyFaction;
   units: UnitInstance[];
 }
 

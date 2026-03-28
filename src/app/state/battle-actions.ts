@@ -1,5 +1,5 @@
 import { batch } from "@preact/signals";
-import type { UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../types";
+import type { UnitInstance, EnemyTeam, EnemyFaction, BattleFrame, BattleResult } from "../types";
 import { initAudio, playSE } from "../engine/audio";
 import { generateEnemyTeam } from "../engine/helpers";
 import { runBattleAsync } from "../battle-worker/client";
@@ -62,7 +62,11 @@ function validateActualBattle(enemy: EnemyTeam | null): Result<EnemyTeam, GameEr
   return ok(enemy);
 }
 
-function applyBattleResult(frames: BattleFrame[], result: BattleResult, enemyTeamType: string) {
+function applyBattleResult(
+  frames: BattleFrame[],
+  result: BattleResult,
+  enemyTeamType: EnemyFaction,
+) {
   batch(() => {
     phase.value = "BATTLE";
     fastForward.value = false;

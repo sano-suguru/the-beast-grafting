@@ -1,6 +1,7 @@
 import { useMemo } from "preact/hooks";
 import type { BattleFrame, UnitInstance } from "../../types";
 import { currentEnemyTeam } from "../../state/game-store";
+import { invariant } from "../../../shared/invariant";
 import { BattleCard } from "../../components/battle-card";
 import { ParticleCanvas } from "../../components/particle-canvas";
 
@@ -46,6 +47,8 @@ function renderCard(
 
 export function BattleVisualizer({ currentFrame, prevFrame, ff, frameIdx }: BattleVisualizerProps) {
   const prevStats = useMemo(() => buildPrevStats(prevFrame), [prevFrame]);
+  const enemy = currentEnemyTeam.value;
+  invariant(enemy != null, "BattleVisualizer rendered without currentEnemyTeam");
 
   return (
     <section
@@ -55,7 +58,7 @@ export function BattleVisualizer({ currentFrame, prevFrame, ff, frameIdx }: Batt
       <div className="mb-2 flex shrink-0 justify-between px-2 text-[10px] font-bold tracking-widest text-zinc-500 md:text-xs">
         <span>あなたの群れ</span>
         <span className="text-red-900">狂宴</span>
-        <span>{currentEnemyTeam.value?.teamType || "異端審問隊"}</span>
+        <span>{enemy.teamType}</span>
       </div>
       <div className="relative flex min-h-0 w-full min-w-0 flex-1 items-center justify-center gap-2 overflow-hidden px-1 md:gap-4">
         <div
