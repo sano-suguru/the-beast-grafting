@@ -8,7 +8,7 @@ import { render, screen, fireEvent } from "@testing-library/preact";
 import { ItemCard } from "./item-card";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick } from "../state/card-actions";
-import { ITEMS } from "../data/items";
+import { ITEMS } from "../../shared/data/items";
 
 beforeEach(() => {
   selection.value = null;

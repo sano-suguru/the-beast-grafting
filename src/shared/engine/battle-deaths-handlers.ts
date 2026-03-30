@@ -1,6 +1,6 @@
 import type { BattleAction, UnitId } from "../types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { invariant, mustGet } from "../../shared/invariant";
+import { invariant, mustGet } from "../invariant";
 import { pushFrame, getMult, createToken, createSummonedUnit, enemyPrefix } from "./battle-context";
 import { UNITS } from "../data/units";
 import { getUnitsByTier } from "./helpers";

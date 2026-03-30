@@ -2,7 +2,7 @@ import { Swords, Shield, Dna, Droplet } from "lucide-preact";
 import type { ComponentChildren } from "preact";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick } from "../state/card-actions";
-import { UNIT_COST } from "../engine/constants";
+import { UNIT_COST } from "../../shared/engine/constants";
 import { StatBadge } from "./stat-badge";
 import { EquipIcon } from "./equip-icon";
 import type { UnitInstance, Selection, HighlightKind } from "../types";
@@ -85,7 +85,7 @@ export function UnitCard({
 }: UnitCardProps) {
   if (!unit) {
     return (
-      <div className="relative max-w-[72px] min-w-0">
+      <div className="relative max-w-[72px] min-w-[50px] flex-1">
         <EmptySlot type={type} index={index} isHighlight={isHighlight} />
       </div>
     );
@@ -100,7 +100,7 @@ export function UnitCard({
   const statClass = getStatClass(isSelected);
 
   return (
-    <div className="relative max-w-[72px] min-w-0">
+    <div className="relative max-w-[72px] min-w-[50px] flex-1">
       <button
         type="button"
         aria-label={unit.name}

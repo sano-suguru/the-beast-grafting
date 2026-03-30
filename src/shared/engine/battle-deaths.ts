@@ -1,6 +1,6 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix } from "./battle-context";
-import { invariant } from "../../shared/invariant";
+import { invariant } from "../invariant";
 import { getDeathHandler, handleEquipDeath, handleBeelzebubSpawns } from "./battle-deaths-handlers";
 import { DEATH_CASCADE_LIMIT, ALTAR_BUFF, FRAME_DELAY_DEATH_CHAIN } from "./constants";
 

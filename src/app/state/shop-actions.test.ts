@@ -27,8 +27,8 @@ import {
   activeEvent,
   undoSnapshot,
 } from "./game-store";
-import { EVENTS } from "../data/events";
-import { makeUnit } from "../engine/test-helpers";
+import { EVENTS } from "../../shared/data/events";
+import { makeUnit } from "../../shared/engine/test-helpers";
 
 beforeEach(() => {
   origin.value = null;
@@ -54,9 +54,9 @@ describe("setupNight – basic setup", () => {
     expect(blood.value).toBe(10);
   });
 
-  it("generates enemy team", () => {
+  it("sets enemy team to null (resolved at battle time)", () => {
     setupNight(1, "thief", true);
-    expect(currentEnemyTeam.value).not.toBeNull();
+    expect(currentEnemyTeam.value).toBeNull();
   });
 
   it("resets cultistUsed", () => {
@@ -363,5 +363,17 @@ describe("dismissEvent", () => {
     blood.value -= 3;
     dismissEvent();
     expect(blood.value).toBe(7);
+  });
+});
+
+describe("setupNight – enemy team", () => {
+  it("sets currentEnemyTeam to null (resolved at battle time)", () => {
+    setupNight(1, null, false);
+    expect(currentEnemyTeam.value).toBeNull();
+  });
+
+  it("sets currentEnemyTeam to null for tutorial shop too", () => {
+    setupNight(3, null, true);
+    expect(currentEnemyTeam.value).toBeNull();
   });
 });

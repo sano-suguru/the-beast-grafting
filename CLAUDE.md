@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`src/app/`** — Client-side Preact SPA
   - **`state/`** — Global state via `@preact/signals` (no store library). All signals live in `game-store.ts`; mutations are split across `game-actions.ts`, `shop-actions.ts`, `card-actions.ts`, `battle-actions.ts`, `undo-actions.ts`.
   - **`engine/`** — Pure game logic (battle simulation, shop effects, death resolution). Deterministic, no UI dependencies. Battle runs produce an array of `BattleFrame`s that the visualizer replays.
-  - **`battle-worker/`** — Web Worker that runs battle simulation off the main thread. `client.ts` is the main-thread interface; `worker.ts` runs the engine.
+  - **`api/`** — API client functions for server communication (`fetch.ts`, `pvp-client.ts`, `run-client.ts`).
   - **`screens/`** — Full-page screen components switched by `phase` signal in `app.tsx`.
   - **`components/`** — Reusable UI components (cards, badges, icons).
   - **`data/`** — Static game data definitions (units, items, origins, church units).
@@ -51,6 +51,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Configs
 
 以下の設定は各設定ファイルを参照: @package.json, @.oxlintrc.json, @vite.config.ts, @tsconfig.app.json, @.dependency-cruiser.cjs
+
+### Patches
+
+- `undici@7.24.4.patch`: `isTraversableNavigable()` がTODOスタブで `true` を返し、Workersランタイムでfetch誤動作するため `false` に修正。
 
 ### Testing
 

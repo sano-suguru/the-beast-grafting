@@ -2,7 +2,7 @@ import type { BattleAction, UnitId } from "../types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
-import { mustGet } from "../../shared/invariant";
+import { mustGet } from "../invariant";
 import {
   BAT_DAMAGE,
   BANSHEE_DAMAGE,

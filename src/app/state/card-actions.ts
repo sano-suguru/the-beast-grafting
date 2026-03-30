@@ -6,7 +6,7 @@ import {
   applyBuyEffects,
   applyChaliceEffect,
   applySummonEffects,
-} from "../engine/shop-effects";
+} from "../../shared/engine/shop-effects";
 import {
   blood,
   board,
@@ -19,7 +19,7 @@ import {
 import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
 import { captureSnapshot } from "./undo-actions";
-import { UNIT_COST } from "../engine/constants";
+import { UNIT_COST } from "../../shared/engine/constants";
 
 function getSlotCost(index: number): number {
   return shopUnits.value[index]?.costOverride ?? UNIT_COST;

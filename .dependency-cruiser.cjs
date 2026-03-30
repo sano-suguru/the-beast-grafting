@@ -15,7 +15,10 @@ module.exports = {
       comment:
         "バレルファイル(index.ts)経由のインポートを禁止する（types/index.tsは型定義本体のため除外）",
       from: {},
-      to: { path: "/index\\.ts$", pathNot: "^src/app/types/index\\.ts$" },
+      to: {
+        path: "/index\\.ts$",
+        pathNot: "^src/app/types/index\\.ts$",
+      },
     },
 
     // ── トップレベルディレクトリ間の境界 ──
@@ -54,20 +57,41 @@ module.exports = {
       from: { path: "^src/db" },
       to: { path: "^src/worker" },
     },
+    {
+      name: "no-shared-to-app",
+      severity: "error",
+      comment: "共有層(shared)からフロントエンド(app)への依存を禁止",
+      from: { path: "^src/shared" },
+      to: { path: "^src/app" },
+    },
+    {
+      name: "no-shared-to-worker",
+      severity: "error",
+      comment: "共有層(shared)からバックエンド(worker)への依存を禁止",
+      from: { path: "^src/shared" },
+      to: { path: "^src/worker" },
+    },
+    {
+      name: "no-shared-to-db",
+      severity: "error",
+      comment: "共有層(shared)からDB層への依存を禁止",
+      from: { path: "^src/shared" },
+      to: { path: "^src/db" },
+    },
 
-    // ── app内部のレイヤー境界 ──
+    // ── 内部レイヤー境界 ──
     {
       name: "no-data-to-upper-layers",
       severity: "error",
       comment: "データ層はengine/state/screens/componentsに依存してはならない",
-      from: { path: "^src/app/data" },
-      to: { path: "^src/app/(engine|state|screens|components)" },
+      from: { path: "^src/(app/data|shared/data)" },
+      to: { path: "^src/(app/|shared/)?(engine|state|screens|components)" },
     },
     {
       name: "no-engine-to-ui-layers",
       severity: "error",
       comment: "エンジン層はstate/screens/componentsに依存してはならない",
-      from: { path: "^src/app/engine" },
+      from: { path: "^src/(app/engine|shared/engine)" },
       to: { path: "^src/app/(state|screens|components)" },
     },
     {

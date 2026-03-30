@@ -12,7 +12,7 @@ import type {
 } from "../types";
 import type { Rng } from "./rng";
 import { createDefaultRng } from "./rng";
-import { invariant } from "../../shared/invariant";
+import { invariant } from "../invariant";
 
 export const generateUid = (): string => Math.random().toString(36).substring(2, 11);
 

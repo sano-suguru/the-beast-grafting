@@ -14,6 +14,7 @@ import type {
   ShopSnapshot,
   EventData,
 } from "../types";
+import type { InfraError } from "../../shared/errors";
 
 export const phase = signal<GamePhase>("TITLE");
 export const origin = signal<OriginId | null>(null);
@@ -38,6 +39,14 @@ export const battleResult = signal<BattleResult>(null);
 export const fastForward = signal(false);
 export const lastBattleResult = signal<BattleResult>(null);
 export const lastEnemyTeamType = signal<EnemyFaction | null>(null);
+
+export const currentRunId = signal<string | null>(null);
+export const lastBattleId = signal<string | null>(null);
+export const battleError = signal<InfraError | null>(null);
+
+export const battleBusy = signal(false);
+
+export const gameLoading = signal(false);
 
 export const undoSnapshot = signal<ShopSnapshot | null>(null);
 export const activeEvent = signal<EventData | null>(null);

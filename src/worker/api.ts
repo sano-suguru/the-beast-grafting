@@ -3,6 +3,8 @@ import { cors } from "hono/cors";
 import { drizzle } from "drizzle-orm/d1";
 import { error } from "../shared/logger";
 import auth from "./auth/routes";
+import pvp from "./pvp/routes";
+import run from "./run/routes";
 import type { AppEnv } from "./auth/types";
 
 const api = new Hono<AppEnv>();
@@ -22,5 +24,7 @@ api.get("/health", (c) => {
 });
 
 api.route("/auth", auth);
+api.route("/pvp", pvp);
+api.route("/run", run);
 
 export default api;

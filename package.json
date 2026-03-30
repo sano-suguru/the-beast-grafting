@@ -13,8 +13,8 @@
     "lint": "vp lint",
     "fmt": "vp fmt",
     "depcruise": "depcruise src --validate .dependency-cruiser.cjs",
-    "similarity": "similarity-ts src/app src/shared --fail-on-duplicates --rename-cost 0.5 && similarity-ts src/worker src/db src/shared --fail-on-duplicates --rename-cost 0.5",
-    "check": "vp check && vp test run && knip && jscpd src && similarity-ts src/app src/shared --fail-on-duplicates --rename-cost 0.5 && similarity-ts src/worker src/db src/shared --fail-on-duplicates --rename-cost 0.5 && depcruise src --validate .dependency-cruiser.cjs",
+    "similarity": "similarity-ts src/app src/shared --fail-on-duplicates --rename-cost 0.5 && similarity-ts src/worker src/db --fail-on-duplicates --rename-cost 0.5",
+    "check": "vp check && vp test run && knip && jscpd src && similarity-ts src/app src/shared --fail-on-duplicates --rename-cost 0.5 && similarity-ts src/worker src/db --fail-on-duplicates --rename-cost 0.5 && depcruise src --validate .dependency-cruiser.cjs",
     "cpd": "jscpd src",
     "test": "vp test",
     "test:unit": "vp test run",
@@ -33,7 +33,7 @@
     "preact": "^10.29.0"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.30.0",
+    "@cloudflare/vite-plugin": "^1.30.2",
     "@cloudflare/workers-types": "^4.20260317.1",
     "@playwright/test": "^1.58.2",
     "@preact/preset-vite": "^2.10.5",
@@ -53,7 +53,7 @@
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vite-plus": "^0.1.13",
-    "wrangler": "^4.76.0"
+    "wrangler": "^4.78.0"
   },
   "packageManager": "pnpm@10.28.2"
 }

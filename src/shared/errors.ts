@@ -18,7 +18,8 @@ export type InfraError =
   | { type: "STORAGE_WRITE_FAILED"; cause: unknown }
   | { type: "DB_ERROR"; cause: unknown }
   | { type: "AUTH_OAUTH_FAILED"; cause: unknown }
-  | { type: "CRYPTO_FAILED"; cause: unknown };
+  | { type: "CRYPTO_FAILED"; cause: unknown }
+  | { type: "API_FETCH_FAILED"; status: number; cause: unknown };
 
 export const dbErr = (e: unknown): InfraError => ({ type: "DB_ERROR", cause: e });
 

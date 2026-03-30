@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import type { BoardUnit } from "../shared/board-unit";
 
 export const players = sqliteTable("players", {
   id: text("id").primaryKey(),
@@ -42,6 +43,52 @@ export const sessions = sqliteTable(
   ],
 );
 
+export const boardSnapshots = sqliteTable(
+  "board_snapshots",
+  {
+    id: text("id").primaryKey(),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    round: integer("round").notNull(),
+    board: text("board", { mode: "json" }).$type<BoardUnit[]>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_snapshots_run_round").on(table.runId, table.round),
+    index("idx_snapshots_round").on(table.round),
+    index("idx_snapshots_player_id").on(table.playerId),
+    index("idx_snapshots_created_at").on(table.createdAt),
+  ],
+);
+
+export const battles = sqliteTable(
+  "battles",
+  {
+    id: text("id").primaryKey(),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    opponentPlayerId: text("opponent_player_id").references(() => players.id),
+    round: integer("round").notNull(),
+    seed: integer("seed").notNull(),
+    result: text("result", { enum: ["WIN", "LOSE", "DRAW"] }).notNull(),
+    consumed: integer("consumed", { mode: "boolean" }).notNull().default(false),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_battles_run_round").on(table.runId, table.round),
+    index("idx_battles_player_id").on(table.playerId),
+    index("idx_battles_created_at").on(table.createdAt),
+  ],
+);
+
 export const runs = sqliteTable(
   "runs",
   {
@@ -50,12 +97,19 @@ export const runs = sqliteTable(
       .notNull()
       .references(() => players.id),
     round: integer("round").notNull().default(1),
-    board: text("board", { mode: "json" }).notNull(),
+    sanity: integer("sanity").notNull().default(5),
+    trophy: integer("trophy").notNull().default(0),
+    board: text("board", { mode: "json" }).$type<BoardUnit[]>().notNull(),
+    originId: text("origin_id"),
+    status: text("status", { enum: ["active", "won", "lost"] })
+      .notNull()
+      .default("active"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   },
   (table) => [
     index("idx_runs_created_at").on(table.createdAt),
     index("idx_runs_player_id").on(table.playerId),
+    index("idx_runs_status").on(table.status),
   ],
 );

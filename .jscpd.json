@@ -1,7 +1,16 @@
 {
   "threshold": 3,
   "reporters": ["console"],
-  "ignore": ["node_modules", "dist", "drizzle", "**/*.lock", "**/*.test.ts", "**/*.test.tsx"],
+  "ignore": [
+    "node_modules",
+    "dist",
+    "drizzle",
+    "**/*.lock",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "src/db/schema.ts"
+  ],
+  "_comment:schema.ts": "Drizzle ORMのテーブル定義は構造的に反復的であり、抽象化すべき重複ではない",
   "absolute": true,
   "exitCode": 1
 }

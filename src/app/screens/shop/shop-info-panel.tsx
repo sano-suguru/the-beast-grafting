@@ -1,6 +1,6 @@
 import { BookOpen } from "lucide-preact";
 import type { Selection, EventData } from "../../types";
-import { getEquipInfo } from "../../engine/helpers";
+import { getEquipInfo } from "../../../shared/engine/helpers";
 import { ShopNarrative } from "./shop-narrative";
 import { activeEvent } from "../../state/game-store";
 

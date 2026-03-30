@@ -1,7 +1,7 @@
 import { createSeededRng } from "./rng";
 import type { SanityTier, EnemyFaction, PreBattleText } from "../types";
 import { PRE_BATTLE_TEXTS } from "../data/pre-battle-texts";
-import { invariant, mustGet } from "../../shared/invariant";
+import { invariant, mustGet } from "../invariant";
 
 export function toSanityTier(sanity: number): SanityTier {
   if (sanity >= 4) return "high";

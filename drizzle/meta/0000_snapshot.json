@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "59ea32aa-48aa-490b-81ce-05125df66071",
+  "id": "b1d4032c-8c3c-4739-a659-a87bcb792228",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_providers": {
@@ -84,6 +84,216 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "battles": {
+      "name": "battles",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "opponent_player_id": {
+          "name": "opponent_player_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "round": {
+          "name": "round",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "seed": {
+          "name": "seed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result": {
+          "name": "result",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "consumed": {
+          "name": "consumed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_battles_run_round": {
+          "name": "idx_battles_run_round",
+          "columns": ["run_id", "round"],
+          "isUnique": true
+        },
+        "idx_battles_player_id": {
+          "name": "idx_battles_player_id",
+          "columns": ["player_id"],
+          "isUnique": false
+        },
+        "idx_battles_created_at": {
+          "name": "idx_battles_created_at",
+          "columns": ["created_at"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "battles_player_id_players_id_fk": {
+          "name": "battles_player_id_players_id_fk",
+          "tableFrom": "battles",
+          "tableTo": "players",
+          "columnsFrom": ["player_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "battles_run_id_runs_id_fk": {
+          "name": "battles_run_id_runs_id_fk",
+          "tableFrom": "battles",
+          "tableTo": "runs",
+          "columnsFrom": ["run_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "battles_opponent_player_id_players_id_fk": {
+          "name": "battles_opponent_player_id_players_id_fk",
+          "tableFrom": "battles",
+          "tableTo": "players",
+          "columnsFrom": ["opponent_player_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "board_snapshots": {
+      "name": "board_snapshots",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "round": {
+          "name": "round",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "board": {
+          "name": "board",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_snapshots_run_round": {
+          "name": "idx_snapshots_run_round",
+          "columns": ["run_id", "round"],
+          "isUnique": true
+        },
+        "idx_snapshots_round": {
+          "name": "idx_snapshots_round",
+          "columns": ["round"],
+          "isUnique": false
+        },
+        "idx_snapshots_player_id": {
+          "name": "idx_snapshots_player_id",
+          "columns": ["player_id"],
+          "isUnique": false
+        },
+        "idx_snapshots_created_at": {
+          "name": "idx_snapshots_created_at",
+          "columns": ["created_at"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "board_snapshots_player_id_players_id_fk": {
+          "name": "board_snapshots_player_id_players_id_fk",
+          "tableFrom": "board_snapshots",
+          "tableTo": "players",
+          "columnsFrom": ["player_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "board_snapshots_run_id_runs_id_fk": {
+          "name": "board_snapshots_run_id_runs_id_fk",
+          "tableFrom": "board_snapshots",
+          "tableTo": "runs",
+          "columnsFrom": ["run_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "players": {
       "name": "players",
       "columns": {
@@ -147,12 +357,43 @@
           "autoincrement": false,
           "default": 1
         },
+        "sanity": {
+          "name": "sanity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 5
+        },
+        "trophy": {
+          "name": "trophy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
         "board": {
           "name": "board",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "origin_id": {
+          "name": "origin_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'active'"
         },
         "created_at": {
           "name": "created_at",
@@ -178,6 +419,11 @@
         "idx_runs_player_id": {
           "name": "idx_runs_player_id",
           "columns": ["player_id"],
+          "isUnique": false
+        },
+        "idx_runs_status": {
+          "name": "idx_runs_status",
+          "columns": ["status"],
           "isUnique": false
         }
       },

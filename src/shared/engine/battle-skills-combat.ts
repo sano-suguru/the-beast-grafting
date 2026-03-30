@@ -1,7 +1,7 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
-import { mustGet } from "../../shared/invariant";
+import { mustGet } from "../invariant";
 import {
   ACID_SPLASH_DAMAGE,
   HUNDRED_ARMS_T1_DAMAGE,

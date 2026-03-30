@@ -1,6 +1,6 @@
-import type { OriginData } from "../types";
+import type { OriginId, OriginData } from "../types";
 
-export const ORIGINS: Record<string, OriginData> = {
+export const ORIGINS: Record<OriginId, OriginData> = {
   thief: {
     id: "thief",
     name: "卑劣なる死体泥棒",

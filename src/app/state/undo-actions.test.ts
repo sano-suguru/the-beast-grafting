@@ -18,7 +18,7 @@ import {
   selection,
   undoSnapshot,
 } from "./game-store";
-import { makeUnit } from "../engine/test-helpers";
+import { makeUnit } from "../../shared/engine/test-helpers";
 import type { ShopSlot, ShopItemSlot } from "../types";
 
 function makeShopSlot(overrides: Partial<ReturnType<typeof makeUnit>> = {}): ShopSlot {

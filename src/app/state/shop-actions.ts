@@ -7,24 +7,23 @@ import type {
   Selection,
   EventData,
 } from "../types";
-import { ITEMS } from "../data/items";
+import { ITEMS } from "../../shared/data/items";
 import { initAudio, playSE } from "../engine/audio";
 import {
   createUnit,
   getShopPool,
   getItemPool,
   getUnitsByTier,
-  generateEnemyTeam,
   pickRandom,
-} from "../engine/helpers";
+} from "../../shared/engine/helpers";
 import {
   isEventRound,
   selectEvent,
   buildEventShopUnits,
   buildEventShopItems,
-} from "../engine/event-helpers";
-import type { Rng } from "../engine/rng";
-import { createDefaultRng } from "../engine/rng";
+} from "../../shared/engine/event-helpers";
+import type { Rng } from "../../shared/engine/rng";
+import { createDefaultRng } from "../../shared/engine/rng";
 import {
   origin,
   blood,
@@ -186,7 +185,7 @@ export function setupNight(
     selection.value = null;
     showHelpOverlay.value = false;
     activeEvent.value = event;
-    currentEnemyTeam.value = generateEnemyTeam(currentRound);
+    currentEnemyTeam.value = null;
     shopUnits.value = nextShopUnits;
     shopItems.value = nextShopItems;
   });

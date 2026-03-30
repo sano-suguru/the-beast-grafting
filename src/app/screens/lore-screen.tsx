@@ -1,5 +1,5 @@
 import { BookOpen, Skull, Bookmark, Swords, Shield } from "lucide-preact";
-import { UNITS } from "../data/units";
+import { UNITS } from "../../shared/data/units";
 import { phase } from "../state/game-store";
 import { loreDb } from "../state/lore";
 import { initAudio, playSE } from "../engine/audio";

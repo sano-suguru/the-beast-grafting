@@ -1,6 +1,6 @@
 import { currentEnemyTeam, round, sanity } from "../state/game-store";
 import { startActualBattle } from "../state/battle-actions";
-import { selectPreBattleNarrative, toSanityTier } from "../engine/pre-battle-narrative";
+import { selectPreBattleNarrative, toSanityTier } from "../../shared/engine/pre-battle-narrative";
 import { invariant } from "../../shared/invariant";
 
 const TIER_CLASS = {

@@ -1,5 +1,5 @@
 import { Heart, Trophy, Droplet, HelpCircle } from "lucide-preact";
-import { ORIGINS } from "../../data/origins";
+import { ORIGINS } from "../../../shared/data/origins";
 import {
   round,
   origin,
