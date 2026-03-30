@@ -1,6 +1,5 @@
 import { batch } from "@preact/signals";
-import type { UnitInstance, BattleFrame, BattleResult } from "../types";
-import type { EnemyFaction } from "../../shared/enemy-faction";
+import type { UnitInstance, BattleResult } from "../types";
 import { initAudio, playSE } from "../engine/audio";
 import { pvpOpponentToEnemyTeam } from "../../shared/board-unit";
 import {
@@ -9,7 +8,6 @@ import {
   sanity,
   trophy,
   board,
-  selection,
   currentEnemyTeam,
   battleFrames,
   currentFrameIdx,
@@ -21,25 +19,22 @@ import {
   lastBattleId,
   battleError,
   battleBusy,
+  battleLoading,
+  battleLoadError,
   onboardingStep,
-  undoSnapshot,
+  shopLocked,
+  shopActionError,
 } from "./game-store";
 import { markSeen, markMastered } from "./lore";
 import { markTutorialDone } from "./tutorial";
-import { setupNight } from "./shop-actions";
-import { applyEndOfTurnEffects } from "../../shared/engine/shop-effects";
-import { ok, err, safeAsync } from "../../shared/errors";
-import type { Result, GameError, InfraError } from "../../shared/errors";
+import { setupNight, applyShopState } from "./shop-actions";
+import { ok, err, safeAsync, fetchErr } from "../../shared/errors";
+import type { Result, GameError } from "../../shared/errors";
 import { invariant } from "../../shared/invariant";
 import { error as logError } from "../../shared/logger";
-import { uploadSnapshot, requestBattle } from "../api/pvp-client";
+import { requestBattle } from "../api/pvp-client";
+import { readyForBattle as apiReadyForBattle } from "../api/shop-client";
 import { advanceRun } from "../api/run-client";
-
-let snapshotUpload: Promise<Result<void, InfraError>> | null = null;
-
-export function resetBattleInternals() {
-  snapshotUpload = null;
-}
 
 function validatePreBattle(currentBoard: (UnitInstance | null)[]): Result<void, GameError> {
   if (!currentBoard.some((u) => u !== null))
@@ -47,119 +42,102 @@ function validatePreBattle(currentBoard: (UnitInstance | null)[]): Result<void, 
   return ok(undefined);
 }
 
+function loadBattleInBackground(runId: string, currentRound: number) {
+  battleLoading.value = true;
+  battleLoadError.value = null;
+
+  void requestBattle(runId, currentRound)
+    .then((result) => {
+      batch(() => {
+        battleLoading.value = false;
+        result.match(
+          ({ frames, result: battleRes, opponent, battleId }) => {
+            currentEnemyTeam.value = pvpOpponentToEnemyTeam(opponent);
+            lastBattleId.value = battleId;
+            battleFrames.value = frames;
+            battleResult.value = battleRes;
+            lastBattleResult.value = battleRes;
+            lastEnemyTeamType.value = opponent.teamType;
+          },
+          (e) => {
+            battleLoadError.value = e;
+            logError("[loadBattle]", e);
+          },
+        );
+      });
+    })
+    .catch((e: unknown) => {
+      batch(() => {
+        battleLoading.value = false;
+        battleLoadError.value = fetchErr(e);
+      });
+      logError("[loadBattle:crash]", e);
+    });
+}
+
 export function startPreBattle() {
   if (validatePreBattle(board.value).isErr()) return;
+  if (shopLocked.value) return;
+  const runId = currentRunId.value;
+  if (!runId) return;
+
   initAudio();
   playSE("clash");
   markSeen(board.value.filter((u): u is UnitInstance => u !== null).map((u) => u.id));
 
-  // Apply end-of-turn effects (SAP: Monkey) before battle
-  const nextBoard = applyEndOfTurnEffects(board.value);
   const shouldFinishTutorial = onboardingStep.value === "battle";
+  const currentRound = round.value;
 
-  batch(() => {
-    undoSnapshot.value = null;
-    board.value = nextBoard;
-    selection.value = null;
-    phase.value = "PRE_BATTLE";
-    if (shouldFinishTutorial) onboardingStep.value = null;
-  });
+  shopLocked.value = true;
 
-  if (shouldFinishTutorial) markTutorialDone();
+  void apiReadyForBattle(runId)
+    .then((result) => {
+      batch(() => {
+        shopLocked.value = false;
+        result.match(
+          (shopState) => {
+            applyShopState(shopState);
+            phase.value = "PRE_BATTLE";
+            if (shouldFinishTutorial) onboardingStep.value = null;
+            if (shouldFinishTutorial) markTutorialDone();
+            loadBattleInBackground(runId, currentRound);
+          },
+          (e) => {
+            shopActionError.value = e;
+            logError("[startPreBattle]", e);
+          },
+        );
+      });
+    })
+    .catch((e: unknown) => {
+      batch(() => {
+        shopLocked.value = false;
+        shopActionError.value = fetchErr(e);
+      });
+      logError("[startPreBattle:crash]", e);
+    });
+}
 
-  const units = nextBoard.filter((u): u is UnitInstance => u !== null);
+export function retryBattle() {
+  if (battleLoading.value) return;
   const runId = currentRunId.value;
-  if (units.length > 0 && runId) {
-    snapshotUpload = uploadSnapshot(runId, round.value, units);
-  }
+  if (!runId) return;
+  loadBattleInBackground(runId, round.value);
 }
-
-function applyBattleResult(
-  frames: BattleFrame[],
-  result: BattleResult,
-  enemyTeamType: EnemyFaction,
-) {
-  batch(() => {
-    phase.value = "BATTLE";
-    fastForward.value = false;
-    battleFrames.value = frames;
-    currentFrameIdx.value = 0;
-    battleResult.value = result;
-    lastBattleResult.value = result;
-    lastEnemyTeamType.value = enemyTeamType;
-  });
-}
-
-const crashErr = (e: unknown): InfraError => ({ type: "API_FETCH_FAILED", status: 0, cause: e });
 
 export function startActualBattle() {
-  if (battleBusy.value) return;
   if (phase.value !== "PRE_BATTLE") return;
+  if (battleLoading.value) return;
+  if (battleLoadError.value !== null) return;
+  if (battleFrames.value.length === 0) return;
 
   initAudio();
   playSE("select");
 
-  battleBusy.value = true;
-  phase.value = "BATTLE_LOADING";
-
-  void safeAsync(executeBattle, crashErr).then((result) => {
-    if (result.isErr()) {
-      logError("[BattleCrash]", result.error);
-      battleError.value = result.error;
-    }
-    battleBusy.value = false;
-  });
-}
-
-async function executeBattle() {
-  battleError.value = null;
-
-  if (snapshotUpload) {
-    const uploadResult = await snapshotUpload;
-    snapshotUpload = null;
-    if (uploadResult.isErr()) {
-      logError("[SnapshotUpload]", uploadResult.error);
-    }
-  }
-
-  const runId = currentRunId.value;
-  if (!runId) {
-    battleError.value = { type: "API_FETCH_FAILED", status: 0, cause: "no active run" };
-    return;
-  }
-
-  const serverResult = await requestBattle(runId, round.value);
-  if (serverResult.isErr()) {
-    battleError.value = serverResult.error;
-    return;
-  }
-
-  const { frames, result, opponent, battleId } = serverResult.value;
-  lastBattleId.value = battleId;
-  currentEnemyTeam.value = pvpOpponentToEnemyTeam(opponent);
-  applyBattleResult(frames, result, opponent.teamType);
-}
-
-export function retryBattle() {
-  if (battleBusy.value) return;
-  if (phase.value !== "BATTLE_LOADING") return;
-
-  battleBusy.value = true;
-
-  void safeAsync(executeBattle, crashErr).then((result) => {
-    if (result.isErr()) {
-      logError("[BattleRetryCrash]", result.error);
-      battleError.value = result.error;
-    }
-    battleBusy.value = false;
-  });
-}
-
-export function abandonBattle() {
   batch(() => {
-    battleBusy.value = false;
-    battleError.value = null;
-    phase.value = "SHOP";
+    phase.value = "BATTLE";
+    fastForward.value = false;
+    currentFrameIdx.value = 0;
   });
 }
 
@@ -197,11 +175,12 @@ function applyLocalFallback(localResult: BattleResult) {
   }
 
   const nextRound = round.value + 1;
+  const runId = currentRunId.value;
   batch(() => {
     round.value = nextRound;
     phase.value = "SHOP";
   });
-  setupNight(nextRound);
+  if (runId) void setupNight(runId);
 }
 
 async function executeConclude() {
@@ -220,6 +199,7 @@ async function executeConclude() {
   result.match(
     (run) => {
       if (run.status === "won") masterBoardUnits();
+      const runId = currentRunId.value;
       batch(() => {
         sanity.value = run.sanity;
         trophy.value = run.trophy;
@@ -228,7 +208,7 @@ async function executeConclude() {
           phase.value = "RESULT";
         } else {
           phase.value = "SHOP";
-          setupNight(run.round);
+          if (runId) void setupNight(runId);
         }
       });
     },
@@ -243,7 +223,7 @@ export function concludeBattle() {
   if (battleBusy.value) return;
   battleBusy.value = true;
 
-  void safeAsync(executeConclude, crashErr).then((result) => {
+  void safeAsync(executeConclude, fetchErr).then((result) => {
     if (result.isErr()) {
       logError("[ConcludeBattleCrash]", result.error);
       batch(() => {

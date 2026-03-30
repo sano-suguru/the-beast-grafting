@@ -11,10 +11,20 @@ vi.mock("../api/fetch", async () => {
   };
 });
 
+vi.mock("../api/run-client", () => ({
+  startRun: vi.fn(),
+  getCurrentRun: vi.fn(),
+}));
+
+vi.mock("../api/shop-client", () => ({
+  setupShop: vi.fn(),
+}));
+
 import { startGame } from "./game-actions";
-import { apiFetch } from "../api/fetch";
-import { createRoutedApiFetch } from "../api/test-helpers";
+import { startRun, getCurrentRun } from "../api/run-client";
+import { setupShop as apiSetupShop } from "../api/shop-client";
 import { tutorialDone } from "./tutorial";
+import { ok, err } from "../../shared/errors";
 import {
   phase,
   origin,
@@ -29,21 +39,21 @@ import {
   shopUnits,
   activeEvent,
   gameLoading,
+  startGameError,
 } from "./game-store";
+import { makeUnit } from "../../engine/test-helpers";
+import type { RunState } from "../../shared/api-types";
+import { makeShopState, toBoardUnit } from "./test-helpers";
 
-const mockApiFetch = vi.mocked(apiFetch);
-
-function defaultRunResponse(overrides: Record<string, unknown> = {}) {
+function defaultRun(overrides: Partial<RunState> = {}): RunState {
   return {
-    run: {
-      id: "run-1",
-      round: 1,
-      sanity: 5,
-      trophy: 0,
-      status: "active",
-      originId: "thief",
-      ...overrides,
-    },
+    id: "run-1",
+    round: 1,
+    sanity: 5,
+    trophy: 0,
+    status: "active",
+    originId: "thief",
+    ...overrides,
   };
 }
 
@@ -62,11 +72,20 @@ beforeEach(() => {
   shopUnits.value = [];
   currentRunId.value = null;
   gameLoading.value = false;
-  mockApiFetch.mockReset();
-  mockApiFetch.mockImplementation(
-    createRoutedApiFetch({
-      "/api/run/start": defaultRunResponse(),
-    }),
+  vi.clearAllMocks();
+
+  vi.mocked(getCurrentRun).mockResolvedValue(ok(null));
+  vi.mocked(startRun).mockResolvedValue(ok(defaultRun()));
+  vi.mocked(apiSetupShop).mockResolvedValue(
+    ok(
+      makeShopState({
+        shopUnits: [
+          { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false },
+          { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false },
+          { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false },
+        ],
+      }),
+    ),
   );
 });
 
@@ -77,6 +96,7 @@ describe("startGame", () => {
   });
 
   it("sets origin", async () => {
+    vi.mocked(startRun).mockResolvedValue(ok(defaultRun({ originId: "surgeon" })));
     await startGame("surgeon");
     expect(origin.value).toBe("surgeon");
   });
@@ -86,18 +106,8 @@ describe("startGame", () => {
     expect(blood.value).toBe(10);
   });
 
-  it("sets sanity to 5 for most origins", async () => {
+  it("sets sanity to 5", async () => {
     await startGame("thief");
-    expect(sanity.value).toBe(5);
-  });
-
-  it("sets sanity to 5 for inquisitor", async () => {
-    mockApiFetch.mockImplementation(
-      createRoutedApiFetch({
-        "/api/run/start": defaultRunResponse({ originId: "inquisitor" }),
-      }),
-    );
-    await startGame("inquisitor");
     expect(sanity.value).toBe(5);
   });
 
@@ -135,15 +145,26 @@ describe("startGame", () => {
     expect(lastBattleResult.value).toBeNull();
   });
 
-  it("first-time player gets fixed shop (rat/rat/bat)", async () => {
+  it("first-time player gets shop from API", async () => {
     tutorialDone.value = false;
     await startGame("thief");
     const ids = shopUnits.value.filter(Boolean).map((s) => s!.unit.id);
     expect(ids).toEqual(["rat", "rat", "bat"]);
   });
 
-  it("returning player gets random shop", async () => {
+  it("returning player gets shop from API", async () => {
     tutorialDone.value = true;
+    vi.mocked(apiSetupShop).mockResolvedValue(
+      ok(
+        makeShopState({
+          shopUnits: [
+            { unit: toBoardUnit(makeUnit({ id: "hound" })), frozen: false },
+            { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false },
+            { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false },
+          ],
+        }),
+      ),
+    );
     await startGame("thief");
     expect(shopUnits.value.filter(Boolean).length).toBe(3);
   });
@@ -154,6 +175,8 @@ describe("startGame", () => {
     expect(activeEvent.value).toBeNull();
 
     tutorialDone.value = true;
+    vi.mocked(startRun).mockResolvedValue(ok(defaultRun()));
+    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState()));
     await startGame("thief");
     expect(activeEvent.value).toBeNull();
   });
@@ -164,46 +187,38 @@ describe("startGame", () => {
   });
 
   it("sets currentRunId to null on server error fallback", async () => {
-    const { err } = await import("../../shared/errors");
-    mockApiFetch.mockResolvedValue(err({ type: "API_FETCH_FAILED", status: 500, cause: null }));
+    vi.mocked(startRun).mockResolvedValue(
+      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
+    );
     await startGame("thief");
     expect(currentRunId.value).toBeNull();
   });
 
   it("calls startRun with originId", async () => {
     await startGame("surgeon");
-    expect(mockApiFetch).toHaveBeenCalledWith(
-      "/api/run/start",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ originId: "surgeon" }),
-      }),
+    expect(startRun).toHaveBeenCalledWith("surgeon");
+  });
+
+  it("sets startGameError on server error without entering SHOP", async () => {
+    vi.mocked(startRun).mockResolvedValue(
+      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
     );
-  });
-
-  it("falls back to local on server error", async () => {
-    const { err } = await import("../../shared/errors");
-    mockApiFetch.mockResolvedValue(err({ type: "API_FETCH_FAILED", status: 500, cause: null }));
     await startGame("thief");
-    expect(phase.value).toBe("SHOP");
-    expect(sanity.value).toBe(5);
+    expect(phase.value).toBe("TITLE");
+    expect(startGameError.value).toEqual({ type: "API_FETCH_FAILED", status: 500, cause: null });
+    expect(gameLoading.value).toBe(false);
   });
 
-  it("resumes existing run on 409 conflict", async () => {
-    const { ok, err } = await import("../../shared/errors");
-    mockApiFetch.mockImplementation(async (path: string) => {
-      if (path.startsWith("/api/run/start")) {
-        return err({ type: "API_FETCH_FAILED", status: 409, cause: null });
-      }
-      if (path.startsWith("/api/run/current")) {
-        return ok(defaultRunResponse({ round: 3, sanity: 4, trophy: 2 }));
-      }
-      return err({ type: "API_FETCH_FAILED", status: 404, cause: null });
-    });
+  it("resumes existing run when getCurrentRun returns active run", async () => {
+    vi.mocked(getCurrentRun).mockResolvedValue(ok(defaultRun({ round: 3, sanity: 4, trophy: 2 })));
+    vi.mocked(apiSetupShop).mockResolvedValue(
+      ok(makeShopState({ round: 3, sanity: 4, trophy: 2 })),
+    );
     await startGame("thief");
     expect(round.value).toBe(3);
     expect(sanity.value).toBe(4);
     expect(trophy.value).toBe(2);
+    expect(startRun).not.toHaveBeenCalled();
   });
 
   it("prevents double startGame via gameLoading", async () => {

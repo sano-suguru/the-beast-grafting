@@ -4,7 +4,6 @@ import { LoreScreen } from "./screens/lore-screen";
 import { OriginScreen } from "./screens/origin-screen";
 import { ShopScreen } from "./screens/shop-screen";
 import { PreBattleScreen } from "./screens/pre-battle-screen";
-import { BattleLoadingScreen } from "./screens/battle-loading-screen";
 import { BattleScreen } from "./screens/battle-screen";
 import { ResultScreen } from "./screens/result-screen";
 
@@ -18,8 +17,6 @@ export function App() {
       return <ShopScreen />;
     case "PRE_BATTLE":
       return <PreBattleScreen />;
-    case "BATTLE_LOADING":
-      return <BattleLoadingScreen />;
     case "BATTLE":
       return <BattleScreen />;
     case "RESULT":

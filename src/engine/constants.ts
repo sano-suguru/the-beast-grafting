@@ -1,4 +1,4 @@
-export const UNIT_COST = 3;
+export { UNIT_COST } from "../shared/constants";
 
 export const DEATH_CASCADE_LIMIT = 20;
 export const COMBAT_ROUND_LIMIT = 500;
@@ -39,6 +39,13 @@ export const ROT_RING_MAX_USES = 4;
 export const MACHINE_BUFF = { atk: 2, hp: 2 } as const;
 export const ROTTING_CARGO_CEILING_BONUS = { atk: 2, hp: 2 } as const;
 
-export const FRAME_DELAY_NORMAL = 700;
-export const FRAME_DELAY_FAST = 150;
 export const FRAME_DELAY_DEATH_CHAIN = 300;
+
+export const SHOP_SIZES = [
+  { minRound: 9, size: 5 },
+  { minRound: 5, size: 4 },
+] as const;
+export const SHOP_SIZE_DEFAULT = 3;
+
+export const ITEM_SHOP_SIZES = [{ minRound: 7, size: 2 }] as const;
+export const ITEM_SHOP_SIZE_DEFAULT = 1;

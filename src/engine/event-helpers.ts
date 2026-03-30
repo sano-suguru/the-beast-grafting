@@ -1,8 +1,8 @@
-import type { EventData, EventId, ShopSlot, ShopItemSlot } from "../types";
+import type { EventData, EventId, ShopSlot, ShopItemSlot } from "../shared/types";
 import type { Rng } from "./rng";
 import { createDefaultRng } from "./rng";
-import { EVENTS } from "../data/events";
-import { ITEMS } from "../data/items";
+import { EVENTS } from "../shared/data/events";
+import { ITEMS } from "../shared/data/items";
 import { createUnit, getUnitsByTier, getItemPool, pickRandom, getCurrentMaxTier } from "./helpers";
 import { UNIT_COST, ROTTING_CARGO_CEILING_BONUS } from "./constants";
 

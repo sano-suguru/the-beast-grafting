@@ -1,5 +1,5 @@
-import { ITEMS } from "../data/items";
-import type { UnitInstance, ShopItemSlot } from "../types";
+import { ITEMS } from "../shared/data/items";
+import type { UnitInstance, ShopItemSlot } from "../shared/types";
 import { ALTAR_BUFF, ROT_RING_MAX_USES, MACHINE_BUFF } from "./constants";
 import { computeZealotBuff } from "./buff-utils";
 

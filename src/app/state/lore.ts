@@ -2,7 +2,7 @@ import { signal, effect } from "@preact/signals";
 import type { LoreDb, LoreEntry } from "../types";
 import { fromThrowable } from "../../shared/errors";
 import type { InfraError } from "../../shared/errors";
-import { safeGetItem, safeSetItem } from "../../shared/storage";
+import { safeGetItem, safeSetItem } from "./storage";
 import { invariant } from "../../shared/invariant";
 
 const STORAGE_KEY = "beastGrafterLore";

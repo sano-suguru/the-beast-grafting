@@ -1,5 +1,5 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import type { UnitInstance, EnemyTeam, BattleResult } from "../types";
+import type { UnitInstance, EnemyTeam, BattleResult } from "../shared/types";
 import type { Rng } from "./rng";
 
 /** トークンはハンドラ登録が構造的に不可能なため、副作用なしのテスト用IDとして使える */

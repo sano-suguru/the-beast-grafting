@@ -1,4 +1,4 @@
-import type { UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../types";
+import type { UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../shared/types";
 import { generateUid } from "./helpers";
 import type { BattleContext, BattleUnit } from "./battle-context";
 import { pushFrame } from "./battle-context";

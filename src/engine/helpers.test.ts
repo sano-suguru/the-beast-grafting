@@ -1,6 +1,6 @@
 import { createUnit, getShopPool, getItemPool, getEquipInfo, generateEnemyTeam } from "./helpers";
-import { EQUIPS } from "../data/equips";
-import type { EquipType } from "../types";
+import { EQUIPS } from "../shared/data/equips";
+import type { EquipType } from "../shared/types";
 import { createSeededRng } from "./rng";
 
 describe("createUnit", () => {

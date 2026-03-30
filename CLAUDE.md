@@ -16,17 +16,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Layers
 
+- **`src/engine/`** — Pure game logic (battle simulation, shop effects, death resolution). Deterministic, no UI/state/worker/DB dependencies. app・workerの両方から参照される独立層。
 - **`src/app/`** — Client-side Preact SPA
   - **`state/`** — Global state via `@preact/signals` (no store library). All signals live in `game-store.ts`; mutations are split across `game-actions.ts`, `shop-actions.ts`, `card-actions.ts`, `battle-actions.ts`, `undo-actions.ts`.
-  - **`engine/`** — Pure game logic (battle simulation, shop effects, death resolution). Deterministic, no UI dependencies. Battle runs produce an array of `BattleFrame`s that the visualizer replays.
+  - **`engine/`** — Client-only engine (audio, particle system). No game logic.
   - **`api/`** — API client functions for server communication (`fetch.ts`, `pvp-client.ts`, `run-client.ts`).
   - **`screens/`** — Full-page screen components switched by `phase` signal in `app.tsx`.
   - **`components/`** — Reusable UI components (cards, badges, icons).
   - **`data/`** — Static game data definitions (units, items, origins, church units).
   - **`types/`** — Shared TypeScript types for the client.
 - **`src/worker/`** — Cloudflare Worker backend (Hono). API routes in `api.ts`, entry in `index.ts`.
-- **`src/db/`** — Drizzle ORM schema (SQLite/D1). Single `runs` table for async PvP board snapshots.
-- **`src/shared/`** — Code shared between client and worker (error types, logger).
+- **`src/db/`** — Drizzle ORM schema (SQLite/D1).
+- **`src/shared/`** — Types, error definitions, data definitions, utilities. Thin layer shared between client and worker.
 - **`e2e/`** — Playwright end-to-end tests.
 
 ### Key Patterns

@@ -11,7 +11,6 @@ import type {
   EnemyFaction,
   BattleFrame,
   BattleResult,
-  ShopSnapshot,
   EventData,
 } from "../types";
 import type { InfraError } from "../../shared/errors";
@@ -45,9 +44,14 @@ export const lastBattleId = signal<string | null>(null);
 export const battleError = signal<InfraError | null>(null);
 
 export const battleBusy = signal(false);
+export const battleLoading = signal(false);
+export const battleLoadError = signal<InfraError | null>(null);
 
 export const gameLoading = signal(false);
 
-export const undoSnapshot = signal<ShopSnapshot | null>(null);
+export const canUndo = signal(false);
+export const shopLocked = signal(false);
+export const shopActionError = signal<InfraError | null>(null);
+export const startGameError = signal<InfraError | null>(null);
 export const activeEvent = signal<EventData | null>(null);
 export const showHelpOverlay = signal(false);

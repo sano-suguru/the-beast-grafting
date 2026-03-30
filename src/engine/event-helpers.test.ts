@@ -5,7 +5,7 @@ import {
   buildEventShopUnits,
   buildEventShopItems,
 } from "./event-helpers";
-import { EVENTS } from "../data/events";
+import { EVENTS } from "../shared/data/events";
 import { ROTTING_CARGO_CEILING_BONUS } from "./constants";
 
 describe("EVENT_SCHEDULE", () => {

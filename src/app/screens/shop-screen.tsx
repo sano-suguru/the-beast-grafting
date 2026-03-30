@@ -1,4 +1,5 @@
 import { ChevronRight, Trash2, Droplet, Undo2, X } from "lucide-preact";
+import { UNIT_COST } from "../../shared/constants";
 import type { OnboardingStep, UnitInstance } from "../types";
 import {
   board,
@@ -7,9 +8,11 @@ import {
   shopItems,
   selection,
   onboardingStep,
-  undoSnapshot,
+  canUndo,
   activeEvent,
   showHelpOverlay,
+  shopLocked,
+  shopActionError,
 } from "../state/game-store";
 import { executeSellUnit, dismissEvent } from "../state/shop-actions";
 import { undoLastAction } from "../state/undo-actions";
@@ -27,6 +30,8 @@ export function ShopScreen() {
   const currentSanity = sanity.value;
   const currentBoard = board.value;
   const currentOnboarding = onboardingStep.value;
+  const busy = shopLocked.value;
+  const actionError = shopActionError.value;
 
   return (
     <main className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300 select-none">
@@ -38,13 +43,15 @@ export function ShopScreen() {
         <ShopInfoPanel sel={sel} currentSanity={currentSanity} />
         <BoardSection board={currentBoard} />
         <div className="mb-4 flex shrink-0 gap-2">
-          <SellButton isActive={sel?.type === "BOARD_UNIT"} />
-          <UndoButton />
+          <SellButton isActive={sel?.type === "BOARD_UNIT" && !busy} />
+          <UndoButton disabled={busy} />
         </div>
         <ShopSection />
       </div>
 
       <ShopFooter currentOnboarding={currentOnboarding} />
+      {busy && <ShopBusyOverlay />}
+      {actionError && <ShopErrorBanner />}
     </main>
   );
 }
@@ -144,14 +151,14 @@ function SellButton({ isActive }: { isActive: boolean }) {
   );
 }
 
-function UndoButton() {
-  const hasSnapshot = undoSnapshot.value !== null;
+function UndoButton({ disabled }: { disabled: boolean }) {
+  const enabled = canUndo.value && !disabled;
   return (
     <button
       onClick={undoLastAction}
-      disabled={!hasSnapshot}
+      disabled={!enabled}
       className={`flex h-10 shrink-0 items-center justify-center rounded border px-3 transition-all md:h-12 md:px-4 ${
-        hasSnapshot
+        enabled
           ? "cursor-pointer border-zinc-600 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:scale-95"
           : "cursor-not-allowed border-zinc-800/50 bg-zinc-900/30 text-zinc-700 opacity-50"
       }`}
@@ -159,6 +166,30 @@ function UndoButton() {
       <Undo2 size={14} className="mr-1" />
       <span className="text-[10px] font-bold md:text-xs">元に戻す</span>
     </button>
+  );
+}
+
+function ShopBusyOverlay() {
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
+      <p className="animate-pulse text-sm tracking-widest text-red-800">……暗闇の中で蠢いている……</p>
+    </div>
+  );
+}
+
+function ShopErrorBanner() {
+  return (
+    <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-between bg-red-950/90 px-3 py-2 text-xs text-red-400">
+      <span>接続に失敗しました。再度お試しください。</span>
+      <button
+        onClick={() => {
+          shopActionError.value = null;
+        }}
+        className="ml-2 shrink-0 cursor-pointer text-red-600 hover:text-red-400"
+      >
+        <X size={14} />
+      </button>
+    </div>
   );
 }
 
@@ -180,7 +211,8 @@ function ShopSection() {
           {label}
           {!isEventMode && (
             <span className="text-[10px] font-normal text-zinc-500">
-              (素体・薬 一律 3<Droplet size={10} className="inline text-red-800" />)
+              (素体・薬 一律 {UNIT_COST}
+              <Droplet size={10} className="inline text-red-800" />)
             </span>
           )}
         </span>

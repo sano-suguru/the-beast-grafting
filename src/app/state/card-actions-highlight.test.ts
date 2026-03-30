@@ -3,7 +3,7 @@ vi.mock("../engine/audio", () => ({
   playSE: vi.fn(),
 }));
 
-vi.mock("../../shared/engine/shop-effects", () => ({
+vi.mock("../../engine/shop-effects", () => ({
   graftUnits: vi.fn((base: UnitInstance) => ({
     ...base,
     level: base.level + 1,
@@ -29,7 +29,7 @@ import {
   onboardingStep,
   lastBattleResult,
 } from "./game-store";
-import { makeUnit } from "../../shared/engine/test-helpers";
+import { makeUnit } from "../../engine/test-helpers";
 import type { ItemData, ShopItemSlot, UnitInstance } from "../types";
 
 function makeItem(overrides: Partial<ItemData> = {}): ItemData {

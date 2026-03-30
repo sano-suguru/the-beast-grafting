@@ -12,7 +12,7 @@ export function FreezeButton({ isUnit, index, isFrozen, iconSize = 12 }: FreezeB
   const onClick = (e: Event) => {
     e.stopPropagation();
     e.preventDefault();
-    handleFreezeClick(isUnit, index);
+    handleFreezeClick(isUnit, index, !isFrozen);
   };
   return (
     <button

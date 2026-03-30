@@ -3,8 +3,13 @@ vi.mock("../engine/audio", () => ({
   playSE: vi.fn(),
 }));
 
-import { captureSnapshot, undoLastAction } from "./undo-actions";
+vi.mock("../api/shop-client", () => ({
+  undoAction: vi.fn(),
+}));
+
+import { undoLastAction } from "./undo-actions";
 import { playSE } from "../engine/audio";
+import { undoAction as apiUndoAction } from "../api/shop-client";
 import {
   blood,
   sanity,
@@ -16,181 +21,115 @@ import {
   onboardingStep,
   rotRingUses,
   selection,
-  undoSnapshot,
+  canUndo,
+  shopLocked,
+  currentRunId,
+  phase,
 } from "./game-store";
-import { makeUnit } from "../../shared/engine/test-helpers";
-import type { ShopSlot, ShopItemSlot } from "../types";
-
-function makeShopSlot(overrides: Partial<ReturnType<typeof makeUnit>> = {}): ShopSlot {
-  return { unit: makeUnit(overrides), frozen: false };
-}
-
-function makeShopItemSlot(): ShopItemSlot {
-  return {
-    item: {
-      id: "preservative",
-      name: "防腐液",
-      cost: 3,
-      atk: 1,
-      hp: 1,
-      equip: null,
-      skillText: "",
-      lore: "",
-    },
-    frozen: false,
-  };
-}
+import { makeUnit } from "../../engine/test-helpers";
+import { ok, err } from "../../shared/errors";
+import { makeShopState, toBoardUnit } from "./test-helpers";
 
 beforeEach(() => {
+  phase.value = "SHOP";
   blood.value = 10;
   sanity.value = 5;
   board.value = [makeUnit({ uid: "u1", atk: 3 }), null, null, null, null];
-  shopUnits.value = [makeShopSlot({ uid: "s1" })];
-  shopItems.value = [makeShopItemSlot()];
+  shopUnits.value = [];
+  shopItems.value = [];
   freeRoll.value = false;
   cultistUsed.value = false;
   onboardingStep.value = null;
   rotRingUses.value = 0;
   selection.value = null;
-  undoSnapshot.value = null;
+  canUndo.value = true;
+  shopLocked.value = false;
+  currentRunId.value = "test-run-id";
   vi.clearAllMocks();
 });
 
-// --- captureSnapshot ---
-
-describe("captureSnapshot", () => {
-  it("captures all signal values into undoSnapshot", () => {
-    captureSnapshot();
-    const snap = undoSnapshot.value!;
-    expect(snap).not.toBeNull();
-    expect(snap.blood).toBe(10);
-    expect(snap.sanity).toBe(5);
-    expect(snap.freeRoll).toBe(false);
-    expect(snap.cultistUsed).toBe(false);
-    expect(snap.onboardingStep).toBeNull();
-    expect(snap.rotRingUses).toBe(0);
-  });
-
-  it("deep-clones board units (mutations don't affect snapshot)", () => {
-    captureSnapshot();
-    // Mutate original
-    board.value[0]!.atk = 99;
-    const snap = undoSnapshot.value!;
-    expect(snap.board[0]!.atk).toBe(3); // original value preserved
-  });
-
-  it("deep-clones shopUnits (mutations don't affect snapshot)", () => {
-    captureSnapshot();
-    shopUnits.value[0]!.unit.atk = 99;
-    const snap = undoSnapshot.value!;
-    expect(snap.shopUnits[0]!.unit.atk).toBe(2); // makeUnit default baseAtk
-  });
-
-  it("deep-clones shopItems (mutations don't affect snapshot)", () => {
-    captureSnapshot();
-    shopItems.value[0]!.item.cost = 99;
-    const snap = undoSnapshot.value!;
-    expect(snap.shopItems[0]!.item.cost).toBe(3);
-  });
-
-  it("handles null entries in board correctly", () => {
-    board.value = [null, makeUnit({ uid: "u2" }), null, null, null];
-    captureSnapshot();
-    const snap = undoSnapshot.value!;
-    expect(snap.board[0]).toBeNull();
-    expect(snap.board[1]).not.toBeNull();
-  });
-
-  it("handles empty shop arrays", () => {
-    shopUnits.value = [];
-    shopItems.value = [];
-    captureSnapshot();
-    const snap = undoSnapshot.value!;
-    expect(snap.shopUnits).toEqual([]);
-    expect(snap.shopItems).toEqual([]);
-  });
-
-  it("deep-copies mixed null/non-null shopItems", () => {
-    const item1 = makeShopItemSlot();
-    const item2 = makeShopItemSlot();
-    shopItems.value = [item1, null, item2];
-    captureSnapshot();
-    const snap = undoSnapshot.value!;
-    expect(snap.shopItems[0]).not.toBeNull();
-    expect(snap.shopItems[1]).toBeNull();
-    expect(snap.shopItems[2]).not.toBeNull();
-    // Verify deep copy (different reference)
-    expect(snap.shopItems[0]).not.toBe(item1);
-    expect(snap.shopItems[2]).not.toBe(item2);
-  });
-});
-
-// --- undoLastAction ---
-
 describe("undoLastAction", () => {
-  it("restores all signals to snapshot values", () => {
-    captureSnapshot();
-    // Modify all signals
+  it("calls API and restores signals from response", async () => {
+    const restoredUnit = makeUnit({ uid: "u1", atk: 3 });
+    const restoredShopUnit = makeUnit({ uid: "s1" });
+    vi.mocked(apiUndoAction).mockResolvedValue(
+      ok(
+        makeShopState({
+          blood: 10,
+          sanity: 5,
+          board: [toBoardUnit(restoredUnit), null, null, null, null],
+          shopUnits: [{ unit: toBoardUnit(restoredShopUnit), frozen: false }],
+          freeRoll: false,
+          cultistUsed: false,
+          rotRingUses: 0,
+          canUndo: false,
+        }),
+      ),
+    );
+
     blood.value = 0;
     sanity.value = 0;
     board.value = [null, null, null, null, null];
-    shopUnits.value = [];
-    shopItems.value = [];
-    freeRoll.value = true;
-    cultistUsed.value = true;
-    onboardingStep.value = "buy";
-    rotRingUses.value = 4;
 
     undoLastAction();
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
 
     expect(blood.value).toBe(10);
     expect(sanity.value).toBe(5);
     expect(board.value[0]!.uid).toBe("u1");
     expect(shopUnits.value).toHaveLength(1);
-    expect(shopItems.value).toHaveLength(1);
-    expect(freeRoll.value).toBe(false);
-    expect(cultistUsed.value).toBe(false);
-    expect(onboardingStep.value).toBeNull();
-    expect(rotRingUses.value).toBe(0);
+    expect(selection.value).toBeNull();
+    expect(playSE).toHaveBeenCalledWith("select");
   });
 
-  it("clears selection after undo", () => {
-    captureSnapshot();
+  it("clears selection after undo", async () => {
+    vi.mocked(apiUndoAction).mockResolvedValue(ok(makeShopState({ canUndo: false })));
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
     undoLastAction();
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(selection.value).toBeNull();
   });
 
-  it("sets undoSnapshot to null after undo (single undo, not stack)", () => {
-    captureSnapshot();
+  it("sets canUndo to false after undo (single undo, not stack)", async () => {
+    vi.mocked(apiUndoAction).mockResolvedValue(ok(makeShopState({ canUndo: false })));
     undoLastAction();
-    expect(undoSnapshot.value).toBeNull();
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    expect(canUndo.value).toBe(false);
   });
 
-  it("does nothing when undoSnapshot is null", () => {
-    undoSnapshot.value = null;
+  it("does nothing when canUndo is false", () => {
+    canUndo.value = false;
     blood.value = 7;
     undoLastAction();
-    expect(blood.value).toBe(7); // unchanged
+    expect(blood.value).toBe(7);
+    expect(apiUndoAction).not.toHaveBeenCalled();
   });
 
-  it("plays select sound effect", () => {
-    captureSnapshot();
+  it("does nothing when shopLocked", () => {
+    shopLocked.value = true;
     undoLastAction();
+    expect(apiUndoAction).not.toHaveBeenCalled();
+  });
+
+  it("does nothing without runId", () => {
+    currentRunId.value = null;
+    undoLastAction();
+    expect(apiUndoAction).not.toHaveBeenCalled();
+  });
+
+  it("plays select sound effect on success", async () => {
+    vi.mocked(apiUndoAction).mockResolvedValue(ok(makeShopState()));
+    undoLastAction();
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(vi.mocked(playSE)).toHaveBeenCalledWith("select");
   });
-});
 
-// --- snapshot isolation ---
-
-describe("snapshot isolation", () => {
-  it("second captureSnapshot overwrites first (not a stack)", () => {
-    captureSnapshot();
-    blood.value = 5;
-    captureSnapshot(); // overwrite with blood=5
-
-    blood.value = 0;
+  it("plays error on API failure", async () => {
+    vi.mocked(apiUndoAction).mockResolvedValue(
+      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
+    );
     undoLastAction();
-    expect(blood.value).toBe(5); // restored to second snapshot, not first
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    expect(playSE).toHaveBeenCalledWith("error");
   });
 });

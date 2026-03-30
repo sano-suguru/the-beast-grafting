@@ -2,7 +2,7 @@ import { getDeathHandler, handleEquipDeath, handleBeelzebubSpawns } from "./batt
 import type { DeathHandlerUnitId } from "./battle-deaths-handlers";
 import { makeBattleUnit, makeContext } from "./test-helpers";
 import type { BattleUnit } from "./battle-context";
-import { invariant } from "../invariant";
+import { invariant } from "../shared/invariant";
 
 function callHandler(
   id: DeathHandlerUnitId,

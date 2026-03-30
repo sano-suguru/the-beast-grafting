@@ -9,6 +9,7 @@ import {
   board,
   activeEvent,
   showHelpOverlay,
+  shopLocked,
 } from "../../state/game-store";
 import { OnboardingTooltip } from "../../components/onboarding-tooltip";
 import { rollShop, useCultistAbility } from "../../state/shop-actions";
@@ -51,12 +52,13 @@ function getBattleButtonClass(hasUnit: boolean, step: OnboardingStep): string {
 }
 
 export function ShopFooter({ currentOnboarding }: { currentOnboarding: OnboardingStep }) {
+  const busy = shopLocked.value;
   const currentFreeRoll = freeRoll.value;
   const currentBlood = blood.value;
   const currentBoard = board.value;
   const hasUnit = currentBoard.some((u) => u);
-  const rollDisabled = isRollDisabled(currentFreeRoll, currentBlood, currentOnboarding);
-  const battleDisabled = isBattleDisabled(hasUnit, currentOnboarding);
+  const rollDisabled = isRollDisabled(currentFreeRoll, currentBlood, currentOnboarding) || busy;
+  const battleDisabled = isBattleDisabled(hasUnit, currentOnboarding) || busy;
 
   return (
     <footer className="relative z-20 grid shrink-0 grid-cols-2 gap-2 border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
@@ -77,7 +79,8 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
         {origin.value === "cultist" && !cultistUsed.value && sanity.value > 1 && (
           <button
             onClick={useCultistAbility}
-            className="cursor-pointer rounded border border-red-900 bg-red-950/30 px-2 text-[10px] text-red-600 hover:bg-red-900/50 active:scale-95"
+            disabled={busy}
+            className="cursor-pointer rounded border border-red-900 bg-red-950/30 px-2 text-[10px] text-red-600 hover:bg-red-900/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             血の代償
           </button>
@@ -95,7 +98,13 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
           disabled={battleDisabled}
           className={`flex-1 ${getBattleButtonClass(hasUnit, currentOnboarding)}`}
         >
-          狂宴へ向かう <Play size={14} />
+          {busy ? (
+            <span className="animate-pulse">……準備中……</span>
+          ) : (
+            <>
+              狂宴へ向かう <Play size={14} />
+            </>
+          )}
         </button>
       </div>
     </footer>

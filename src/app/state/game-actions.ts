@@ -16,6 +16,7 @@ import {
   onboardingStep,
   showHelpOverlay,
   gameLoading,
+  startGameError,
 } from "./game-store";
 import { setupNight } from "./shop-actions";
 import { tutorialDone } from "./tutorial";
@@ -51,6 +52,7 @@ function applyLocalGameState(
 export async function startGame(selectedOrigin: OriginId) {
   if (gameLoading.value) return;
   gameLoading.value = true;
+  startGameError.value = null;
   initAudio();
   playSE("clash");
 
@@ -59,30 +61,27 @@ export async function startGame(selectedOrigin: OriginId) {
     logError("[startGame:session]", sessionResult.error);
   }
 
-  const result = await startRun(selectedOrigin);
-  if (result.isOk()) {
-    const run = result.value;
-    applyLocalGameState(selectedOrigin, run.round, run.sanity, run.trophy, run.id);
-    setupNight(run.round, selectedOrigin, !tutorialDone.value);
+  const existing = await getCurrentRun();
+  if (existing.isOk() && existing.value) {
+    const run = existing.value;
+    const rawOriginId = run.originId ?? selectedOrigin;
+    const originId: OriginId = isOriginId(rawOriginId) ? rawOriginId : selectedOrigin;
+    applyLocalGameState(originId, run.round, run.sanity, run.trophy, run.id);
+    await setupNight(run.id, false);
     gameLoading.value = false;
     return;
   }
 
-  if (result.error.type === "API_FETCH_FAILED" && result.error.status === 409) {
-    const existing = await getCurrentRun();
-    if (existing.isOk() && existing.value) {
-      const run = existing.value;
-      const rawOriginId = run.originId ?? selectedOrigin;
-      const originId: OriginId = isOriginId(rawOriginId) ? rawOriginId : selectedOrigin;
-      applyLocalGameState(originId, run.round, run.sanity, run.trophy, run.id);
-      setupNight(run.round, originId, false);
-      gameLoading.value = false;
-      return;
-    }
+  const result = await startRun(selectedOrigin);
+  if (result.isOk()) {
+    const run = result.value;
+    applyLocalGameState(selectedOrigin, run.round, run.sanity, run.trophy, run.id);
+    await setupNight(run.id, !tutorialDone.value);
+    gameLoading.value = false;
+    return;
   }
 
   logError("[startGame]", result.error);
-  applyLocalGameState(selectedOrigin, 1, 5, 0, null);
-  setupNight(1, selectedOrigin, !tutorialDone.value);
+  startGameError.value = result.error;
   gameLoading.value = false;
 }

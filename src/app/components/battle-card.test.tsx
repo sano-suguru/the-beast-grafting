@@ -2,7 +2,7 @@
 /// <reference types="@testing-library/jest-dom" />
 import { render, screen } from "@testing-library/preact";
 import { BattleCard } from "./battle-card";
-import { makeUnit } from "../../shared/engine/test-helpers";
+import { makeUnit } from "../../engine/test-helpers";
 
 describe("BattleCard", () => {
   it("returns null for null unit", () => {

@@ -1,14 +1,20 @@
 import { ORIGINS } from "../../shared/data/origins";
 import { startGame } from "../state/game-actions";
-import { gameLoading } from "../state/game-store";
+import { gameLoading, startGameError } from "../state/game-store";
 
 export function OriginScreen() {
   const loading = gameLoading.value;
+  const error = startGameError.value;
   return (
     <main className="relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-y-auto bg-zinc-950 p-4 font-serif text-zinc-300">
       <h1 className="mt-8 mb-8 border-b border-zinc-800 pb-2 text-2xl font-bold text-zinc-100">
         素性の選択
       </h1>
+      {error && (
+        <p className="mb-4 text-sm text-red-500">
+          サーバーに接続できませんでした。再度お試しください。
+        </p>
+      )}
       <ul role="list" className="mb-8 grid w-full max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
         {Object.values(ORIGINS).map((org) => (
           <li key={org.id}>

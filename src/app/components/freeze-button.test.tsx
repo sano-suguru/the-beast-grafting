@@ -28,6 +28,12 @@ describe("FreezeButton", () => {
   it("calls handleFreezeClick with correct args on click", () => {
     render(<FreezeButton isUnit={false} index={2} />);
     fireEvent.click(screen.getByRole("switch", { name: "防腐処理" }));
-    expect(handleFreezeClick).toHaveBeenCalledWith(false, 2);
+    expect(handleFreezeClick).toHaveBeenCalledWith(false, 2, true);
+  });
+
+  it("sends frozen=false when unfreezing", () => {
+    render(<FreezeButton isUnit index={1} isFrozen />);
+    fireEvent.click(screen.getByRole("switch", { name: "防腐処理" }));
+    expect(handleFreezeClick).toHaveBeenCalledWith(true, 1, false);
   });
 });

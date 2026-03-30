@@ -138,6 +138,12 @@ export interface ShopItemSlot {
 
 export type SanityTier = "high" | "mid" | "low";
 
+export function toSanityTier(sanity: number): SanityTier {
+  if (sanity >= 4) return "high";
+  if (sanity >= 2) return "mid";
+  return "low";
+}
+
 export interface PreBattleText {
   readonly intro: string;
   readonly closing: string;

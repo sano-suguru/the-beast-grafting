@@ -24,7 +24,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["src/test-setup.ts"],
     coverage: {
-      include: ["src/shared/engine/**", "src/shared/data/**", "src/app/state/**", "src/worker/**"],
+      include: ["src/engine/**", "src/shared/data/**", "src/app/state/**", "src/worker/**"],
       exclude: ["**/*.test.{ts,tsx}"],
       reporter: ["text", "html"],
     },

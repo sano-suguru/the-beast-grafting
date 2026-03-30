@@ -4,8 +4,10 @@ import { playSE } from "../engine/audio";
 import { BattleVisualizer } from "./battle/battle-visualizer";
 import { BattleLog } from "./battle/battle-log";
 import { BattleFooter } from "./battle/battle-footer";
-import { FRAME_DELAY_NORMAL, FRAME_DELAY_FAST } from "../../shared/engine/constants";
 import type { LogType, SoundType } from "../types";
+
+const FRAME_DELAY_NORMAL = 700;
+const FRAME_DELAY_FAST = 150;
 
 const SE_MAP: Partial<Record<LogType, SoundType>> = {
   clash: "clash",

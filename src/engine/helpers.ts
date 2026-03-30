@@ -1,18 +1,16 @@
-import { UNITS } from "../data/units";
-import { CHURCH_UNITS } from "../data/church-units";
-import { EQUIPS } from "../data/equips";
+import { UNITS } from "../shared/data/units";
+import { CHURCH_UNITS } from "../shared/data/church-units";
 import type {
   UnitInstance,
   EnemyTeam,
   EnemyFaction,
-  EquipType,
   RegularUnitId,
   ChurchUnitId,
   ItemId,
-} from "../types";
+} from "../shared/types";
 import type { Rng } from "./rng";
 import { createDefaultRng } from "./rng";
-import { invariant } from "../invariant";
+import { invariant } from "../shared/invariant";
 
 export const generateUid = (): string => Math.random().toString(36).substring(2, 11);
 
@@ -158,4 +156,4 @@ export const generateEnemyTeam = (round: number, rng: Rng = createDefaultRng()):
   return { teamName, teamType: type, units };
 };
 
-export const getEquipInfo = (equipId: EquipType) => EQUIPS[equipId];
+export { getEquipInfo } from "../shared/data/equips";

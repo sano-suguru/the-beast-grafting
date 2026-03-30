@@ -7,7 +7,7 @@ import type {
   IconType,
   RegularUnitId,
   ChurchUnitId,
-} from "../types";
+} from "../shared/types";
 import type { Rng } from "./rng";
 import { generateUid } from "./helpers";
 import { MAX_OPS } from "./constants";

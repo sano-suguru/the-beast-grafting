@@ -1,4 +1,4 @@
-import type { EnemyFaction, PreBattleText, SanityTier } from "../types";
+import type { EnemyFaction, PreBattleText, SanityTier } from "../../shared/types";
 
 export const PRE_BATTLE_TEXTS: Record<
   SanityTier,

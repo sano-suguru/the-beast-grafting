@@ -1,8 +1,8 @@
-import type { BattleAction, UnitId } from "../types";
+import type { BattleAction, UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
-import { mustGet } from "../invariant";
+import { mustGet } from "../shared/invariant";
 import {
   BAT_DAMAGE,
   BANSHEE_DAMAGE,

@@ -16,17 +16,9 @@ export type {
   BattleResult,
 } from "../../shared/types";
 
-import type { UnitInstance, ItemData, ShopSlot, ShopItemSlot } from "../../shared/types";
+import type { UnitInstance, ItemData } from "../../shared/types";
 
-export type GamePhase =
-  | "TITLE"
-  | "ORIGIN"
-  | "SHOP"
-  | "PRE_BATTLE"
-  | "BATTLE_LOADING"
-  | "BATTLE"
-  | "RESULT"
-  | "LORE";
+export type GamePhase = "TITLE" | "ORIGIN" | "SHOP" | "PRE_BATTLE" | "BATTLE" | "RESULT" | "LORE";
 
 export type Selection =
   | { type: "SHOP_UNIT"; index: number; item: UnitInstance }
@@ -36,19 +28,6 @@ export type Selection =
 export type HighlightKind = "graft" | "swap" | "move" | false;
 
 export type OnboardingStep = "buy" | "graft" | "roll" | "battle" | null;
-
-export interface ShopSnapshot {
-  blood: number;
-  sanity: number;
-  trophy: number;
-  board: (UnitInstance | null)[];
-  shopUnits: (ShopSlot | null)[];
-  shopItems: (ShopItemSlot | null)[];
-  freeRoll: boolean;
-  cultistUsed: boolean;
-  onboardingStep: OnboardingStep;
-  rotRingUses: number;
-}
 
 export interface LoreEntry {
   seen: boolean;

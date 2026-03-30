@@ -59,6 +59,7 @@ CREATE TABLE `runs` (
 	`trophy` integer DEFAULT 0 NOT NULL,
 	`board` text NOT NULL,
 	`origin_id` text,
+	`shop_seed` integer,
 	`status` text DEFAULT 'active' NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
@@ -77,4 +78,27 @@ CREATE TABLE `sessions` (
 );
 --> statement-breakpoint
 CREATE INDEX `idx_sessions_player_id` ON `sessions` (`player_id`);--> statement-breakpoint
-CREATE INDEX `idx_sessions_expires_at` ON `sessions` (`expires_at`);
+CREATE INDEX `idx_sessions_expires_at` ON `sessions` (`expires_at`);--> statement-breakpoint
+CREATE TABLE `shop_states` (
+	`id` text PRIMARY KEY NOT NULL,
+	`run_id` text NOT NULL,
+	`round` integer NOT NULL,
+	`blood` integer DEFAULT 10 NOT NULL,
+	`free_roll` integer DEFAULT false NOT NULL,
+	`cultist_used` integer DEFAULT false NOT NULL,
+	`rot_ring_uses` integer DEFAULT 0 NOT NULL,
+	`shop_units` text NOT NULL,
+	`shop_items` text NOT NULL,
+	`board` text NOT NULL,
+	`active_event` text,
+	`rng_s0` integer NOT NULL,
+	`rng_s1` integer NOT NULL,
+	`undo_snapshot` text,
+	`version` integer DEFAULT 1 NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
+	FOREIGN KEY (`run_id`) REFERENCES `runs`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_shop_states_run_round` ON `shop_states` (`run_id`,`round`);--> statement-breakpoint
+CREATE INDEX `idx_shop_states_run_id` ON `shop_states` (`run_id`);

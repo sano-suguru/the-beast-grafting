@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import { createTestDb } from "../auth/test-db";
-import { runs, boardSnapshots, battles } from "../../db/schema";
+import { runs, battles, shopStates } from "../../db/schema";
 import { generateId } from "../auth/crypto";
 import runRoutes, { consumeAndAdvance } from "./routes";
 import { TEST_ENV } from "../auth/test-helpers";
@@ -369,42 +369,53 @@ describe("POST /advance", () => {
     expect(body.error.reason).toBe("run_finished");
   });
 
-  it("updates board from latest snapshot", async () => {
+  it("updates board from latest shop state", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const startRes = await postStart(app, token);
     const { run } = (await startRes.json()) as RunResponse;
 
-    await testDb.insert(boardSnapshots).values({
+    const ratUnit = {
+      id: "rat" as const,
+      name: "疫病ネズミ",
+      baseAtk: 2,
+      baseHp: 2,
+      atk: 5,
+      hp: 5,
+      tier: 1,
+      level: 2,
+      exp: 2,
+      equip: null,
+      uid: "test-uid",
+      isChurch: false,
+      skillText: "",
+      lore: "",
+    };
+    const now = new Date();
+
+    await testDb.insert(shopStates).values({
       id: generateId(),
-      playerId,
       runId: run.id,
       round: 1,
-      board: [
-        {
-          id: "rat",
-          name: "疫病ネズミ",
-          baseAtk: 2,
-          baseHp: 2,
-          atk: 5,
-          hp: 5,
-          tier: 1,
-          level: 2,
-          exp: 2,
-          equip: null,
-          uid: "test-uid",
-          isChurch: false,
-          skillText: "",
-          lore: "",
-        },
-      ],
-      createdAt: new Date(),
+      blood: 10,
+      freeRoll: false,
+      cultistUsed: false,
+      rotRingUses: 0,
+      shopUnits: [],
+      shopItems: [],
+      board: [ratUnit, null, null, null, null],
+      rngS0: 1,
+      rngS1: 2,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
     });
 
     const battleId = await insertBattle(testDb, playerId, run.id, 1, "WIN");
     await postAdvance(app, token, battleId);
 
     const row = await testDb.select().from(runs).where(eq(runs.playerId, playerId)).limit(1);
-    expect(row[0]!.board).toHaveLength(1);
+    expect(row[0]!.board).toHaveLength(5);
     expect(row[0]!.board[0]!.atk).toBe(5);
+    expect(row[0]!.board[1]).toBeNull();
   });
 });

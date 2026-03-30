@@ -1,8 +1,8 @@
-import { safeSetItem } from "../../shared/storage";
+import { safeSetItem } from "./storage";
 
 const store = new Map<string, string>();
 
-vi.mock("../../shared/storage", () => ({
+vi.mock("./storage", () => ({
   safeGetItem: vi.fn((key: string) => store.get(key) ?? null),
   safeSetItem: vi.fn((key: string, value: string) => {
     store.set(key, value);

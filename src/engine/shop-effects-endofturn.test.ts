@@ -1,5 +1,5 @@
 import { applyEndOfTurnEffects } from "./shop-effects";
-import type { UnitInstance } from "../types";
+import type { UnitInstance } from "../shared/types";
 
 function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
   return {

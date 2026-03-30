@@ -3,30 +3,15 @@ vi.mock("../engine/audio", () => ({
   playSE: vi.fn(),
 }));
 
-vi.mock("../../shared/engine/shop-effects", () => ({
-  graftUnits: vi.fn((base: UnitInstance) => ({
-    ...base,
-    level: base.level + 1,
-    exp: 1,
-  })),
-  applyBuyEffects: vi.fn((_unit: UnitInstance, board: (UnitInstance | null)[]) => ({
-    board,
-    chaliceTriggered: false,
-    rotRingUses: 0,
-  })),
-  applyChaliceEffect: vi.fn((items: (ShopItemSlot | null)[]) => items),
-  applySummonEffects: vi.fn((_idx: number, board: (UnitInstance | null)[]) => board),
-  applyEndOfTurnEffects: vi.fn((board: (UnitInstance | null)[]) => board),
+vi.mock("../api/shop-client", () => ({
+  buyUnit: vi.fn(),
+  equipItem: vi.fn(),
+  swapBoard: vi.fn(),
 }));
 
 import { handleCardClick } from "./card-actions";
 import { playSE } from "../engine/audio";
-import {
-  graftUnits,
-  applyBuyEffects,
-  applyChaliceEffect,
-  applySummonEffects,
-} from "../../shared/engine/shop-effects";
+import { buyUnit as apiBuyUnit, equipItem as apiEquipItem } from "../api/shop-client";
 import {
   blood,
   board,
@@ -35,9 +20,14 @@ import {
   selection,
   onboardingStep,
   lastBattleResult,
+  shopLocked,
+  currentRunId,
+  phase,
 } from "./game-store";
-import { makeUnit } from "../../shared/engine/test-helpers";
-import type { ItemData, ShopSlot, ShopItemSlot, UnitInstance } from "../types";
+import { makeUnit } from "../../engine/test-helpers";
+import { ok } from "../../shared/errors";
+import type { ItemData, ShopSlot, ShopItemSlot } from "../types";
+import { makeShopState, toBoardUnit } from "./test-helpers";
 
 function makeItem(overrides: Partial<ItemData> = {}): ItemData {
   return {
@@ -50,7 +40,7 @@ function makeItem(overrides: Partial<ItemData> = {}): ItemData {
     skillText: "",
     lore: "",
     ...overrides,
-  };
+  } as ItemData;
 }
 
 function makeShopSlot(overrides: Partial<ReturnType<typeof makeUnit>> = {}): ShopSlot {
@@ -62,6 +52,7 @@ function makeShopItemSlot(overrides: Partial<ItemData> = {}): ShopItemSlot {
 }
 
 beforeEach(() => {
+  phase.value = "SHOP";
   blood.value = 10;
   board.value = [null, null, null, null, null];
   shopUnits.value = [];
@@ -69,22 +60,9 @@ beforeEach(() => {
   selection.value = null;
   onboardingStep.value = null;
   lastBattleResult.value = null;
+  shopLocked.value = false;
+  currentRunId.value = "test-run-id";
   vi.clearAllMocks();
-
-  vi.mocked(graftUnits).mockImplementation((base: UnitInstance) => ({
-    ...base,
-    level: base.level + 1,
-    exp: 1,
-  }));
-  vi.mocked(applyBuyEffects).mockImplementation(
-    (_unit: UnitInstance, b: (UnitInstance | null)[]) => ({
-      board: b,
-      chaliceTriggered: false,
-      rotRingUses: 0,
-    }),
-  );
-  vi.mocked(applyChaliceEffect).mockImplementation((items: (ShopItemSlot | null)[]) => items);
-  vi.mocked(applySummonEffects).mockImplementation((_idx: number, b: (UnitInstance | null)[]) => b);
 });
 
 describe("handleCardClick – selection / deselection", () => {
@@ -144,87 +122,122 @@ describe("handleCardClick – selection / deselection", () => {
 });
 
 describe("handleCardClick – buy unit to empty slot", () => {
-  it("places unit on board and deducts blood", () => {
+  it("calls API and applies response on buy", async () => {
     const unit = makeUnit({ id: "hound" });
-    shopUnits.value = [makeShopSlot({ id: "hound" }), null];
+    shopUnits.value = [makeShopSlot({ id: "hound" })];
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
+    vi.mocked(apiBuyUnit).mockResolvedValue(
+      ok(
+        makeShopState({
+          blood: 7,
+          board: [toBoardUnit(unit), null, null, null, null],
+          shopUnits: [null],
+        }),
+      ),
+    );
+
     handleCardClick("BOARD_SLOT", 0, null);
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
 
     expect(blood.value).toBe(7);
-    expect(board.value[0]).toBe(unit);
+    expect(board.value[0]!.id).toBe("hound");
     expect(shopUnits.value[0]).toBeNull();
     expect(selection.value).toBeNull();
-    expect(applySummonEffects).toHaveBeenCalled();
-    expect(applyBuyEffects).toHaveBeenCalled();
     expect(playSE).toHaveBeenCalledWith("buy");
   });
 
   it("plays error and does nothing when blood < 3", () => {
     blood.value = 2;
     const unit = makeUnit();
+    shopUnits.value = [makeShopSlot()];
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
     handleCardClick("BOARD_SLOT", 0, null);
 
-    expect(blood.value).toBe(2);
-    expect(board.value[0]).toBeNull();
+    expect(selection.value).toBeNull();
     expect(playSE).toHaveBeenCalledWith("error");
+    expect(apiBuyUnit).not.toHaveBeenCalled();
   });
 });
 
 describe("handleCardClick – graft shop unit onto board unit", () => {
-  it("grafts when same ID and level < 3", () => {
+  it("calls API for graft when same ID and level < 3", async () => {
     const shopUnit = makeUnit({ id: "hound", uid: "shop-1" });
     const boardUnit = makeUnit({ id: "hound", level: 1, uid: "board-1" });
     board.value = [boardUnit, null, null, null, null];
     shopUnits.value = [makeShopSlot({ id: "hound" })];
     selection.value = { type: "SHOP_UNIT", index: 0, item: shopUnit };
 
+    const graftedUnit = makeUnit({ id: "hound", level: 2, uid: "board-1" });
+    vi.mocked(apiBuyUnit).mockResolvedValue(
+      ok(
+        makeShopState({
+          blood: 7,
+          board: [toBoardUnit(graftedUnit), null, null, null, null],
+          shopUnits: [null],
+        }),
+      ),
+    );
+
     handleCardClick("BOARD_SLOT", 0, null);
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
 
     expect(blood.value).toBe(7);
-    expect(graftUnits).toHaveBeenCalledWith(boardUnit, shopUnit);
+    expect(board.value[0]!.level).toBe(2);
     expect(playSE).toHaveBeenCalledWith("graft");
-    expect(selection.value).toBeNull();
   });
 
   it("plays error when IDs differ", () => {
     const shopUnit = makeUnit({ id: "bat" });
     const boardUnit = makeUnit({ id: "hound" });
     board.value = [boardUnit, null, null, null, null];
+    shopUnits.value = [makeShopSlot({ id: "bat" })];
     selection.value = { type: "SHOP_UNIT", index: 0, item: shopUnit };
 
     handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(10);
-    expect(graftUnits).not.toHaveBeenCalled();
     expect(playSE).toHaveBeenCalledWith("error");
+    expect(apiBuyUnit).not.toHaveBeenCalled();
   });
 
   it("plays error when target is level 3", () => {
     const shopUnit = makeUnit({ id: "hound" });
     const boardUnit = makeUnit({ id: "hound", level: 3 });
     board.value = [boardUnit, null, null, null, null];
+    shopUnits.value = [makeShopSlot({ id: "hound" })];
     selection.value = { type: "SHOP_UNIT", index: 0, item: shopUnit };
 
     handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(10);
-    expect(graftUnits).not.toHaveBeenCalled();
     expect(playSE).toHaveBeenCalledWith("error");
+    expect(apiBuyUnit).not.toHaveBeenCalled();
   });
 });
 
 describe("handleCardClick – equip item onto board unit", () => {
-  it("applies item stats and equip to unit", () => {
+  it("calls API and applies equip response", async () => {
     const item = makeItem({ cost: 2, atk: 1, hp: 3, equip: "iron" });
     const unit = makeUnit({ atk: 5, hp: 5, equip: null });
     board.value = [unit, null, null, null, null];
     shopItems.value = [makeShopItemSlot({ cost: 2, atk: 1, hp: 3, equip: "iron" })];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
 
+    const equippedUnit = makeUnit({ atk: 6, hp: 8, equip: "iron" });
+    vi.mocked(apiEquipItem).mockResolvedValue(
+      ok(
+        makeShopState({
+          blood: 8,
+          board: [toBoardUnit(equippedUnit), null, null, null, null],
+          shopItems: [null],
+        }),
+      ),
+    );
+
     handleCardClick("BOARD_SLOT", 0, null);
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
 
     expect(blood.value).toBe(8);
     expect(board.value[0]!.atk).toBe(6);
@@ -237,12 +250,13 @@ describe("handleCardClick – equip item onto board unit", () => {
 
   it("plays error when target slot is empty", () => {
     const item = makeItem();
+    shopItems.value = [makeShopItemSlot()];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
 
     handleCardClick("BOARD_SLOT", 0, null);
 
-    expect(blood.value).toBe(10);
     expect(playSE).toHaveBeenCalledWith("error");
+    expect(apiEquipItem).not.toHaveBeenCalled();
   });
 
   it("plays error when blood is insufficient", () => {
@@ -250,69 +264,14 @@ describe("handleCardClick – equip item onto board unit", () => {
     const item = makeItem({ cost: 3 });
     const unit = makeUnit();
     board.value = [unit, null, null, null, null];
+    shopItems.value = [makeShopItemSlot({ cost: 3 })];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
 
     handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(1);
     expect(playSE).toHaveBeenCalledWith("error");
-  });
-
-  it("preservative (equip: null) preserves unit's existing equip", () => {
-    const item = makeItem({ id: "preservative", cost: 3, atk: 1, hp: 1, equip: null });
-    const unit = makeUnit({ atk: 5, hp: 5, equip: "iron" });
-    board.value = [unit, null, null, null, null];
-    shopItems.value = [
-      makeShopItemSlot({ id: "preservative", cost: 3, atk: 1, hp: 1, equip: null }),
-    ];
-    selection.value = { type: "SHOP_ITEM", index: 0, item };
-
-    handleCardClick("BOARD_SLOT", 0, null);
-
-    expect(board.value[0]!.equip).toBe("iron"); // preserved
-    expect(board.value[0]!.atk).toBe(6);
-    expect(board.value[0]!.hp).toBe(6);
-  });
-
-  it("equip item overwrites existing equip", () => {
-    const item = makeItem({ cost: 3, equip: "maggot_nest" });
-    const unit = makeUnit({ atk: 5, hp: 5, equip: "iron" });
-    board.value = [unit, null, null, null, null];
-    shopItems.value = [makeShopItemSlot({ cost: 3, equip: "maggot_nest" })];
-    selection.value = { type: "SHOP_ITEM", index: 0, item };
-
-    handleCardClick("BOARD_SLOT", 0, null);
-
-    expect(board.value[0]!.equip).toBe("maggot_nest");
-  });
-
-  it("pure_blood (cost 0) works with blood=0", () => {
-    blood.value = 0;
-    const item = makeItem({ id: "pure_blood", cost: 0, atk: 1, hp: 2, equip: null });
-    const unit = makeUnit({ atk: 3, hp: 3 });
-    board.value = [unit, null, null, null, null];
-    shopItems.value = [makeShopItemSlot({ id: "pure_blood", cost: 0, atk: 1, hp: 2, equip: null })];
-    selection.value = { type: "SHOP_ITEM", index: 0, item };
-
-    handleCardClick("BOARD_SLOT", 0, null);
-
-    expect(blood.value).toBe(0); // no deduction
-    expect(board.value[0]!.atk).toBe(4);
-    expect(board.value[0]!.hp).toBe(5);
-    expect(playSE).toHaveBeenCalledWith("graft");
-  });
-
-  it("deducts correct cost for each item", () => {
-    blood.value = 10;
-    const item = makeItem({ cost: 2, atk: 0, hp: 0, equip: "berserk" });
-    const unit = makeUnit();
-    board.value = [unit, null, null, null, null];
-    shopItems.value = [makeShopItemSlot({ cost: 2, equip: "berserk" })];
-    selection.value = { type: "SHOP_ITEM", index: 0, item };
-
-    handleCardClick("BOARD_SLOT", 0, null);
-
-    expect(blood.value).toBe(8);
+    expect(apiEquipItem).not.toHaveBeenCalled();
   });
 });
 

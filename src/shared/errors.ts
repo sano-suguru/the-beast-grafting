@@ -8,7 +8,8 @@ export type GameError =
   | { type: "PRECONDITION_FAILED"; reason: string }
   | { type: "NOT_FOUND"; entity: string }
   | { type: "AUTH_INVALID_CREDENTIALS" }
-  | { type: "AUTH_EMAIL_TAKEN" };
+  | { type: "AUTH_EMAIL_TAKEN" }
+  | { type: "CONFLICT"; reason: string };
 
 export type InfraError =
   | { type: "AUDIO_INIT_FAILED"; cause: unknown }
@@ -22,6 +23,11 @@ export type InfraError =
   | { type: "API_FETCH_FAILED"; status: number; cause: unknown };
 
 export const dbErr = (e: unknown): InfraError => ({ type: "DB_ERROR", cause: e });
+export const fetchErr = (e: unknown): InfraError => ({
+  type: "API_FETCH_FAILED",
+  status: 0,
+  cause: e,
+});
 
 /** fromThrowable for async — wraps a promise, catches rejections into Result */
 function safeAsync<T, E>(fn: () => Promise<T>, mapErr: (e: unknown) => E): Promise<Result<T, E>> {

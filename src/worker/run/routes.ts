@@ -4,7 +4,7 @@ import { safeAsync, dbErr } from "../../shared/errors";
 import type { BoardUnit } from "../../shared/board-unit";
 import type { RunState, RunStatus } from "../../shared/api-types";
 import { isOriginId } from "../../shared/origin-id";
-import { runs, battles, boardSnapshots } from "../../db/schema";
+import { runs, battles, shopStates } from "../../db/schema";
 import { generateId } from "../auth/crypto";
 import { requireAuth } from "../auth/middleware";
 import type { AuthEnv } from "../auth/types";
@@ -18,11 +18,13 @@ const runRoutes = new Hono<AuthEnv>();
 const INITIAL_SANITY = 5;
 const WIN_THRESHOLD = 10;
 
+import { generateShopSeed } from "../utils/seed";
+
 interface AdvanceFields {
   round: number;
   sanity: number;
   trophy: number;
-  board: BoardUnit[];
+  board: (BoardUnit | null)[];
   status: RunStatus;
 }
 
@@ -85,8 +87,9 @@ runRoutes.post("/start", requireAuth, jsonBody(), async (c) => {
         round: 1,
         sanity: INITIAL_SANITY,
         trophy: 0,
-        board: [] as BoardUnit[],
+        board: [] as (BoardUnit | null)[],
         originId: originId ?? null,
+        shopSeed: generateShopSeed(),
         status: "active",
         createdAt: now,
         updatedAt: now,
@@ -216,18 +219,19 @@ runRoutes.post("/advance", requireAuth, jsonBody(), async (c) => {
 
   const newRound = newStatus === "active" ? run.round + 1 : run.round;
 
-  const latestBoard = await safeAsync(
+  const latestShopState = await safeAsync(
     () =>
       db
-        .select({ board: boardSnapshots.board })
-        .from(boardSnapshots)
-        .where(and(eq(boardSnapshots.runId, run.id), eq(boardSnapshots.round, battle.round)))
+        .select({ board: shopStates.board })
+        .from(shopStates)
+        .where(and(eq(shopStates.runId, run.id), eq(shopStates.round, battle.round)))
         .limit(1),
     dbErr,
   );
-  if (latestBoard.isErr()) return internalError(c, "[run/advance:board]", latestBoard.error);
+  if (latestShopState.isErr())
+    return internalError(c, "[run/advance:board]", latestShopState.error);
 
-  const boardData = latestBoard.value[0]?.board ?? run.board;
+  const boardData = latestShopState.value[0]?.board ?? run.board;
 
   const batchResult = await consumeAndAdvance(db, battleId, run.id, {
     round: newRound,

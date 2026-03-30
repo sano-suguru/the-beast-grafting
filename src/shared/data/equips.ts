@@ -10,3 +10,5 @@ export const EQUIPS: Record<EquipType, EquipInfo> = {
   acid: { name: "酸の血液", desc: "【酸血】攻撃時、攻撃対象の後ろの1体に5ダメージ" },
   death_curse: { name: "道連れの呪符", desc: "【道連れ】死亡時、1/1のコピーとして蘇生" },
 };
+
+export const getEquipInfo = (equipId: EquipType): EquipInfo => EQUIPS[equipId];

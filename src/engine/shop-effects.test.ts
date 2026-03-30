@@ -4,8 +4,8 @@ import {
   applyChaliceEffect,
   applySummonEffects,
 } from "./shop-effects";
-import { ITEMS } from "../data/items";
-import type { UnitInstance, ShopItemSlot } from "../types";
+import { ITEMS } from "../shared/data/items";
+import type { UnitInstance, ShopItemSlot } from "../shared/types";
 
 function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
   return {

@@ -1,3 +1,4 @@
+import { clamp01 } from "./easing";
 import type { EffectInstance } from "./types";
 import { interpolated } from "./update";
 
@@ -48,7 +49,7 @@ export function renderEffects(ctx: CanvasRenderingContext2D, effects: EffectInst
 
     // オーバーレイ描画
     if (effect.drawOverlay && effect.elapsed < effect.duration) {
-      const progress = effect.elapsed / effect.duration;
+      const progress = clamp01(effect.elapsed / effect.duration);
       ctx.save();
       effect.drawOverlay(ctx, progress, effect.elapsed);
       ctx.restore();

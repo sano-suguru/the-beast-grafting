@@ -1,5 +1,7 @@
 import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 import type { BoardUnit } from "../shared/board-unit";
+import type { ShopSlotJson, ShopItemSlotJson, ShopUndoSnapshot } from "./shop-state-types";
+import type { EventData } from "../shared/types";
 
 export const players = sqliteTable("players", {
   id: text("id").primaryKey(),
@@ -99,8 +101,9 @@ export const runs = sqliteTable(
     round: integer("round").notNull().default(1),
     sanity: integer("sanity").notNull().default(5),
     trophy: integer("trophy").notNull().default(0),
-    board: text("board", { mode: "json" }).$type<BoardUnit[]>().notNull(),
+    board: text("board", { mode: "json" }).$type<(BoardUnit | null)[]>().notNull(),
     originId: text("origin_id"),
+    shopSeed: integer("shop_seed"),
     status: text("status", { enum: ["active", "won", "lost"] })
       .notNull()
       .default("active"),
@@ -111,5 +114,34 @@ export const runs = sqliteTable(
     index("idx_runs_created_at").on(table.createdAt),
     index("idx_runs_player_id").on(table.playerId),
     index("idx_runs_status").on(table.status),
+  ],
+);
+
+export const shopStates = sqliteTable(
+  "shop_states",
+  {
+    id: text("id").primaryKey(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id, { onDelete: "cascade" }),
+    round: integer("round").notNull(),
+    blood: integer("blood").notNull().default(10),
+    freeRoll: integer("free_roll", { mode: "boolean" }).notNull().default(false),
+    cultistUsed: integer("cultist_used", { mode: "boolean" }).notNull().default(false),
+    rotRingUses: integer("rot_ring_uses").notNull().default(0),
+    shopUnits: text("shop_units", { mode: "json" }).$type<(ShopSlotJson | null)[]>().notNull(),
+    shopItems: text("shop_items", { mode: "json" }).$type<(ShopItemSlotJson | null)[]>().notNull(),
+    board: text("board", { mode: "json" }).$type<(BoardUnit | null)[]>().notNull(),
+    activeEvent: text("active_event", { mode: "json" }).$type<EventData | null>(),
+    rngS0: integer("rng_s0").notNull(),
+    rngS1: integer("rng_s1").notNull(),
+    undoSnapshot: text("undo_snapshot", { mode: "json" }).$type<ShopUndoSnapshot | null>(),
+    version: integer("version").notNull().default(1),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_shop_states_run_round").on(table.runId, table.round),
+    index("idx_shop_states_run_id").on(table.runId),
   ],
 );

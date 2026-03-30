@@ -1,9 +1,9 @@
-import { UNITS } from "../data/units";
-import { CHURCH_UNITS } from "../data/church-units";
-import { ITEMS } from "../data/items";
-import { EQUIPS } from "../data/equips";
-import type { EquipType } from "../types";
-import { ORIGINS } from "../data/origins";
+import { UNITS } from "../shared/data/units";
+import { CHURCH_UNITS } from "../shared/data/church-units";
+import { ITEMS } from "../shared/data/items";
+import { EQUIPS } from "../shared/data/equips";
+import type { EquipType } from "../shared/types";
+import { ORIGINS } from "../shared/data/origins";
 import { UNIT_DEATH_HANDLERS } from "./battle-deaths-handlers";
 import { getUnitsByTier, getShopPool, getItemPool } from "./helpers";
 import { INERT_UNIT_ID } from "./test-helpers";

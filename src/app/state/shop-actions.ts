@@ -1,362 +1,215 @@
 import { batch } from "@preact/signals";
-import type {
-  OriginId,
-  ShopSlot,
-  ShopItemSlot,
-  UnitInstance,
-  Selection,
-  EventData,
-} from "../types";
-import { ITEMS } from "../../shared/data/items";
+import type { ShopStateResponse } from "../../shared/api-types";
+import { boardUnitToUnitInstance } from "../../shared/board-unit";
+import { fetchErr } from "../../shared/errors";
+import type { InfraError } from "../../shared/errors";
+import { error as logError } from "../../shared/logger";
 import { initAudio, playSE } from "../engine/audio";
 import {
-  createUnit,
-  getShopPool,
-  getItemPool,
-  getUnitsByTier,
-  pickRandom,
-} from "../../shared/engine/helpers";
-import {
-  isEventRound,
-  selectEvent,
-  buildEventShopUnits,
-  buildEventShopItems,
-} from "../../shared/engine/event-helpers";
-import type { Rng } from "../../shared/engine/rng";
-import { createDefaultRng } from "../../shared/engine/rng";
-import {
-  origin,
   blood,
-  round,
   board,
+  round,
+  sanity,
+  trophy,
   freeRoll,
   cultistUsed,
-  sanity,
   selection,
   shopUnits,
   shopItems,
   currentEnemyTeam,
-  onboardingStep,
-  undoSnapshot,
   rotRingUses,
   activeEvent,
+  canUndo,
+  shopLocked,
+  shopActionError,
+  currentRunId,
+  onboardingStep,
   showHelpOverlay,
+  phase,
 } from "./game-store";
 import { markSeen } from "./lore";
-import { invariant } from "../../shared/invariant";
+import {
+  setupShop as apiSetupShop,
+  rollShop as apiRollShop,
+  dismissEvent as apiDismissEvent,
+  freezeSlot as apiFreezeSlot,
+  sellUnit as apiSellUnit,
+  useCultist as apiUseCultist,
+  getShopState as apiGetShopState,
+} from "../api/shop-client";
 
-function markShopUnitsSeen(slots: (ShopSlot | null)[]): void {
-  markSeen(slots.filter((s): s is ShopSlot => s !== null).map((s) => s.unit.id));
-}
-import { ok, err } from "../../shared/errors";
-import type { Result, GameError } from "../../shared/errors";
-import { captureSnapshot } from "./undo-actions";
-
-function getShopSize(r: number): number {
-  if (r >= 9) return 5;
-  if (r >= 5) return 4;
-  return 3;
-}
-
-function generateShopUnits(
-  r: number,
-  prev: (ShopSlot | null)[],
-  sizeModifier = 0,
-  rng: Rng = createDefaultRng(),
-): (ShopSlot | null)[] {
-  const pool = getShopPool(r);
-  const size = Math.max(0, getShopSize(r) + sizeModifier);
-  return [...Array(size).keys()].map((i) => {
-    if (prev[i]?.frozen) return prev[i];
-    return { unit: createUnit(pickRandom(pool, rng)), frozen: false };
-  });
+function handleShopError(label: string) {
+  return (e: InfraError) => {
+    logError(label, e);
+    playSE("error");
+    shopActionError.value = e;
+  };
 }
 
-function applyInquisitorUpgrade(
-  units: (ShopSlot | null)[],
-  currentOrigin: OriginId | null,
-  rng: Rng = createDefaultRng(),
-): (ShopSlot | null)[] {
-  if (currentOrigin !== "inquisitor") return units;
-  const candidates = units
-    .map((s, i) => (s && !s.frozen && s.unit.tier < 6 ? i : -1))
-    .filter((i) => i >= 0);
-  if (candidates.length === 0) return units;
-  const targetIdx = pickRandom(candidates, rng);
-  const slot = units[targetIdx];
-  if (!slot) return units;
-  const higherTier = getUnitsByTier(slot.unit.tier + 1);
-  if (higherTier.length === 0) return units;
-  const newId = pickRandom([...higherTier], rng);
-  const next = [...units];
-  next[targetIdx] = { unit: createUnit(newId), frozen: slot.frozen };
-  return next;
+function isConflict(e: InfraError): boolean {
+  return e.type === "API_FETCH_FAILED" && e.status === 409;
 }
 
-function generateShopItems(
-  r: number,
-  prev: (ShopItemSlot | null)[],
-  rng: Rng = createDefaultRng(),
-): (ShopItemSlot | null)[] {
-  const itemPool = getItemPool();
-  const size = r >= 7 ? 2 : 1;
-  return [...Array(size).keys()].map((i) => {
-    const existing = prev[i];
-    if (existing?.frozen) return existing;
-    const item = ITEMS[pickRandom(itemPool, rng)];
-    return { item, frozen: false };
-  });
+async function resyncShopState(): Promise<boolean> {
+  const runId = currentRunId.value;
+  if (!runId) return false;
+  const fresh = await apiGetShopState(runId);
+  if (fresh.isErr()) return false;
+  batch(() => applyShopState(fresh.value));
+  return true;
 }
 
-function buildShopForRound(
-  currentRound: number,
-  event: EventData | null,
-  currentOrigin: OriginId | null,
-  prevUnits: (ShopSlot | null)[],
-  prevItems: (ShopItemSlot | null)[],
-): { units: (ShopSlot | null)[]; items: (ShopItemSlot | null)[] } {
-  let units: (ShopSlot | null)[];
-  if (event?.replacesShopUnits) {
-    units = buildEventShopUnits(event, currentRound);
-  } else {
-    const sizeModifier = event?.shopSizeModifier ?? 0;
-    units = generateShopUnits(currentRound, prevUnits, sizeModifier);
-    units = applyInquisitorUpgrade(units, currentOrigin);
-  }
-
-  if (event?.shopUnitBuff) {
-    const buff = event.shopUnitBuff;
-    units = units.map((slot) =>
-      slot && !slot.frozen
-        ? {
-            ...slot,
-            unit: { ...slot.unit, atk: slot.unit.atk + buff.atk, hp: slot.unit.hp + buff.hp },
-          }
-        : slot,
-    );
-  }
-
-  const items =
-    event && event.itemOffers.length > 0
-      ? buildEventShopItems(event)
-      : generateShopItems(currentRound, prevItems);
-
-  return { units, items };
-}
-
-export function setupNight(
-  currentRound: number,
-  currentOrigin: OriginId | null = origin.value,
-  useTutorialShop = false,
+export function runShopAction(
+  label: string,
+  request: Promise<import("neverthrow").Result<ShopStateResponse, InfraError>>,
+  onSuccess: (state: ShopStateResponse) => void = () => {},
 ) {
-  const event = !useTutorialShop && isEventRound(currentRound) ? selectEvent() : null;
-
-  let nextShopUnits: (ShopSlot | null)[];
-  let nextShopItems: (ShopItemSlot | null)[];
-
-  if (useTutorialShop) {
-    nextShopUnits = applyInquisitorUpgrade(
-      [
-        { unit: createUnit("rat"), frozen: false },
-        { unit: createUnit("rat"), frozen: false },
-        { unit: createUnit("bat"), frozen: false },
-      ],
-      currentOrigin,
-    );
-    nextShopItems = generateShopItems(currentRound, []);
-  } else {
-    const result = buildShopForRound(
-      currentRound,
-      event,
-      currentOrigin,
-      shopUnits.value,
-      shopItems.value,
-    );
-    nextShopUnits = result.units;
-    nextShopItems = result.items;
-  }
-
-  batch(() => {
-    undoSnapshot.value = null;
-    blood.value = 10 + (event?.bloodBonus ?? 0);
-    freeRoll.value = (event?.freeRoll ?? false) || currentOrigin === "thief";
-    cultistUsed.value = false;
-    rotRingUses.value = 0;
-    selection.value = null;
-    showHelpOverlay.value = false;
-    activeEvent.value = event;
-    currentEnemyTeam.value = null;
-    shopUnits.value = nextShopUnits;
-    shopItems.value = nextShopItems;
-  });
-
-  markShopUnitsSeen(nextShopUnits);
+  shopLocked.value = true;
+  shopActionError.value = null;
+  void request
+    .then(async (result) => {
+      if (phase.value !== "SHOP") {
+        shopLocked.value = false;
+        return;
+      }
+      if (result.isErr() && isConflict(result.error)) {
+        const synced = await resyncShopState();
+        shopLocked.value = false;
+        if (!synced) handleShopError(`${label}:resync`)(result.error);
+        return;
+      }
+      batch(() => {
+        result.match((state) => {
+          applyShopState(state);
+          onSuccess(state);
+        }, handleShopError(label));
+        shopLocked.value = false;
+      });
+    })
+    .catch((e: unknown) => {
+      batch(() => {
+        shopLocked.value = false;
+        shopActionError.value = fetchErr(e);
+      });
+      logError(`${label}:crash`, e);
+    });
 }
 
-function validateRoll(hasFreeRoll: boolean, currentBlood: number): Result<void, GameError> {
-  if (!hasFreeRoll && currentBlood < 1)
-    return err({
-      type: "INSUFFICIENT_RESOURCE",
-      resource: "blood",
-      required: 1,
-      current: currentBlood,
+function markShopUnitsSeen(slots: (NonNullable<(typeof shopUnits.value)[number]> | null)[]): void {
+  markSeen(slots.filter((s): s is NonNullable<typeof s> => s !== null).map((s) => s.unit.id));
+}
+
+export function applyShopState(state: ShopStateResponse) {
+  batch(() => {
+    blood.value = state.blood;
+    board.value = state.board.map((bu) => (bu ? boardUnitToUnitInstance(bu) : null));
+    shopUnits.value = state.shopUnits.map((s) =>
+      s
+        ? {
+            unit: boardUnitToUnitInstance(s.unit),
+            frozen: s.frozen,
+            ...(s.costOverride !== undefined ? { costOverride: s.costOverride } : {}),
+          }
+        : null,
+    );
+    shopItems.value = state.shopItems.map((s) => (s ? { item: s.item, frozen: s.frozen } : null));
+    freeRoll.value = state.freeRoll;
+    cultistUsed.value = state.cultistUsed;
+    rotRingUses.value = state.rotRingUses;
+    activeEvent.value = state.activeEvent;
+    canUndo.value = state.canUndo;
+    round.value = state.round;
+    sanity.value = state.sanity;
+    trophy.value = state.trophy;
+    selection.value = null;
+    currentEnemyTeam.value = null;
+  });
+}
+
+export async function setupNight(runId: string, useTutorialShop = false) {
+  shopLocked.value = true;
+  shopActionError.value = null;
+  try {
+    const result = await apiSetupShop(runId, useTutorialShop);
+    if (phase.value !== "SHOP") {
+      shopLocked.value = false;
+      return;
+    }
+    batch(() => {
+      result.match((state) => {
+        applyShopState(state);
+        showHelpOverlay.value = false;
+        markShopUnitsSeen(shopUnits.value);
+      }, handleShopError("[setupNight]"));
+      shopLocked.value = false;
     });
-  return ok(undefined);
+  } catch (e: unknown) {
+    batch(() => {
+      shopLocked.value = false;
+      shopActionError.value = fetchErr(e);
+    });
+    logError("[setupNight:crash]", e);
+  }
 }
 
 export function rollShop() {
+  if (shopLocked.value) return;
+  const runId = currentRunId.value;
+  if (!runId) return;
+
   initAudio();
-  if (activeEvent.value?.lockRoll) {
-    playSE("error");
-    return;
-  }
-  validateRoll(freeRoll.value, blood.value).match(
-    () => {
-      playSE("select");
-      const { units: nextShopUnits, items: nextShopItems } = buildShopForRound(
-        round.value,
-        activeEvent.value,
-        origin.value,
-        shopUnits.value,
-        shopItems.value,
-      );
-      batch(() => {
-        if (!freeRoll.value) blood.value -= 1;
-        freeRoll.value = false;
-        selection.value = null;
-        if (onboardingStep.value === "roll") onboardingStep.value = "battle";
-        shopUnits.value = nextShopUnits;
-        shopItems.value = nextShopItems;
-      });
-      markShopUnitsSeen(nextShopUnits);
-    },
-    () => playSE("error"),
-  );
+  runShopAction("[rollShop]", apiRollShop(runId), () => {
+    playSE("select");
+    if (onboardingStep.value === "roll") onboardingStep.value = "battle";
+    markShopUnitsSeen(shopUnits.value);
+  });
 }
 
 export function dismissEvent() {
-  invariant(activeEvent.value !== null, "dismissEvent: no active event");
-  const event = activeEvent.value;
-  initAudio();
-  playSE("select");
-  const currentRound = round.value;
-  const currentOrigin = origin.value;
-  const { units: nextShopUnits, items: nextShopItems } = buildShopForRound(
-    currentRound,
-    null,
-    currentOrigin,
-    [],
-    [],
-  );
-  const bloodBeforeEvent = blood.value - event.bloodBonus;
-  batch(() => {
-    blood.value = Math.max(0, bloodBeforeEvent);
-    activeEvent.value = null;
-    freeRoll.value = currentOrigin === "thief";
-    shopUnits.value = nextShopUnits;
-    shopItems.value = nextShopItems;
-    selection.value = null;
-  });
-  markShopUnitsSeen(nextShopUnits);
-}
+  if (shopLocked.value) return;
+  const runId = currentRunId.value;
+  if (!runId) return;
 
-export function handleFreezeClick(isUnit: boolean, index: number) {
   initAudio();
-  playSE("select");
-  batch(() => {
-    if (isUnit) {
-      const n = [...shopUnits.value];
-      const slot = n[index];
-      if (slot) n[index] = { ...slot, frozen: !slot.frozen };
-      shopUnits.value = n;
-    } else {
-      const n = [...shopItems.value];
-      const slot = n[index];
-      if (slot) n[index] = { ...slot, frozen: !slot.frozen };
-      shopItems.value = n;
-    }
-    selection.value = null;
+  runShopAction("[dismissEvent]", apiDismissEvent(runId), () => {
+    playSE("select");
+    markShopUnitsSeen(shopUnits.value);
   });
 }
 
-interface SellAction {
-  unit: UnitInstance;
-  index: number;
-  bloodGain: number;
-}
+export function handleFreezeClick(isUnit: boolean, index: number, frozen: boolean) {
+  if (shopLocked.value) return;
+  const runId = currentRunId.value;
+  if (!runId) return;
 
-function validateSell(
-  sel: Selection | null,
-  currentBoard: (UnitInstance | null)[],
-): Result<SellAction, GameError> {
-  if (!sel || sel.type !== "BOARD_UNIT")
-    return err({ type: "PRECONDITION_FAILED", reason: "no_board_unit_selected" });
-  const unit = currentBoard[sel.index];
-  if (!unit) return err({ type: "INVALID_TARGET", reason: "slot_empty" });
-  return ok({ unit, index: sel.index, bloodGain: unit.id === "beggar" ? 2 : 1 });
+  initAudio();
+  runShopAction("[freeze]", apiFreezeSlot(runId, isUnit, index, frozen), () => {
+    playSE("select");
+  });
 }
 
 export function executeSellUnit() {
-  validateSell(selection.value, board.value).match(
-    ({ index, bloodGain }) => {
-      captureSnapshot();
-      playSE("graft");
-      const newBoard = [...board.value];
-      newBoard[index] = null;
-      if (origin.value === "surgeon") {
-        const active = newBoard
-          .map((u, i) => (u ? i : null))
-          .filter((i): i is number => i !== null);
-        if (active.length > 0) {
-          const targetIdx = active[Math.floor(Math.random() * active.length)];
-          if (targetIdx !== undefined) {
-            const target = newBoard[targetIdx];
-            if (target) {
-              newBoard[targetIdx] = { ...target, atk: target.atk + 1, hp: target.hp + 1 };
-            }
-          }
-        }
-      }
-      batch(() => {
-        blood.value += bloodGain;
-        board.value = newBoard;
-        selection.value = null;
-      });
-    },
-    () => playSE("error"),
-  );
-}
+  if (shopLocked.value) return;
+  const runId = currentRunId.value;
+  if (!runId) return;
+  const sel = selection.value;
+  if (!sel || sel.type !== "BOARD_UNIT") {
+    playSE("error");
+    return;
+  }
 
-function validateCultist(
-  currentOrigin: OriginId | null,
-  isUsed: boolean,
-  currentSanity: number,
-): Result<void, GameError> {
-  if (currentOrigin !== "cultist")
-    return err({ type: "PRECONDITION_FAILED", reason: "not_cultist" });
-  if (isUsed) return err({ type: "PRECONDITION_FAILED", reason: "already_used" });
-  if (currentSanity < 1)
-    return err({
-      type: "INSUFFICIENT_RESOURCE",
-      resource: "sanity",
-      required: 1,
-      current: currentSanity,
-    });
-  return ok(undefined);
+  runShopAction("[sell]", apiSellUnit(runId, sel.index), () => {
+    playSE("graft");
+  });
 }
 
 export function useCultistAbility() {
-  validateCultist(origin.value, cultistUsed.value, sanity.value).match(
-    () => {
-      initAudio();
-      captureSnapshot();
-      playSE("graft");
-      batch(() => {
-        sanity.value -= 1;
-        blood.value += 3;
-        cultistUsed.value = true;
-      });
-    },
-    () => playSE("error"),
-  );
+  if (shopLocked.value) return;
+  const runId = currentRunId.value;
+  if (!runId) return;
+
+  initAudio();
+  runShopAction("[cultist]", apiUseCultist(runId), () => {
+    playSE("graft");
+  });
 }

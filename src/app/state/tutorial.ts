@@ -1,5 +1,5 @@
 import { signal, effect } from "@preact/signals";
-import { safeGetItem, safeSetItem } from "../../shared/storage";
+import { safeGetItem, safeSetItem } from "./storage";
 
 const STORAGE_KEY = "beastGrafterTutorialDone";
 

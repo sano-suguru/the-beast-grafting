@@ -79,19 +79,64 @@ module.exports = {
       to: { path: "^src/db" },
     },
 
+    // ── engine層の境界 ──
+    {
+      name: "no-app-to-engine",
+      severity: "error",
+      comment:
+        "フロントエンド(app)はengine層に直接依存してはならない（shared経由でアクセスすること）",
+      from: { path: "^src/app", pathNot: "\\.test\\.(ts|tsx)$" },
+      to: { path: "^src/engine" },
+    },
+    {
+      name: "no-engine-to-app",
+      severity: "error",
+      comment: "engine層はフロントエンド(app)に依存してはならない",
+      from: { path: "^src/engine" },
+      to: { path: "^src/app" },
+    },
+    {
+      name: "no-engine-to-worker",
+      severity: "error",
+      comment: "engine層はバックエンド(worker)に依存してはならない",
+      from: { path: "^src/engine" },
+      to: { path: "^src/worker" },
+    },
+    {
+      name: "no-engine-to-db",
+      severity: "error",
+      comment: "engine層はDB層に依存してはならない",
+      from: { path: "^src/engine" },
+      to: { path: "^src/db" },
+    },
+    {
+      name: "no-shared-to-engine",
+      severity: "error",
+      comment: "共有層(shared)はengine層に依存してはならない",
+      from: { path: "^src/shared" },
+      to: { path: "^src/engine" },
+    },
+    {
+      name: "no-db-to-engine",
+      severity: "error",
+      comment: "DB層はengine層に依存してはならない",
+      from: { path: "^src/db" },
+      to: { path: "^src/engine" },
+    },
+
     // ── 内部レイヤー境界 ──
     {
       name: "no-data-to-upper-layers",
       severity: "error",
       comment: "データ層はengine/state/screens/componentsに依存してはならない",
       from: { path: "^src/(app/data|shared/data)" },
-      to: { path: "^src/(app/|shared/)?(engine|state|screens|components)" },
+      to: { path: "^src/(app/|shared/)?(engine|state|screens|components)|^src/engine" },
     },
     {
       name: "no-engine-to-ui-layers",
       severity: "error",
-      comment: "エンジン層はstate/screens/componentsに依存してはならない",
-      from: { path: "^src/(app/engine|shared/engine)" },
+      comment: "エンジン層(app内)はstate/screens/componentsに依存してはならない",
+      from: { path: "^src/app/engine" },
       to: { path: "^src/app/(state|screens|components)" },
     },
     {

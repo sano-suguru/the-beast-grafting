@@ -1,4 +1,5 @@
-import { toSanityTier, selectPreBattleNarrative } from "./pre-battle-narrative";
+import { toSanityTier } from "../../shared/types";
+import { selectPreBattleNarrative } from "./pre-battle-narrative";
 
 describe("toSanityTier", () => {
   it.each([

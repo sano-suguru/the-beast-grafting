@@ -1,5 +1,5 @@
-import { fromThrowable } from "./errors";
-import { warn } from "./logger";
+import { fromThrowable } from "../../shared/errors";
+import { warn } from "../../shared/logger";
 
 const _safeSetItem = fromThrowable(
   (key: string, value: string) => {

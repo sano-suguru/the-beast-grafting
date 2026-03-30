@@ -7,6 +7,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/worker", "src/shared", "src/db"],
+  "include": ["src/worker", "src/shared", "src/engine", "src/db"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
