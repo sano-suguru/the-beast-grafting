@@ -6,7 +6,6 @@ import { mustGet } from "../shared/invariant";
 import {
   BAT_DAMAGE,
   BANSHEE_DAMAGE,
-  EVANGELIST_HP_RATIO,
   PARASITE_BUFF,
   EYE_DAMAGE,
   REVENANT_MAX_TARGETS,
@@ -71,24 +70,6 @@ function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   );
 }
 
-function applyEvangelistSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
-  if (targetArr.length === 0) return;
-  const first = mustGet(targetArr, 0, "evangelist target");
-  let target: BattleUnit = first;
-  targetArr.forEach((t) => {
-    if (t.hp > target.hp) target = t;
-  });
-  const dmg = Math.floor(target.hp * EVANGELIST_HP_RATIO);
-  applySkillDamage(
-    u,
-    target,
-    dmg,
-    `[${u.name}]の腐敗の祈り！ [${target.name}]の体力を奪う (-${dmg}HP)`,
-    isPlayer,
-    ctx,
-  );
-}
-
 function applyCholeraSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   if (targetArr.length === 0) return;
   const targetIdx = Math.floor(ctx.rng.next() * targetArr.length);
@@ -143,7 +124,6 @@ const START_SKILL_HANDLERS = {
   bat: applyBatSkill,
   inquisitor: applyBatSkill,
   shrieking_throat: applyBansheeSkill,
-  evangelist: applyEvangelistSkill,
   revenant: applyRevenantSkill,
 } satisfies Partial<Record<UnitId, StartSkillHandler>>;
 

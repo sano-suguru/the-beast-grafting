@@ -1,6 +1,7 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
 import type { UnitInstance, EnemyTeam, BattleResult } from "../shared/types";
 import type { Rng } from "./rng";
+import { createSeededRng } from "./rng";
 
 /** トークンはハンドラ登録が構造的に不可能なため、副作用なしのテスト用IDとして使える */
 export const INERT_UNIT_ID = "token" as const;
@@ -33,7 +34,7 @@ export function makeContext(
   pBoard: BattleUnit[] = [],
   eBoard: BattleUnit[] = [],
   lastBattleResult: BattleResult = null,
-  rng: Rng = { next: () => Math.random() },
+  rng: Rng = createSeededRng(42),
 ): BattleContext {
   return {
     rng,

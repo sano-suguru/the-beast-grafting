@@ -1,5 +1,6 @@
 import { resolveDeaths } from "./battle-deaths";
 import { createSeededRng } from "./rng";
+import { EVANGELIST_PLAGUE_DAMAGE } from "./constants";
 import { makeBattleUnit, makeContext } from "./test-helpers";
 
 describe("resolveDeaths – basic removal", () => {
@@ -260,6 +261,16 @@ describe("resolveDeaths – beelzebub", () => {
     expect(ctx.pBoard).toHaveLength(0);
     expect(ctx.pFlyCount).toBe(0);
   });
+
+  it("does not spawn fly when beelzebub has hp <= 0 but is not yet spliced", () => {
+    // unitA(atk=5) dies first → beelzebub(atk=2, hp=0) still on board → must NOT spawn
+    const unitA = makeBattleUnit({ id: "token", atk: 5, hp: 0 });
+    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 2, hp: 0 });
+    const ctx = makeContext([unitA, beelzebub], []);
+    resolveDeaths(ctx);
+    expect(ctx.pFlyCount).toBe(0);
+    expect(ctx.pBoard.filter((u) => u.name === "腐肉の蠅")).toHaveLength(0);
+  });
 });
 
 describe("resolveDeaths – fair tiebreaker", () => {
@@ -293,5 +304,120 @@ describe("resolveDeaths – fair tiebreaker", () => {
     expect(counts[0]).toBeGreaterThan(50);
     expect(counts[1]).toBeGreaterThan(50);
     expect(counts[2]).toBeGreaterThan(50);
+  });
+});
+
+describe("resolveDeaths – evangelist plague", () => {
+  it("deals 3 damage to a random enemy when ally dies", () => {
+    const dying = makeBattleUnit({ hp: 0 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
+    const enemy = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
+    resolveDeaths(ctx);
+    expect(enemy.hp).toBe(7);
+  });
+
+  it("brains behind evangelist doubles plague damage", () => {
+    const dying = makeBattleUnit({ hp: 0 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
+    const enemy = makeBattleUnit({ hp: 20 });
+    const ctx = makeContext([dying, evangelist, brains], [enemy], null, { next: () => 0 });
+    resolveDeaths(ctx);
+    expect(enemy.hp).toBe(14);
+  });
+
+  it("does not trigger when evangelist itself dies", () => {
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 0 });
+    const enemy = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([evangelist], [enemy]);
+    resolveDeaths(ctx);
+    expect(enemy.hp).toBe(10);
+  });
+
+  it("triggers on token death (unlike beelzebub)", () => {
+    const token = makeBattleUnit({ id: "token", name: "頭部", hp: 0 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
+    const enemy = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([token, evangelist], [enemy], null, { next: () => 0 });
+    resolveDeaths(ctx);
+    expect(enemy.hp).toBe(7);
+  });
+
+  it("does nothing when enemy board is empty", () => {
+    const dying = makeBattleUnit({ hp: 0 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
+    const ctx = makeContext([dying, evangelist], []);
+    resolveDeaths(ctx);
+    const plagueFrames = ctx.frames.filter((f) => f.log.text.includes("祈りを捧げる"));
+    expect(plagueFrames).toHaveLength(0);
+  });
+
+  it("cross-board plague does not let dead enemy evangelist fire", () => {
+    const dying = makeBattleUnit({ hp: 0 });
+    const pEvangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
+    const bystander = makeBattleUnit({ hp: 20 });
+    const eEvangelist = makeBattleUnit({ id: "evangelist", name: "敵伝道師", atk: 3, hp: 2 });
+    const ctx = makeContext([dying, pEvangelist, bystander], [eEvangelist], null, {
+      next: () => 0,
+    });
+    resolveDeaths(ctx);
+    expect(eEvangelist.hp).toBeLessThanOrEqual(0);
+    expect(bystander.hp).toBe(20);
+  });
+
+  it("fires once per ally death when multiple allies die simultaneously", () => {
+    const dead1 = makeBattleUnit({ id: "token", hp: 0, atk: 5 });
+    const dead2 = makeBattleUnit({ id: "token", hp: 0, atk: 2 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 1, hp: 10 });
+    const enemy = makeBattleUnit({ hp: 20 });
+    const ctx = makeContext([dead1, dead2, evangelist], [enemy], null, { next: () => 0 });
+    resolveDeaths(ctx);
+    const plagueFrames = ctx.frames.filter((f) => f.log.text.includes("祈りを捧げる"));
+    expect(plagueFrames).toHaveLength(2);
+    expect(enemy.hp).toBe(20 - EVANGELIST_PLAGUE_DAMAGE * 2);
+  });
+
+  it("does not fire when evangelist has hp <= 0 but is not yet spliced", () => {
+    // unitA(atk=5) dies first → evangelist(atk=3, hp=0) is still on board → must NOT fire plague
+    const unitA = makeBattleUnit({ id: "token", atk: 5, hp: 0 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 0 });
+    const enemy = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([unitA, evangelist], [enemy], null, { next: () => 0 });
+    resolveDeaths(ctx);
+    expect(enemy.hp).toBe(10);
+  });
+
+  it("skips enemies with hp <= 0 when selecting plague target", () => {
+    const dying = makeBattleUnit({ id: "token", hp: 0 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
+    const deadEnemy = makeBattleUnit({ id: "token", hp: -2 });
+    const aliveEnemy = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([dying, evangelist], [deadEnemy, aliveEnemy], null, { next: () => 0 });
+    resolveDeaths(ctx);
+    expect(deadEnemy.hp).toBe(-2);
+    expect(aliveEnemy.hp).toBe(10 - EVANGELIST_PLAGUE_DAMAGE);
+  });
+});
+
+describe("resolveDeaths – cross-board cascade", () => {
+  it("evangelist plague kill triggers enemy death handler in next iteration", () => {
+    const dying = makeBattleUnit({ id: "token", hp: 0 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
+    // squire の hp を EVANGELIST_PLAGUE_DAMAGE ぴったりにして plague で確殺
+    const squire = makeBattleUnit({
+      id: "squire",
+      name: "従騎士",
+      atk: 1,
+      hp: EVANGELIST_PLAGUE_DAMAGE,
+      isChurch: true,
+    });
+    const bystander = makeBattleUnit({ id: "token", name: "傍観者", atk: 2, hp: 5 });
+    const ctx = makeContext([dying, evangelist], [squire, bystander], null, { next: () => 0 });
+    resolveDeaths(ctx);
+    // squire が plague で死亡 → 次イテレーションで squire の死亡ハンドラ発火 → bystander +1/+1
+    expect(ctx.eBoard).not.toContainEqual(expect.objectContaining({ name: "従騎士" }));
+    expect(bystander.atk).toBe(3);
+    expect(bystander.hp).toBe(6);
   });
 });

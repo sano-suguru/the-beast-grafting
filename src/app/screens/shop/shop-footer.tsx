@@ -28,8 +28,9 @@ function getRollButtonClass(
   hasFreeRoll: boolean,
   currentBlood: number,
   step: OnboardingStep,
+  rollLocked: boolean,
 ): string {
-  const canRoll = hasFreeRoll || currentBlood >= 1;
+  const canRoll = !rollLocked && (hasFreeRoll || currentBlood >= 1);
   const base = canRoll
     ? "border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 active:scale-95"
     : "border-zinc-900 bg-zinc-950 text-zinc-700 opacity-50 cursor-not-allowed";
@@ -72,7 +73,12 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
         <button
           onClick={rollShop}
           disabled={rollDisabled}
-          className={getRollButtonClass(currentFreeRoll, currentBlood, currentOnboarding)}
+          className={getRollButtonClass(
+            currentFreeRoll,
+            currentBlood,
+            currentOnboarding,
+            !!activeEvent.value?.lockRoll,
+          )}
         >
           <RefreshCw size={14} /> 墓暴き ({currentFreeRoll ? "無料" : "1"})
         </button>

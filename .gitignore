@@ -4,6 +4,7 @@ dist/
 .dev.vars
 *.local
 coverage/
+.claude/.edited
 playwright-report/
 test-results/
 

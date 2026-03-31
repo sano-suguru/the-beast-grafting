@@ -50,7 +50,7 @@ export function processHundredArmsKnockout(
       pushFrame(
         ctx,
         "skill",
-        `${prefix}[${attacker.name}]の蹂躙！ [${target.name}]に ${dmg} ダメージ${target.tier === 1 ? "(Tier1倍打)" : ""}`,
+        `${prefix}[${attacker.name}]の無数の拳が[${target.name}]を叩き潰す！ ${dmg} ダメージ。${target.tier === 1 ? "(脆い肉ほど容易く千切れる)" : ""}`,
         "skill",
         {
           [attacker.uid]: { type: "skill" },

@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { signal, batch, type Signal } from "@preact/signals";
 import type {
   GamePhase,
   OriginId,
@@ -15,43 +15,72 @@ import type {
 } from "../types";
 import type { InfraError } from "../../shared/errors";
 
-export const phase = signal<GamePhase>("TITLE");
-export const origin = signal<OriginId | null>(null);
-export const round = signal(1);
-export const blood = signal(10);
-export const sanity = signal(5);
-export const trophy = signal(0);
+const registry: Array<{ reset(): void }> = [];
 
-export const board = signal<(UnitInstance | null)[]>([null, null, null, null, null]);
-export const shopUnits = signal<(ShopSlot | null)[]>([]);
-export const shopItems = signal<(ShopItemSlot | null)[]>([]);
-export const selection = signal<Selection | null>(null);
-export const freeRoll = signal(false);
-export const cultistUsed = signal(false);
-export const onboardingStep = signal<OnboardingStep>(null);
-export const rotRingUses = signal(0);
+function resettableSignal<T>(factory: () => T): Signal<T> {
+  const sig = signal(factory());
+  registry.push({
+    reset() {
+      sig.value = factory();
+    },
+  });
+  return sig;
+}
 
-export const currentEnemyTeam = signal<EnemyTeam | null>(null);
-export const battleFrames = signal<BattleFrame[]>([]);
-export const currentFrameIdx = signal(0);
-export const battleResult = signal<BattleResult>(null);
-export const fastForward = signal(false);
-export const lastBattleResult = signal<BattleResult>(null);
-export const lastEnemyTeamType = signal<EnemyFaction | null>(null);
+export const phase = resettableSignal<GamePhase>(() => "TITLE");
+export const origin = resettableSignal<OriginId | null>(() => null);
+export const round = resettableSignal(() => 1);
+export const blood = resettableSignal(() => 10);
+export const sanity = resettableSignal(() => 5);
+export const trophy = resettableSignal(() => 0);
 
-export const currentRunId = signal<string | null>(null);
-export const lastBattleId = signal<string | null>(null);
-export const battleError = signal<InfraError | null>(null);
+export const board = resettableSignal<(UnitInstance | null)[]>(() => [
+  null,
+  null,
+  null,
+  null,
+  null,
+]);
+export const shopUnits = resettableSignal<(ShopSlot | null)[]>(() => []);
+export const shopItems = resettableSignal<(ShopItemSlot | null)[]>(() => []);
+export const selection = resettableSignal<Selection | null>(() => null);
+export const freeRoll = resettableSignal(() => false);
+export const cultistUsed = resettableSignal(() => false);
+export const onboardingStep = resettableSignal<OnboardingStep>(() => null);
+export const rotRingUses = resettableSignal(() => 0);
 
-export const battleBusy = signal(false);
-export const battleLoading = signal(false);
-export const battleLoadError = signal<InfraError | null>(null);
+export const currentEnemyTeam = resettableSignal<EnemyTeam | null>(() => null);
+export const battleFrames = resettableSignal<BattleFrame[]>(() => []);
+export const currentFrameIdx = resettableSignal(() => 0);
+export const battleResult = resettableSignal<BattleResult>(() => null);
+export const fastForward = resettableSignal(() => false);
+export const lastBattleResult = resettableSignal<BattleResult>(() => null);
+export const lastEnemyTeamType = resettableSignal<EnemyFaction | null>(() => null);
 
-export const gameLoading = signal(false);
+export const currentRunId = resettableSignal<string | null>(() => null);
+export const lastBattleId = resettableSignal<string | null>(() => null);
+export const battleError = resettableSignal<InfraError | null>(() => null);
 
-export const canUndo = signal(false);
-export const shopLocked = signal(false);
-export const shopActionError = signal<InfraError | null>(null);
-export const startGameError = signal<InfraError | null>(null);
-export const activeEvent = signal<EventData | null>(null);
-export const showHelpOverlay = signal(false);
+export const battleBusy = resettableSignal(() => false);
+export const battleLoading = resettableSignal(() => false);
+export const battleLoadError = resettableSignal<InfraError | null>(() => null);
+
+export const gameLoading = resettableSignal(() => false);
+
+export const canUndo = resettableSignal(() => false);
+export const shopLocked = resettableSignal(() => false);
+export const shopActionError = resettableSignal<InfraError | null>(() => null);
+export const startGameError = resettableSignal<InfraError | null>(() => null);
+export const activeEvent = resettableSignal<EventData | null>(() => null);
+export const showHelpOverlay = resettableSignal(() => false);
+export const showRetireConfirm = resettableSignal(() => false);
+export const recoveryWarning = resettableSignal<string | null>(() => null);
+export const retiring = resettableSignal(() => false);
+
+export function resetAllSignals() {
+  batch(() => {
+    for (const entry of registry) {
+      entry.reset();
+    }
+  });
+}

@@ -2,32 +2,34 @@ import { simulateBattle, runBattle } from "./battle";
 import { makeUnit, makeBattleUnit, makeEnemyTeam, makeContext } from "./test-helpers";
 import { MAX_OPS } from "./constants";
 
+const SEED = 42;
+
 describe("simulateBattle", () => {
   it("returns WIN when player units are stronger", () => {
     const playerBoard = [makeUnit({ atk: 10, hp: 20 }), null, null, null, null];
     const enemy = makeEnemyTeam([makeUnit({ atk: 1, hp: 1 })]);
-    const { result } = simulateBattle(playerBoard, enemy, 1);
+    const { result } = simulateBattle(playerBoard, enemy, 1, SEED);
     expect(result).toBe("WIN");
   });
 
   it("returns LOSE when enemy units are stronger", () => {
     const playerBoard = [makeUnit({ atk: 1, hp: 1 }), null, null, null, null];
     const enemy = makeEnemyTeam([makeUnit({ atk: 10, hp: 20 })]);
-    const { result } = simulateBattle(playerBoard, enemy, 1);
+    const { result } = simulateBattle(playerBoard, enemy, 1, SEED);
     expect(result).toBe("LOSE");
   });
 
   it("returns DRAW when both sides die simultaneously", () => {
     const playerBoard = [makeUnit({ atk: 5, hp: 5 }), null, null, null, null];
     const enemy = makeEnemyTeam([makeUnit({ atk: 5, hp: 5 })]);
-    const { result } = simulateBattle(playerBoard, enemy, 1);
+    const { result } = simulateBattle(playerBoard, enemy, 1, SEED);
     expect(result).toBe("DRAW");
   });
 
   it("generates frames including info and result", () => {
     const playerBoard = [makeUnit({ atk: 10, hp: 10 }), null, null, null, null];
     const enemy = makeEnemyTeam([makeUnit({ atk: 1, hp: 1 })]);
-    const { frames } = simulateBattle(playerBoard, enemy, 1);
+    const { frames } = simulateBattle(playerBoard, enemy, 1, SEED);
     expect(frames.length).toBeGreaterThan(0);
     expect(frames[0]!.log.type).toBe("info");
     expect(frames[frames.length - 1]!.log.type).toBe("result");
@@ -42,14 +44,14 @@ describe("simulateBattle", () => {
       null,
     ];
     const enemy = makeEnemyTeam([makeUnit({ atk: 2, hp: 2 }), makeUnit({ atk: 2, hp: 2 })]);
-    const { result } = simulateBattle(playerBoard, enemy, 1);
+    const { result } = simulateBattle(playerBoard, enemy, 1, SEED);
     expect(result).toBe("WIN");
   });
 
   it("handles empty player board gracefully", () => {
     const playerBoard = [null, null, null, null, null];
     const enemy = makeEnemyTeam([makeUnit({ atk: 1, hp: 1 })]);
-    const { result } = simulateBattle(playerBoard, enemy, 1);
+    const { result } = simulateBattle(playerBoard, enemy, 1, SEED);
     expect(result).toBe("LOSE");
   });
 
@@ -58,7 +60,7 @@ describe("simulateBattle", () => {
     const u2 = makeUnit({ atk: 2, hp: 2, uid: "e2" });
     const enemy = makeEnemyTeam([u1, u2]);
     const originalOrder = [...enemy.units];
-    simulateBattle([makeUnit({ atk: 10, hp: 10 }), null, null, null, null], enemy, 1);
+    simulateBattle([makeUnit({ atk: 10, hp: 10 }), null, null, null, null], enemy, 1, SEED);
     expect(enemy.units.map((u) => u.uid)).toEqual(originalOrder.map((u) => u.uid));
   });
 

@@ -6,7 +6,6 @@ vi.mock("../engine/audio", () => ({
 vi.mock("../api/shop-client", () => ({
   setupShop: vi.fn(),
   rollShop: vi.fn(),
-  dismissEvent: vi.fn(),
   freezeSlot: vi.fn(),
   sellUnit: vi.fn(),
   useCultist: vi.fn(),
@@ -16,7 +15,6 @@ import { playSE } from "../engine/audio";
 import {
   setupShop as apiSetupShop,
   rollShop as apiRollShop,
-  dismissEvent as apiDismissEvent,
   freezeSlot as apiFreezeSlot,
   sellUnit as apiSellUnit,
   useCultist as apiUseCultist,
@@ -27,7 +25,6 @@ import {
   handleFreezeClick,
   executeSellUnit,
   useCultistAbility,
-  dismissEvent,
 } from "./shop-actions";
 import {
   origin,
@@ -160,6 +157,12 @@ describe("rollShop", () => {
 
   it("does nothing when shopLocked", () => {
     shopLocked.value = true;
+    rollShop();
+    expect(apiRollShop).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when activeEvent has lockRoll", () => {
+    activeEvent.value = { lockRoll: true } as typeof activeEvent.value;
     rollShop();
     expect(apiRollShop).not.toHaveBeenCalled();
   });
@@ -304,41 +307,6 @@ describe("useCultistAbility", () => {
       err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
     );
     useCultistAbility();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(playSE).toHaveBeenCalledWith("error");
-  });
-});
-
-describe("dismissEvent", () => {
-  it("calls API and applies response", async () => {
-    activeEvent.value = { id: "vial" } as typeof activeEvent.value;
-    vi.mocked(apiDismissEvent).mockResolvedValue(
-      ok(makeShopState({ blood: 10, activeEvent: null })),
-    );
-    dismissEvent();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(activeEvent.value).toBeNull();
-    expect(blood.value).toBe(10);
-    expect(playSE).toHaveBeenCalledWith("select");
-  });
-
-  it("does nothing when shopLocked", () => {
-    shopLocked.value = true;
-    dismissEvent();
-    expect(apiDismissEvent).not.toHaveBeenCalled();
-  });
-
-  it("does nothing without runId", () => {
-    currentRunId.value = null;
-    dismissEvent();
-    expect(apiDismissEvent).not.toHaveBeenCalled();
-  });
-
-  it("plays error on API failure", async () => {
-    vi.mocked(apiDismissEvent).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
-    dismissEvent();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(playSE).toHaveBeenCalledWith("error");
   });

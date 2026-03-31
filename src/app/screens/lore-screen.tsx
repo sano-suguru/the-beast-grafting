@@ -1,10 +1,62 @@
 import { BookOpen, Skull, Bookmark, Swords, Shield } from "lucide-preact";
 import { UNITS } from "../../shared/data/units";
+import { CHURCH_UNITS } from "../../shared/data/church-units";
 import { phase } from "../state/game-store";
 import { loreDb } from "../state/lore";
 import { initAudio, playSE } from "../engine/audio";
 import { StatBadge } from "../components/stat-badge";
 import type { UnitData, LoreEntry } from "../types";
+
+function ChurchUnseenCard({ id }: { id: string }) {
+  return (
+    <article
+      key={id}
+      aria-label="未記録の教団兵"
+      className="flex gap-3 border border-amber-900/30 bg-amber-950/10 p-3 opacity-40 grayscale"
+    >
+      <div className="flex aspect-[2/3] w-12 shrink-0 items-center justify-center rounded border border-amber-900/30 bg-zinc-950 md:w-16">
+        <Shield size={20} className="text-amber-900/50" />
+      </div>
+      <div className="flex flex-1 flex-col justify-center">
+        <div className="mb-1 text-sm font-bold text-amber-800/60">未記録の教団兵</div>
+        <div className="text-[10px] text-amber-900/60">教団との戦闘で遭遇すると記録される。</div>
+      </div>
+    </article>
+  );
+}
+
+function ChurchLoreUnitCard({ unit }: { unit: UnitData }) {
+  return (
+    <article
+      aria-label={unit.name}
+      className="relative flex gap-3 border border-amber-900/40 bg-amber-950/10 p-3"
+    >
+      <div className="relative flex aspect-[2/3] w-14 shrink-0 flex-col rounded border border-amber-900/40 bg-zinc-950 p-1 md:w-16">
+        <div className="mt-0.5 line-clamp-2 h-6 overflow-hidden text-center text-[8px] leading-tight font-bold break-words text-amber-200 md:h-8 md:text-[9px]">
+          {unit.name}
+        </div>
+        <div className="flex flex-1 items-center justify-center">
+          <Shield size={16} className="text-amber-700/50" />
+        </div>
+        <div className="flex items-center justify-between rounded bg-black px-1">
+          <StatBadge icon={Swords} value={unit.baseAtk} className="text-amber-600/70" />
+          <StatBadge icon={Shield} value={unit.baseHp} className="text-amber-600/70" />
+        </div>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="mb-1.5 text-sm font-bold text-amber-200">
+          {unit.name} <span className="ml-1 text-[10px] text-amber-600/50">Tier {unit.tier}</span>
+        </div>
+        <div className="mb-2 text-[9px] font-bold text-amber-600/80 md:text-[10px]">
+          {unit.skillText}
+        </div>
+        <div className="mb-2 text-[10px] leading-relaxed text-amber-300/60 md:text-xs">
+          {unit.lore}
+        </div>
+      </div>
+    </article>
+  );
+}
 
 function UnseenCard({ id }: { id: string }) {
   return (
@@ -81,6 +133,7 @@ export function LoreScreen() {
   const sortedUnits = Object.values(UNITS)
     .filter((u) => u.tier > 0)
     .sort((a, b) => a.tier - b.tier);
+  const churchUnits = Object.values(CHURCH_UNITS).sort((a, b) => a.tier - b.tier);
   const db = loreDb.value;
   const handleClose = () => {
     initAudio();
@@ -123,6 +176,30 @@ export function LoreScreen() {
             );
           })}
         </ul>
+        <div className="mt-8 border-t border-amber-900/30 pt-6">
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-bold tracking-wider text-amber-700/80">
+            <Shield size={16} /> 教団兵の記録
+          </h2>
+          <p className="mb-4 text-center text-[10px] text-amber-800/60 md:text-xs">
+            戦場で遭遇した教団の兵士たち。敵を知ることは、生き延びる術である。
+          </p>
+          <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {churchUnits.map((unit) => {
+              const entry = db[unit.id];
+              if (!entry?.seen)
+                return (
+                  <li key={unit.id}>
+                    <ChurchUnseenCard id={unit.id} />
+                  </li>
+                );
+              return (
+                <li key={unit.id}>
+                  <ChurchLoreUnitCard unit={unit} />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </main>
   );

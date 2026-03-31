@@ -1,13 +1,14 @@
 import { Skull, Book } from "lucide-preact";
 import { UNITS } from "../../shared/data/units";
-import { phase } from "../state/game-store";
+import { phase, gameLoading } from "../state/game-store";
 import { loreDb } from "../state/lore";
 import { initAudio, playSE } from "../engine/audio";
+import { resumeOrSelectOrigin } from "../state/game-actions";
 
-const goToOrigin = () => {
+const enterGame = () => {
   initAudio();
   playSE("select");
-  phase.value = "ORIGIN";
+  void resumeOrSelectOrigin();
 };
 
 const goToLore = () => {
@@ -41,10 +42,15 @@ export function TitleScreen() {
       </div>
       <div className="flex flex-col gap-4">
         <button
-          onClick={goToOrigin}
-          className="cursor-pointer border border-red-900 bg-red-950/10 px-8 py-3 font-bold tracking-widest text-red-600 transition-all hover:bg-red-950/30"
+          onClick={enterGame}
+          disabled={gameLoading.value}
+          className={`border border-red-900 px-8 py-3 font-bold tracking-widest transition-all ${
+            gameLoading.value
+              ? "animate-pulse cursor-wait bg-red-950/5 text-red-900"
+              : "cursor-pointer bg-red-950/10 text-red-600 hover:bg-red-950/30"
+          }`}
         >
-          地下室へ降りる
+          {gameLoading.value ? "……闇の中を探っている……" : "地下室へ降りる"}
         </button>
         <button
           onClick={goToLore}

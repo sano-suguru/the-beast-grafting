@@ -15,7 +15,6 @@ import {
   executeFreeze,
   executeSwap,
   executeCultist,
-  executeDismissEvent,
   executeUndo,
   executeReady,
 } from "./shop-service";
@@ -424,70 +423,6 @@ describe("executeCultist", () => {
     const result = executeCultist(state, "cultist");
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().type).toBe("INSUFFICIENT_RESOURCE");
-  });
-});
-
-describe("executeDismissEvent", () => {
-  test("clears activeEvent", () => {
-    const state = makeState({
-      activeEvent: {
-        bloodBonus: 0,
-        freeRoll: false,
-        lockRoll: false,
-        replacesShopUnits: false,
-        shopSizeModifier: 0,
-        shopUnitBuff: null,
-        itemOffers: [],
-        unitOffers: [],
-      } as any,
-    });
-    const result = executeDismissEvent(state, null);
-    expect(result.isOk()).toBe(true);
-    expect(result._unsafeUnwrap().activeEvent).toBeNull();
-  });
-
-  test("reverts blood bonus", () => {
-    const state = makeState({
-      blood: 13,
-      activeEvent: {
-        bloodBonus: 3,
-        freeRoll: false,
-        lockRoll: false,
-        replacesShopUnits: false,
-        shopSizeModifier: 0,
-        shopUnitBuff: null,
-        itemOffers: [],
-        unitOffers: [],
-      } as any,
-    });
-    const result = executeDismissEvent(state, null);
-    expect(result.isOk()).toBe(true);
-    expect(result._unsafeUnwrap().blood).toBe(10);
-  });
-
-  test("thief gets freeRoll after dismiss", () => {
-    const state = makeState({
-      activeEvent: {
-        bloodBonus: 0,
-        freeRoll: false,
-        lockRoll: false,
-        replacesShopUnits: false,
-        shopSizeModifier: 0,
-        shopUnitBuff: null,
-        itemOffers: [],
-        unitOffers: [],
-      } as any,
-    });
-    const result = executeDismissEvent(state, "thief");
-    expect(result.isOk()).toBe(true);
-    expect(result._unsafeUnwrap().freeRoll).toBe(true);
-  });
-
-  test("fails when no event active", () => {
-    const state = makeState();
-    const result = executeDismissEvent(state, null);
-    expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().type).toBe("PRECONDITION_FAILED");
   });
 });
 

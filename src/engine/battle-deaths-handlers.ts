@@ -14,6 +14,7 @@ import {
   MAGGOT_TOKEN,
   DEATH_CURSE_TOKEN,
   FRAME_DELAY_DEATH_CHAIN,
+  EVANGELIST_PLAGUE_DAMAGE,
 } from "./constants";
 
 type DeathContext = {
@@ -294,7 +295,7 @@ function collectBeelzebubSpawns(
   let remaining = FLY_SPAWN_CAP - flyCount;
   for (let i = 0; i < board.length; i++) {
     const u = board[i];
-    if (!u || u.id !== "beelzebub") continue;
+    if (!u || u.id !== "beelzebub" || u.hp <= 0) continue;
     const mult = getMult(board, i);
     const count = Math.min(mult, remaining);
     if (count <= 0) continue;
@@ -334,4 +335,36 @@ export function handleBeelzebubSpawns(
     }
   }
   ctx[flyCountKey] += totalSpawned;
+}
+
+export function handleEvangelistPlague(
+  board: BattleUnit[],
+  enemyBoard: BattleUnit[],
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  const prefix = enemyPrefix(isPlayer);
+  for (let i = 0; i < board.length; i++) {
+    const u = board[i];
+    if (!u || u.id !== "evangelist" || u.hp <= 0) continue;
+    const mult = getMult(board, i);
+    for (let m = 0; m < mult; m++) {
+      const alive = enemyBoard.filter((e) => e.hp > 0);
+      // 敵全滅 → 残りの evangelist も対象なしのため関数ごと終了
+      if (alive.length === 0) return;
+      const target = alive[Math.floor(ctx.rng.next() * alive.length)]!;
+      target.hp -= EVANGELIST_PLAGUE_DAMAGE;
+      pushFrame(
+        ctx,
+        "skill",
+        `${prefix}屍の上で[${u.name}]が祈りを捧げる… [${target.name}]の血が黒く沸き立つ！ ${EVANGELIST_PLAGUE_DAMAGE} ダメージ。`,
+        "skill",
+        {
+          [u.uid]: { type: "skill" },
+          [target.uid]: { type: "damage", value: `-${EVANGELIST_PLAGUE_DAMAGE}` },
+        },
+        FRAME_DELAY_DEATH_CHAIN,
+      );
+    }
+  }
 }

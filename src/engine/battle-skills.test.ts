@@ -33,15 +33,6 @@ describe("runStartSkills – damage skills", () => {
     expect(front.hp).toBe(10);
     expect(back.hp).toBe(2);
   });
-
-  it("evangelist deals 33% of highest HP enemy", () => {
-    const evan = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
-    const weak = makeBattleUnit({ hp: 5 });
-    const strong = makeBattleUnit({ hp: 30 });
-    const ctx = makeContext([evan], [weak, strong]);
-    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(strong.hp).toBe(21); // 30 - floor(30 * 0.33) = 30 - 9 = 21
-  });
 });
 
 describe("runStartSkills – revenant buff", () => {

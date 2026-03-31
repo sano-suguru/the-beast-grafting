@@ -1,4 +1,4 @@
-import { Heart, Trophy, Droplet, HelpCircle } from "lucide-preact";
+import { Heart, Trophy, Droplet, HelpCircle, LogOut } from "lucide-preact";
 import { ORIGINS } from "../../../shared/data/origins";
 import {
   round,
@@ -8,6 +8,8 @@ import {
   blood,
   showHelpOverlay,
   onboardingStep,
+  shopLocked,
+  showRetireConfirm,
 } from "../../state/game-store";
 import { playSE } from "../../engine/audio";
 
@@ -38,6 +40,21 @@ export function ShopHeader() {
           aria-label="ヘルプ"
         >
           <HelpCircle size={14} />
+        </button>
+        <button
+          onClick={() => {
+            playSE("select");
+            showRetireConfirm.value = true;
+          }}
+          disabled={shopLocked.value}
+          className={`rounded p-1 transition-colors ${
+            shopLocked.value
+              ? "cursor-not-allowed text-zinc-800"
+              : "cursor-pointer text-zinc-600 hover:text-zinc-400"
+          }`}
+          aria-label="リタイア"
+        >
+          <LogOut size={14} />
         </button>
       </div>
       <div className="flex gap-3 md:gap-4">

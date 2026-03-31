@@ -31,7 +31,6 @@ import { markSeen } from "./lore";
 import {
   setupShop as apiSetupShop,
   rollShop as apiRollShop,
-  dismissEvent as apiDismissEvent,
   freezeSlot as apiFreezeSlot,
   sellUnit as apiSellUnit,
   useCultist as apiUseCultist,
@@ -154,6 +153,7 @@ export async function setupNight(runId: string, useTutorialShop = false) {
 
 export function rollShop() {
   if (shopLocked.value) return;
+  if (activeEvent.value?.lockRoll) return;
   const runId = currentRunId.value;
   if (!runId) return;
 
@@ -161,18 +161,6 @@ export function rollShop() {
   runShopAction("[rollShop]", apiRollShop(runId), () => {
     playSE("select");
     if (onboardingStep.value === "roll") onboardingStep.value = "battle";
-    markShopUnitsSeen(shopUnits.value);
-  });
-}
-
-export function dismissEvent() {
-  if (shopLocked.value) return;
-  const runId = currentRunId.value;
-  if (!runId) return;
-
-  initAudio();
-  runShopAction("[dismissEvent]", apiDismissEvent(runId), () => {
-    playSE("select");
     markShopUnitsSeen(shopUnits.value);
   });
 }

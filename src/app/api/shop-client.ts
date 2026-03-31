@@ -68,10 +68,6 @@ export function useCultist(runId: string): Promise<Result<ShopStateResponse, Inf
   return shopFetch("cultist", { runId });
 }
 
-export function dismissEvent(runId: string): Promise<Result<ShopStateResponse, InfraError>> {
-  return shopFetch("dismiss-event", { runId });
-}
-
 export function undoAction(runId: string): Promise<Result<ShopStateResponse, InfraError>> {
   return shopFetch("undo", { runId });
 }

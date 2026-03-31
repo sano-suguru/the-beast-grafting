@@ -1,7 +1,12 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix } from "./battle-context";
 import { invariant } from "../shared/invariant";
-import { getDeathHandler, handleEquipDeath, handleBeelzebubSpawns } from "./battle-deaths-handlers";
+import {
+  getDeathHandler,
+  handleEquipDeath,
+  handleBeelzebubSpawns,
+  handleEvangelistPlague,
+} from "./battle-deaths-handlers";
 import { DEATH_CASCADE_LIMIT, ALTAR_BUFF, FRAME_DELAY_DEATH_CHAIN } from "./constants";
 
 function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
@@ -71,6 +76,12 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   if (dead.id !== "token") {
     handleBeelzebubSpawns(board, isPlayer, ctx, insertIdx);
   }
+  // SAP準拠: processSideDeaths は ATK降順で1体ずつ死亡解決する。
+  // evangelist の "味方死亡" トリガーは各死亡後に独立発火し、
+  // resolveDeaths のカスケードループで後続死亡も順次処理される。
+  // splice(L65)済みのため死んだevangelist自身は発火しない。
+  const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
+  handleEvangelistPlague(board, enemyBoard, isPlayer, ctx);
   return true;
 }
 

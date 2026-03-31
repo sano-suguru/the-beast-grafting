@@ -104,7 +104,7 @@ export const runs = sqliteTable(
     board: text("board", { mode: "json" }).$type<(BoardUnit | null)[]>().notNull(),
     originId: text("origin_id"),
     shopSeed: integer("shop_seed"),
-    status: text("status", { enum: ["active", "won", "lost"] })
+    status: text("status", { enum: ["active", "won", "lost", "retired"] })
       .notNull()
       .default("active"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),

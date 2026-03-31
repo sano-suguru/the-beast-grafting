@@ -1,11 +1,13 @@
 import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
 import { ALTAR_BUFF, ROT_RING_MAX_USES, MACHINE_BUFF } from "./constants";
+import { EXP_PER_LEVEL, MAX_UNIT_LEVEL } from "../shared/constants";
 import { computeZealotBuff } from "./buff-utils";
 
 export const graftUnits = (base: UnitInstance, material: UnitInstance): UnitInstance => {
   const newExp = base.exp + 1;
-  const newLevel = newExp >= base.level * 2 ? Math.min(3, base.level + 1) : base.level;
+  const newLevel =
+    newExp >= base.level * EXP_PER_LEVEL ? Math.min(MAX_UNIT_LEVEL, base.level + 1) : base.level;
   return {
     ...base,
     atk: base.atk + material.atk,

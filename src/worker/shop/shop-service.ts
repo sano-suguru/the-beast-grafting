@@ -534,32 +534,6 @@ export function executeCultist(
   });
 }
 
-export function executeDismissEvent(
-  state: ShopStateRow,
-  originId: OriginId | null,
-): Result<ShopStateRow, GameError> {
-  if (!state.activeEvent) return err({ type: "PRECONDITION_FAILED", reason: "no_active_event" });
-
-  const event = state.activeEvent;
-  const { rng, saveRng } = withRng(state);
-  const prevItems = itemSlotsFromJson(state.shopItems);
-  // prevUnits=[] : イベント解除時はショップユニットを全再生成する（frozen枠も残さない）
-  const { units, items } = buildShopForRound(state.round, null, originId, [], prevItems, rng);
-
-  const bloodBeforeEvent = state.blood - event.bloodBonus;
-
-  return ok({
-    ...state,
-    blood: Math.max(0, bloodBeforeEvent),
-    activeEvent: null,
-    freeRoll: originId === "thief",
-    shopUnits: slotsToJson(units),
-    shopItems: itemSlotsToJson(items),
-    undoSnapshot: captureUndo(state),
-    ...saveRng(),
-  });
-}
-
 export function executeUndo(state: ShopStateRow): Result<ShopStateRow, GameError> {
   if (!state.undoSnapshot) return err({ type: "PRECONDITION_FAILED", reason: "no_undo_available" });
 

@@ -45,8 +45,3 @@ export function restoreRng(state: RngState): StatefulRng {
   invariant(state.s0 !== 0 || state.s1 !== 0, "RNG state must not be all-zero");
   return createXorshift128plus(state.s0, state.s1);
 }
-
-/** Default RNG delegating to Math.random(). */
-export function createDefaultRng(): Rng {
-  return { next: () => Math.random() };
-}

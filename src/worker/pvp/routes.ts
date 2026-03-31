@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { eq, and } from "drizzle-orm";
 import { safeAsync, dbErr } from "../../shared/errors";
+import { warn } from "../../shared/logger";
 import type { BoardUnit } from "../../shared/board-unit";
 import {
   unitInstanceToBoardUnit,
@@ -15,6 +16,7 @@ import { CHURCH_UNITS } from "../../shared/data/church-units";
 import type { RegularUnitId, ChurchUnitId } from "../../shared/types";
 import { simulateBattle } from "../../engine/battle";
 import { generateEnemyTeam } from "../../engine/helpers";
+import { createSeededRng } from "../../engine/rng";
 import { boardSnapshots, battles, runs } from "../../db/schema";
 import { generateId } from "../auth/crypto";
 import { requireAuth } from "../auth/middleware";
@@ -216,12 +218,13 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
     return internalError(c, "[pvp/battle:opponent]", opponentResult.error);
 
   const pvpOpponent = opponentResult.value;
+  const seed = generateBattleSeed();
   let enemy: EnemyTeam;
   const opponentPlayerId = pvpOpponent?.playerId ?? null;
   if (pvpOpponent) {
     enemy = pvpOpponentToEnemyTeam(pvpOpponent);
   } else {
-    enemy = generateEnemyTeam(round);
+    enemy = generateEnemyTeam(round, createSeededRng(seed));
   }
 
   const existingBattle = await safeAsync(
@@ -235,11 +238,15 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
   );
   if (existingBattle.isErr()) return internalError(c, "[pvp/battle:check]", existingBattle.error);
   if (existingBattle.value[0]) {
+    warn("[pvp/battle] battle_already_exists", {
+      runId,
+      round,
+      existingId: existingBattle.value[0].id,
+    });
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "battle_already_exists" } }, 409);
   }
 
-  const seed = generateBattleSeed();
-  const { frames, result } = simulateBattle(playerBoard, enemy, round, null, seed);
+  const { frames, result } = simulateBattle(playerBoard, enemy, round, seed);
 
   const battleId = generateId();
   const saveResult = await safeAsync(
@@ -272,6 +279,12 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
   );
   if (verifyInsert.isErr()) return internalError(c, "[pvp/battle:verify]", verifyInsert.error);
   if (verifyInsert.value[0]?.id !== battleId) {
+    warn("[pvp/battle] race: battle_already_exists", {
+      runId,
+      round,
+      battleId,
+      actualId: verifyInsert.value[0]?.id,
+    });
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "battle_already_exists" } }, 409);
   }
 

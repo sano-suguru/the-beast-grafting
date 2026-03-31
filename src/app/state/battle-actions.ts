@@ -58,6 +58,8 @@ function loadBattleInBackground(runId: string, currentRound: number) {
             battleResult.value = battleRes;
             lastBattleResult.value = battleRes;
             lastEnemyTeamType.value = opponent.teamType;
+            const churchIds = opponent.units.filter((u) => u.isChurch).map((u) => u.id);
+            if (churchIds.length > 0) markSeen(churchIds);
           },
           (e) => {
             battleLoadError.value = e;

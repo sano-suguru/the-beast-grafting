@@ -2,7 +2,7 @@ import { Swords, Shield, Dna, Droplet } from "lucide-preact";
 import type { ComponentChildren } from "preact";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick } from "../state/card-actions";
-import { UNIT_COST } from "../../shared/constants";
+import { UNIT_COST, EXP_PER_LEVEL, MAX_UNIT_LEVEL } from "../../shared/constants";
 import { StatBadge } from "./stat-badge";
 import { EquipIcon } from "./equip-icon";
 import type { UnitInstance, Selection, HighlightKind } from "../types";
@@ -45,9 +45,22 @@ function getStatClass(isSelected: boolean): string {
   return isSelected ? "text-emerald-400" : "text-zinc-400";
 }
 
-function getLevelBadgeClass(cantAfford: boolean): string {
-  const dim = cantAfford ? "opacity-40 grayscale" : "";
-  return `absolute -bottom-1 -left-1 bg-zinc-800 text-[8px] md:text-[9px] px-1 rounded border border-zinc-700 pointer-events-none ${dim}`;
+function ExpDots({ level, exp }: { level: number; exp: number }) {
+  if (level >= MAX_UNIT_LEVEL) return null;
+  const baseExp = (level - 1) * EXP_PER_LEVEL;
+  const filled = Math.max(0, Math.min(EXP_PER_LEVEL, exp - baseExp));
+  return (
+    <span aria-label={`経験値${filled}/${EXP_PER_LEVEL}`} className="inline-flex gap-px">
+      {Array.from({ length: EXP_PER_LEVEL }, (_, i) => (
+        <span
+          key={i}
+          className={`text-[7px] leading-none ${i < filled ? "text-zinc-300" : "text-zinc-600"}`}
+        >
+          {i < filled ? "\u25CF" : "\u25CB"}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 function getContentClass(cantAfford: boolean): string {
@@ -118,11 +131,19 @@ export function UnitCard({
             <StatBadge icon={Shield} value={unit.hp} className={statClass} />
           </div>
         </div>
-        {unit.level > 1 && <div className={getLevelBadgeClass(cantAfford)}>Lv{unit.level}</div>}
+        <div className="pointer-events-none absolute -top-1 -left-1 flex items-center gap-0.5 rounded border border-zinc-700 bg-zinc-800 px-1 text-[8px] text-zinc-400 md:text-[9px]">
+          {unit.level > 1 && <span>Lv{unit.level}</span>}
+          <ExpDots level={unit.level} exp={unit.exp} />
+        </div>
         {type === "SHOP_UNIT" && cost !== UNIT_COST && (
           <div className="pointer-events-none absolute -top-1 -right-1 flex items-center gap-px rounded border border-zinc-600 bg-zinc-800 px-1 text-[8px] font-bold text-zinc-300">
             {cost}
             <Droplet size={7} className="text-red-800" />
+          </div>
+        )}
+        {type === "SHOP_UNIT" && (
+          <div className="pointer-events-none absolute -right-1 -bottom-2.5 rounded border border-zinc-700 bg-zinc-800 px-1 text-[7px] font-bold text-zinc-500 md:text-[8px]">
+            T{unit.tier}
           </div>
         )}
       </button>

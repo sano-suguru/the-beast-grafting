@@ -24,7 +24,12 @@ export async function apiFetch<T>(
   const response = res.value;
   if (!response.ok) {
     if (response.status === 401) sessionPromise = null;
-    return err({ type: "API_FETCH_FAILED", status: response.status, cause: null });
+    const body = await safeAsync(() => response.json(), apiFetchErr(response.status));
+    return err({
+      type: "API_FETCH_FAILED",
+      status: response.status,
+      cause: body.isOk() ? body.value : null,
+    });
   }
 
   const json = await safeAsync(() => response.json(), apiFetchErr(response.status));

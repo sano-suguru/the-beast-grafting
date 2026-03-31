@@ -70,6 +70,33 @@ describe("UnitCard", () => {
     expect(container.innerHTML).not.toContain("red-900");
   });
 
+  it("shows two empty dots for level 1 exp 0", () => {
+    const unit = makeUnit({ level: 1, exp: 0 });
+    render(<UnitCard unit={unit} type="BOARD_SLOT" index={0} />);
+    expect(screen.getByLabelText("経験値0/2")).toBeInTheDocument();
+    expect(screen.getByLabelText("経験値0/2").textContent).toBe("○○");
+  });
+
+  it("shows one filled dot for level 1 exp 1", () => {
+    const unit = makeUnit({ level: 1, exp: 1 });
+    render(<UnitCard unit={unit} type="BOARD_SLOT" index={0} />);
+    expect(screen.getByLabelText("経験値1/2").textContent).toBe("●○");
+  });
+
+  it("shows Lv2 with empty dots for level 2 exp 2", () => {
+    const unit = makeUnit({ level: 2, exp: 2 });
+    render(<UnitCard unit={unit} type="BOARD_SLOT" index={0} />);
+    expect(screen.getByText("Lv2")).toBeInTheDocument();
+    expect(screen.getByLabelText("経験値0/2").textContent).toBe("○○");
+  });
+
+  it("shows no dots for level 3", () => {
+    const unit = makeUnit({ level: 3, exp: 4 });
+    render(<UnitCard unit={unit} type="BOARD_SLOT" index={0} />);
+    expect(screen.getByText("Lv3")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/経験値/)).not.toBeInTheDocument();
+  });
+
   it("shows cost badge when costOverride differs from default", () => {
     const unit = makeUnit();
     const { container } = render(

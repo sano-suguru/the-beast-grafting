@@ -1,3 +1,4 @@
+import { useEffect } from "preact/hooks";
 import { ChevronRight, Trash2, Droplet, Undo2, X } from "lucide-preact";
 import { UNIT_COST } from "../../shared/constants";
 import type { OnboardingStep, UnitInstance } from "../types";
@@ -13,8 +14,10 @@ import {
   showHelpOverlay,
   shopLocked,
   shopActionError,
+  showRetireConfirm,
+  recoveryWarning,
 } from "../state/game-store";
-import { executeSellUnit, dismissEvent } from "../state/shop-actions";
+import { executeSellUnit } from "../state/shop-actions";
 import { undoLastAction } from "../state/undo-actions";
 import { checkHighlight } from "../state/card-actions";
 import { UnitCard } from "../components/unit-card";
@@ -24,6 +27,8 @@ import { OnboardingTooltip } from "../components/onboarding-tooltip";
 import { ShopHeader } from "./shop/shop-header";
 import { ShopInfoPanel } from "./shop/shop-info-panel";
 import { ShopFooter } from "./shop/shop-footer";
+import { retireGame } from "../state/game-actions";
+import { playSE } from "../engine/audio";
 
 export function ShopScreen() {
   const sel = selection.value;
@@ -51,7 +56,9 @@ export function ShopScreen() {
 
       <ShopFooter currentOnboarding={currentOnboarding} />
       {busy && <ShopBusyOverlay />}
+      {showRetireConfirm.value && <RetireConfirmOverlay />}
       {actionError && <ShopErrorBanner />}
+      {recoveryWarning.value && <RecoveryWarningBanner />}
     </main>
   );
 }
@@ -177,6 +184,40 @@ function ShopBusyOverlay() {
   );
 }
 
+function RetireConfirmOverlay() {
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
+      <div className="mx-4 flex max-w-sm flex-col items-center gap-6 border border-zinc-800 bg-zinc-950 p-6">
+        <p className="text-center text-sm leading-relaxed text-zinc-300">
+          この地下室を捨てて逃げますか？
+          <br />
+          <span className="text-xs text-zinc-500">進行状況は失われます。</span>
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              showRetireConfirm.value = false;
+            }}
+            className="cursor-pointer border border-zinc-700 px-4 py-2 text-xs tracking-widest text-zinc-400 transition-all hover:bg-zinc-900 active:scale-95"
+          >
+            留まる
+          </button>
+          <button
+            onClick={() => {
+              playSE("select");
+              showRetireConfirm.value = false;
+              void retireGame();
+            }}
+            className="cursor-pointer border border-red-900 bg-red-950/30 px-4 py-2 text-xs tracking-widest text-red-500 transition-all hover:bg-red-950/50 active:scale-95"
+          >
+            逃げ出す
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ShopErrorBanner() {
   return (
     <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-between bg-red-950/90 px-3 py-2 text-xs text-red-400">
@@ -186,6 +227,31 @@ function ShopErrorBanner() {
           shopActionError.value = null;
         }}
         className="ml-2 shrink-0 cursor-pointer text-red-600 hover:text-red-400"
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+const RECOVERY_BANNER_MS = 8000;
+
+function RecoveryWarningBanner() {
+  useEffect(() => {
+    const id = setTimeout(() => {
+      recoveryWarning.value = null;
+    }, RECOVERY_BANNER_MS);
+    return () => clearTimeout(id);
+  }, []);
+
+  return (
+    <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-between bg-amber-950/90 px-3 py-2 text-xs text-amber-400">
+      <span>{recoveryWarning.value}</span>
+      <button
+        onClick={() => {
+          recoveryWarning.value = null;
+        }}
+        className="ml-2 shrink-0 cursor-pointer text-amber-600 hover:text-amber-400"
       >
         <X size={14} />
       </button>
@@ -216,14 +282,6 @@ function ShopSection() {
             </span>
           )}
         </span>
-        {isEventMode && (
-          <button
-            onClick={dismissEvent}
-            className="flex cursor-pointer items-center gap-1 rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[9px] font-bold text-zinc-400 hover:bg-zinc-700 active:scale-95 md:text-[10px]"
-          >
-            <X size={10} /> 見送る
-          </button>
-        )}
       </div>
       <div className="relative z-0 flex flex-1 items-start gap-2 md:gap-4">
         <ul role="list" className="flex min-w-0 flex-1 gap-1 md:gap-2">

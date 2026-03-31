@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { eq, and } from "drizzle-orm";
-import { safeAsync, dbErr } from "../../shared/errors";
+import { safeAsync, dbErr, ok, err, type Result, type InfraError } from "../../shared/errors";
 import type { BoardUnit } from "../../shared/board-unit";
-import type { RunState, RunStatus } from "../../shared/api-types";
+import type { RunState, CurrentRunState, RunStatus } from "../../shared/api-types";
 import { isOriginId } from "../../shared/origin-id";
 import { runs, battles, shopStates } from "../../db/schema";
 import { generateId } from "../auth/crypto";
@@ -28,27 +28,54 @@ interface AdvanceFields {
   status: RunStatus;
 }
 
-/** Consume a battle then advance the run. Returns false if already consumed. */
-export function consumeAndAdvance(
+/**
+ * Consume a battle then advance the run. Returns false if already consumed or run no longer active.
+ * D1 にトランザクションがないため2段階で実行する。consume 成功後の advance がインフラエラーで
+ * 失敗した場合、battle は consumed 済みだが run は未更新になる。この中間状態は
+ * クライアントの recoverPendingBattle (game-actions.ts) がカバーする。
+ */
+export async function consumeAndAdvance(
   db: DrizzleD1Database,
   battleId: string,
   runId: string,
   fields: AdvanceFields,
-) {
-  return safeAsync(async () => {
-    const consumeRows = await db
-      .update(battles)
-      .set({ consumed: true })
-      .where(and(eq(battles.id, battleId), eq(battles.consumed, false)))
-      .returning({ id: battles.id });
-    if (consumeRows.length === 0) return false;
+): Promise<Result<boolean, InfraError>> {
+  const consumed = await safeAsync(
+    () =>
+      db
+        .update(battles)
+        .set({ consumed: true })
+        .where(and(eq(battles.id, battleId), eq(battles.consumed, false)))
+        .returning({ id: battles.id }),
+    dbErr,
+  );
+  if (consumed.isErr()) return err(consumed.error);
+  if (consumed.value.length === 0) return ok(false);
 
-    await db
-      .update(runs)
-      .set({ ...fields, updatedAt: new Date() })
-      .where(eq(runs.id, runId));
-    return true;
-  }, dbErr);
+  const advanced = await safeAsync(
+    () =>
+      db
+        .update(runs)
+        .set({ ...fields, updatedAt: new Date() })
+        .where(and(eq(runs.id, runId), eq(runs.status, "active")))
+        .returning({ id: runs.id }),
+    dbErr,
+  );
+  if (advanced.isErr()) return err(advanced.error);
+  if (advanced.value.length > 0) return ok(true);
+  return ok(false);
+}
+
+function findActiveRunId(db: DrizzleD1Database, playerId: string) {
+  return safeAsync(
+    () =>
+      db
+        .select({ id: runs.id })
+        .from(runs)
+        .where(and(eq(runs.playerId, playerId), eq(runs.status, "active")))
+        .limit(1),
+    dbErr,
+  );
 }
 
 function validateOriginId(id: unknown): id is string | null {
@@ -63,15 +90,7 @@ runRoutes.post("/start", requireAuth, jsonBody(), async (c) => {
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_origin" } }, 400);
   }
 
-  const existingRun = await safeAsync(
-    () =>
-      db
-        .select({ id: runs.id })
-        .from(runs)
-        .where(and(eq(runs.playerId, playerId), eq(runs.status, "active")))
-        .limit(1),
-    dbErr,
-  );
+  const existingRun = await findActiveRunId(db, playerId);
   if (existingRun.isErr()) return internalError(c, "[run/start:check]", existingRun.error);
   if (existingRun.value[0]) {
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "active_run_exists" } }, 409);
@@ -121,18 +140,38 @@ runRoutes.get("/current", requireAuth, async (c) => {
           round: runs.round,
           sanity: runs.sanity,
           trophy: runs.trophy,
-          board: runs.board,
           originId: runs.originId,
           status: runs.status,
+          pendingBattleId: battles.id,
         })
         .from(runs)
+        .leftJoin(
+          battles,
+          and(
+            eq(battles.runId, runs.id),
+            eq(battles.round, runs.round),
+            eq(battles.consumed, false),
+          ),
+        )
         .where(and(eq(runs.playerId, playerId), eq(runs.status, "active")))
         .limit(1),
     dbErr,
   );
   if (result.isErr()) return internalError(c, "[run/current]", result.error);
 
-  return c.json({ run: result.value[0] ?? null });
+  const row = result.value[0];
+  if (!row) return c.json({ run: null });
+
+  const run: CurrentRunState = {
+    id: row.id,
+    round: row.round,
+    sanity: row.sanity,
+    trophy: row.trophy,
+    status: row.status,
+    originId: row.originId,
+    pendingBattleId: row.pendingBattleId ?? null,
+  };
+  return c.json({ run });
 });
 
 runRoutes.post("/advance", requireAuth, jsonBody(), async (c) => {
@@ -258,6 +297,27 @@ runRoutes.post("/advance", requireAuth, jsonBody(), async (c) => {
     originId: run.originId,
   };
   return c.json({ run: updatedRun });
+});
+
+runRoutes.post("/retire", requireAuth, async (c) => {
+  const db = c.get("db");
+  const playerId = c.get("playerId");
+
+  const result = await safeAsync(
+    () =>
+      db
+        .update(runs)
+        .set({ status: "retired" as const, updatedAt: new Date() })
+        .where(and(eq(runs.playerId, playerId), eq(runs.status, "active")))
+        .returning({ id: runs.id }),
+    dbErr,
+  );
+  if (result.isErr()) return internalError(c, "[run/retire]", result.error);
+  if (result.value.length === 0) {
+    return c.json({ error: { type: "NOT_FOUND", entity: "run" } }, 404);
+  }
+
+  return c.json({ ok: true });
 });
 
 export default runRoutes;

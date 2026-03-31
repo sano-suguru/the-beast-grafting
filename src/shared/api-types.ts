@@ -3,7 +3,7 @@ import type { BoardUnit, PvpOpponent } from "./board-unit";
 
 export type ServerBattleResult = "WIN" | "LOSE" | "DRAW";
 
-export type RunStatus = "active" | "won" | "lost";
+export type RunStatus = "active" | "won" | "lost" | "retired";
 
 export interface RunState {
   id: string;
@@ -12,6 +12,10 @@ export interface RunState {
   trophy: number;
   status: RunStatus;
   originId: string | null;
+}
+
+export interface CurrentRunState extends RunState {
+  pendingBattleId: string | null;
 }
 
 export interface BattleResponse {

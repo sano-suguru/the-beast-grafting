@@ -1,6 +1,5 @@
 import type { EventData, EventId, ShopSlot, ShopItemSlot } from "../shared/types";
 import type { Rng } from "./rng";
-import { createDefaultRng } from "./rng";
 import { EVENTS } from "../shared/data/events";
 import { ITEMS } from "../shared/data/items";
 import { createUnit, getUnitsByTier, getItemPool, pickRandom, getCurrentMaxTier } from "./helpers";
@@ -18,15 +17,11 @@ function getTierAboveCurrent(round: number): number {
 
 const EVENT_IDS = Object.keys(EVENTS) as EventId[];
 
-export function selectEvent(rng: Rng = createDefaultRng()): EventData {
+export function selectEvent(rng: Rng): EventData {
   return EVENTS[pickRandom(EVENT_IDS, rng)];
 }
 
-export function buildEventShopUnits(
-  event: EventData,
-  round: number,
-  rng: Rng = createDefaultRng(),
-): ShopSlot[] {
+export function buildEventShopUnits(event: EventData, round: number, rng: Rng): ShopSlot[] {
   const atCeiling = getCurrentMaxTier(round) >= 6;
   return event.unitOffers.map((offer) => {
     const autoTier = offer.tier == null;
@@ -54,10 +49,7 @@ export function buildEventShopUnits(
   });
 }
 
-export function buildEventShopItems(
-  event: EventData,
-  rng: Rng = createDefaultRng(),
-): ShopItemSlot[] {
+export function buildEventShopItems(event: EventData, rng: Rng): ShopItemSlot[] {
   const pool = getItemPool();
   return event.itemOffers.map((offer) => {
     const itemId = offer.itemId === "random" ? pickRandom(pool, rng) : offer.itemId;

@@ -46,8 +46,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Comments
 
 - **コードで語れないことだけコメントする**: WHATコメント（コードの動作説明）は書かない。まず関数名・定数名・型で意図を表現し、それでも伝わらない設計由来（例: SAP準拠の理由）のみWHYコメントを書く。
-- **セクションディバイダー禁止**: `// --- XXX ---` や罫線コメントは使わない。関数定義と空行で区切る。
 - **JSDocはAPI境界に限定**: 公開関数・型フィールドの説明に使う。内部実装の逐次説明には使わない。
+
+### LSP
+
+- コード変更後の型エラー確認、シンボルの定義・参照の調査にはLSPツールを積極的に使う。Grep/Readで探す前にまずLSPを試すこと。
+- リファクタリング前は `findReferences` で影響範囲を把握する。
+- 呼び出し関係の調査には `incomingCalls` / `outgoingCalls` を使う。
 
 ### Configs
 

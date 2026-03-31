@@ -130,7 +130,7 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 5,
     tier: 4,
-    skillText: "開戦: 敵最高HPを33%減",
+    skillText: "味方死亡: ランダムな敵に3ダメージ",
     lore: "全身から致死の瘴気を放つ、かつての聖職者。その祈りは最も屈強な騎士の肺すら一瞬で腐らせる。",
     secretLore: "彼が通った街はすべて沈黙し、もはや誰一人として神への祈りを口にする者はいない。",
   },

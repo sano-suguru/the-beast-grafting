@@ -28,7 +28,6 @@ import {
   executeFreeze,
   executeSwap,
   executeCultist,
-  executeDismissEvent,
   executeUndo,
   executeReady,
 } from "./shop-service";
@@ -493,10 +492,6 @@ shopRoutes.post("/swap", requireAuth, jsonBody(), (c) =>
 
 shopRoutes.post("/cultist", requireAuth, jsonBody(), (c) =>
   shopAction(c, (state, run) => executeCultist(state, run.originId)),
-);
-
-shopRoutes.post("/dismiss-event", requireAuth, jsonBody(), (c) =>
-  shopAction(c, (state, run) => executeDismissEvent(state, run.originId)),
 );
 
 shopRoutes.post("/undo", requireAuth, jsonBody(), (c) =>

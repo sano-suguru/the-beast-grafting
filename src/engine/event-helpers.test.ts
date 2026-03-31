@@ -7,6 +7,7 @@ import {
 } from "./event-helpers";
 import { EVENTS } from "../shared/data/events";
 import { ROTTING_CARGO_CEILING_BONUS } from "./constants";
+import { createSeededRng } from "./rng";
 
 describe("EVENT_SCHEDULE", () => {
   it("contains 4, 8, 12, 16", () => {
@@ -36,7 +37,7 @@ describe("isEventRound", () => {
 
 describe("selectEvent", () => {
   it("returns a valid EventData", () => {
-    const event = selectEvent();
+    const event = selectEvent(createSeededRng(42));
     expect(event).toBeDefined();
     expect(event.id).toBeDefined();
     expect(event.narrative).toBeDefined();
@@ -57,12 +58,12 @@ describe("selectEvent", () => {
 
 describe("buildEventShopUnits", () => {
   it("returns empty array for events with no unitOffers", () => {
-    const result = buildEventShopUnits(EVENTS.vial, 4);
+    const result = buildEventShopUnits(EVENTS.vial, 4, createSeededRng(42));
     expect(result).toHaveLength(0);
   });
 
   it("builds slots from rotting_cargo offers", () => {
-    const result = buildEventShopUnits(EVENTS.rotting_cargo, 4);
+    const result = buildEventShopUnits(EVENTS.rotting_cargo, 4, createSeededRng(42));
     expect(result).toHaveLength(2);
     expect(result.every((s) => s !== null)).toBe(true);
     result.forEach((slot) => {
@@ -85,7 +86,7 @@ describe("buildEventShopUnits", () => {
         },
       ],
     };
-    const result = buildEventShopUnits(event, 4);
+    const result = buildEventShopUnits(event, 4, createSeededRng(42));
     const slot = result[0];
     expect(slot).not.toBeNull();
     expect(slot!.unit.atk).toBeGreaterThanOrEqual(2);
@@ -93,7 +94,7 @@ describe("buildEventShopUnits", () => {
   });
 
   it("applies ceiling bonus at round 12 when tier is auto-resolved", () => {
-    const result = buildEventShopUnits(EVENTS.rotting_cargo, 12);
+    const result = buildEventShopUnits(EVENTS.rotting_cargo, 12, createSeededRng(42));
     result.forEach((slot) => {
       expect(slot).not.toBeNull();
       expect(slot!.unit.atk).toBeGreaterThanOrEqual(ROTTING_CARGO_CEILING_BONUS.atk);
@@ -114,7 +115,7 @@ describe("buildEventShopUnits", () => {
         },
       ],
     };
-    const result = buildEventShopUnits(event, 4);
+    const result = buildEventShopUnits(event, 4, createSeededRng(42));
     const slot = result[0]!;
     expect(slot.unit.id).toBe("rat");
     expect(slot.unit.atk).toBe(2);
@@ -135,7 +136,7 @@ describe("buildEventShopUnits", () => {
         },
       ],
     };
-    const result = buildEventShopUnits(event, 12);
+    const result = buildEventShopUnits(event, 12, createSeededRng(42));
     const slot = result[0]!;
     expect(slot.unit.id).toBe("rat");
     expect(slot.unit.atk).toBe(2);
@@ -145,12 +146,12 @@ describe("buildEventShopUnits", () => {
 
 describe("buildEventShopItems", () => {
   it("returns empty array for events with no itemOffers", () => {
-    const result = buildEventShopItems(EVENTS.rotting_cargo);
+    const result = buildEventShopItems(EVENTS.rotting_cargo, createSeededRng(42));
     expect(result).toHaveLength(0);
   });
 
   it("builds free item slot for patrol", () => {
-    const result = buildEventShopItems(EVENTS.patrol);
+    const result = buildEventShopItems(EVENTS.patrol, createSeededRng(42));
     expect(result).toHaveLength(1);
     const slot = result[0];
     expect(slot).not.toBeNull();

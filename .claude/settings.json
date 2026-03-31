@@ -12,6 +12,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/post-stop.sh",
+            "timeout": 300,
+            "statusMessage": "Running pnpm check..."
+          }
+        ]
+      }
     ]
   },
   "permissions": {

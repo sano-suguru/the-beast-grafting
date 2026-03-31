@@ -18,7 +18,7 @@ export const DEATH_CURSE_TOKEN = { atk: 1, hp: 1 } as const;
 
 export const BAT_DAMAGE = 1;
 export const BANSHEE_DAMAGE = 8;
-export const EVANGELIST_HP_RATIO = 0.33;
+export const EVANGELIST_PLAGUE_DAMAGE = 3;
 export const PARASITE_BUFF = { atk: 2, hp: 2 } as const;
 export const EYE_DAMAGE = 5;
 export const EYE_INITIAL_USES = 5;

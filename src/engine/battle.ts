@@ -3,7 +3,7 @@ import { generateUid } from "./helpers";
 import type { BattleContext, BattleUnit } from "./battle-context";
 import { pushFrame } from "./battle-context";
 import type { Rng } from "./rng";
-import { createDefaultRng, createSeededRng } from "./rng";
+import { createSeededRng } from "./rng";
 import { resolveDeaths } from "./battle-deaths";
 import {
   runStartSkills,
@@ -117,7 +117,7 @@ function pushResultFrame(ctx: BattleContext, result: BattleResult, enemyTeam: En
   } else if (result === "LOSE") {
     const msg =
       enemyTeam.teamType === "教団"
-        ? "敗北。あなたの傑作は異端審問官の炎に巻かれ、浄化された。"
+        ? "敗北。あなたの傑作は異端審問官の炎に巻かれ、灰も残さず焼き尽くされた。"
         : "敗北。あなたの傑作は無残に解体され、同業者のキメラに貪り喰われた。";
     pushFrame(ctx, "result", msg, "skull");
   } else {
@@ -167,10 +167,10 @@ export function simulateBattle(
   playerBoard: (UnitInstance | null)[],
   enemyTeam: EnemyTeam,
   round: number,
+  seed: number,
   lastBattleResult: BattleResult = null,
-  seed?: number,
 ): { frames: BattleFrame[]; result: BattleResult } {
-  const rng = seed != null ? createSeededRng(seed) : createDefaultRng();
+  const rng = createSeededRng(seed);
   const ctx = initContext(playerBoard, enemyTeam, lastBattleResult, rng);
   return runBattle(ctx, enemyTeam, round);
 }

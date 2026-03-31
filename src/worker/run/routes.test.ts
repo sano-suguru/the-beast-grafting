@@ -85,6 +85,14 @@ function postAdvance(app: Hono<AuthEnv>, token: string, battleId: string) {
   );
 }
 
+function postRetire(app: Hono<AuthEnv>, token: string) {
+  return app.request(
+    "/retire",
+    { method: "POST", headers: { Cookie: `session=${token}` } },
+    TEST_ENV,
+  );
+}
+
 let app: Hono<AuthEnv>;
 
 beforeEach(() => {
@@ -302,6 +310,47 @@ describe("POST /advance", () => {
     expect(runRow[0]!.trophy).toBe(1);
   });
 
+  it("consumeAndAdvance returns false when run is retired", async () => {
+    const { playerId } = await createTestPlayer(testDb);
+    const now = new Date();
+    const runId = generateId();
+    await testDb.insert(runs).values({
+      id: runId,
+      playerId,
+      round: 1,
+      sanity: 5,
+      trophy: 0,
+      board: [],
+      originId: null,
+      status: "retired",
+      createdAt: now,
+      updatedAt: now,
+    });
+    const battleId = await insertBattle(testDb, playerId, runId, 1, "WIN");
+
+    const result = await consumeAndAdvance(testDb, battleId, runId, {
+      round: 2,
+      sanity: 5,
+      trophy: 1,
+      board: [],
+      status: "active",
+    });
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap()).toBe(false);
+
+    const runRow = await testDb.select().from(runs).where(eq(runs.id, runId)).limit(1);
+    expect(runRow[0]!.status).toBe("retired");
+    expect(runRow[0]!.trophy).toBe(0);
+
+    // battle は consumed のまま残る（terminal run なので再利用されない）
+    const battleRow = await testDb
+      .select({ consumed: battles.consumed })
+      .from(battles)
+      .where(eq(battles.id, battleId))
+      .limit(1);
+    expect(battleRow[0]!.consumed).toBe(true);
+  });
+
   it("rejects battle with mismatched round", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const startRes = await postStart(app, token);
@@ -369,6 +418,20 @@ describe("POST /advance", () => {
     expect(body.error.reason).toBe("run_finished");
   });
 
+  it("rejects advance on retired run", async () => {
+    const { token, playerId } = await createTestPlayer(testDb);
+    const startRes = await postStart(app, token);
+    const { run } = (await startRes.json()) as RunResponse;
+
+    await testDb.update(runs).set({ status: "retired" }).where(eq(runs.id, run.id));
+
+    const battleId = await insertBattle(testDb, playerId, run.id, 1, "WIN");
+    const res = await postAdvance(app, token, battleId);
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: { reason: string } };
+    expect(body.error.reason).toBe("run_finished");
+  });
+
   it("updates board from latest shop state", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const startRes = await postStart(app, token);
@@ -417,5 +480,64 @@ describe("POST /advance", () => {
     expect(row[0]!.board).toHaveLength(5);
     expect(row[0]!.board[0]!.atk).toBe(5);
     expect(row[0]!.board[1]).toBeNull();
+  });
+});
+
+describe("POST /retire", () => {
+  it("rejects unauthenticated requests", async () => {
+    const res = await app.request("/retire", { method: "POST" }, TEST_ENV);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 404 when no active run", async () => {
+    const { token } = await createTestPlayer(testDb);
+    const res = await postRetire(app, token);
+    expect(res.status).toBe(404);
+  });
+
+  it("retires an active run", async () => {
+    const { token, playerId } = await createTestPlayer(testDb);
+    await postStart(app, token, { originId: "thief" });
+
+    const res = await postRetire(app, token);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { ok: boolean };
+    expect(body.ok).toBe(true);
+
+    const row = await testDb.select().from(runs).where(eq(runs.playerId, playerId)).limit(1);
+    expect(row[0]!.status).toBe("retired");
+  });
+
+  it("allows starting a new run after retiring", async () => {
+    const { token } = await createTestPlayer(testDb);
+    await postStart(app, token, { originId: "thief" });
+    await postRetire(app, token);
+
+    const res = await postStart(app, token, { originId: "surgeon" });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as RunResponse;
+    expect(body.run.status).toBe("active");
+    expect(body.run.originId).toBe("surgeon");
+  });
+
+  it("returns 404 on double retire", async () => {
+    const { token } = await createTestPlayer(testDb);
+    await postStart(app, token, { originId: "thief" });
+    const first = await postRetire(app, token);
+    expect(first.status).toBe(200);
+
+    const second = await postRetire(app, token);
+    expect(second.status).toBe(404);
+  });
+
+  it("does not return retired run from GET /current", async () => {
+    const { token } = await createTestPlayer(testDb);
+    await postStart(app, token);
+    await postRetire(app, token);
+
+    const res = await getCurrent(app, token);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { run: null };
+    expect(body.run).toBeNull();
   });
 });

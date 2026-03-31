@@ -9,7 +9,6 @@ import type {
   ItemId,
 } from "../shared/types";
 import type { Rng } from "./rng";
-import { createDefaultRng } from "./rng";
 import { invariant } from "../shared/invariant";
 
 export const generateUid = (): string => Math.random().toString(36).substring(2, 11);
@@ -136,7 +135,7 @@ const generateGrafterTeam = (round: number): UnitInstance[] => {
   ];
 };
 
-export const generateEnemyTeam = (round: number, rng: Rng = createDefaultRng()): EnemyTeam => {
+export const generateEnemyTeam = (round: number, rng: Rng): EnemyTeam => {
   const isCult = rng.next() > round * 0.1;
   const type = isCult ? "教団" : "同業者";
   const teamName = generateTeamName(type, rng);

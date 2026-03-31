@@ -8,7 +8,7 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseHp: 2,
     tier: 1,
     skillText: "死亡: 後ろの味方に+1/+1",
-    lore: "教義を妄信する若き騎士。異端を狩るためなら自らの命も惜しまない。",
+    lore: "異端を知らぬ瞳が、最も深く剣を突き立てる。",
   },
   inquisitor: {
     id: "inquisitor",
@@ -26,7 +26,7 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseHp: 1,
     tier: 1,
     skillText: "死亡: 1/1頭部を召喚",
-    lore: "純白の毛並みを持つ教団の猟犬。痛覚を麻痺させる聖水を与えられており、首を落とされても噛み付き続ける。",
+    lore: "聖水に浸された獣は、もはや自らの死を認識できない。",
   },
   priest: {
     id: "priest",
@@ -35,7 +35,7 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseHp: 2,
     tier: 2,
     skillText: "死亡: 味方全体を+0/+1",
-    lore: "神聖な祈りで騎士たちを鼓舞し、癒しを与える聖職者。",
+    lore: "彼の祝福を受けた騎士は、腕を失っても微笑んでいた。",
   },
   templar: {
     id: "templar",
@@ -44,7 +44,7 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseHp: 3,
     tier: 2,
     skillText: "被弾: 自身に+1/+0",
-    lore: "分厚い信仰の鎧に身を包んだ、教団のエリート戦士。",
+    lore: "鎧の裏には聖句を刻んだ釘が並ぶ。傷を負うたび、彼は恍惚と微笑む。",
   },
   church_beast: {
     id: "church_beast",
