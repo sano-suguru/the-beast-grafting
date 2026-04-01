@@ -218,13 +218,14 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
     return internalError(c, "[pvp/battle:opponent]", opponentResult.error);
 
   const pvpOpponent = opponentResult.value;
-  const seed = generateBattleSeed();
+  const battleSeed = generateBattleSeed();
   let enemy: EnemyTeam;
   const opponentPlayerId = pvpOpponent?.playerId ?? null;
   if (pvpOpponent) {
     enemy = pvpOpponentToEnemyTeam(pvpOpponent);
   } else {
-    enemy = generateEnemyTeam(round, createSeededRng(seed));
+    const enemySeed = generateBattleSeed();
+    enemy = generateEnemyTeam(round, createSeededRng(enemySeed));
   }
 
   const existingBattle = await safeAsync(
@@ -246,7 +247,14 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "battle_already_exists" } }, 409);
   }
 
-  const { frames, result } = simulateBattle(playerBoard, enemy, round, seed);
+  const { frames, result } = simulateBattle(playerBoard, enemy, round, battleSeed);
+
+  const opponent: PvpOpponent = {
+    playerId: opponentPlayerId,
+    teamName: enemy.teamName,
+    teamType: enemy.teamType,
+    units: enemy.units.map(unitInstanceToBoardUnit),
+  };
 
   const battleId = generateId();
   const saveResult = await safeAsync(
@@ -259,7 +267,8 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
           runId,
           opponentPlayerId,
           round,
-          seed,
+          seed: battleSeed,
+          opponent,
           result: result ?? "DRAW",
           createdAt: new Date(),
         })
@@ -288,14 +297,7 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "battle_already_exists" } }, 409);
   }
 
-  const opponent: PvpOpponent = {
-    playerId: opponentPlayerId,
-    teamName: enemy.teamName,
-    teamType: enemy.teamType,
-    units: enemy.units.map(unitInstanceToBoardUnit),
-  };
-
-  return c.json({ battleId, frames, result, opponent, seed });
+  return c.json({ battleId, frames, result, opponent, seed: battleSeed });
 });
 
 export default pvp;

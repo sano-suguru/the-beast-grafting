@@ -11,9 +11,6 @@
   "vars": {
     "ALLOWED_ORIGIN": "http://localhost:5173"
   },
-  "triggers": {
-    "crons": ["0 3 * * *"]
-  },
   "observability": { "enabled": true },
   "d1_databases": [
     {
@@ -22,5 +19,23 @@
       "database_id": "local",
       "migrations_dir": "./drizzle"
     }
-  ]
+  ],
+  "env": {
+    "production": {
+      "vars": {
+        "ALLOWED_ORIGIN": "https://the-beast-grafting.snsgr.workers.dev"
+      },
+      "triggers": {
+        "crons": ["0 3 * * *"]
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "beast-grafting-db",
+          "database_id": "544b8b4a-3f9e-4ccd-9703-55501ed5d324",
+          "migrations_dir": "./drizzle"
+        }
+      ]
+    }
+  }
 }

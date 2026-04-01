@@ -505,6 +505,7 @@ describe("retireGame", () => {
   });
 
   it("sets shopActionError when retire truly failed", async () => {
+    showRetireConfirm.value = true;
     vi.mocked(retireRun).mockResolvedValue(
       err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
     );
@@ -512,9 +513,11 @@ describe("retireGame", () => {
     await retireGame();
     expect(phase.value).toBe("SHOP");
     expect(shopActionError.value).toEqual({ type: "API_FETCH_FAILED", status: 500, cause: null });
+    expect(showRetireConfirm.value).toBe(true);
   });
 
   it("sets shopActionError when verification also fails", async () => {
+    showRetireConfirm.value = true;
     vi.mocked(retireRun).mockResolvedValue(
       err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
     );
@@ -524,6 +527,7 @@ describe("retireGame", () => {
     await retireGame();
     expect(phase.value).toBe("SHOP");
     expect(shopActionError.value).toEqual({ type: "API_FETCH_FAILED", status: 500, cause: null });
+    expect(showRetireConfirm.value).toBe(true);
   });
 
   it("skips when already retiring", async () => {

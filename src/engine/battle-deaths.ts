@@ -39,8 +39,8 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   // SAP準拠: ATK降順で死亡解決（同値ならHP降順、さらに同値なら均一ランダム）
   const deadUnits: { idx: number; unit: BattleUnit }[] = [];
   for (let i = 0; i < board.length; i++) {
-    const unit = board[i];
-    if (unit && unit.hp <= 0) deadUnits.push({ idx: i, unit });
+    const unit = board[i]!;
+    if (unit.hp <= 0) deadUnits.push({ idx: i, unit });
   }
   if (deadUnits.length === 0) return false;
 

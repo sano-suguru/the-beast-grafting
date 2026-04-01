@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "b1d4032c-8c3c-4739-a659-a87bcb792228",
+  "id": "7b4e88d4-4525-4006-a51b-d248dbad2ec5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_providers": {
@@ -125,6 +125,13 @@
         "seed": {
           "name": "seed",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "opponent": {
+          "name": "opponent",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false

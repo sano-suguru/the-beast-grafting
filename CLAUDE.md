@@ -10,7 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 コマンド一覧は @package.json scripts を参照。
 
-単一テストファイル実行: `pnpm vitest run src/app/engine/battle.test.ts`
+- 単一テストファイル実行: `pnpm vitest run src/app/engine/battle.test.ts`
+- `pnpm check` の内訳: `vp check`(lint+test+typecheck) → `knip`(未使用検出) → `jscpd`(コピペ検出) → `similarity-ts`(類似コード検出) → `depcruise`(依存境界検証)
 
 ## Architecture
 
@@ -25,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **`components/`** — Reusable UI components (cards, badges, icons).
   - **`data/`** — Static game data definitions (units, items, origins, church units).
   - **`types/`** — Shared TypeScript types for the client.
-- **`src/worker/`** — Cloudflare Worker backend (Hono). API routes in `api.ts`, entry in `index.ts`.
+- **`src/worker/`** — Cloudflare Worker backend (Hono). Entry in `index.ts`、ルートは `api.ts` で `/api` プレフィックス下に `auth/`, `pvp/`, `run/`, `shop/` をマウント。認証は `requireAuth`/`optionalAuth` ミドルウェア。
 - **`src/db/`** — Drizzle ORM schema (SQLite/D1).
 - **`src/shared/`** — Types, error definitions, data definitions, utilities. Thin layer shared between client and worker.
 - **`e2e/`** — Playwright end-to-end tests.
@@ -36,6 +37,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Battle simulation is frame-based**: `battle.ts` produces `BattleFrame[]` via `BattleContext`. Each frame snapshots both boards + a log entry + per-unit actions. The visualizer replays these frames for animation.
 - **Signals-based state**: No Redux/Zustand. State is `@preact/signals` signals in `game-store.ts`. Screens read signals directly; action modules mutate them.
 - **Vite-plus**: Uses `vite-plus` (vp) as a wrapper around Vite for dev/build/lint/fmt/check commands. Config is in `vite.config.ts`.
+- **パスエイリアス**: `@/*` → `./src/*`（`tsconfig.app.json` で定義）。
+- **oxlint複雑度制限**: max-lines: 300, max-lines-per-function: 50, max-depth: 4, complexity: 10（テストファイルは行数制限免除）。ファイル名はkebab-case必須。
 - **Fail-fast over defensive fallbacks**: バグを隠す防御的フォールバックよりフェイルファストを優先する。
   - ハードコードIDなど「失敗=データバグ」の箇所で `.unwrapOr(null)` や `?? fallback` を使わない。`invariant()` (`src/shared/invariant.ts`) でクラッシュさせる。
   - 型で必須と保証できるフィールドに `?? defaultValue` を書かない。型を正しく定義し、初期化時に保証する。
@@ -64,10 +67,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Testing
 
-- テストヘルパー: `src/app/engine/test-helpers.ts`
-- state テストでは `beforeEach` で全シグナルを初期状態にリセット
+- テストヘルパー: `src/engine/test-helpers.ts`（`makeUnit`, `makeBattleUnit`, `makeContext`, `makeEnemyTeam`）
+- state テストでは `beforeEach` で `resetAllSignals()` を呼び全シグナルを初期状態にリセット
 - 外部依存（audio 等）は `vi.mock()` でモック
 - テストファイルは行数制限免除
+- カバレッジ対象: `engine/`, `shared/data/`, `app/state/`, `worker/`
 
 ## Game Design Reference
 

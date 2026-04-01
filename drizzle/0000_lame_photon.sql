@@ -18,6 +18,7 @@ CREATE TABLE `battles` (
 	`opponent_player_id` text,
 	`round` integer NOT NULL,
 	`seed` integer NOT NULL,
+	`opponent` text NOT NULL,
 	`result` text NOT NULL,
 	`consumed` integer DEFAULT false NOT NULL,
 	`created_at` integer NOT NULL,

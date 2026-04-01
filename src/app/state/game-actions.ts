@@ -151,7 +151,6 @@ export async function resumeOrSelectOrigin() {
 export async function retireGame() {
   if (retiring.value) return;
   retiring.value = true;
-  shopActionError.value = null;
   const result = await retireRun();
   if (result.isOk()) {
     resetAllSignals();

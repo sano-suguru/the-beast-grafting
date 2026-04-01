@@ -294,8 +294,8 @@ function collectBeelzebubSpawns(
   const spawns: { beelzebub: BattleUnit; count: number }[] = [];
   let remaining = FLY_SPAWN_CAP - flyCount;
   for (let i = 0; i < board.length; i++) {
-    const u = board[i];
-    if (!u || u.id !== "beelzebub" || u.hp <= 0) continue;
+    const u = board[i]!;
+    if (u.id !== "beelzebub" || u.hp <= 0) continue;
     const mult = getMult(board, i);
     const count = Math.min(mult, remaining);
     if (count <= 0) continue;
@@ -345,8 +345,8 @@ export function handleEvangelistPlague(
 ) {
   const prefix = enemyPrefix(isPlayer);
   for (let i = 0; i < board.length; i++) {
-    const u = board[i];
-    if (!u || u.id !== "evangelist" || u.hp <= 0) continue;
+    const u = board[i]!;
+    if (u.id !== "evangelist" || u.hp <= 0) continue;
     const mult = getMult(board, i);
     for (let m = 0; m < mult; m++) {
       const alive = enemyBoard.filter((e) => e.hp > 0);

@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
-import type { BoardUnit } from "../shared/board-unit";
+import type { BoardUnit, PvpOpponent } from "../shared/board-unit";
 import type { ShopSlotJson, ShopItemSlotJson, ShopUndoSnapshot } from "./shop-state-types";
 import type { EventData } from "../shared/types";
 
@@ -80,6 +80,7 @@ export const battles = sqliteTable(
     opponentPlayerId: text("opponent_player_id").references(() => players.id),
     round: integer("round").notNull(),
     seed: integer("seed").notNull(),
+    opponent: text("opponent", { mode: "json" }).$type<PvpOpponent>().notNull(),
     result: text("result", { enum: ["WIN", "LOSE", "DRAW"] }).notNull(),
     consumed: integer("consumed", { mode: "boolean" }).notNull().default(false),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),

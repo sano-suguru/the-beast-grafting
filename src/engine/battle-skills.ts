@@ -155,8 +155,8 @@ export function applyCholeraBeforeAttack(
   ctx: BattleContext,
 ) {
   for (let i = 0; i < board.length; i++) {
-    const u = board[i];
-    if (!u || u.id !== "cholera") continue;
+    const u = board[i]!;
+    if (u.id !== "cholera") continue;
     if (u.skillUses <= 0) continue;
     applyCholeraSkill({ u, targetArr, isPlayer, ctx });
     u.skillUses = 0;

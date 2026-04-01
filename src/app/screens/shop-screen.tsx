@@ -16,6 +16,7 @@ import {
   shopActionError,
   showRetireConfirm,
   recoveryWarning,
+  retiring,
 } from "../state/game-store";
 import { executeSellUnit } from "../state/shop-actions";
 import { undoLastAction } from "../state/undo-actions";
@@ -57,7 +58,7 @@ export function ShopScreen() {
       <ShopFooter currentOnboarding={currentOnboarding} />
       {busy && <ShopBusyOverlay />}
       {showRetireConfirm.value && <RetireConfirmOverlay />}
-      {actionError && <ShopErrorBanner />}
+      {actionError && !showRetireConfirm.value && <ShopErrorBanner />}
       {recoveryWarning.value && <RecoveryWarningBanner />}
     </main>
   );
@@ -193,24 +194,39 @@ function RetireConfirmOverlay() {
           <br />
           <span className="text-xs text-zinc-500">進行状況は失われます。</span>
         </p>
+        {shopActionError.value && (
+          <p className="text-center text-xs text-red-400">
+            接続に失敗しました。再度お試しください。
+          </p>
+        )}
         <div className="flex gap-3">
           <button
             onClick={() => {
+              shopActionError.value = null;
               showRetireConfirm.value = false;
             }}
-            className="cursor-pointer border border-zinc-700 px-4 py-2 text-xs tracking-widest text-zinc-400 transition-all hover:bg-zinc-900 active:scale-95"
+            disabled={retiring.value}
+            className={`border border-zinc-700 px-4 py-2 text-xs tracking-widest transition-all ${
+              retiring.value
+                ? "cursor-wait text-zinc-700"
+                : "cursor-pointer text-zinc-400 hover:bg-zinc-900 active:scale-95"
+            }`}
           >
             留まる
           </button>
           <button
             onClick={() => {
               playSE("select");
-              showRetireConfirm.value = false;
               void retireGame();
             }}
-            className="cursor-pointer border border-red-900 bg-red-950/30 px-4 py-2 text-xs tracking-widest text-red-500 transition-all hover:bg-red-950/50 active:scale-95"
+            disabled={retiring.value}
+            className={`border border-red-900 px-4 py-2 text-xs tracking-widest transition-all ${
+              retiring.value
+                ? "animate-pulse cursor-wait bg-red-950/10 text-red-900"
+                : "cursor-pointer bg-red-950/30 text-red-500 hover:bg-red-950/50 active:scale-95"
+            }`}
           >
-            逃げ出す
+            {retiring.value ? "……" : "逃げ出す"}
           </button>
         </div>
       </div>
