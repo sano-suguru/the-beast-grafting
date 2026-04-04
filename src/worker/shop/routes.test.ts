@@ -194,7 +194,7 @@ describe("POST /freeze", () => {
     expect(idx).toBeGreaterThanOrEqual(0);
     const res = await shopPost(app, "/freeze", token, {
       runId,
-      isUnit: true,
+      slotType: "unit",
       index: idx,
       frozen: true,
     });
@@ -207,7 +207,7 @@ describe("POST /freeze", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     await setupShopState(app, token, runId);
-    const res = await shopPost(app, "/freeze", token, { runId, isUnit: true });
+    const res = await shopPost(app, "/freeze", token, { runId, slotType: "unit" });
     expect(res.status).toBe(400);
   });
 });

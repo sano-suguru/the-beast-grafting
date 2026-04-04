@@ -41,7 +41,10 @@ function mockOAuthFetch(tokenResponse: MockResponse, userInfoResponse: MockRespo
   vi.stubGlobal(
     "fetch",
     vi.fn().mockImplementation((input: string | URL | Request) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      let url: string;
+      if (typeof input === "string") url = input;
+      else if (input instanceof URL) url = input.href;
+      else url = input.url;
       const res = url.includes("/token") ? tokenResponse : userInfoResponse;
       return Promise.resolve(new Response(JSON.stringify(res.body), { status: res.status }));
     }),

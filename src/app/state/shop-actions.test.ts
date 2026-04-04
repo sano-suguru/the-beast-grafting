@@ -81,7 +81,7 @@ describe("setupNight", () => {
     const unit = makeUnit({ id: "rat" });
     const state = makeShopState({
       blood: 10,
-      shopUnits: [{ unit: toBoardUnit(unit), frozen: false }],
+      shopUnits: [{ unit: toBoardUnit(unit), frozen: false, eventSourced: false }],
       freeRoll: true,
       round: 2,
     });
@@ -146,7 +146,12 @@ describe("rollShop", () => {
   it("calls API and applies response", async () => {
     const unit = makeUnit({ id: "bat" });
     vi.mocked(apiRollShop).mockResolvedValue(
-      ok(makeShopState({ blood: 9, shopUnits: [{ unit: toBoardUnit(unit), frozen: false }] })),
+      ok(
+        makeShopState({
+          blood: 9,
+          shopUnits: [{ unit: toBoardUnit(unit), frozen: false, eventSourced: false }],
+        }),
+      ),
     );
     rollShop();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
@@ -196,13 +201,13 @@ describe("handleFreezeClick", () => {
     vi.mocked(apiFreezeSlot).mockResolvedValue(
       ok(
         makeShopState({
-          shopUnits: [{ unit: toBoardUnit(makeUnit()), frozen: true }],
+          shopUnits: [{ unit: toBoardUnit(makeUnit()), frozen: true, eventSourced: false }],
         }),
       ),
     );
-    handleFreezeClick(true, 0, true);
+    handleFreezeClick("unit", 0, true);
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(apiFreezeSlot).toHaveBeenCalledWith("test-run-id", true, 0, true);
+    expect(apiFreezeSlot).toHaveBeenCalledWith("test-run-id", "unit", 0, true);
     expect(shopUnits.value[0]!.frozen).toBe(true);
   });
 
@@ -220,21 +225,21 @@ describe("handleFreezeClick", () => {
     vi.mocked(apiFreezeSlot).mockResolvedValue(
       ok(makeShopState({ shopItems: [{ item, frozen: true }] })),
     );
-    handleFreezeClick(false, 0, true);
+    handleFreezeClick("item", 0, true);
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(apiFreezeSlot).toHaveBeenCalledWith("test-run-id", false, 0, true);
+    expect(apiFreezeSlot).toHaveBeenCalledWith("test-run-id", "item", 0, true);
     expect(shopItems.value[0]!.frozen).toBe(true);
   });
 
   it("does nothing when shopLocked", () => {
     shopLocked.value = true;
-    handleFreezeClick(true, 0, true);
+    handleFreezeClick("unit", 0, true);
     expect(apiFreezeSlot).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
     currentRunId.value = null;
-    handleFreezeClick(true, 0, true);
+    handleFreezeClick("unit", 0, true);
     expect(apiFreezeSlot).not.toHaveBeenCalled();
   });
 });

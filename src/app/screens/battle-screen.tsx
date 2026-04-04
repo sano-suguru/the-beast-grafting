@@ -1,6 +1,7 @@
 import { useEffect } from "preact/hooks";
 import { battleFrames, currentFrameIdx, fastForward } from "../state/game-store";
 import { playSE } from "../engine/audio";
+import { warn } from "../../shared/logger";
 import { BattleVisualizer } from "./battle/battle-visualizer";
 import { BattleLog } from "./battle/battle-log";
 import { BattleFooter } from "./battle/battle-footer";
@@ -23,7 +24,7 @@ export function BattleScreen() {
   const ff = fastForward.value;
   const currentFrame = frames[frameIdx];
   if (!currentFrame) {
-    console.warn(`[BUG] frameIdx ${frameIdx} out of bounds (length=${frames.length})`);
+    warn(`[BUG] frameIdx ${frameIdx} out of bounds (length=${frames.length})`);
     return null;
   }
   const isFinished = frameIdx >= frames.length - 1;

@@ -10,6 +10,7 @@ import {
   onboardingStep,
   shopLocked,
   showRetireConfirm,
+  resourceError,
 } from "../../state/game-store";
 import { playSE } from "../../engine/audio";
 
@@ -20,9 +21,42 @@ function toggleHelp() {
   if (next) onboardingStep.value = null;
 }
 
+function SanityDisplay({ currentSanity, isAlert }: { currentSanity: number; isAlert: boolean }) {
+  const pulse = currentSanity <= 2 || isAlert;
+  return (
+    <div
+      className={`flex flex-col items-center ${pulse ? "animate-pulse" : ""} ${isAlert ? "rounded border border-red-500 p-0.5" : ""}`}
+    >
+      <Heart size={14} className={`mb-0.5 ${pulse ? "text-red-600" : "text-zinc-500"}`} />
+      <span className={`text-[10px] font-bold md:text-xs ${pulse ? "text-red-500" : ""}`}>
+        {currentSanity}
+      </span>
+    </div>
+  );
+}
+
+function ResourceBar({ resErr }: { resErr: "blood" | "sanity" | null }) {
+  return (
+    <div className="flex gap-3 md:gap-4">
+      <SanityDisplay currentSanity={sanity.value} isAlert={resErr === "sanity"} />
+      <div className="flex flex-col items-center">
+        <Trophy size={14} className="mb-0.5 text-zinc-500" />
+        <span className="text-[10px] font-bold md:text-xs">{trophy.value}</span>
+      </div>
+      <div
+        className={`flex flex-col items-center ${resErr === "blood" ? "animate-pulse rounded border border-red-500 p-0.5" : ""}`}
+      >
+        <Droplet size={14} className="mb-0.5 text-red-700" />
+        <span className="text-[10px] font-bold text-red-600 md:text-xs">{blood.value}</span>
+      </div>
+    </div>
+  );
+}
+
 export function ShopHeader() {
-  const currentSanity = sanity.value;
   const isHelpActive = showHelpOverlay.value;
+  const locked = shopLocked.value;
+  const resErr = resourceError.value;
   return (
     <header className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 p-2 md:p-3">
       <div className="flex items-center gap-2">
@@ -41,42 +75,25 @@ export function ShopHeader() {
         >
           <HelpCircle size={14} />
         </button>
+      </div>
+      <div className="flex items-center gap-4 md:gap-5">
+        <ResourceBar resErr={resErr} />
+        <div className="h-5 w-px bg-zinc-700" />
         <button
           onClick={() => {
             playSE("select");
             showRetireConfirm.value = true;
           }}
-          disabled={shopLocked.value}
-          className={`rounded p-1 transition-colors ${
-            shopLocked.value
-              ? "cursor-not-allowed text-zinc-800"
-              : "cursor-pointer text-zinc-600 hover:text-zinc-400"
+          disabled={locked}
+          className={`flex items-center gap-1 rounded border px-2 py-1 text-[10px] tracking-wider transition-colors md:text-xs ${
+            locked
+              ? "cursor-not-allowed border-zinc-800 text-zinc-700"
+              : "cursor-pointer border-zinc-700 text-zinc-500 hover:border-red-900 hover:text-red-700"
           }`}
-          aria-label="リタイア"
         >
-          <LogOut size={14} />
+          <LogOut size={12} />
+          逃走
         </button>
-      </div>
-      <div className="flex gap-3 md:gap-4">
-        <div className={`flex flex-col items-center ${currentSanity <= 2 ? "animate-pulse" : ""}`}>
-          <Heart
-            size={14}
-            className={currentSanity <= 2 ? "mb-0.5 text-red-600" : "mb-0.5 text-zinc-500"}
-          />
-          <span
-            className={`text-[10px] font-bold md:text-xs ${currentSanity <= 2 ? "text-red-500" : ""}`}
-          >
-            {currentSanity}
-          </span>
-        </div>
-        <div className="flex flex-col items-center">
-          <Trophy size={14} className="mb-0.5 text-zinc-500" />
-          <span className="text-[10px] font-bold md:text-xs">{trophy.value}</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <Droplet size={14} className="mb-0.5 text-red-700" />
-          <span className="text-[10px] font-bold text-red-600 md:text-xs">{blood.value}</span>
-        </div>
       </div>
     </header>
   );

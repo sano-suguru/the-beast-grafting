@@ -1,5 +1,6 @@
 import { safeAsync, fromThrowable } from "../../shared/errors";
 import type { Result, InfraError } from "../../shared/errors";
+import { invariant } from "../../shared/invariant";
 
 const PBKDF2_ITERATIONS = 100_000;
 const SALT_BYTES = 16;
@@ -19,9 +20,7 @@ function toArrayBuffer(arr: Uint8Array): ArrayBuffer {
 }
 
 function fromHex(hex: string): Uint8Array {
-  if (hex.length % 2 !== 0 || !/^[0-9a-f]*$/.test(hex)) {
-    throw new Error("fromHex: invalid hex string");
-  }
+  invariant(hex.length % 2 === 0 && /^[0-9a-f]*$/.test(hex), "fromHex: invalid hex string");
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);

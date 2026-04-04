@@ -144,12 +144,12 @@ describe("POST /pvp/battle", () => {
     await postSnapshot(app, token, {
       runId,
       round: 3,
-      board: [makeValidUnit({ atk: 10, hp: 10 })],
+      board: [makeValidUnit({ buffAtk: 8, buffHp: 8 })],
     });
     await postSnapshot(app, token, {
       runId,
       round: 4,
-      board: [makeValidUnit({ atk: 10, hp: 10 })],
+      board: [makeValidUnit({ buffAtk: 8, buffHp: 8 })],
     });
 
     const res1 = await postBattle(app, token, { runId, round: 3 });
@@ -170,7 +170,7 @@ describe("POST /pvp/battle", () => {
     await postSnapshot(app, tokenB, {
       runId: runIdB,
       round: 3,
-      board: [makeValidUnit({ atk: 5, hp: 5 })],
+      board: [makeValidUnit({ buffAtk: 3, buffHp: 3 })],
     });
 
     const res = await postBattle(app, tokenA, { runId: runIdA, round: 3 });
@@ -204,7 +204,7 @@ describe("POST /pvp/battle", () => {
     await postSnapshot(app, tokenB, {
       runId: runIdB,
       round: 3,
-      board: [makeValidUnit({ atk: 5, hp: 5 })],
+      board: [makeValidUnit({ buffAtk: 3, buffHp: 3 })],
     });
 
     await postBattle(app, tokenA, { runId: runIdA, round: 3 });

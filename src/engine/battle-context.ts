@@ -5,6 +5,7 @@ import type {
   BattleAction,
   LogType,
   IconType,
+  LogSegment,
   RegularUnitId,
   ChurchUnitId,
 } from "../shared/types";
@@ -13,6 +14,10 @@ import { generateUid } from "./helpers";
 import { MAX_OPS } from "./constants";
 
 export interface BattleUnit extends UnitInstance {
+  atk: number;
+  hp: number;
+  battleBaseAtk: number;
+  battleBaseHp: number;
   altarBuffed?: boolean;
   equipUses: number;
   skillUses: number;
@@ -37,10 +42,17 @@ function cloneBattleUnit(u: BattleUnit): BattleUnit {
   return { ...u };
 }
 
+export const seg = {
+  u: (text: string): LogSegment => ({ kind: "unit", text }),
+  e: (text: string): LogSegment => ({ kind: "effect", text }),
+  s: (text: string): LogSegment => ({ kind: "stat", text }),
+  hp: (text: string): LogSegment => ({ kind: "hp", text }),
+};
+
 export function pushFrame(
   ctx: BattleContext,
   logType: LogType,
-  logText: string,
+  segments: LogSegment[],
   iconType: IconType,
   actions: Record<string, BattleAction> = {},
   delay?: number,
@@ -54,10 +66,21 @@ export function pushFrame(
   ctx.frames.push({
     pBoard: ctx.pBoard.map(cloneBattleUnit),
     eBoard: ctx.eBoard.map(cloneBattleUnit),
-    log: { id: `log-${ctx.logCounter}`, type: logType, text: logText, icon: iconType },
+    log: { id: `log-${ctx.logCounter}`, type: logType, segments, icon: iconType },
     actions,
     ...(delay != null && { delay }),
   });
+}
+
+export function skillDamageActions(
+  attacker: BattleUnit,
+  target: BattleUnit,
+  damage: number,
+): Record<string, BattleAction> {
+  return {
+    [attacker.uid]: { type: "skill" },
+    [target.uid]: { type: "damage", value: `-${damage}`, source: attacker.uid },
+  };
 }
 
 export const enemyPrefix = (isPlayer: boolean): string => (isPlayer ? "" : "敵の");
@@ -76,8 +99,12 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
     equip: null,
     level: 1,
     isChurch,
+    battleBaseAtk: atk,
+    battleBaseHp: hp,
     baseAtk: atk,
     baseHp: hp,
+    buffAtk: 0,
+    buffHp: 0,
     tier: 0,
     skillText: "",
     lore: "",
@@ -103,8 +130,12 @@ export function createSummonedUnit(
     ...unitData,
     atk,
     hp,
+    battleBaseAtk: atk,
+    battleBaseHp: hp,
     baseAtk: atk,
     baseHp: hp,
+    buffAtk: 0,
+    buffHp: 0,
     uid: generateUid(),
     equip: null,
     level: 1,

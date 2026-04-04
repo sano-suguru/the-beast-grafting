@@ -1,7 +1,9 @@
 import { useMemo } from "preact/hooks";
-import type { BattleFrame, UnitInstance } from "../../types";
+import { Swords } from "lucide-preact";
+import type { BattleFrame, BattleUnitSnapshot } from "../../types";
 import { currentEnemyTeam } from "../../state/game-store";
 import { invariant } from "../../../shared/invariant";
+import { GradientBackground } from "../../components/gradient-background";
 import { BattleCard } from "../../components/battle-card";
 import { ParticleCanvas } from "../../components/particle-canvas";
 
@@ -21,7 +23,7 @@ function buildPrevStats(frame: BattleFrame | undefined): Map<string, { atk: numb
 }
 
 function renderCard(
-  u: UnitInstance,
+  u: BattleUnitSnapshot,
   side: "p" | "e",
   frame: BattleFrame,
   prevStats: Map<string, { atk: number; hp: number }>,
@@ -37,8 +39,8 @@ function renderCard(
       actionObj={frame.actions?.[u.uid]}
       fastForward={ff}
       frameIdx={frameIdx}
-      atkBaseDiff={u.atk - u.baseAtk}
-      hpBaseDiff={u.hp - u.baseHp}
+      atkBaseDiff={u.atk - u.battleBaseAtk}
+      hpBaseDiff={u.hp - u.battleBaseHp}
       atkDelta={prev ? u.atk - prev.atk : 0}
       hpDelta={prev ? u.hp - prev.hp : 0}
     />
@@ -53,14 +55,15 @@ export function BattleVisualizer({ currentFrame, prevFrame, ff, frameIdx }: Batt
   return (
     <section
       aria-label="戦場"
-      className="relative flex h-56 min-w-0 shrink-0 flex-col border-b border-zinc-900 bg-[#050505] p-2 md:h-64 md:p-4"
+      className="relative flex h-56 min-w-0 shrink-0 flex-col overflow-hidden border-b border-zinc-900 bg-[#050505] p-2 md:h-64 md:p-4"
     >
-      <div className="mb-2 flex shrink-0 justify-between px-2 text-[10px] font-bold tracking-widest text-zinc-500 md:text-xs">
-        <span>あなたの群れ</span>
-        <span className="text-red-900">狂宴</span>
-        <span>{enemy.teamType}</span>
+      <GradientBackground />
+      <div className="relative z-10 mb-2 flex shrink-0 justify-between px-2 text-[10px] font-bold tracking-widest text-zinc-600 md:text-xs">
+        <span>◀ 後衛</span>
+        <span className="text-red-900">{enemy.teamType}</span>
+        <span>後衛 ▶</span>
       </div>
-      <div className="relative flex min-h-0 w-full min-w-0 flex-1 items-center justify-center gap-2 overflow-hidden px-1 md:gap-4">
+      <div className="relative z-10 flex min-h-0 w-full min-w-0 flex-1 items-center justify-center gap-2 overflow-hidden px-1 md:gap-4">
         <div
           role="group"
           aria-label="味方"
@@ -70,7 +73,9 @@ export function BattleVisualizer({ currentFrame, prevFrame, ff, frameIdx }: Batt
             renderCard(u, "p", currentFrame, prevStats, ff, frameIdx),
           )}
         </div>
-        <div className="z-0 h-full w-px shrink-0 bg-zinc-900/50" aria-hidden="true" />
+        <div className="z-0 flex h-full shrink-0 items-center" aria-hidden="true">
+          <Swords size={20} className="text-red-900 opacity-30" />
+        </div>
         <div role="group" aria-label="敵" className="z-10 flex min-w-0 flex-1 justify-start gap-1">
           {currentFrame.eBoard.map((u) =>
             renderCard(u, "e", currentFrame, prevStats, ff, frameIdx),

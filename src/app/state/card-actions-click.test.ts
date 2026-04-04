@@ -5,13 +5,18 @@ vi.mock("../engine/audio", () => ({
 
 vi.mock("../api/shop-client", () => ({
   buyUnit: vi.fn(),
+  buyReward: vi.fn(),
   equipItem: vi.fn(),
   swapBoard: vi.fn(),
 }));
 
 import { handleCardClick } from "./card-actions";
 import { playSE } from "../engine/audio";
-import { buyUnit as apiBuyUnit, equipItem as apiEquipItem } from "../api/shop-client";
+import {
+  buyUnit as apiBuyUnit,
+  buyReward as apiBuyReward,
+  equipItem as apiEquipItem,
+} from "../api/shop-client";
 import {
   blood,
   board,
@@ -44,7 +49,7 @@ function makeItem(overrides: Partial<ItemData> = {}): ItemData {
 }
 
 function makeShopSlot(overrides: Partial<ReturnType<typeof makeUnit>> = {}): ShopSlot {
-  return { unit: makeUnit(overrides), frozen: false };
+  return { unit: makeUnit(overrides), frozen: false, eventSourced: false };
 }
 
 function makeShopItemSlot(overrides: Partial<ItemData> = {}): ShopItemSlot {
@@ -220,12 +225,12 @@ describe("handleCardClick – graft shop unit onto board unit", () => {
 describe("handleCardClick – equip item onto board unit", () => {
   it("calls API and applies equip response", async () => {
     const item = makeItem({ cost: 2, atk: 1, hp: 3, equip: "iron" });
-    const unit = makeUnit({ atk: 5, hp: 5, equip: null });
+    const unit = makeUnit({ baseAtk: 5, baseHp: 5, equip: null });
     board.value = [unit, null, null, null, null];
     shopItems.value = [makeShopItemSlot({ cost: 2, atk: 1, hp: 3, equip: "iron" })];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
 
-    const equippedUnit = makeUnit({ atk: 6, hp: 8, equip: "iron" });
+    const equippedUnit = makeUnit({ baseAtk: 5, baseHp: 5, buffAtk: 1, buffHp: 3, equip: "iron" });
     vi.mocked(apiEquipItem).mockResolvedValue(
       ok(
         makeShopState({
@@ -240,8 +245,8 @@ describe("handleCardClick – equip item onto board unit", () => {
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
 
     expect(blood.value).toBe(8);
-    expect(board.value[0]!.atk).toBe(6);
-    expect(board.value[0]!.hp).toBe(8);
+    expect(board.value[0]!.baseAtk + board.value[0]!.buffAtk).toBe(6);
+    expect(board.value[0]!.baseHp + board.value[0]!.buffHp).toBe(8);
     expect(board.value[0]!.equip).toBe("iron");
     expect(shopItems.value[0]).toBeNull();
     expect(selection.value).toBeNull();
@@ -298,5 +303,88 @@ describe("handleCardClick – clears selection on validation error", () => {
 
     expect(selection.value).toBeNull();
     expect(playSE).toHaveBeenCalledWith("error");
+  });
+});
+
+describe("handleCardClick – REWARD_UNIT selection / deselection", () => {
+  it("selects a reward unit", () => {
+    const unit = makeUnit({ id: "hound" });
+    handleCardClick("REWARD_UNIT", 0, unit);
+    expect(selection.value).toEqual({ type: "REWARD_UNIT", index: 0, item: unit });
+    expect(playSE).toHaveBeenCalledWith("select");
+  });
+
+  it("deselects when clicking the same reward unit", () => {
+    const unit = makeUnit({ id: "hound" });
+    selection.value = { type: "REWARD_UNIT", index: 0, item: unit };
+    handleCardClick("REWARD_UNIT", 0, unit);
+    expect(selection.value).toBeNull();
+    expect(playSE).toHaveBeenCalledWith("select");
+  });
+});
+
+describe("handleCardClick – REWARD_UNIT buy to empty slot", () => {
+  it("calls buyReward API and applies response", async () => {
+    const unit = makeUnit({ id: "hound" });
+    selection.value = { type: "REWARD_UNIT", index: 0, item: unit };
+
+    vi.mocked(apiBuyReward).mockResolvedValue(
+      ok(
+        makeShopState({
+          blood: 7,
+          board: [toBoardUnit(unit), null, null, null, null],
+          rewardSlots: [null],
+        }),
+      ),
+    );
+
+    handleCardClick("BOARD_SLOT", 0, null);
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+
+    expect(blood.value).toBe(7);
+    expect(board.value[0]!.id).toBe("hound");
+    expect(selection.value).toBeNull();
+    expect(playSE).toHaveBeenCalledWith("buy");
+  });
+});
+
+describe("handleCardClick – REWARD_UNIT graft", () => {
+  it("grafts when same ID and level < 3", async () => {
+    const rewardUnit = makeUnit({ id: "hound", uid: "reward-1" });
+    const boardUnit = makeUnit({ id: "hound", level: 1, uid: "board-1" });
+    board.value = [boardUnit, null, null, null, null];
+    selection.value = { type: "REWARD_UNIT", index: 0, item: rewardUnit };
+
+    const graftedUnit = makeUnit({ id: "hound", level: 2, uid: "board-1" });
+    vi.mocked(apiBuyReward).mockResolvedValue(
+      ok(
+        makeShopState({
+          blood: 7,
+          board: [toBoardUnit(graftedUnit), null, null, null, null],
+          rewardSlots: [null],
+        }),
+      ),
+    );
+
+    handleCardClick("BOARD_SLOT", 0, null);
+    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+
+    expect(blood.value).toBe(7);
+    expect(board.value[0]!.level).toBe(2);
+    expect(playSE).toHaveBeenCalledWith("graft");
+  });
+});
+
+describe("handleCardClick – REWARD_UNIT insufficient blood", () => {
+  it("plays error when blood < 3", () => {
+    blood.value = 2;
+    const unit = makeUnit({ id: "hound" });
+    selection.value = { type: "REWARD_UNIT", index: 0, item: unit };
+
+    handleCardClick("BOARD_SLOT", 0, null);
+
+    expect(selection.value).toBeNull();
+    expect(playSE).toHaveBeenCalledWith("error");
+    expect(apiBuyReward).not.toHaveBeenCalled();
   });
 });

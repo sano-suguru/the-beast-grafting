@@ -6,6 +6,10 @@ import {
   applyEquipmentEffects,
 } from "./battle-skills";
 import { makeBattleUnit, makeContext } from "./test-helpers";
+import type { BattleFrame } from "../shared/types";
+import { segmentsToPlainText } from "./test-helpers";
+
+const logText = (f: BattleFrame) => segmentsToPlainText(f.log.segments);
 
 describe("runStartSkills – damage skills", () => {
   it("bat deals 1 damage to enemy front", () => {
@@ -77,7 +81,7 @@ describe("runStartSkills – revenant buff", () => {
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(ctx.frames).toHaveLength(1);
     expect(ctx.frames[0]!.log.type).toBe("skill");
-    expect(ctx.frames[0]!.log.text).toContain("復讐の亡霊");
+    expect(logText(ctx.frames[0]!)).toContain("復讐の亡霊");
   });
 
   it("buffs at most 3 allies even with more on board", () => {
@@ -105,7 +109,7 @@ describe("runStartSkills – revenant buff", () => {
     expect(rev.atk).toBe(2); // self not buffed
     expect(eAlly.atk).toBe(4);
     expect(ctx.frames).toHaveLength(1);
-    expect(ctx.frames[0]!.log.text).toContain("敵の");
+    expect(logText(ctx.frames[0]!)).toContain("敵の");
   });
 });
 
@@ -125,7 +129,7 @@ describe("runStartSkills – cholera infection", () => {
     applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(target.equip).toBe("infection");
     expect(ctx.frames).toHaveLength(2);
-    expect(ctx.frames[0]!.log.text).toContain("蝕まれた");
+    expect(logText(ctx.frames[0]!)).toContain("蝕まれた");
   });
 
   it("cholera does not log overwrite when target has no equipment", () => {
@@ -319,5 +323,43 @@ describe("applyEquipmentEffects – numbness exhaustion", () => {
     applyEquipmentEffects(p, e, ctx);
     expect(p.equip).toBe("numbness");
     expect(p.equipUses).toBe(1);
+  });
+
+  it("numbness with equipUses: 0 does not reduce damage", () => {
+    const p = makeBattleUnit({ equip: "numbness", atk: 3, hp: 10, equipUses: 0 });
+    const e = makeBattleUnit({ atk: 8, hp: 10 });
+    const ctx = makeContext([p], [e]);
+    const { pDmg } = applyEquipmentEffects(p, e, ctx);
+    expect(pDmg).toBe(8);
+    expect(p.equip).toBe("numbness");
+    expect(p.equipUses).toBe(0);
+  });
+});
+
+describe("applyEquipmentEffects – side effects and frames", () => {
+  it("corpse_wax sets equip to null after blocking", () => {
+    const p = makeBattleUnit({ equip: "corpse_wax", atk: 3, hp: 10 });
+    const e = makeBattleUnit({ atk: 5, hp: 10 });
+    const ctx = makeContext([p], [e]);
+    applyEquipmentEffects(p, e, ctx);
+    expect(p.equip).toBeNull();
+  });
+
+  it("iron generates a defend frame", () => {
+    const p = makeBattleUnit({ equip: "iron", atk: 3, hp: 10 });
+    const e = makeBattleUnit({ atk: 6, hp: 10 });
+    const ctx = makeContext([p], [e]);
+    applyEquipmentEffects(p, e, ctx);
+    expect(ctx.frames.length).toBeGreaterThanOrEqual(1);
+    expect(ctx.frames.some((f) => f.log.type === "defend")).toBe(true);
+  });
+
+  it("berserk generates a skill frame", () => {
+    const p = makeBattleUnit({ equip: "berserk", atk: 3, hp: 10 });
+    const e = makeBattleUnit({ atk: 2, hp: 10 });
+    const ctx = makeContext([p], [e]);
+    applyEquipmentEffects(p, e, ctx);
+    expect(ctx.frames.length).toBeGreaterThanOrEqual(1);
+    expect(ctx.frames.some((f) => f.log.type === "skill")).toBe(true);
   });
 });

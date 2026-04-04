@@ -24,5 +24,5 @@ const EQUIP_ICONS: Record<EquipType, { Icon: typeof ShieldAlert; className: stri
 export function EquipIcon({ equipId }: { equipId: EquipType | null }) {
   if (!equipId) return null;
   const { Icon, className } = EQUIP_ICONS[equipId];
-  return <Icon size={14} className={`${className} absolute top-1 left-1`} aria-hidden="true" />;
+  return <Icon size={14} className={className} aria-hidden="true" />;
 }

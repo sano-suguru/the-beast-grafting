@@ -19,7 +19,7 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 4,
     baseHp: 1,
     tier: 1,
-    skillText: "解体: 鮮血を1多く獲得",
+    skillText: "解体: {blood}を1多く獲得",
     lore: "教会の施しを受けられず餓死した名もなき者。胃袋を裂けば飲み込んで隠した硬貨が出てくるかもしれない。",
     secretLore:
       "その胃袋から無限に溢れ出る硬貨は、数多の強欲な商人たちを狂わせ、街を凄惨な殺し合いへと発展させた。",

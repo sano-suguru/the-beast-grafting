@@ -18,8 +18,8 @@ export const createUnit = (id: RegularUnitId | ChurchUnitId): UnitInstance => {
   const data = isChurch ? CHURCH_UNITS[id as ChurchUnitId] : UNITS[id as RegularUnitId];
   return {
     ...data,
-    atk: data.baseAtk,
-    hp: data.baseHp,
+    buffAtk: 0,
+    buffHp: 0,
     level: 1,
     exp: 0,
     equip: null,
@@ -144,10 +144,11 @@ export const generateEnemyTeam = (round: number, rng: Rng): EnemyTeam => {
 
   // Make end-game enemies stronger randomly
   if (round >= 5) {
+    const bonus = Math.floor(round / 2);
     units = units.map((u) => ({
       ...u,
-      atk: u.atk + Math.floor(round / 2),
-      hp: u.hp + Math.floor(round / 2),
+      baseAtk: u.baseAtk + bonus,
+      baseHp: u.baseHp + bonus,
       level: Math.min(3, Math.ceil(round / 4)),
     }));
   }

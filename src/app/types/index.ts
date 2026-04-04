@@ -10,22 +10,34 @@ export type {
   EnemyFaction,
   EnemyTeam,
   LogType,
+  LogSegmentKind,
+  LogSegment,
   BattleAction,
   BattleLogEntry,
+  BattleUnitSnapshot,
   BattleFrame,
   BattleResult,
 } from "../../shared/types";
 
 import type { UnitInstance, ItemData } from "../../shared/types";
 
-export type GamePhase = "TITLE" | "ORIGIN" | "SHOP" | "PRE_BATTLE" | "BATTLE" | "RESULT" | "LORE";
+export type GamePhase =
+  | "TITLE"
+  | "ORIGIN"
+  | "SHOP"
+  | "PRE_BATTLE"
+  | "BATTLE"
+  | "BATTLE_RESULT"
+  | "RESULT"
+  | "LORE";
 
 export type Selection =
   | { type: "SHOP_UNIT"; index: number; item: UnitInstance }
   | { type: "SHOP_ITEM"; index: number; item: ItemData }
-  | { type: "BOARD_UNIT"; index: number; item: UnitInstance };
+  | { type: "BOARD_UNIT"; index: number; item: UnitInstance }
+  | { type: "REWARD_UNIT"; index: number; item: UnitInstance };
 
-export type HighlightKind = "graft" | "swap" | "move" | false;
+export type HighlightKind = "graft" | "swap" | "move" | "passive-graft" | false;
 
 export type OnboardingStep = "buy" | "graft" | "roll" | "battle" | null;
 

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { eq, and } from "drizzle-orm";
+import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { safeAsync, dbErr } from "../../shared/errors";
 import { warn } from "../../shared/logger";
-import type { BoardUnit } from "../../shared/board-unit";
 import {
   unitInstanceToBoardUnit,
   boardUnitToUnitInstance,
@@ -10,10 +10,6 @@ import {
 } from "../../shared/board-unit";
 import type { PvpOpponent } from "../../shared/board-unit";
 import type { EnemyTeam } from "../../shared/types";
-import { isEquipType } from "../../shared/equip-type";
-import { UNITS } from "../../shared/data/units";
-import { CHURCH_UNITS } from "../../shared/data/church-units";
-import type { RegularUnitId, ChurchUnitId } from "../../shared/types";
 import { simulateBattle } from "../../engine/battle";
 import { generateEnemyTeam } from "../../engine/helpers";
 import { createSeededRng } from "../../engine/rng";
@@ -24,90 +20,11 @@ import type { AuthEnv } from "../auth/types";
 import { findOpponent } from "./matchmaking";
 import { jsonBody, getParsedBody, bodyField } from "../parse-json";
 import { internalError } from "../error-response";
+import { validateSnapshotBody, validateRound, validateNonEmptyString } from "./pvp-validation";
 
 const pvp = new Hono<AuthEnv>();
 
-const MAX_BOARD_SIZE = 5;
-const MAX_PAYLOAD_BYTES = 10_000;
-const MAX_ROUND = 20;
-const STAT_CEILING_MULTIPLIER = 20;
-const STAT_CEILING_BASE = 200;
-
-function lookupMasterData(
-  id: string,
-): { name: string; baseAtk: number; baseHp: number; tier: number } | null {
-  if (Object.hasOwn(UNITS, id)) return UNITS[id as RegularUnitId];
-  if (Object.hasOwn(CHURCH_UNITS, id)) return CHURCH_UNITS[id as ChurchUnitId];
-  return null;
-}
-
-function validateBoardUnit(u: unknown): u is BoardUnit {
-  if (typeof u !== "object" || u === null) return false;
-  const o = u as Record<string, unknown>;
-  if (
-    typeof o["id"] !== "string" ||
-    typeof o["name"] !== "string" ||
-    typeof o["baseAtk"] !== "number" ||
-    typeof o["baseHp"] !== "number" ||
-    typeof o["atk"] !== "number" ||
-    typeof o["hp"] !== "number" ||
-    typeof o["tier"] !== "number" ||
-    typeof o["level"] !== "number" ||
-    typeof o["exp"] !== "number" ||
-    !(isEquipType(o["equip"]) || o["equip"] === null) ||
-    typeof o["uid"] !== "string" ||
-    typeof o["isChurch"] !== "boolean" ||
-    typeof o["skillText"] !== "string" ||
-    typeof o["lore"] !== "string"
-  )
-    return false;
-
-  const uid = o["uid"] as string;
-  if (uid.length === 0 || uid.length > 32) return false;
-
-  const exp = o["exp"] as number;
-  if (!Number.isInteger(exp) || exp < 0 || exp > 2) return false;
-
-  const id = o["id"] as string;
-  const master = lookupMasterData(id);
-  if (!master) return false;
-  if (o["name"] !== master.name) return false;
-  if (o["tier"] !== master.tier) return false;
-  if (o["baseAtk"] !== master.baseAtk || o["baseHp"] !== master.baseHp) return false;
-
-  const isFromChurch = Object.hasOwn(CHURCH_UNITS, id);
-  if (o["isChurch"] !== isFromChurch) return false;
-
-  const level = o["level"] as number;
-  if (!Number.isInteger(level) || level < 1 || level > 3) return false;
-
-  const atk = o["atk"] as number;
-  const hp = o["hp"] as number;
-  if (atk < master.baseAtk || hp < master.baseHp) return false;
-
-  const atkCeiling = master.baseAtk * STAT_CEILING_MULTIPLIER + STAT_CEILING_BASE;
-  const hpCeiling = master.baseHp * STAT_CEILING_MULTIPLIER + STAT_CEILING_BASE;
-  if (atk > atkCeiling || hp > hpCeiling) return false;
-
-  return true;
-}
-
-function validateSnapshotBody(
-  body: unknown,
-): body is { runId: string; round: number; board: BoardUnit[] } {
-  if (typeof body !== "object" || body === null) return false;
-  const b = body as Record<string, unknown>;
-  if (typeof b["runId"] !== "string" || b["runId"].length === 0) return false;
-  if (typeof b["round"] !== "number" || b["round"] < 1 || !Number.isInteger(b["round"]))
-    return false;
-  if (b["round"] > MAX_ROUND) return false;
-  if (!Array.isArray(b["board"]) || b["board"].length < 1 || b["board"].length > MAX_BOARD_SIZE)
-    return false;
-  if (!b["board"].every(validateBoardUnit)) return false;
-  return true;
-}
-
-pvp.post("/snapshot", requireAuth, jsonBody(MAX_PAYLOAD_BYTES), async (c) => {
+pvp.post("/snapshot", requireAuth, jsonBody(10_000), async (c) => {
   const db = c.get("db");
   const playerId = c.get("playerId");
 
@@ -163,23 +80,64 @@ function generateBattleSeed(): number {
   return (buf[0] ?? 0) >>> 0 || 1;
 }
 
-function validateRound(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= MAX_ROUND;
+function resolveEnemy(pvpOpponent: PvpOpponent | null, round: number): EnemyTeam {
+  if (pvpOpponent) return pvpOpponentToEnemyTeam(pvpOpponent);
+  return generateEnemyTeam(round, createSeededRng(generateBattleSeed()));
 }
 
-pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
-  const db = c.get("db");
-  const playerId = c.get("playerId");
-  const parsedBody = getParsedBody(c);
-  const round = bodyField(parsedBody, "round");
-  const runId = bodyField(parsedBody, "runId");
-  if (!validateRound(round)) {
-    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_round" } }, 400);
-  }
-  if (typeof runId !== "string" || runId.length === 0) {
-    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_run_id" } }, 400);
-  }
+type SaveVerifyError = { kind: "infra"; label: string; cause: unknown } | { kind: "race" };
 
+async function saveBattleAndVerify(
+  db: DrizzleD1Database,
+  battleId: string,
+  values: typeof battles.$inferInsert,
+  runId: string,
+  round: number,
+): Promise<SaveVerifyError | null> {
+  const saveResult = await safeAsync(
+    () =>
+      db
+        .insert(battles)
+        .values(values)
+        .onConflictDoNothing({ target: [battles.runId, battles.round] }),
+    dbErr,
+  );
+  if (saveResult.isErr())
+    return { kind: "infra", label: "[pvp/battle:save]", cause: saveResult.error };
+
+  const verify = await safeAsync(
+    () =>
+      db
+        .select({ id: battles.id })
+        .from(battles)
+        .where(and(eq(battles.runId, runId), eq(battles.round, round)))
+        .limit(1),
+    dbErr,
+  );
+  if (verify.isErr()) return { kind: "infra", label: "[pvp/battle:verify]", cause: verify.error };
+  if (verify.value[0]?.id !== battleId) {
+    warn("[pvp/battle] race: battle_already_exists", {
+      runId,
+      round,
+      battleId,
+      actualId: verify.value[0]?.id,
+    });
+    return { kind: "race" };
+  }
+  return null;
+}
+
+type LoadBoardResult =
+  | { error: unknown; label: string }
+  | { precondition: string }
+  | { board: ReturnType<typeof boardUnitToUnitInstance>[] };
+
+async function loadPlayerBoard(
+  db: DrizzleD1Database,
+  runId: string,
+  round: number,
+  playerId: string,
+): Promise<LoadBoardResult> {
   const runCheck = await safeAsync(
     () =>
       db
@@ -189,10 +147,8 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
         .limit(1),
     dbErr,
   );
-  if (runCheck.isErr()) return internalError(c, "[pvp/battle:run]", runCheck.error);
-  if (!runCheck.value[0]) {
-    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_run" } }, 400);
-  }
+  if (runCheck.isErr()) return { error: runCheck.error, label: "[pvp/battle:run]" };
+  if (!runCheck.value[0]) return { precondition: "invalid_run" };
 
   const snapshotResult = await safeAsync(
     () =>
@@ -204,96 +160,83 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
     dbErr,
   );
   if (snapshotResult.isErr())
-    return internalError(c, "[pvp/battle:snapshot]", snapshotResult.error);
+    return { error: snapshotResult.error, label: "[pvp/battle:snapshot]" };
+  if (!snapshotResult.value[0]) return { precondition: "no_snapshot" };
 
-  const snapshot = snapshotResult.value[0];
-  if (!snapshot) {
-    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "no_snapshot" } }, 400);
-  }
+  return { board: snapshotResult.value[0].board.map(boardUnitToUnitInstance) };
+}
 
-  const playerBoard = snapshot.board.map(boardUnitToUnitInstance);
+function extractBoard(
+  c: { json: (d: unknown, s: number) => Response },
+  loaded: LoadBoardResult,
+): Response | { board: ReturnType<typeof boardUnitToUnitInstance>[] } {
+  if ("error" in loaded) return internalError(c, loaded.label, loaded.error);
+  if ("precondition" in loaded)
+    return c.json({ error: { type: "PRECONDITION_FAILED", reason: loaded.precondition } }, 400);
+  return loaded;
+}
+
+function buildBattleRecord(
+  playerId: string,
+  runId: string,
+  round: number,
+  pvpOpponent: PvpOpponent | null,
+  playerBoard: ReturnType<typeof boardUnitToUnitInstance>[],
+) {
+  const enemy = resolveEnemy(pvpOpponent, round);
+  const battleSeed = generateBattleSeed();
+  const { frames, result } = simulateBattle(playerBoard, enemy, round, battleSeed);
+  const opponent: PvpOpponent = {
+    playerId: pvpOpponent?.playerId ?? null,
+    teamName: enemy.teamName,
+    teamType: enemy.teamType,
+    units: enemy.units.map(unitInstanceToBoardUnit),
+  };
+  const battleId = generateId();
+  const values: typeof battles.$inferInsert = {
+    id: battleId,
+    playerId,
+    runId,
+    opponentPlayerId: pvpOpponent?.playerId ?? null,
+    round,
+    seed: battleSeed,
+    opponent,
+    result: result ?? "DRAW",
+    createdAt: new Date(),
+  };
+  return { battleId, frames, result, opponent, battleSeed, values };
+}
+
+pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
+  const db = c.get("db");
+  const playerId = c.get("playerId");
+  const parsedBody = getParsedBody(c);
+  const round = bodyField(parsedBody, "round");
+  const runId = bodyField(parsedBody, "runId");
+  if (!validateRound(round))
+    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_round" } }, 400);
+  if (!validateNonEmptyString(runId))
+    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_run_id" } }, 400);
+
+  const loaded = await loadPlayerBoard(db, runId, round, playerId);
+  const extracted = extractBoard(c, loaded);
+  if (extracted instanceof Response) return extracted;
 
   const opponentResult = await findOpponent(db, playerId, round);
   if (opponentResult.isErr())
     return internalError(c, "[pvp/battle:opponent]", opponentResult.error);
 
-  const pvpOpponent = opponentResult.value;
-  const battleSeed = generateBattleSeed();
-  let enemy: EnemyTeam;
-  const opponentPlayerId = pvpOpponent?.playerId ?? null;
-  if (pvpOpponent) {
-    enemy = pvpOpponentToEnemyTeam(pvpOpponent);
-  } else {
-    const enemySeed = generateBattleSeed();
-    enemy = generateEnemyTeam(round, createSeededRng(enemySeed));
-  }
-
-  const existingBattle = await safeAsync(
-    () =>
-      db
-        .select({ id: battles.id, result: battles.result, seed: battles.seed })
-        .from(battles)
-        .where(and(eq(battles.runId, runId), eq(battles.round, round)))
-        .limit(1),
-    dbErr,
+  const { battleId, frames, result, opponent, battleSeed, values } = buildBattleRecord(
+    playerId,
+    runId,
+    round,
+    opponentResult.value,
+    extracted.board,
   );
-  if (existingBattle.isErr()) return internalError(c, "[pvp/battle:check]", existingBattle.error);
-  if (existingBattle.value[0]) {
-    warn("[pvp/battle] battle_already_exists", {
-      runId,
-      round,
-      existingId: existingBattle.value[0].id,
-    });
-    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "battle_already_exists" } }, 409);
-  }
 
-  const { frames, result } = simulateBattle(playerBoard, enemy, round, battleSeed);
-
-  const opponent: PvpOpponent = {
-    playerId: opponentPlayerId,
-    teamName: enemy.teamName,
-    teamType: enemy.teamType,
-    units: enemy.units.map(unitInstanceToBoardUnit),
-  };
-
-  const battleId = generateId();
-  const saveResult = await safeAsync(
-    () =>
-      db
-        .insert(battles)
-        .values({
-          id: battleId,
-          playerId,
-          runId,
-          opponentPlayerId,
-          round,
-          seed: battleSeed,
-          opponent,
-          result: result ?? "DRAW",
-          createdAt: new Date(),
-        })
-        .onConflictDoNothing({ target: [battles.runId, battles.round] }),
-    dbErr,
-  );
-  if (saveResult.isErr()) return internalError(c, "[pvp/battle:insert]", saveResult.error);
-
-  const verifyInsert = await safeAsync(
-    () =>
-      db
-        .select({ id: battles.id })
-        .from(battles)
-        .where(and(eq(battles.runId, runId), eq(battles.round, round)))
-        .limit(1),
-    dbErr,
-  );
-  if (verifyInsert.isErr()) return internalError(c, "[pvp/battle:verify]", verifyInsert.error);
-  if (verifyInsert.value[0]?.id !== battleId) {
-    warn("[pvp/battle] race: battle_already_exists", {
-      runId,
-      round,
-      battleId,
-      actualId: verifyInsert.value[0]?.id,
-    });
+  const saveError = await saveBattleAndVerify(db, battleId, values, runId, round);
+  if (saveError) {
+    if (saveError.kind === "infra") return internalError(c, saveError.label, saveError.cause);
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "battle_already_exists" } }, 409);
   }
 

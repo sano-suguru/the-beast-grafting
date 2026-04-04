@@ -49,3 +49,5 @@ export const SHOP_SIZE_DEFAULT = 3;
 
 export const ITEM_SHOP_SIZES = [{ minRound: 7, size: 2 }] as const;
 export const ITEM_SHOP_SIZE_DEFAULT = 1;
+
+export const LEVEL_UP_REWARD_COUNT = 2;

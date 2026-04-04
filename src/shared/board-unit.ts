@@ -10,8 +10,8 @@ export interface BoardUnit {
   name: string;
   baseAtk: number;
   baseHp: number;
-  atk: number;
-  hp: number;
+  buffAtk: number;
+  buffHp: number;
   tier: number;
   level: number;
   exp: number;
@@ -35,8 +35,8 @@ export function unitInstanceToBoardUnit(u: UnitInstance): BoardUnit {
     name: u.name,
     baseAtk: u.baseAtk,
     baseHp: u.baseHp,
-    atk: u.atk,
-    hp: u.hp,
+    buffAtk: u.buffAtk,
+    buffHp: u.buffHp,
     tier: u.tier,
     level: u.level,
     exp: u.exp,
@@ -56,8 +56,8 @@ export function boardUnitToUnitInstance(bu: BoardUnit): UnitInstance {
     name: bu.name,
     baseAtk: bu.baseAtk,
     baseHp: bu.baseHp,
-    atk: bu.atk,
-    hp: bu.hp,
+    buffAtk: bu.buffAtk,
+    buffHp: bu.buffHp,
     tier: bu.tier,
     level: bu.level,
     exp: bu.exp,

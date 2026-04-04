@@ -30,6 +30,7 @@ export interface ShopSlotResponse {
   unit: BoardUnit;
   frozen: boolean;
   costOverride?: number;
+  eventSourced: boolean;
 }
 
 export interface ShopItemSlotResponse {
@@ -46,6 +47,7 @@ export interface ShopStateResponse {
   cultistUsed: boolean;
   rotRingUses: number;
   activeEvent: EventData | null;
+  rewardSlots: (ShopSlotResponse | null)[];
   canUndo: boolean;
   round: number;
   sanity: number;

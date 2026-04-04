@@ -1,6 +1,6 @@
-import type { BattleAction, UnitId } from "../shared/types";
+import type { BattleAction, LogSegment, UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix } from "./battle-context";
+import { pushFrame, getMult, enemyPrefix, seg, skillDamageActions } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
 import {
@@ -9,12 +9,6 @@ import {
   PARASITE_BUFF,
   EYE_DAMAGE,
   REVENANT_MAX_TARGETS,
-  BERSERK_BONUS,
-  IRON_REDUCTION,
-  CORPSE_WAX_REDUCTION,
-  INFECTION_EXTRA_DAMAGE,
-  NUMBNESS_REDUCTION,
-  MIN_EQUIPMENT_DAMAGE,
   SUPPORT_IDX,
 } from "./constants";
 
@@ -31,15 +25,15 @@ function applySkillDamage(
   u: BattleUnit,
   target: BattleUnit,
   dmg: number,
-  msg: string,
+  segments: LogSegment[],
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
   target.hp -= dmg;
   const prefix = enemyPrefix(isPlayer);
-  pushFrame(ctx, "skill", `${prefix}${msg}`, "skill", {
+  pushFrame(ctx, "skill", [prefix, ...segments], "skill", {
     [u.uid]: { type: "skill" },
-    [target.uid]: { type: "damage", value: `-${dmg}` },
+    [target.uid]: { type: "damage", value: `-${dmg}`, source: u.uid },
   });
   resolveDeaths(ctx);
 }
@@ -47,11 +41,18 @@ function applySkillDamage(
 function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   if (targetArr.length === 0) return;
   const target = mustGet(targetArr, Math.floor(ctx.rng.next() * targetArr.length), "bat target");
+  const hpBefore = target.hp;
   applySkillDamage(
     u,
     target,
     BAT_DAMAGE,
-    `[${u.name}]の先制攻撃！ [${target.name}]に ${BAT_DAMAGE} ダメージ。`,
+    [
+      seg.u(u.name),
+      "が喰らいつく！ ",
+      seg.u(target.name),
+      "に ",
+      seg.hp(`${hpBefore}→${Math.max(0, hpBefore - BAT_DAMAGE)}`),
+    ],
     isPlayer,
     ctx,
   );
@@ -60,11 +61,18 @@ function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
 function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   const back = targetArr[targetArr.length - 1];
   if (!back) return;
+  const hpBefore = back.hp;
   applySkillDamage(
     u,
     back,
     BANSHEE_DAMAGE,
-    `[${u.name}]の呪殺の絶叫！ 最後尾の[${back.name}]に ${BANSHEE_DAMAGE} ダメージ。`,
+    [
+      seg.u(u.name),
+      "が叫ぶ！ 最後尾の",
+      seg.u(back.name),
+      "に ",
+      seg.hp(`${hpBefore}→${Math.max(0, hpBefore - BANSHEE_DAMAGE)}`),
+    ],
     isPlayer,
     ctx,
   );
@@ -78,14 +86,22 @@ function applyCholeraSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   target.equip = "infection";
   const prefix = enemyPrefix(isPlayer);
   if (prevEquip && prevEquip !== "infection") {
-    pushFrame(ctx, "skill", `${prefix}[${target.name}]の装備が疫病に蝕まれた！`, "skill", {
+    pushFrame(ctx, "skill", [prefix, seg.u(target.name), "の装備が疫病に蝕まれた！"], "skill", {
       [target.uid]: { type: "damage", value: "装備消去" },
     });
   }
   pushFrame(
     ctx,
     "skill",
-    `${prefix}[${u.name}]が疫病を撒き散らす！ [${target.name}]が【感染】した。`,
+    [
+      prefix,
+      seg.u(u.name),
+      "が疫病を撒き散らす！ ",
+      seg.u(target.name),
+      "が",
+      seg.e("感染"),
+      "した。",
+    ],
     "skill",
     {
       [u.uid]: { type: "skill" },
@@ -113,7 +129,7 @@ function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
     pushFrame(
       ctx,
       "skill",
-      `${prefix}[${u.name}]の怨嗟が燃え上がる！ 前方${buffed}体の攻撃力+1。`,
+      [prefix, seg.u(u.name), `の眼が血走る。前方${buffed}体の攻撃力+1。`],
       "skill",
       actions,
     );
@@ -163,6 +179,46 @@ export function applyCholeraBeforeAttack(
   }
 }
 
+function applyParasiteBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {
+  u.atk += PARASITE_BUFF.atk;
+  u.hp += PARASITE_BUFF.hp;
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      prefix,
+      seg.u(u.name),
+      "が前衛の闘争に興奮する！ ",
+      seg.s(`+${PARASITE_BUFF.atk}/+${PARASITE_BUFF.hp}`),
+    ],
+    "skill",
+    { [u.uid]: { type: "buff", value: `+${PARASITE_BUFF.atk}/+${PARASITE_BUFF.hp}` } },
+  );
+}
+
+function applyEyeGaze(u: BattleUnit, enemyBoard: BattleUnit[], prefix: string, ctx: BattleContext) {
+  if (enemyBoard.length === 0 || u.skillUses <= 0) return;
+  const target = mustGet(enemyBoard, Math.floor(ctx.rng.next() * enemyBoard.length), "eye target");
+  const hpBefore = target.hp;
+  target.hp -= EYE_DAMAGE;
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      prefix,
+      seg.u(u.name),
+      "が",
+      seg.u(target.name),
+      "を睨みつける！ ",
+      seg.hp(`${hpBefore}→${Math.max(0, target.hp)}`),
+    ],
+    "skill",
+    skillDamageActions(u, target, EYE_DAMAGE),
+  );
+  u.skillUses = u.skillUses - 1;
+  resolveDeaths(ctx);
+}
+
 export function applyBeforeAttackSkills(
   board: BattleUnit[],
   enemyBoard: BattleUnit[],
@@ -175,39 +231,8 @@ export function applyBeforeAttackSkills(
   const mult = getMult(board, SUPPORT_IDX);
 
   for (let m = 0; m < mult; m++) {
-    if (u.id === "parasite") {
-      u.atk += PARASITE_BUFF.atk;
-      u.hp += PARASITE_BUFF.hp;
-      pushFrame(
-        ctx,
-        "skill",
-        `${prefix}[${u.name}]が前衛の闘争に興奮する！ (+${PARASITE_BUFF.atk}/+${PARASITE_BUFF.hp})`,
-        "skill",
-        {
-          [u.uid]: { type: "buff", value: `+${PARASITE_BUFF.atk}/+${PARASITE_BUFF.hp}` },
-        },
-      );
-    }
-    if (u.id === "eye" && enemyBoard.length > 0 && u.skillUses > 0) {
-      const target = mustGet(
-        enemyBoard,
-        Math.floor(ctx.rng.next() * enemyBoard.length),
-        "eye target",
-      );
-      target.hp -= EYE_DAMAGE;
-      pushFrame(
-        ctx,
-        "skill",
-        `${prefix}[${u.name}]の悪意の凝視！ [${target.name}]に ${EYE_DAMAGE} ダメージ。`,
-        "skill",
-        {
-          [u.uid]: { type: "skill" },
-          [target.uid]: { type: "damage", value: `-${EYE_DAMAGE}` },
-        },
-      );
-      u.skillUses = u.skillUses - 1;
-      resolveDeaths(ctx);
-    }
+    if (u.id === "parasite") applyParasiteBuff(u, prefix, ctx);
+    if (u.id === "eye") applyEyeGaze(u, enemyBoard, prefix, ctx);
   }
 }
 
@@ -226,94 +251,17 @@ export function applyOnHitSkills(
   for (let m = 0; m < mult; m++) {
     if (defender.id === "templar") {
       defender.atk += 1;
-      pushFrame(ctx, "skill", `${prefix}[${defender.name}]の信仰が深まる！ (+1/+0)`, "skill", {
-        [defender.uid]: { type: "buff", value: "+1/+0" },
-      });
-    }
-  }
-}
-
-function applyBerserkBonus(unit: BattleUnit, ctx: BattleContext, prefix: string): number {
-  if (unit.equip !== "berserk") return 0;
-  pushFrame(
-    ctx,
-    "skill",
-    `${prefix}[${unit.name}]の【狂乱】！(攻撃ダメ+${BERSERK_BONUS})`,
-    "skill",
-    {
-      [unit.uid]: { type: "skill" },
-    },
-  );
-  return BERSERK_BONUS;
-}
-
-function applyDefensiveEquip(
-  unit: BattleUnit,
-  baseDmg: number,
-  ctx: BattleContext,
-  prefix: string,
-): { dmg: number; action: BattleAction["type"] } {
-  let dmg = baseDmg;
-  let action: BattleAction["type"] = "damage";
-  if (unit.equip === "iron") {
-    dmg = Math.max(MIN_EQUIPMENT_DAMAGE, dmg - IRON_REDUCTION);
-    action = "defend";
-    pushFrame(
-      ctx,
-      "defend",
-      `${prefix}[${unit.name}]の【鉄の皮膚】！(被ダメ-${IRON_REDUCTION})`,
-      "defend",
-      {
-        [unit.uid]: { type: "defend" },
-      },
-    );
-  }
-  if (unit.equip === "corpse_wax") {
-    dmg = Math.max(0, dmg - CORPSE_WAX_REDUCTION);
-    unit.equip = null;
-    action = "defend";
-    pushFrame(
-      ctx,
-      "defend",
-      `${prefix}[${unit.name}]の【屍蝋の盾】が破壊された！(${CORPSE_WAX_REDUCTION}軽減)`,
-      "defend",
-      {
-        [unit.uid]: { type: "defend", value: `${CORPSE_WAX_REDUCTION}軽減` },
-      },
-    );
-  }
-  if (unit.equip === "infection") dmg += INFECTION_EXTRA_DAMAGE;
-  if (unit.equip === "numbness") {
-    const uses = unit.equipUses;
-    if (uses > 0) {
-      dmg = Math.max(MIN_EQUIPMENT_DAMAGE, dmg - NUMBNESS_REDUCTION);
-      unit.equipUses = uses - 1;
-      action = "defend";
       pushFrame(
         ctx,
-        "defend",
-        `${prefix}[${unit.name}]の【痛覚麻痺】！(被ダメ-${NUMBNESS_REDUCTION}, 残${uses - 1}回)`,
-        "defend",
+        "skill",
+        [prefix, seg.u(defender.name), "が傷を受け、嗤う。", seg.s("+1/+0")],
+        "skill",
         {
-          [unit.uid]: { type: "defend" },
+          [defender.uid]: { type: "buff", value: "+1/+0" },
         },
       );
-      if (uses - 1 <= 0) {
-        unit.equip = null;
-      }
     }
   }
-  return { dmg, action };
 }
 
-export function applyEquipmentEffects(
-  p: BattleUnit,
-  e: BattleUnit,
-  ctx: BattleContext,
-): { pDmg: number; eDmg: number; pAction: BattleAction["type"]; eAction: BattleAction["type"] } {
-  const pBonus = applyBerserkBonus(p, ctx, "");
-  const eBonus = applyBerserkBonus(e, ctx, "敵の");
-  const pDef = applyDefensiveEquip(p, e.atk + eBonus, ctx, "");
-  const eDef = applyDefensiveEquip(e, p.atk + pBonus, ctx, "敵の");
-  return { pDmg: pDef.dmg, eDmg: eDef.dmg, pAction: pDef.action, eAction: eDef.action };
-}
+export { applyEquipmentEffects } from "./battle-equip";

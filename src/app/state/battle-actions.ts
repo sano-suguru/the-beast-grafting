@@ -21,6 +21,7 @@ import {
   battleBusy,
   battleLoading,
   battleLoadError,
+  battleConcludeData,
   onboardingStep,
   shopLocked,
   shopActionError,
@@ -61,19 +62,19 @@ function loadBattleInBackground(runId: string, currentRound: number) {
             const churchIds = opponent.units.filter((u) => u.isChurch).map((u) => u.id);
             if (churchIds.length > 0) markSeen(churchIds);
           },
-          (e) => {
-            battleLoadError.value = e;
-            logError("[loadBattle]", e);
+          (error) => {
+            battleLoadError.value = error;
+            logError("[loadBattle]", error);
           },
         );
       });
     })
-    .catch((e: unknown) => {
+    .catch((error: unknown) => {
       batch(() => {
         battleLoading.value = false;
-        battleLoadError.value = fetchErr(e);
+        battleLoadError.value = fetchErr(error);
       });
-      logError("[loadBattle:crash]", e);
+      logError("[loadBattle:crash]", error);
     });
 }
 
@@ -104,19 +105,19 @@ export function startPreBattle() {
             if (shouldFinishTutorial) markTutorialDone();
             loadBattleInBackground(runId, currentRound);
           },
-          (e) => {
-            shopActionError.value = e;
-            logError("[startPreBattle]", e);
+          (error) => {
+            shopActionError.value = error;
+            logError("[startPreBattle]", error);
           },
         );
       });
     })
-    .catch((e: unknown) => {
+    .catch((error: unknown) => {
       batch(() => {
         shopLocked.value = false;
-        shopActionError.value = fetchErr(e);
+        shopActionError.value = fetchErr(error);
       });
-      logError("[startPreBattle:crash]", e);
+      logError("[startPreBattle:crash]", error);
     });
 }
 
@@ -155,34 +156,30 @@ function applyLocalFallback(localResult: BattleResult) {
   const isWin = localResult === "WIN";
   const isLose = localResult === "LOSE";
 
+  let trophyDelta = 0;
+  let sanityDelta = 0;
+  let gameEnded = false;
+
   if (isWin) {
+    trophyDelta = 1;
     if (trophy.value + 1 >= 10) {
       masterBoardUnits();
-      batch(() => {
-        trophy.value = 10;
-        phase.value = "RESULT";
-      });
-      return;
+      gameEnded = true;
     }
-    trophy.value += 1;
   } else if (isLose) {
+    sanityDelta = -1;
     if (sanity.value - 1 <= 0) {
-      batch(() => {
-        sanity.value = 0;
-        phase.value = "RESULT";
-      });
-      return;
+      gameEnded = true;
     }
-    sanity.value -= 1;
   }
 
-  const nextRound = round.value + 1;
-  const runId = currentRunId.value;
   batch(() => {
-    round.value = nextRound;
-    phase.value = "SHOP";
+    trophy.value = Math.min(trophy.value + trophyDelta, 10);
+    sanity.value = Math.max(sanity.value + sanityDelta, 0);
+    if (!gameEnded) round.value = round.value + 1;
+    battleConcludeData.value = { sanityDelta, trophyDelta, gameEnded };
+    phase.value = "BATTLE_RESULT";
   });
-  if (runId) void setupNight(runId);
 }
 
 async function executeConclude() {
@@ -201,17 +198,19 @@ async function executeConclude() {
   result.match(
     (run) => {
       if (run.status === "won") masterBoardUnits();
-      const runId = currentRunId.value;
+      const prevSanity = sanity.value;
+      const prevTrophy = trophy.value;
+      const gameEnded = run.status === "won" || run.status === "lost";
       batch(() => {
         sanity.value = run.sanity;
         trophy.value = run.trophy;
         round.value = run.round;
-        if (run.status === "won" || run.status === "lost") {
-          phase.value = "RESULT";
-        } else {
-          phase.value = "SHOP";
-          if (runId) void setupNight(runId);
-        }
+        battleConcludeData.value = {
+          sanityDelta: run.sanity - prevSanity,
+          trophyDelta: run.trophy - prevTrophy,
+          gameEnded,
+        };
+        phase.value = "BATTLE_RESULT";
       });
     },
     (e) => {
@@ -228,11 +227,32 @@ export function concludeBattle() {
   void safeAsync(executeConclude, fetchErr).then((result) => {
     if (result.isErr()) {
       logError("[ConcludeBattleCrash]", result.error);
-      batch(() => {
-        battleError.value = result.error;
-        phase.value = "SHOP";
-      });
+      battleError.value = result.error;
+      applyLocalFallback(battleResult.value);
     }
     battleBusy.value = false;
   });
+}
+
+export function proceedFromBattleResult() {
+  const data = battleConcludeData.value;
+  if (!data) return;
+
+  initAudio();
+  playSE("select");
+
+  if (data.gameEnded) {
+    batch(() => {
+      battleConcludeData.value = null;
+      phase.value = "RESULT";
+    });
+    return;
+  }
+
+  const runId = currentRunId.value;
+  batch(() => {
+    battleConcludeData.value = null;
+    phase.value = "SHOP";
+  });
+  if (runId) void setupNight(runId);
 }

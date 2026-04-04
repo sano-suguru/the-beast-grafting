@@ -9,26 +9,26 @@ test.describe("Battle Flow", () => {
   test("enter pre-battle from shop", async ({ page }) => {
     await prepareForBattle(page);
     await page.getByRole("button", { name: "狂宴へ向かう" }).click();
-    await expect(page.getByRole("button", { name: "結果を見届ける" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "見届ける。" })).toBeVisible();
   });
 
   test("battle plays through and shows footer", async ({ page }) => {
     await prepareForBattle(page);
     await page.getByRole("button", { name: "狂宴へ向かう" }).click();
-    await page.getByRole("button", { name: "結果を見届ける" }).click();
+    await page.getByRole("button", { name: "見届ける。" }).click();
 
     // Battle screen should show fast-forward or conclude button
     await expect(
       page
         .getByRole("button", { name: "早送り" })
-        .or(page.getByRole("button", { name: /血を拭き取る/ })),
+        .or(page.getByRole("button", { name: /死体を検分する/ })),
     ).toBeVisible({ timeout: 10000 });
   });
 
   test("complete battle and return to shop", async ({ page }) => {
     await prepareForBattle(page);
     await page.getByRole("button", { name: "狂宴へ向かう" }).click();
-    await page.getByRole("button", { name: "結果を見届ける" }).click();
+    await page.getByRole("button", { name: "見届ける。" }).click();
 
     // Fast forward if available
     const ffButton = page.getByRole("button", { name: "早送り" });
@@ -37,7 +37,7 @@ test.describe("Battle Flow", () => {
     }
 
     // Wait for battle to finish and click conclude
-    const concludeButton = page.getByRole("button", { name: /血を拭き取る/ });
+    const concludeButton = page.getByRole("button", { name: /死体を検分する/ });
     await expect(concludeButton).toBeVisible({ timeout: 30000 });
     await concludeButton.click();
 

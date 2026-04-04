@@ -1,70 +1,32 @@
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { eq, and } from "drizzle-orm";
-import { safeAsync, dbErr, ok, err, type Result, type InfraError } from "../../shared/errors";
+import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { safeAsync, dbErr } from "../../shared/errors";
 import type { BoardUnit } from "../../shared/board-unit";
-import type { RunState, CurrentRunState, RunStatus } from "../../shared/api-types";
+import type { RunState, CurrentRunState } from "../../shared/api-types";
 import { isOriginId } from "../../shared/origin-id";
-import { runs, battles, shopStates } from "../../db/schema";
+import { runs, battles } from "../../db/schema";
 import { generateId } from "../auth/crypto";
 import { requireAuth } from "../auth/middleware";
 import type { AuthEnv } from "../auth/types";
 import { jsonBody, getParsedBody, bodyField } from "../parse-json";
 import { internalError } from "../error-response";
-
-import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { generateShopSeed } from "../utils/seed";
+import {
+  consumeAndAdvance,
+  fetchBattle,
+  fetchActiveRun,
+  fetchLatestBoard,
+  validateBattleForRun,
+  computeAdvanceFields,
+} from "./run-helpers";
+import type { BattleRow } from "./run-helpers";
+export { consumeAndAdvance };
 
 const runRoutes = new Hono<AuthEnv>();
 
 const INITIAL_SANITY = 5;
-const WIN_THRESHOLD = 10;
-
-import { generateShopSeed } from "../utils/seed";
-
-interface AdvanceFields {
-  round: number;
-  sanity: number;
-  trophy: number;
-  board: (BoardUnit | null)[];
-  status: RunStatus;
-}
-
-/**
- * Consume a battle then advance the run. Returns false if already consumed or run no longer active.
- * D1 にトランザクションがないため2段階で実行する。consume 成功後の advance がインフラエラーで
- * 失敗した場合、battle は consumed 済みだが run は未更新になる。この中間状態は
- * クライアントの recoverPendingBattle (game-actions.ts) がカバーする。
- */
-export async function consumeAndAdvance(
-  db: DrizzleD1Database,
-  battleId: string,
-  runId: string,
-  fields: AdvanceFields,
-): Promise<Result<boolean, InfraError>> {
-  const consumed = await safeAsync(
-    () =>
-      db
-        .update(battles)
-        .set({ consumed: true })
-        .where(and(eq(battles.id, battleId), eq(battles.consumed, false)))
-        .returning({ id: battles.id }),
-    dbErr,
-  );
-  if (consumed.isErr()) return err(consumed.error);
-  if (consumed.value.length === 0) return ok(false);
-
-  const advanced = await safeAsync(
-    () =>
-      db
-        .update(runs)
-        .set({ ...fields, updatedAt: new Date() })
-        .where(and(eq(runs.id, runId), eq(runs.status, "active")))
-        .returning({ id: runs.id }),
-    dbErr,
-  );
-  if (advanced.isErr()) return err(advanced.error);
-  if (advanced.value.length > 0) return ok(true);
-  return ok(false);
-}
 
 function findActiveRunId(db: DrizzleD1Database, playerId: string) {
   return safeAsync(
@@ -174,130 +136,81 @@ runRoutes.get("/current", requireAuth, async (c) => {
   return c.json({ run });
 });
 
+async function validateAdvanceRequest(
+  c: Context<AuthEnv>,
+  db: DrizzleD1Database,
+  playerId: string,
+  battleId: string,
+): Promise<Response | { battle: BattleRow; run: typeof runs.$inferSelect }> {
+  const battleResult = await fetchBattle(db, battleId);
+  if (battleResult.isErr()) return internalError(c, "[run/advance:battle]", battleResult.error);
+  const battle = battleResult.value[0];
+  if (!battle) return c.json({ error: { type: "NOT_FOUND", entity: "battle" } }, 404);
+  if (battle.playerId !== playerId)
+    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "not_owner" } }, 403);
+
+  const activeRun = await fetchActiveRun(db, playerId);
+  if (activeRun.isErr()) return internalError(c, "[run/advance:run]", activeRun.error);
+  const run = activeRun.value[0];
+  if (!run) return handleMissingRun(c, db, playerId);
+
+  const validationError = validateBattleForRun(battle, run);
+  if (validationError === "battle_already_consumed")
+    return c.json({ error: { type: "PRECONDITION_FAILED", reason: validationError } }, 409);
+  if (validationError)
+    return c.json({ error: { type: "PRECONDITION_FAILED", reason: validationError } }, 400);
+
+  return { battle, run };
+}
+
 runRoutes.post("/advance", requireAuth, jsonBody(), async (c) => {
   const db = c.get("db");
   const playerId = c.get("playerId");
   const battleId = bodyField(getParsedBody(c), "battleId");
-  if (typeof battleId !== "string") {
+  if (typeof battleId !== "string")
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_battle_id" } }, 400);
-  }
 
-  const battleResult = await safeAsync(
-    () =>
-      db
-        .select({
-          result: battles.result,
-          playerId: battles.playerId,
-          runId: battles.runId,
-          round: battles.round,
-          consumed: battles.consumed,
-        })
-        .from(battles)
-        .where(eq(battles.id, battleId))
-        .limit(1),
-    dbErr,
+  const validated = await validateAdvanceRequest(c, db, playerId, battleId);
+  if (validated instanceof Response) return validated;
+  const { battle, run } = validated;
+
+  const shopBoard = await fetchLatestBoard(db, run.id, battle.round);
+  if (shopBoard.isErr()) return internalError(c, "[run/advance:board]", shopBoard.error);
+
+  const fields = computeAdvanceFields(
+    { ...run, board: shopBoard.value[0]?.board ?? run.board },
+    battle.result,
   );
-  if (battleResult.isErr()) return internalError(c, "[run/advance:battle]", battleResult.error);
-
-  const battle = battleResult.value[0];
-  if (!battle) return c.json({ error: { type: "NOT_FOUND", entity: "battle" } }, 404);
-  if (battle.playerId !== playerId) {
-    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "not_owner" } }, 403);
-  }
-  const activeRun = await safeAsync(
-    () =>
-      db
-        .select()
-        .from(runs)
-        .where(and(eq(runs.playerId, playerId), eq(runs.status, "active")))
-        .limit(1),
-    dbErr,
-  );
-  if (activeRun.isErr()) return internalError(c, "[run/advance:run]", activeRun.error);
-
-  const run = activeRun.value[0];
-  if (!run) {
-    const anyRun = await safeAsync(
-      () => db.select({ id: runs.id }).from(runs).where(eq(runs.playerId, playerId)).limit(1),
-      dbErr,
-    );
-    if (anyRun.isErr()) return internalError(c, "[run/advance:run-check]", anyRun.error);
-    if (anyRun.value[0]) {
-      return c.json({ error: { type: "PRECONDITION_FAILED", reason: "run_finished" } }, 409);
-    }
-    return c.json({ error: { type: "NOT_FOUND", entity: "run" } }, 404);
-  }
-
-  if (battle.runId !== run.id) {
-    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "run_mismatch" } }, 400);
-  }
-  if (battle.round !== run.round) {
-    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "round_mismatch" } }, 400);
-  }
-  if (battle.consumed) {
-    return c.json(
-      { error: { type: "PRECONDITION_FAILED", reason: "battle_already_consumed" } },
-      409,
-    );
-  }
-
-  let newSanity = run.sanity;
-  let newTrophy = run.trophy;
-  let newStatus: RunStatus = run.status;
-
-  if (battle.result === "WIN") {
-    newTrophy += 1;
-    if (newTrophy >= WIN_THRESHOLD) newStatus = "won";
-  } else if (battle.result === "LOSE") {
-    newSanity -= 1;
-    if (newSanity <= 0) {
-      newSanity = 0;
-      newStatus = "lost";
-    }
-  }
-
-  const newRound = newStatus === "active" ? run.round + 1 : run.round;
-
-  const latestShopState = await safeAsync(
-    () =>
-      db
-        .select({ board: shopStates.board })
-        .from(shopStates)
-        .where(and(eq(shopStates.runId, run.id), eq(shopStates.round, battle.round)))
-        .limit(1),
-    dbErr,
-  );
-  if (latestShopState.isErr())
-    return internalError(c, "[run/advance:board]", latestShopState.error);
-
-  const boardData = latestShopState.value[0]?.board ?? run.board;
-
-  const batchResult = await consumeAndAdvance(db, battleId, run.id, {
-    round: newRound,
-    sanity: newSanity,
-    trophy: newTrophy,
-    board: boardData,
-    status: newStatus,
-  });
+  const batchResult = await consumeAndAdvance(db, battleId, run.id, fields);
   if (batchResult.isErr()) return internalError(c, "[run/advance:batch]", batchResult.error);
-
-  if (!batchResult.value) {
+  if (!batchResult.value)
     return c.json(
       { error: { type: "PRECONDITION_FAILED", reason: "battle_already_consumed" } },
       409,
     );
-  }
 
-  const updatedRun: RunState = {
-    id: run.id,
-    round: newRound,
-    sanity: newSanity,
-    trophy: newTrophy,
-    status: newStatus,
-    originId: run.originId,
-  };
-  return c.json({ run: updatedRun });
+  return c.json({
+    run: {
+      id: run.id,
+      round: fields.round,
+      sanity: fields.sanity,
+      trophy: fields.trophy,
+      status: fields.status,
+      originId: run.originId,
+    },
+  });
 });
+
+async function handleMissingRun(c: Context, db: DrizzleD1Database, playerId: string) {
+  const anyRun = await safeAsync(
+    () => db.select({ id: runs.id }).from(runs).where(eq(runs.playerId, playerId)).limit(1),
+    dbErr,
+  );
+  if (anyRun.isErr()) return internalError(c, "[run/advance:run-check]", anyRun.error);
+  if (anyRun.value[0])
+    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "run_finished" } }, 409);
+  return c.json({ error: { type: "NOT_FOUND", entity: "run" } }, 404);
+}
 
 runRoutes.post("/retire", requireAuth, async (c) => {
   const db = c.get("db");

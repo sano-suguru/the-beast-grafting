@@ -1,20 +1,15 @@
-import type { BattleAction, UnitId } from "../shared/types";
+import type { BattleAction, LogSegment, UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { invariant, mustGet } from "../shared/invariant";
-import { pushFrame, getMult, createToken, createSummonedUnit, enemyPrefix } from "./battle-context";
+import { pushFrame, createToken, createSummonedUnit, enemyPrefix, seg } from "./battle-context";
 import { UNITS } from "../shared/data/units";
 import { getUnitsByTier } from "./helpers";
-import { computeZealotBuff } from "./buff-utils";
+import { applyZealotBuff } from "./battle-deaths-zealot";
 import {
-  FLY_SPAWN_CAP,
-  FLY_TOKEN,
   HOUND_TOKEN,
   BEAST_SUMMON,
   CHURCH_BEAST_TOKEN,
-  MAGGOT_TOKEN,
-  DEATH_CURSE_TOKEN,
   FRAME_DELAY_DEATH_CHAIN,
-  EVANGELIST_PLAGUE_DAMAGE,
 } from "./constants";
 
 type DeathContext = {
@@ -29,36 +24,6 @@ type DeathContext = {
 
 type DeathHandler = (context: DeathContext) => void;
 
-function applyZealotBuff(
-  boardArray: BattleUnit[],
-  tokenUid: string,
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  const buffAmount = computeZealotBuff(boardArray, {
-    requireAlive: true,
-    getMultiplier: (idx) => getMult(boardArray, idx),
-  });
-  if (buffAmount <= 0) return;
-  const zealot = boardArray.find((u) => u.id === "zealot" && u.hp > 0);
-  invariant(zealot, "zealot must exist when buffAmount > 0");
-  const zealotName = zealot.name;
-  const token = boardArray.find((u) => u.uid === tokenUid);
-  if (!token) return;
-  token.atk += buffAmount;
-  const prefix = enemyPrefix(isPlayer);
-  pushFrame(
-    ctx,
-    "skill",
-    `${prefix}[${zealotName}]が呪詛を唱える！ [${token.name}]の攻撃+${buffAmount}`,
-    "skill",
-    {
-      [tokenUid]: { type: "buff", value: `+${buffAmount}/+0` },
-    },
-    FRAME_DELAY_DEATH_CHAIN,
-  );
-}
-
 function spawnTokenOnDeath(
   dead: BattleUnit,
   board: BattleUnit[],
@@ -68,7 +33,7 @@ function spawnTokenOnDeath(
   tokenName: string,
   atk: number,
   hp: number,
-  message: string,
+  segments: LogSegment[],
 ) {
   const token = createToken(tokenName, atk, hp, dead.isChurch);
   board.splice(idx, 0, token);
@@ -76,7 +41,7 @@ function spawnTokenOnDeath(
   pushFrame(
     ctx,
     "skill",
-    `${prefix}${message}`,
+    [prefix, ...segments],
     "skill",
     {
       [token.uid]: { type: "summon" },
@@ -95,7 +60,14 @@ function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
   pushFrame(
     ctx,
     "skill",
-    `${prefix}[${dead.name}]の汚染された血が[${target.name}]に変異を促す！ (+1/+1)`,
+    [
+      prefix,
+      seg.u(dead.name),
+      "の汚染された血が",
+      seg.u(target.name),
+      "に変異を促す！ ",
+      seg.s("+1/+1"),
+    ],
     "skill",
     {
       [target.uid]: { type: "buff", value: "+1/+1" },
@@ -114,7 +86,7 @@ function handleHoundDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
     "噛み付く頭部",
     HOUND_TOKEN.atk,
     HOUND_TOKEN.hp,
-    `[${dead.name}]の首が牙を剥く！ (${HOUND_TOKEN.atk}/${HOUND_TOKEN.hp} 召喚)`,
+    [seg.u(dead.name), "の首が牙を剥く！ ", seg.s(`${HOUND_TOKEN.atk}/${HOUND_TOKEN.hp} 召喚`)],
   );
 }
 
@@ -131,7 +103,14 @@ function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   pushFrame(
     ctx,
     "skill",
-    `${prefix}[${dead.name}]の腹から[${summoned.name}]が這い出した！ (${BEAST_SUMMON.atk}/${BEAST_SUMMON.hp} 召喚)`,
+    [
+      prefix,
+      seg.u(dead.name),
+      "の腹から",
+      seg.u(summoned.name),
+      "が這い出した！ ",
+      seg.s(`${BEAST_SUMMON.atk}/${BEAST_SUMMON.hp} 召喚`),
+    ],
     "skill",
     { [summoned.uid]: { type: "summon" } },
     FRAME_DELAY_DEATH_CHAIN,
@@ -149,7 +128,13 @@ function handleChurchBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContex
     "祝福の幼子",
     CHURCH_BEAST_TOKEN.atk,
     CHURCH_BEAST_TOKEN.hp,
-    `[${dead.name}]の腹が裂け、『祝福』が現れた！ (${CHURCH_BEAST_TOKEN.atk}/${CHURCH_BEAST_TOKEN.hp} 召喚)`,
+    [
+      seg.u(dead.name),
+      "の腹が裂け、",
+      seg.e("祝福"),
+      "が現れた！ ",
+      seg.s(`${CHURCH_BEAST_TOKEN.atk}/${CHURCH_BEAST_TOKEN.hp} 召喚`),
+    ],
   );
 }
 
@@ -161,7 +146,7 @@ function handleSquireDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
   pushFrame(
     ctx,
     "skill",
-    `${prefix}[${dead.name}]の遺志が後衛の[${successor.name}]を鼓舞する！ (+1/+1)`,
+    [prefix, seg.u(dead.name), "の断末魔。", seg.u(successor.name), "が奮い立つ。", seg.s("+1/+1")],
     "skill",
     {
       [successor.uid]: { type: "buff", value: "+1/+1" },
@@ -179,7 +164,7 @@ function handlePriestDeath({ dead, board, isPlayer, ctx }: DeathContext) {
   pushFrame(
     ctx,
     "skill",
-    `${prefix}[${dead.name}]の祈りが味方全体を癒す！ (+1)`,
+    [prefix, seg.u(dead.name), "が崩れ落ちる。その唇がまだ動いている。味方全体", seg.s("+1")],
     "skill",
     actionMap,
     FRAME_DELAY_DEATH_CHAIN,
@@ -193,7 +178,14 @@ function handleMaidenDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
   pushFrame(
     ctx,
     "skill",
-    `${prefix}[${dead.name}]の残骸が[${successor.name}]を覆う！ (屍蝋の盾付与)`,
+    [
+      prefix,
+      seg.u(dead.name),
+      "の残骸が",
+      seg.u(successor.name),
+      "を覆う！ ",
+      seg.s("屍蝋の盾付与"),
+    ],
     "skill",
     {
       [successor.uid]: { type: "defend", value: "盾" },
@@ -212,7 +204,7 @@ function handleMartyrDeath({ dead, isPlayer, ctx, successor, successor2 }: Death
     pushFrame(
       ctx,
       "skill",
-      `${prefix}[${dead.name}]の遺志！ [${target.name}]が鼓舞された(+1/+1)`,
+      [prefix, seg.u(dead.name), "が", seg.u(target.name), "へ手を伸ばす。", seg.s("+1/+1")],
       "skill",
       {
         [target.uid]: { type: "buff", value: "+1/+1" },
@@ -242,129 +234,8 @@ export function getDeathHandler(id: UnitId): DeathHandler | undefined {
     : undefined;
 }
 
-export function handleEquipDeath(
-  dead: BattleUnit,
-  board: BattleUnit[],
-  idx: number,
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  const prefix = enemyPrefix(isPlayer);
-  if (dead.equip === "maggot_nest") {
-    const token = createToken("巨大蛆虫", MAGGOT_TOKEN.atk, MAGGOT_TOKEN.hp, dead.isChurch);
-    board.splice(idx, 0, token);
-    pushFrame(
-      ctx,
-      "skill",
-      `${prefix}[${dead.name}]の傷口から蛆虫が這い出した！ (1/1 召喚)`,
-      "skill",
-      {
-        [token.uid]: { type: "summon" },
-      },
-      FRAME_DELAY_DEATH_CHAIN,
-    );
-    applyZealotBuff(board, token.uid, isPlayer, ctx);
-  }
-  if (dead.equip === "death_curse") {
-    const token = createToken(
-      dead.name,
-      DEATH_CURSE_TOKEN.atk,
-      DEATH_CURSE_TOKEN.hp,
-      dead.isChurch,
-    );
-    board.splice(idx, 0, token);
-    pushFrame(
-      ctx,
-      "skill",
-      `${prefix}[${dead.name}]の呪符が発動！ 怨念が肉体を繋ぎ止める！ (1/1 蘇生)`,
-      "skill",
-      {
-        [token.uid]: { type: "summon" },
-      },
-      FRAME_DELAY_DEATH_CHAIN,
-    );
-    applyZealotBuff(board, token.uid, isPlayer, ctx);
-  }
-}
-
-function collectBeelzebubSpawns(
-  board: BattleUnit[],
-  flyCount: number,
-): { spawns: { beelzebub: BattleUnit; count: number }[]; totalSpawned: number } {
-  const spawns: { beelzebub: BattleUnit; count: number }[] = [];
-  let remaining = FLY_SPAWN_CAP - flyCount;
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "beelzebub" || u.hp <= 0) continue;
-    const mult = getMult(board, i);
-    const count = Math.min(mult, remaining);
-    if (count <= 0) continue;
-    spawns.push({ beelzebub: u, count });
-    remaining -= count;
-    if (remaining <= 0) break;
-  }
-  const totalSpawned = spawns.reduce((sum, s) => sum + s.count, 0);
-  return { spawns, totalSpawned };
-}
-
-export function handleBeelzebubSpawns(
-  board: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-  deathIdx: number,
-) {
-  const flyCountKey = isPlayer ? "pFlyCount" : "eFlyCount";
-  const prefix = enemyPrefix(isPlayer);
-  const { spawns, totalSpawned } = collectBeelzebubSpawns(board, ctx[flyCountKey]);
-
-  for (const { beelzebub, count } of spawns) {
-    for (let m = 0; m < count; m++) {
-      const token = createToken("腐肉の蠅", FLY_TOKEN.atk, FLY_TOKEN.hp, beelzebub.isChurch);
-      board.splice(deathIdx, 0, token);
-      pushFrame(
-        ctx,
-        "skill",
-        `${prefix}[${beelzebub.name}]の瘴気が死肉に群がる蠅を呼ぶ！ (${FLY_TOKEN.atk}/${FLY_TOKEN.hp} 蠅召喚)`,
-        "skill",
-        {
-          [token.uid]: { type: "summon" },
-        },
-        FRAME_DELAY_DEATH_CHAIN,
-      );
-      applyZealotBuff(board, token.uid, isPlayer, ctx);
-    }
-  }
-  ctx[flyCountKey] += totalSpawned;
-}
-
-export function handleEvangelistPlague(
-  board: BattleUnit[],
-  enemyBoard: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  const prefix = enemyPrefix(isPlayer);
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "evangelist" || u.hp <= 0) continue;
-    const mult = getMult(board, i);
-    for (let m = 0; m < mult; m++) {
-      const alive = enemyBoard.filter((e) => e.hp > 0);
-      // 敵全滅 → 残りの evangelist も対象なしのため関数ごと終了
-      if (alive.length === 0) return;
-      const target = alive[Math.floor(ctx.rng.next() * alive.length)]!;
-      target.hp -= EVANGELIST_PLAGUE_DAMAGE;
-      pushFrame(
-        ctx,
-        "skill",
-        `${prefix}屍の上で[${u.name}]が祈りを捧げる… [${target.name}]の血が黒く沸き立つ！ ${EVANGELIST_PLAGUE_DAMAGE} ダメージ。`,
-        "skill",
-        {
-          [u.uid]: { type: "skill" },
-          [target.uid]: { type: "damage", value: `-${EVANGELIST_PLAGUE_DAMAGE}` },
-        },
-        FRAME_DELAY_DEATH_CHAIN,
-      );
-    }
-  }
-}
+export {
+  handleEquipDeath,
+  handleBeelzebubSpawns,
+  handleEvangelistPlague,
+} from "./battle-deaths-effects";

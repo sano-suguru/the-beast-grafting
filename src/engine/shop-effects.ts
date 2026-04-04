@@ -1,19 +1,39 @@
 import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
+import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
+import { invariant } from "../shared/invariant";
 import { ALTAR_BUFF, ROT_RING_MAX_USES, MACHINE_BUFF } from "./constants";
-import { EXP_PER_LEVEL, MAX_UNIT_LEVEL } from "../shared/constants";
+import { CUMULATIVE_EXP, MAX_UNIT_LEVEL } from "../shared/constants";
 import { computeZealotBuff } from "./buff-utils";
 
-export const graftUnits = (base: UnitInstance, material: UnitInstance): UnitInstance => {
-  const newExp = base.exp + 1;
-  const newLevel =
-    newExp >= base.level * EXP_PER_LEVEL ? Math.min(MAX_UNIT_LEVEL, base.level + 1) : base.level;
+interface GraftResult {
+  unit: UnitInstance;
+  leveledUp: boolean;
+}
+
+export const graftUnits = (base: UnitInstance, material: UnitInstance): GraftResult => {
+  const maxExp = CUMULATIVE_EXP[MAX_UNIT_LEVEL];
+  const newExp = Math.min(base.exp + 1, maxExp);
+  const nextLevel = Math.min(MAX_UNIT_LEVEL, base.level + 1);
+  invariant(nextLevel === 2 || nextLevel === 3, `unexpected nextLevel: ${nextLevel}`);
+  const threshold = CUMULATIVE_EXP[nextLevel] ?? Infinity;
+  const newLevel = newExp >= threshold ? nextLevel : base.level;
+  const leveledUp = newLevel > base.level;
+
+  const maxAtk = Math.max(effectiveAtk(base), effectiveAtk(material));
+  const maxHp = Math.max(effectiveHp(base), effectiveHp(material));
+
   return {
-    ...base,
-    atk: base.atk + material.atk,
-    hp: base.hp + material.hp,
-    exp: newExp,
-    level: newLevel,
+    unit: {
+      ...base,
+      baseAtk: maxAtk + 1,
+      baseHp: maxHp + 1,
+      buffAtk: 0,
+      buffHp: 0,
+      exp: newExp,
+      level: newLevel,
+    },
+    leveledUp,
   };
 };
 
@@ -35,8 +55,8 @@ function applyRotRingBuff(
       bu
         ? {
             ...bu,
-            atk: bu.atk + rotRingCount,
-            hp: bu.hp + rotRingCount,
+            buffAtk: bu.buffAtk + rotRingCount,
+            buffHp: bu.buffHp + rotRingCount,
           }
         : null,
     ),
@@ -84,8 +104,8 @@ export const applySummonEffects = (
   if (altarCount > 0) {
     nextBoard[summonedUnitIndex] = {
       ...target,
-      atk: target.atk + ALTAR_BUFF.atk * altarCount,
-      hp: target.hp + ALTAR_BUFF.hp * altarCount,
+      buffAtk: target.buffAtk + ALTAR_BUFF.atk * altarCount,
+      buffHp: target.buffHp + ALTAR_BUFF.hp * altarCount,
     };
     modified = true;
   }
@@ -98,7 +118,7 @@ export const applySummonEffects = (
     const current = nextBoard[summonedUnitIndex] ?? target;
     nextBoard[summonedUnitIndex] = {
       ...current,
-      atk: current.atk + zealotCount,
+      buffAtk: current.buffAtk + zealotCount,
     };
     modified = true;
   }
@@ -109,7 +129,7 @@ export const applySummonEffects = (
 export const applyEndOfTurnEffects = (
   currentBoard: (UnitInstance | null)[],
 ): (UnitInstance | null)[] => {
-  let nextBoard = [...currentBoard];
+  const nextBoard = [...currentBoard];
   let modified = false;
 
   // SAP: Monkey相当
@@ -122,8 +142,8 @@ export const applyEndOfTurnEffects = (
       if (!front) return;
       nextBoard[frontIdx] = {
         ...front,
-        atk: front.atk + MACHINE_BUFF.atk,
-        hp: front.hp + MACHINE_BUFF.hp,
+        buffAtk: front.buffAtk + MACHINE_BUFF.atk,
+        buffHp: front.buffHp + MACHINE_BUFF.hp,
       };
     });
   }

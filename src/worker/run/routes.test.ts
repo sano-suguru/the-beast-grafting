@@ -443,8 +443,8 @@ describe("POST /advance", () => {
       name: "疫病ネズミ",
       baseAtk: 2,
       baseHp: 2,
-      atk: 5,
-      hp: 5,
+      buffAtk: 3,
+      buffHp: 3,
       tier: 1,
       level: 2,
       exp: 2,
@@ -479,7 +479,7 @@ describe("POST /advance", () => {
 
     const row = await testDb.select().from(runs).where(eq(runs.playerId, playerId)).limit(1);
     expect(row[0]!.board).toHaveLength(5);
-    expect(row[0]!.board[0]!.atk).toBe(5);
+    expect(row[0]!.board[0]!.buffAtk).toBe(3);
     expect(row[0]!.board[1]).toBeNull();
   });
 });

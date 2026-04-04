@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "7b4e88d4-4525-4006-a51b-d248dbad2ec5",
+  "id": "67132ecb-b16e-49ac-88b1-f0d655e31daf",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_providers": {
@@ -612,6 +612,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "reward_slots": {
+          "name": "reward_slots",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "undo_snapshot": {
           "name": "undo_snapshot",

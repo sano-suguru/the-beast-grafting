@@ -1,6 +1,7 @@
 import { createUnit, getShopPool, getItemPool, getEquipInfo, generateEnemyTeam } from "./helpers";
 import { EQUIPS } from "../shared/data/equips";
 import type { EquipType } from "../shared/types";
+import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { createSeededRng } from "./rng";
 
 describe("createUnit", () => {
@@ -8,8 +9,8 @@ describe("createUnit", () => {
     const unit = createUnit("rat");
     expect(unit.id).toBe("rat");
     expect(unit.name).toBe("疫病ネズミ");
-    expect(unit.atk).toBe(2);
-    expect(unit.hp).toBe(2);
+    expect(effectiveAtk(unit)).toBe(2);
+    expect(effectiveHp(unit)).toBe(2);
     expect(unit.level).toBe(1);
     expect(unit.exp).toBe(0);
     expect(unit.equip).toBeNull();
@@ -23,10 +24,12 @@ describe("createUnit", () => {
     expect(unit.isChurch).toBe(true);
   });
 
-  it("sets atk/hp from baseAtk/baseHp", () => {
+  it("sets buffAtk/buffHp to 0 initially", () => {
     const unit = createUnit("beast");
-    expect(unit.atk).toBe(unit.baseAtk);
-    expect(unit.hp).toBe(unit.baseHp);
+    expect(unit.buffAtk).toBe(0);
+    expect(unit.buffHp).toBe(0);
+    expect(effectiveAtk(unit)).toBe(unit.baseAtk);
+    expect(effectiveHp(unit)).toBe(unit.baseHp);
   });
 
   it("generates a uid string", () => {

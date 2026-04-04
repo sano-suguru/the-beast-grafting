@@ -174,8 +174,8 @@ describe("POST /snapshot", () => {
   it("upserts on same run+round", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const unit1 = makeValidUnit({ atk: 5 });
-    const unit2 = makeValidUnit({ atk: 99 });
+    const unit1 = makeValidUnit({ buffAtk: 3 });
+    const unit2 = makeValidUnit({ buffAtk: 97 });
 
     await postSnapshot(app, token, { runId, round: 3, board: [unit1] });
     await postSnapshot(app, token, { runId, round: 3, board: [unit2] });
@@ -185,7 +185,7 @@ describe("POST /snapshot", () => {
       .from(boardSnapshots)
       .where(and(eq(boardSnapshots.runId, runId), eq(boardSnapshots.round, 3)));
     expect(rows).toHaveLength(1);
-    expect(rows[0]!.board[0]).toMatchObject({ atk: 99 });
+    expect(rows[0]!.board[0]).toMatchObject({ buffAtk: 97 });
   });
 
   it("rejects oversized payload", async () => {
@@ -248,18 +248,18 @@ describe("POST /snapshot – stat validation", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects atk below base", async () => {
+  it("rejects negative buffAtk", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const unit = makeValidUnit({ atk: 1 });
+    const unit = makeValidUnit({ buffAtk: -1 });
     const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
 
-  it("rejects atk exceeding ceiling", async () => {
+  it("rejects effective atk exceeding ceiling", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const unit = makeValidUnit({ atk: 9999 });
+    const unit = makeValidUnit({ buffAtk: 9999 });
     const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
@@ -279,8 +279,8 @@ describe("POST /snapshot – stat validation", () => {
       name: "見習い従騎士",
       baseAtk: 1,
       baseHp: 2,
-      atk: 1,
-      hp: 2,
+      buffAtk: 0,
+      buffHp: 0,
       tier: 1,
       isChurch: true,
     });

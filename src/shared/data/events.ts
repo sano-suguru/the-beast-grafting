@@ -12,7 +12,6 @@ export const EVENTS: Record<EventId, EventData> = {
     shopSizeModifier: -1,
     freeRoll: false,
     lockRoll: false,
-    replacesShopUnits: false,
   },
   surplus: {
     id: "surplus",
@@ -25,7 +24,6 @@ export const EVENTS: Record<EventId, EventData> = {
     shopSizeModifier: 0,
     freeRoll: false,
     lockRoll: true,
-    replacesShopUnits: false,
   },
   rotting_cargo: {
     id: "rotting_cargo",
@@ -41,7 +39,6 @@ export const EVENTS: Record<EventId, EventData> = {
     shopSizeModifier: 0,
     freeRoll: false,
     lockRoll: false,
-    replacesShopUnits: true,
   },
   quiet_night: {
     id: "quiet_night",
@@ -54,7 +51,6 @@ export const EVENTS: Record<EventId, EventData> = {
     shopSizeModifier: 0,
     freeRoll: true,
     lockRoll: false,
-    replacesShopUnits: false,
   },
   patrol: {
     id: "patrol",
@@ -67,6 +63,5 @@ export const EVENTS: Record<EventId, EventData> = {
     shopSizeModifier: 0,
     freeRoll: false,
     lockRoll: false,
-    replacesShopUnits: false,
   },
 };

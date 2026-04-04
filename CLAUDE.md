@@ -59,7 +59,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Configs
 
-以下の設定は各設定ファイルを参照: @package.json, @.oxlintrc.json, @vite.config.ts, @tsconfig.app.json, @.dependency-cruiser.cjs
+以下の設定は各設定ファイルを参照: @package.json, @vite.config.ts, @tsconfig.app.json, @.dependency-cruiser.cjs
 
 ### Patches
 

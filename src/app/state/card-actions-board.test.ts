@@ -30,7 +30,7 @@ import type { ShopSlot } from "../types";
 import { makeShopState, toBoardUnit } from "./test-helpers";
 
 function makeShopSlot(overrides: Partial<ReturnType<typeof makeUnit>> = {}): ShopSlot {
-  return { unit: makeUnit(overrides), frozen: false };
+  return { unit: makeUnit(overrides), frozen: false, eventSourced: false };
 }
 
 beforeEach(() => {
@@ -174,7 +174,10 @@ describe("handleCardClick – onboarding transitions", () => {
         makeShopState({
           blood: 7,
           board: [toBoardUnit(unit), null, null, null, null],
-          shopUnits: [null, { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false }],
+          shopUnits: [
+            null,
+            { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false, eventSourced: false },
+          ],
         }),
       ),
     );

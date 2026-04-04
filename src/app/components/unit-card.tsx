@@ -1,8 +1,9 @@
-import { Swords, Shield, Dna, Droplet } from "lucide-preact";
+import { Dna } from "lucide-preact";
 import type { ComponentChildren } from "preact";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick } from "../state/card-actions";
-import { UNIT_COST, EXP_PER_LEVEL, MAX_UNIT_LEVEL } from "../../shared/constants";
+import { UNIT_COST, expPerLevel, MAX_UNIT_LEVEL, CUMULATIVE_EXP } from "../../shared/constants";
+import { effectiveAtk, effectiveHp } from "../../shared/unit-stats";
 import { StatBadge } from "./stat-badge";
 import { EquipIcon } from "./equip-icon";
 import type { UnitInstance, Selection, HighlightKind } from "../types";
@@ -13,17 +14,23 @@ interface UnitCardProps {
   index: number;
   isHighlight?: HighlightKind | undefined;
   costOverride?: number | undefined;
+  isFrozen?: boolean | undefined;
   children?: ComponentChildren;
 }
 
 function getBorderClass(
   isSelected: boolean,
+  isFrozen: boolean,
   isHighlight: HighlightKind | undefined,
   cantAfford: boolean,
 ): string {
   if (isSelected) return "border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)] scale-105 z-10";
+  if (isFrozen)
+    return "border-amber-700/50 ring-1 ring-amber-700 shadow-[inset_0_0_12px_rgba(180,83,9,0.4)]";
   if (isHighlight === "swap")
     return "border-dashed border-emerald-800 shadow-[0_0_8px_rgba(16,185,129,0.12)]";
+  if (isHighlight === "passive-graft") return "border-rose-900/50 animate-graft-resonance";
+  if (isHighlight === "graft") return "border-emerald-500 animate-graft-resonance-active";
   if (isHighlight) return "border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]";
   if (cantAfford) return "border-red-900/30";
   return "border-zinc-700";
@@ -32,8 +39,8 @@ function getBorderClass(
 const DNA_COLORS: Record<number, string> = { 2: "text-emerald-700", 3: "text-purple-700" };
 
 function getCardClass(border: string, cantAfford: boolean): string {
-  const hover = cantAfford ? "" : "hover:border-zinc-500";
-  return `w-full aspect-[2/3] bg-zinc-900 border ${border} rounded relative flex flex-col cursor-pointer transition-all ${hover} select-none`;
+  const hover = cantAfford ? "" : "hover:brightness-110";
+  return `w-full aspect-[2/3] bg-zinc-900 border ${border} rounded-md relative flex flex-col cursor-pointer transition-all ${hover} select-none`;
 }
 
 function getNameClass(isChurch: boolean): string {
@@ -41,31 +48,19 @@ function getNameClass(isChurch: boolean): string {
   return `text-[8px] md:text-[10px] text-center font-bold leading-tight h-6 md:h-8 overflow-hidden mt-0.5 md:mt-1 pointer-events-none break-words line-clamp-2 ${color}`;
 }
 
-function getStatClass(isSelected: boolean): string {
-  return isSelected ? "text-emerald-400" : "text-zinc-400";
-}
-
-function ExpDots({ level, exp }: { level: number; exp: number }) {
+function ExpBar({ level, exp }: { level: number; exp: number }) {
   if (level >= MAX_UNIT_LEVEL) return null;
-  const baseExp = (level - 1) * EXP_PER_LEVEL;
-  const filled = Math.max(0, Math.min(EXP_PER_LEVEL, exp - baseExp));
+  const needed = expPerLevel(level);
+  const baseExp = CUMULATIVE_EXP[level as keyof typeof CUMULATIVE_EXP] ?? 0;
+  const filled = Math.max(0, Math.min(needed, exp - baseExp));
+  const pct = (filled / needed) * 100;
   return (
-    <span aria-label={`経験値${filled}/${EXP_PER_LEVEL}`} className="inline-flex gap-px">
-      {Array.from({ length: EXP_PER_LEVEL }, (_, i) => (
-        <span
-          key={i}
-          className={`text-[7px] leading-none ${i < filled ? "text-zinc-300" : "text-zinc-600"}`}
-        >
-          {i < filled ? "\u25CF" : "\u25CB"}
-        </span>
-      ))}
-    </span>
+    <div className="mx-1 h-1 rounded-full bg-zinc-800" aria-label={`経験値${filled}/${needed}`}>
+      {pct > 0 && (
+        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+      )}
+    </div>
   );
-}
-
-function getContentClass(cantAfford: boolean): string {
-  const dim = cantAfford ? "opacity-40 grayscale" : "";
-  return `flex flex-col flex-1 p-1 md:p-1.5 ${dim}`;
 }
 
 function EmptySlot({
@@ -83,8 +78,58 @@ function EmptySlot({
       type="button"
       aria-label="空きスロット"
       onClick={() => handleCardClick(isSlot ? "BOARD_SLOT" : type, index, null)}
-      className={`flex aspect-[2/3] w-full cursor-pointer items-center justify-center rounded border border-dashed bg-zinc-900/50 transition-colors ${isHighlight ? "border-emerald-700/50 bg-emerald-950/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)] hover:border-emerald-500" : "border-zinc-800"}`}
-    ></button>
+      className={`group flex aspect-[2/3] w-full cursor-pointer items-center justify-center rounded-md border border-dashed bg-zinc-900/50 transition-colors ${isHighlight ? "border-emerald-700/50 bg-emerald-950/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)] hover:border-emerald-500" : "border-zinc-800"}`}
+    >
+      <span className="text-[8px] tracking-widest text-zinc-700 opacity-50 transition-opacity group-hover:opacity-100">
+        空
+      </span>
+    </button>
+  );
+}
+
+function UnitCardBadges({
+  type,
+  cost,
+  tier,
+  cantAfford,
+}: {
+  type: Selection["type"] | "BOARD_SLOT";
+  cost: number;
+  tier: number;
+  cantAfford: boolean;
+}) {
+  if (type !== "SHOP_UNIT") return null;
+  return (
+    <>
+      {cost !== UNIT_COST && (
+        <div className="pointer-events-none absolute -top-1 -left-1 flex items-center gap-px rounded border border-zinc-600 bg-zinc-800 px-1 text-[8px] font-bold text-zinc-300">
+          {cost}
+        </div>
+      )}
+      <div className="pointer-events-none absolute -right-1 -bottom-2.5 rounded border border-zinc-700 bg-zinc-800 px-1 text-[7px] font-bold text-zinc-500 md:text-[8px]">
+        T{tier}
+      </div>
+      {cantAfford && (
+        <div className="pointer-events-none absolute inset-0 rounded-md bg-black/50 backdrop-grayscale" />
+      )}
+    </>
+  );
+}
+
+function UnitCardContent({ unit }: { unit: UnitInstance }) {
+  return (
+    <div className="flex flex-1 flex-col p-1 md:p-1.5">
+      <div className={getNameClass(unit.isChurch)}>{unit.name}</div>
+      <div className="pointer-events-none flex flex-1 items-center justify-center">
+        <Dna size={18} className={DNA_COLORS[unit.level] || "text-zinc-600"} />
+      </div>
+      <ExpBar level={unit.level} exp={unit.exp} />
+      <div className="pointer-events-none flex items-center justify-between rounded bg-zinc-950 px-1">
+        <StatBadge value={effectiveAtk(unit)} statType="atk" />
+        <span className="text-[8px] text-zinc-600 md:text-[9px]">Lv{unit.level}</span>
+        <StatBadge value={effectiveHp(unit)} statType="hp" />
+      </div>
+    </div>
   );
 }
 
@@ -94,6 +139,7 @@ export function UnitCard({
   index,
   isHighlight,
   costOverride,
+  isFrozen,
   children,
 }: UnitCardProps) {
   if (!unit) {
@@ -109,8 +155,7 @@ export function UnitCard({
   const isSelected = sel?.type === type && sel?.index === index;
   const cost = type === "SHOP_UNIT" ? (costOverride ?? UNIT_COST) : UNIT_COST;
   const cantAfford = type === "SHOP_UNIT" && blood.value < cost;
-  const border = getBorderClass(isSelected, isHighlight, cantAfford);
-  const statClass = getStatClass(isSelected);
+  const border = getBorderClass(isSelected, !!isFrozen, isHighlight, cantAfford);
 
   return (
     <div className="relative max-w-[72px] min-w-[50px] flex-1">
@@ -120,32 +165,13 @@ export function UnitCard({
         onClick={() => handleCardClick(isSlot ? "BOARD_SLOT" : type, index, unit)}
         className={getCardClass(border, cantAfford)}
       >
-        <div className={getContentClass(cantAfford)}>
-          <div className={getNameClass(unit.isChurch)}>{unit.name}</div>
-          <div className="pointer-events-none flex flex-1 items-center justify-center">
+        <UnitCardContent unit={unit} />
+        {unit.equip && (
+          <div className="pointer-events-none absolute -top-1 -right-1 z-10 rounded-full border border-amber-900 bg-black/80 p-0.5">
             <EquipIcon equipId={unit.equip} />
-            <Dna size={18} className={DNA_COLORS[unit.level] || "text-zinc-600"} />
-          </div>
-          <div className="pointer-events-none flex items-center justify-between rounded bg-zinc-950 px-1">
-            <StatBadge icon={Swords} value={unit.atk} className={statClass} />
-            <StatBadge icon={Shield} value={unit.hp} className={statClass} />
-          </div>
-        </div>
-        <div className="pointer-events-none absolute -top-1 -left-1 flex items-center gap-0.5 rounded border border-zinc-700 bg-zinc-800 px-1 text-[8px] text-zinc-400 md:text-[9px]">
-          {unit.level > 1 && <span>Lv{unit.level}</span>}
-          <ExpDots level={unit.level} exp={unit.exp} />
-        </div>
-        {type === "SHOP_UNIT" && cost !== UNIT_COST && (
-          <div className="pointer-events-none absolute -top-1 -right-1 flex items-center gap-px rounded border border-zinc-600 bg-zinc-800 px-1 text-[8px] font-bold text-zinc-300">
-            {cost}
-            <Droplet size={7} className="text-red-800" />
           </div>
         )}
-        {type === "SHOP_UNIT" && (
-          <div className="pointer-events-none absolute -right-1 -bottom-2.5 rounded border border-zinc-700 bg-zinc-800 px-1 text-[7px] font-bold text-zinc-500 md:text-[8px]">
-            T{unit.tier}
-          </div>
-        )}
+        <UnitCardBadges type={type} cost={cost} tier={unit.tier} cantAfford={cantAfford} />
       </button>
       {children}
     </div>

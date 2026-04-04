@@ -5,6 +5,7 @@ import { OriginScreen } from "./screens/origin-screen";
 import { ShopScreen } from "./screens/shop-screen";
 import { PreBattleScreen } from "./screens/pre-battle-screen";
 import { BattleScreen } from "./screens/battle-screen";
+import { BattleResultScreen } from "./screens/battle-result/battle-result-screen";
 import { ResultScreen } from "./screens/result-screen";
 
 export function App() {
@@ -19,6 +20,8 @@ export function App() {
       return <PreBattleScreen />;
     case "BATTLE":
       return <BattleScreen />;
+    case "BATTLE_RESULT":
+      return <BattleResultScreen />;
     case "RESULT":
       return <ResultScreen />;
     case "LORE":

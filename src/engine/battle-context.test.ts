@@ -2,6 +2,7 @@ import { getMult, createToken, pushFrame } from "./battle-context";
 import type { BattleUnit } from "./battle-context";
 import { makeContext } from "./test-helpers";
 import { MAX_OPS } from "./constants";
+import { segmentsToPlainText } from "./test-helpers";
 
 function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit {
   return {
@@ -9,11 +10,15 @@ function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit {
     name: "疫病ネズミ",
     baseAtk: 2,
     baseHp: 1,
+    buffAtk: 0,
+    buffHp: 0,
     tier: 1,
     skillText: "",
     lore: "",
     atk: 2,
     hp: 1,
+    battleBaseAtk: 2,
+    battleBaseHp: 1,
     level: 1,
     exp: 0,
     equip: null,
@@ -101,7 +106,7 @@ describe("pushFrame", () => {
   it("sets opLimitExceeded when opCount exceeds MAX_OPS", () => {
     const ctx = makeContext();
     ctx.opCount = MAX_OPS;
-    pushFrame(ctx, "info", "test", "info");
+    pushFrame(ctx, "info", ["test"], "info");
     expect(ctx.opLimitExceeded).toBe(true);
     expect(ctx.frames).toHaveLength(0);
   });
@@ -109,9 +114,9 @@ describe("pushFrame", () => {
   it("adds frame normally at opCount = MAX_OPS - 1", () => {
     const ctx = makeContext();
     ctx.opCount = MAX_OPS - 1;
-    pushFrame(ctx, "info", "boundary test", "info");
+    pushFrame(ctx, "info", ["boundary test"], "info");
     expect(ctx.opLimitExceeded).toBe(false);
     expect(ctx.frames).toHaveLength(1);
-    expect(ctx.frames[0]!.log.text).toBe("boundary test");
+    expect(segmentsToPlainText(ctx.frames[0]!.log.segments)).toBe("boundary test");
   });
 });

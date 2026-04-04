@@ -136,6 +136,10 @@ export const shopStates = sqliteTable(
     activeEvent: text("active_event", { mode: "json" }).$type<EventData | null>(),
     rngS0: integer("rng_s0").notNull(),
     rngS1: integer("rng_s1").notNull(),
+    rewardSlots: text("reward_slots", { mode: "json" })
+      .$type<(ShopSlotJson | null)[]>()
+      .notNull()
+      .default([]),
     undoSnapshot: text("undo_snapshot", { mode: "json" }).$type<ShopUndoSnapshot | null>(),
     version: integer("version").notNull().default(1),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),

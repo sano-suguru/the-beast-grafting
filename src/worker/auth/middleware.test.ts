@@ -5,23 +5,23 @@ import { createSession } from "./session";
 import { requireAuth, optionalAuth } from "./middleware";
 import { sessions } from "../../db/schema";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import type { AuthEnv } from "./types";
+import type { AuthEnv, OptionalAuthEnv } from "./types";
 import { TEST_ENV } from "./test-helpers";
+import { invariant } from "../../shared/invariant";
 
 let testDb: DrizzleD1Database;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono の型パラメータを統一するためany許容
 function createMiddlewareTestApp(
   getDb: () => DrizzleD1Database,
-  middleware: MiddlewareHandler<any>,
-  handler: (c: any) => Response,
+  middleware: MiddlewareHandler<AuthEnv> | MiddlewareHandler<OptionalAuthEnv>,
+  handler: (c: { json: (data: unknown) => Response; get: (key: string) => unknown }) => Response,
 ) {
   const app = new Hono<AuthEnv>();
   app.use("*", async (c, next) => {
     c.set("db", getDb());
     await next();
   });
-  app.use("*", middleware);
+  app.use("*", middleware as MiddlewareHandler<AuthEnv>);
   app.get("/test", (c) => handler(c));
   return app;
 }
@@ -35,8 +35,7 @@ async function insertPlayer(id = "player-1") {
 
 async function createValidSession(playerId: string) {
   const result = await createSession(testDb, playerId);
-  expect(result.isOk()).toBe(true);
-  if (!result.isOk()) throw new Error("unreachable");
+  invariant(result.isOk(), "session creation must succeed in test");
   return result.value.token;
 }
 

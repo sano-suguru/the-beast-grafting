@@ -1,16 +1,14 @@
 import { useEffect } from "preact/hooks";
-import { ChevronRight, Trash2, Droplet, Undo2, X } from "lucide-preact";
-import { UNIT_COST } from "../../shared/constants";
+import { ChevronRight, Trash2, Undo2, X } from "lucide-preact";
+import { ResourceText } from "../components/resource-text";
+import { useDelayedFlag } from "../hooks/use-delayed-flag";
 import type { OnboardingStep, UnitInstance } from "../types";
 import {
   board,
   sanity,
-  shopUnits,
-  shopItems,
   selection,
   onboardingStep,
   canUndo,
-  activeEvent,
   showHelpOverlay,
   shopLocked,
   shopActionError,
@@ -22,12 +20,11 @@ import { executeSellUnit } from "../state/shop-actions";
 import { undoLastAction } from "../state/undo-actions";
 import { checkHighlight } from "../state/card-actions";
 import { UnitCard } from "../components/unit-card";
-import { ItemCard } from "../components/item-card";
-import { FreezeButton } from "../components/freeze-button";
 import { OnboardingTooltip } from "../components/onboarding-tooltip";
 import { ShopHeader } from "./shop/shop-header";
 import { ShopInfoPanel } from "./shop/shop-info-panel";
 import { ShopFooter } from "./shop/shop-footer";
+import { ShopSection } from "./shop/shop-section";
 import { retireGame } from "../state/game-actions";
 import { playSE } from "../engine/audio";
 
@@ -38,9 +35,16 @@ export function ShopScreen() {
   const currentOnboarding = onboardingStep.value;
   const busy = shopLocked.value;
   const actionError = shopActionError.value;
+  const showBusyOverlay = useDelayedFlag(busy);
 
   return (
-    <main className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 bg-zinc-950 font-serif text-zinc-300 select-none">
+    <main
+      className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 font-serif text-zinc-300 select-none"
+      style={{
+        background:
+          "radial-gradient(ellipse at 50% 0%, rgba(39,39,42,0.4) 0%, transparent 60%), #09090b",
+      }}
+    >
       {!showHelpOverlay.value && <OnboardingOverlays step={currentOnboarding} />}
       {showHelpOverlay.value && <HelpBackdrop />}
       <ShopHeader />
@@ -56,7 +60,7 @@ export function ShopScreen() {
       </div>
 
       <ShopFooter currentOnboarding={currentOnboarding} />
-      {busy && <ShopBusyOverlay />}
+      {showBusyOverlay.value && <ShopBusyOverlay />}
       {showRetireConfirm.value && <RetireConfirmOverlay />}
       {actionError && !showRetireConfirm.value && <ShopErrorBanner />}
       {recoveryWarning.value && <RecoveryWarningBanner />}
@@ -153,7 +157,7 @@ function SellButton({ isActive }: { isActive: boolean }) {
     >
       <Trash2 size={16} className="mr-2" />
       <span className="text-[10px] font-bold tracking-widest md:text-xs">
-        選択した死体を解体する (鮮血還元)
+        <ResourceText text="選択した死体を解体する ({blood}還元)" />
       </span>
     </button>
   );
@@ -272,66 +276,5 @@ function RecoveryWarningBanner() {
         <X size={14} />
       </button>
     </div>
-  );
-}
-
-function ShopSection() {
-  const event = activeEvent.value;
-  const isEventMode = !!event;
-  const label = event ? event.name : "闇市場";
-
-  return (
-    <section aria-label={label} className="relative z-0 flex min-h-0 flex-1 flex-col pb-4">
-      {showHelpOverlay.value && (
-        <OnboardingTooltip
-          text="素体を買って解剖台に並べろ"
-          positionClass="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-        />
-      )}
-      <div className="relative z-10 mb-1 flex items-center justify-between px-1 md:mb-2">
-        <span className="flex items-center gap-1 text-xs font-bold text-zinc-400 md:text-sm">
-          {label}
-          {!isEventMode && (
-            <span className="text-[10px] font-normal text-zinc-500">
-              (素体・薬 一律 {UNIT_COST}
-              <Droplet size={10} className="inline text-red-800" />)
-            </span>
-          )}
-        </span>
-      </div>
-      <div className="relative z-0 flex flex-1 items-start gap-2 md:gap-4">
-        <ul role="list" className="flex min-w-0 flex-1 gap-1 md:gap-2">
-          {shopUnits.value.map((item, i) => (
-            <li key={`shop-u-${i}`} className="flex min-w-0 flex-1">
-              <UnitCard
-                unit={item?.unit ?? null}
-                type="SHOP_UNIT"
-                index={i}
-                costOverride={item?.costOverride}
-                isHighlight={
-                  checkHighlight("SHOP_UNIT", i, item?.unit ?? null) ||
-                  (onboardingStep.value === "buy" && !!item ? "move" : false)
-                }
-              >
-                {!!item && !isEventMode && (
-                  <FreezeButton isUnit={true} index={i} isFrozen={item.frozen} />
-                )}
-              </UnitCard>
-            </li>
-          ))}
-        </ul>
-        <div className="z-10 mx-0.5 h-24 w-px shrink-0 bg-zinc-800 md:mx-1" aria-hidden="true" />
-        <ul role="list" className="z-10 flex shrink-0 gap-1 md:gap-2">
-          {shopItems.value.map((item, i) => (
-            <li key={`shop-i-${i}`} className="relative flex shrink-0">
-              <ItemCard item={item?.item ?? null} index={i} />
-              {!!item && !isEventMode && (
-                <FreezeButton isUnit={false} index={i} isFrozen={item.frozen} iconSize={10} />
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
   );
 }

@@ -32,6 +32,14 @@ export function buyUnit(
   return shopFetch("buy", { runId, shopIndex, boardIndex });
 }
 
+export function buyReward(
+  runId: string,
+  rewardIndex: number,
+  boardIndex: number,
+): Promise<Result<ShopStateResponse, InfraError>> {
+  return shopFetch("buy-reward", { runId, rewardIndex, boardIndex });
+}
+
 export function sellUnit(
   runId: string,
   boardIndex: number,
@@ -49,11 +57,11 @@ export function equipItem(
 
 export function freezeSlot(
   runId: string,
-  isUnit: boolean,
+  slotType: "unit" | "item" | "reward",
   index: number,
   frozen: boolean,
 ): Promise<Result<ShopStateResponse, InfraError>> {
-  return shopFetch("freeze", { runId, isUnit, index, frozen });
+  return shopFetch("freeze", { runId, slotType, index, frozen });
 }
 
 export function swapBoard(

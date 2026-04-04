@@ -11,7 +11,8 @@ app.route("/api", api);
 
 export default {
   fetch: app.fetch,
-  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {
+  // eslint-disable-next-line no-unused-vars -- positional params required by CF Workers scheduled handler
+  async scheduled(_event: ScheduledEvent, env: Env, _executionCtx: ExecutionContext) {
     const db = drizzle(env.DB);
     const [sessionResult, snapshotResult] = await Promise.all([
       cleanExpiredSessions(db),

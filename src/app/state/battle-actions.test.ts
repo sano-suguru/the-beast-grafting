@@ -16,7 +16,13 @@ vi.mock("../api/run-client", () => ({
   advanceRun: vi.fn(),
 }));
 
-import { startPreBattle, startActualBattle, concludeBattle, retryBattle } from "./battle-actions";
+import {
+  startPreBattle,
+  startActualBattle,
+  concludeBattle,
+  retryBattle,
+  proceedFromBattleResult,
+} from "./battle-actions";
 import * as lore from "./lore";
 import { readyForBattle as apiReadyForBattle, setupShop as apiSetupShop } from "../api/shop-client";
 import { requestBattle } from "../api/pvp-client";
@@ -43,6 +49,7 @@ import {
   battleBusy,
   battleLoading,
   battleLoadError,
+  battleConcludeData,
   onboardingStep,
   origin,
   blood,
@@ -54,12 +61,12 @@ import {
   canUndo,
   rotRingUses,
 } from "./game-store";
-import { makeUnit } from "../../engine/test-helpers";
+import { makeUnit, makeSnapshot } from "../../engine/test-helpers";
 import { makeShopState as _makeShopState, toBoardUnit } from "./test-helpers";
 
 function makeShopState(overrides: Partial<ShopStateResponse> = {}): ShopStateResponse {
   return _makeShopState({
-    board: [toBoardUnit(makeUnit({ atk: 10, hp: 10 })), null, null, null, null],
+    board: [toBoardUnit(makeUnit({ baseAtk: 10, baseHp: 10 })), null, null, null, null],
     ...overrides,
   });
 }
@@ -69,9 +76,9 @@ function defaultBattleResponse() {
     battleId: "test-battle-id",
     frames: [
       {
-        pBoard: [makeUnit()],
+        pBoard: [makeSnapshot()],
         eBoard: [],
-        log: { id: "1", type: "result" as const, text: "勝利", icon: "trophy" as const },
+        log: { id: "1", type: "result" as const, segments: ["勝利"], icon: "trophy" as const },
         actions: {},
       },
     ],
@@ -103,7 +110,7 @@ beforeEach(() => {
   round.value = 1;
   sanity.value = 5;
   trophy.value = 0;
-  board.value = [makeUnit({ atk: 10, hp: 10 }), null, null, null, null];
+  board.value = [makeUnit({ baseAtk: 10, baseHp: 10 }), null, null, null, null];
   selection.value = null;
   currentEnemyTeam.value = null;
   battleFrames.value = [];
@@ -117,6 +124,7 @@ beforeEach(() => {
   battleBusy.value = false;
   battleLoading.value = false;
   battleLoadError.value = null;
+  battleConcludeData.value = null;
   onboardingStep.value = null;
   origin.value = null;
   blood.value = 10;
@@ -297,7 +305,7 @@ describe("concludeBattle", () => {
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(round.value).toBe(3);
-    expect(phase.value).toBe("SHOP");
+    expect(phase.value).toBe("BATTLE_RESULT");
   });
 
   it("decrements sanity on loss from server", async () => {
@@ -321,7 +329,7 @@ describe("concludeBattle", () => {
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(sanity.value).toBe(0);
-    expect(phase.value).toBe("RESULT");
+    expect(phase.value).toBe("BATTLE_RESULT");
   });
 
   it("game clear when server returns won status", async () => {
@@ -334,7 +342,7 @@ describe("concludeBattle", () => {
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(trophy.value).toBe(10);
-    expect(phase.value).toBe("RESULT");
+    expect(phase.value).toBe("BATTLE_RESULT");
   });
 
   it("draw advances round without changing sanity or trophy", async () => {
@@ -354,7 +362,7 @@ describe("concludeBattle", () => {
     expect(sanity.value).toBe(5);
     expect(trophy.value).toBe(3);
     expect(round.value).toBe(3);
-    expect(phase.value).toBe("SHOP");
+    expect(phase.value).toBe("BATTLE_RESULT");
   });
 
   it("calls markMastered for level 3 non-church units on game clear", async () => {
@@ -398,7 +406,7 @@ describe("concludeBattle", () => {
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(round.value).toBe(3);
-    expect(phase.value).toBe("SHOP");
+    expect(phase.value).toBe("BATTLE_RESULT");
   });
 
   it("advances locally when no battleId", async () => {
@@ -411,6 +419,38 @@ describe("concludeBattle", () => {
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(trophy.value).toBe(4);
     expect(round.value).toBe(3);
+    expect(phase.value).toBe("BATTLE_RESULT");
+  });
+});
+
+describe("proceedFromBattleResult", () => {
+  it("transitions to RESULT and clears battleConcludeData when gameEnded", () => {
+    battleConcludeData.value = { sanityDelta: -1, trophyDelta: 0, gameEnded: true };
+    proceedFromBattleResult();
+    expect(phase.value).toBe("RESULT");
+    expect(battleConcludeData.value).toBeNull();
+  });
+
+  it("transitions to SHOP and calls setupNight when game not ended", async () => {
+    battleConcludeData.value = { sanityDelta: 0, trophyDelta: 1, gameEnded: false };
+    proceedFromBattleResult();
     expect(phase.value).toBe("SHOP");
+    expect(battleConcludeData.value).toBeNull();
+    await vi.waitFor(() => expect(apiSetupShop).toHaveBeenCalledWith("test-run-id", false));
+  });
+
+  it("does nothing when battleConcludeData is null", () => {
+    phase.value = "BATTLE_RESULT";
+    battleConcludeData.value = null;
+    proceedFromBattleResult();
+    expect(phase.value).toBe("BATTLE_RESULT");
+  });
+
+  it("does not call setupNight when no runId", () => {
+    currentRunId.value = null;
+    battleConcludeData.value = { sanityDelta: 0, trophyDelta: 1, gameEnded: false };
+    proceedFromBattleResult();
+    expect(phase.value).toBe("SHOP");
+    expect(apiSetupShop).not.toHaveBeenCalled();
   });
 });

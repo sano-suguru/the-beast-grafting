@@ -14,26 +14,26 @@ beforeEach(() => {
 
 describe("FreezeButton", () => {
   it("shows frozen state when isFrozen is true", () => {
-    render(<FreezeButton isUnit index={0} isFrozen />);
+    render(<FreezeButton slotType="unit" index={0} isFrozen />);
     const toggle = screen.getByRole("switch", { name: "防腐処理" });
     expect(toggle).toHaveAttribute("aria-checked", "true");
   });
 
   it("shows unfrozen state when isFrozen is false", () => {
-    render(<FreezeButton isUnit index={0} isFrozen={false} />);
+    render(<FreezeButton slotType="unit" index={0} isFrozen={false} />);
     const toggle = screen.getByRole("switch", { name: "防腐処理" });
     expect(toggle).toHaveAttribute("aria-checked", "false");
   });
 
   it("calls handleFreezeClick with correct args on click", () => {
-    render(<FreezeButton isUnit={false} index={2} />);
+    render(<FreezeButton slotType="item" index={2} />);
     fireEvent.click(screen.getByRole("switch", { name: "防腐処理" }));
-    expect(handleFreezeClick).toHaveBeenCalledWith(false, 2, true);
+    expect(handleFreezeClick).toHaveBeenCalledWith("item", 2, true);
   });
 
   it("sends frozen=false when unfreezing", () => {
-    render(<FreezeButton isUnit index={1} isFrozen />);
+    render(<FreezeButton slotType="unit" index={1} isFrozen />);
     fireEvent.click(screen.getByRole("switch", { name: "防腐処理" }));
-    expect(handleFreezeClick).toHaveBeenCalledWith(true, 1, false);
+    expect(handleFreezeClick).toHaveBeenCalledWith("unit", 1, false);
   });
 });

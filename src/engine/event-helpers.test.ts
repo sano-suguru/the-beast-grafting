@@ -7,6 +7,7 @@ import {
 } from "./event-helpers";
 import { EVENTS } from "../shared/data/events";
 import { ROTTING_CARGO_CEILING_BONUS } from "./constants";
+import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { createSeededRng } from "./rng";
 
 describe("EVENT_SCHEDULE", () => {
@@ -69,6 +70,7 @@ describe("buildEventShopUnits", () => {
     result.forEach((slot) => {
       expect(slot!.unit.equip).toBe("infection");
       expect(slot!.costOverride).toBe(2);
+      expect(slot!.eventSourced).toBe(true);
     });
   });
 
@@ -89,16 +91,16 @@ describe("buildEventShopUnits", () => {
     const result = buildEventShopUnits(event, 4, createSeededRng(42));
     const slot = result[0];
     expect(slot).not.toBeNull();
-    expect(slot!.unit.atk).toBeGreaterThanOrEqual(2);
-    expect(slot!.unit.hp).toBeGreaterThanOrEqual(3);
+    expect(effectiveAtk(slot!.unit)).toBeGreaterThanOrEqual(2);
+    expect(effectiveHp(slot!.unit)).toBeGreaterThanOrEqual(3);
   });
 
   it("applies ceiling bonus at round 12 when tier is auto-resolved", () => {
     const result = buildEventShopUnits(EVENTS.rotting_cargo, 12, createSeededRng(42));
     result.forEach((slot) => {
       expect(slot).not.toBeNull();
-      expect(slot!.unit.atk).toBeGreaterThanOrEqual(ROTTING_CARGO_CEILING_BONUS.atk);
-      expect(slot!.unit.hp).toBeGreaterThanOrEqual(ROTTING_CARGO_CEILING_BONUS.hp);
+      expect(effectiveAtk(slot!.unit)).toBeGreaterThanOrEqual(ROTTING_CARGO_CEILING_BONUS.atk);
+      expect(effectiveHp(slot!.unit)).toBeGreaterThanOrEqual(ROTTING_CARGO_CEILING_BONUS.hp);
     });
   });
 
@@ -118,8 +120,8 @@ describe("buildEventShopUnits", () => {
     const result = buildEventShopUnits(event, 4, createSeededRng(42));
     const slot = result[0]!;
     expect(slot.unit.id).toBe("rat");
-    expect(slot.unit.atk).toBe(2);
-    expect(slot.unit.hp).toBe(2);
+    expect(effectiveAtk(slot.unit)).toBe(2);
+    expect(effectiveHp(slot.unit)).toBe(2);
   });
 
   it("does not apply ceiling bonus when tier is explicitly set", () => {
@@ -139,8 +141,8 @@ describe("buildEventShopUnits", () => {
     const result = buildEventShopUnits(event, 12, createSeededRng(42));
     const slot = result[0]!;
     expect(slot.unit.id).toBe("rat");
-    expect(slot.unit.atk).toBe(2);
-    expect(slot.unit.hp).toBe(2);
+    expect(effectiveAtk(slot.unit)).toBe(2);
+    expect(effectiveHp(slot.unit)).toBe(2);
   });
 });
 

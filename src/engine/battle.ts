@@ -1,7 +1,8 @@
 import type { UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../shared/types";
+import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { generateUid } from "./helpers";
 import type { BattleContext, BattleUnit } from "./battle-context";
-import { pushFrame } from "./battle-context";
+import { pushFrame, seg } from "./battle-context";
 import type { Rng } from "./rng";
 import { createSeededRng } from "./rng";
 import { resolveDeaths } from "./battle-deaths";
@@ -21,7 +22,20 @@ import {
 } from "./constants";
 
 function initBattleUnit(u: UnitInstance): BattleUnit {
-  const bu: BattleUnit = { ...u, uid: generateUid(), skillUses: 0, equipUses: 0 };
+  const atk = effectiveAtk(u);
+  const hp = effectiveHp(u);
+  const bu: BattleUnit = {
+    ...u,
+    atk,
+    hp,
+    battleBaseAtk: atk,
+    battleBaseHp: hp,
+    buffAtk: 0,
+    buffHp: 0,
+    uid: generateUid(),
+    skillUses: 0,
+    equipUses: 0,
+  };
   if (bu.id === "cholera") bu.skillUses = CHOLERA_INITIAL_USES;
   if (bu.id === "eye") bu.skillUses = EYE_INITIAL_USES;
   if (bu.equip === "numbness") bu.equipUses = NUMBNESS_INITIAL_USES;
@@ -62,29 +76,34 @@ function runCombatRound(ctx: BattleContext) {
   const e = ctx.eBoard[0];
   if (!p || !e) return;
 
-  pushFrame(
-    ctx,
-    "clash",
-    `[${p.name}(${p.atk}/${p.hp})] と 敵の[${e.name}(${e.atk}/${e.hp})] が激突！`,
-    "clash",
-    {
-      [p.uid]: { type: "clash" },
-      [e.uid]: { type: "clash" },
-    },
-  );
+  pushFrame(ctx, "clash", [seg.u(p.name), " と 敵の", seg.u(e.name), " が喰らい合う！"], "clash", {
+    [p.uid]: { type: "clash" },
+    [e.uid]: { type: "clash" },
+  });
 
   const { pDmg, eDmg, pAction, eAction } = applyEquipmentEffects(p, e, ctx);
+  const pHpBefore = p.hp;
+  const eHpBefore = e.hp;
   p.hp -= pDmg;
   e.hp -= eDmg;
 
   pushFrame(
     ctx,
     "damage",
-    `互いの肉が裂ける！ ([${p.name}]に ${pDmg} ダメージ / 敵の[${e.name}]に ${eDmg} ダメージ)`,
+    [
+      "互いの肉が裂ける！ ",
+      seg.u(p.name),
+      " ",
+      seg.hp(`${pHpBefore}→${Math.max(0, p.hp)}`),
+      " / 敵の",
+      seg.u(e.name),
+      " ",
+      seg.hp(`${eHpBefore}→${Math.max(0, e.hp)}`),
+    ],
     "damage",
     {
-      [p.uid]: { type: pAction, value: `-${pDmg}` },
-      [e.uid]: { type: eAction, value: `-${eDmg}` },
+      [p.uid]: { type: pAction, value: `-${pDmg}`, source: e.uid },
+      [e.uid]: { type: eAction, value: `-${eDmg}`, source: p.uid },
     },
   );
 
@@ -113,15 +132,15 @@ function determineResult(ctx: BattleContext, timedOut: boolean): BattleResult {
 
 function pushResultFrame(ctx: BattleContext, result: BattleResult, enemyTeam: EnemyTeam) {
   if (result === "WIN") {
-    pushFrame(ctx, "result", "勝利。死体の山から、あなたの傑作が嗤っている。", "trophy");
+    pushFrame(ctx, "result", ["勝利。死体の山から、あなたの傑作が嗤っている。"], "trophy");
   } else if (result === "LOSE") {
     const msg =
       enemyTeam.teamType === "教団"
         ? "敗北。あなたの傑作は異端審問官の炎に巻かれ、灰も残さず焼き尽くされた。"
         : "敗北。あなたの傑作は無残に解体され、同業者のキメラに貪り喰われた。";
-    pushFrame(ctx, "result", msg, "skull");
+    pushFrame(ctx, "result", [msg], "skull");
   } else {
-    pushFrame(ctx, "result", "引き分け。路地裏には静寂と腐臭だけが残った。", "info");
+    pushFrame(ctx, "result", ["引き分け。路地裏には静寂と腐臭だけが残った。"], "info");
   }
 }
 
@@ -134,7 +153,7 @@ export function runBattle(
   pushFrame(
     ctx,
     "info",
-    `【第${round}夜】 狂宴が幕を開けた。敵は ${enemyTeam.teamName} だ。`,
+    [seg.e(`第${round}夜`), ` 狂宴が幕を開けた。敵は ${enemyTeam.teamName} だ。`],
     "info",
   );
 
@@ -154,7 +173,7 @@ export function runBattle(
 
   const timedOut = loopSafety >= COMBAT_ROUND_LIMIT || ctx.opLimitExceeded;
   if (timedOut) {
-    pushFrame(ctx, "info", "戦闘が長引きすぎた...引き分けとなる。", "info");
+    pushFrame(ctx, "info", ["戦闘が長引きすぎた...引き分けとなる。"], "info");
   }
 
   const result = determineResult(ctx, timedOut);

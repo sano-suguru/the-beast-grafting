@@ -1,5 +1,6 @@
 import { eq, lt, desc, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { setCookie } from "hono/cookie";
 import { safeAsync, dbErr } from "../../shared/errors";
 import type { Result, InfraError } from "../../shared/errors";
 import { sessions } from "../../db/schema";
@@ -68,4 +69,20 @@ export function cleanExpiredSessions(db: DrizzleD1Database): Promise<Result<void
   return safeAsync(async () => {
     await db.delete(sessions).where(lt(sessions.expiresAt, new Date()));
   }, dbErr);
+}
+
+export function setSessionCookie(
+  c: Parameters<typeof setCookie>[0],
+  token: string,
+  expiresAt: Date,
+  env: Env,
+): void {
+  const isSecure = env.ALLOWED_ORIGIN.startsWith("https://");
+  setCookie(c, "session", token, {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: "Lax",
+    path: "/api",
+    expires: expiresAt,
+  });
 }

@@ -2,6 +2,10 @@ import { resolveDeaths } from "./battle-deaths";
 import { createSeededRng } from "./rng";
 import { EVANGELIST_PLAGUE_DAMAGE } from "./constants";
 import { makeBattleUnit, makeContext } from "./test-helpers";
+import type { BattleFrame } from "../shared/types";
+import { segmentsToPlainText } from "./test-helpers";
+
+const logText = (f: BattleFrame) => segmentsToPlainText(f.log.segments);
 
 describe("resolveDeaths – basic removal", () => {
   it("removes dead units (hp <= 0) from boards", () => {
@@ -141,10 +145,10 @@ describe("resolveDeaths – token buff synergies", () => {
     const altar = makeBattleUnit({ id: "altar", name: "祭壇", atk: 3, hp: 4 });
     const ctx = makeContext([hound, altar], []);
     resolveDeaths(ctx);
-    const altarLog = ctx.frames.find((f) => f.log.text.includes("邪神の祝福"));
+    const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
-    expect(altarLog!.log.text).toContain("+3/+1");
-    expect(altarLog!.log.text).toContain("→ (4/2)");
+    expect(logText(altarLog!)).toContain("+3/+1");
+    expect(logText(altarLog!)).toContain("→ 4/2");
   });
 
   it("altar buff doubles with brains behind it", () => {
@@ -165,10 +169,10 @@ describe("resolveDeaths – token buff synergies", () => {
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const ctx = makeContext([hound, altar, brains], []);
     resolveDeaths(ctx);
-    const altarLog = ctx.frames.find((f) => f.log.text.includes("邪神の祝福"));
+    const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
-    expect(altarLog!.log.text).toContain("+6/+2");
-    expect(altarLog!.log.text).toContain("→ (7/3)");
+    expect(logText(altarLog!)).toContain("+6/+2");
+    expect(logText(altarLog!)).toContain("→ 7/3");
   });
 });
 
@@ -282,7 +286,7 @@ describe("resolveDeaths – fair tiebreaker", () => {
     // highAtk (ATK=10) should be resolved first; both dead so both removed
     // but the death frame order should show high first
     const deathFrames = ctx.frames.filter((f) => f.log.type === "death");
-    expect(deathFrames[0]!.log.text).toContain(highAtk.name);
+    expect(logText(deathFrames[0]!)).toContain(highAtk.name);
   });
 
   it("selects uniformly among tied dead units", () => {
@@ -296,9 +300,10 @@ describe("resolveDeaths – fair tiebreaker", () => {
       const ctx = makeContext([a, b, c], [], null, rng);
       resolveDeaths(ctx);
       const firstDeath = ctx.frames.find((f) => f.log.type === "death");
-      if (firstDeath?.log.text.includes("A")) counts[0] = counts[0]! + 1;
-      else if (firstDeath?.log.text.includes("B")) counts[1] = counts[1]! + 1;
-      else if (firstDeath?.log.text.includes("C")) counts[2] = counts[2]! + 1;
+      const txt = firstDeath ? logText(firstDeath) : "";
+      if (txt.includes("A")) counts[0] = counts[0]! + 1;
+      else if (txt.includes("B")) counts[1] = counts[1]! + 1;
+      else if (txt.includes("C")) counts[2] = counts[2]! + 1;
     }
     // Each should be picked ~100 times; allow generous variance (>50)
     expect(counts[0]).toBeGreaterThan(50);
@@ -349,7 +354,7 @@ describe("resolveDeaths – evangelist plague", () => {
     const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
     const ctx = makeContext([dying, evangelist], []);
     resolveDeaths(ctx);
-    const plagueFrames = ctx.frames.filter((f) => f.log.text.includes("祈りを捧げる"));
+    const plagueFrames = ctx.frames.filter((f) => logText(f).includes("祈りを捧げる"));
     expect(plagueFrames).toHaveLength(0);
   });
 
@@ -373,7 +378,7 @@ describe("resolveDeaths – evangelist plague", () => {
     const enemy = makeBattleUnit({ hp: 20 });
     const ctx = makeContext([dead1, dead2, evangelist], [enemy], null, { next: () => 0 });
     resolveDeaths(ctx);
-    const plagueFrames = ctx.frames.filter((f) => f.log.text.includes("祈りを捧げる"));
+    const plagueFrames = ctx.frames.filter((f) => logText(f).includes("祈りを捧げる"));
     expect(plagueFrames).toHaveLength(2);
     expect(enemy.hp).toBe(20 - EVANGELIST_PLAGUE_DAMAGE * 2);
   });

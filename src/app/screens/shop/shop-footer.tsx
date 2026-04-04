@@ -1,4 +1,5 @@
 import { RefreshCw, Play } from "lucide-preact";
+import { useDelayedFlag } from "../../hooks/use-delayed-flag";
 import type { OnboardingStep } from "../../types";
 import {
   blood,
@@ -52,46 +53,58 @@ function getBattleButtonClass(hasUnit: boolean, step: OnboardingStep): string {
   return `flex items-center justify-center gap-1 border rounded py-2 text-[10px] md:text-xs font-bold tracking-widest transition-all cursor-pointer ${base} ${onboarding}`;
 }
 
-export function ShopFooter({ currentOnboarding }: { currentOnboarding: OnboardingStep }) {
-  const busy = shopLocked.value;
+function RollSection({
+  currentOnboarding,
+  busy,
+}: {
+  currentOnboarding: OnboardingStep;
+  busy: boolean;
+}) {
   const currentFreeRoll = freeRoll.value;
   const currentBlood = blood.value;
-  const currentBoard = board.value;
-  const hasUnit = currentBoard.some((u) => u);
   const rollDisabled = isRollDisabled(currentFreeRoll, currentBlood, currentOnboarding) || busy;
+  return (
+    <div className="relative flex gap-1 md:gap-2">
+      {showHelpOverlay.value && (
+        <OnboardingTooltip
+          text="品揃えを入れ替える"
+          positionClass="bottom-full left-1/2 -translate-x-1/2 mb-2"
+        />
+      )}
+      <button
+        onClick={rollShop}
+        disabled={rollDisabled}
+        className={getRollButtonClass(
+          currentFreeRoll,
+          currentBlood,
+          currentOnboarding,
+          !!activeEvent.value?.lockRoll,
+        )}
+      >
+        <RefreshCw size={14} /> 墓暴き ({currentFreeRoll ? "無料" : "1"})
+      </button>
+      {origin.value === "cultist" && !cultistUsed.value && sanity.value > 1 && (
+        <button
+          onClick={useCultistAbility}
+          disabled={busy}
+          className="cursor-pointer rounded border border-red-900 bg-red-950/30 px-2 text-[10px] text-red-600 hover:bg-red-900/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          血の代償
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function ShopFooter({ currentOnboarding }: { currentOnboarding: OnboardingStep }) {
+  const busy = shopLocked.value;
+  const showBusyText = useDelayedFlag(busy);
+  const hasUnit = board.value.some((u) => u);
   const battleDisabled = isBattleDisabled(hasUnit, currentOnboarding) || busy;
 
   return (
     <footer className="relative z-20 grid shrink-0 grid-cols-2 gap-2 border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
-      <div className="relative flex gap-1 md:gap-2">
-        {showHelpOverlay.value && (
-          <OnboardingTooltip
-            text="品揃えを入れ替える"
-            positionClass="bottom-full left-1/2 -translate-x-1/2 mb-2"
-          />
-        )}
-        <button
-          onClick={rollShop}
-          disabled={rollDisabled}
-          className={getRollButtonClass(
-            currentFreeRoll,
-            currentBlood,
-            currentOnboarding,
-            !!activeEvent.value?.lockRoll,
-          )}
-        >
-          <RefreshCw size={14} /> 墓暴き ({currentFreeRoll ? "無料" : "1"})
-        </button>
-        {origin.value === "cultist" && !cultistUsed.value && sanity.value > 1 && (
-          <button
-            onClick={useCultistAbility}
-            disabled={busy}
-            className="cursor-pointer rounded border border-red-900 bg-red-950/30 px-2 text-[10px] text-red-600 hover:bg-red-900/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            血の代償
-          </button>
-        )}
-      </div>
+      <RollSection currentOnboarding={currentOnboarding} busy={busy} />
       <div className="relative flex">
         {showHelpOverlay.value && (
           <OnboardingTooltip
@@ -104,7 +117,7 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
           disabled={battleDisabled}
           className={`flex-1 ${getBattleButtonClass(hasUnit, currentOnboarding)}`}
         >
-          {busy ? (
+          {showBusyText.value ? (
             <span className="animate-pulse">……準備中……</span>
           ) : (
             <>

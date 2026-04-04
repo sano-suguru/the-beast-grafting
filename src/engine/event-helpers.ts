@@ -21,30 +21,42 @@ export function selectEvent(rng: Rng): EventData {
   return EVENTS[pickRandom(EVENT_IDS, rng)];
 }
 
+function resolveUnitId(
+  offer: EventData["unitOffers"][number],
+  round: number,
+  rng: Rng,
+): Parameters<typeof createUnit>[0] {
+  if (offer.unitId !== "random") return offer.unitId;
+  const autoTier = offer.tier == null;
+  const tier = autoTier ? getTierAboveCurrent(round) : offer.tier!;
+  return pickRandom([...getUnitsByTier(tier)], rng);
+}
+
+function boostUnit(
+  unit: ReturnType<typeof createUnit>,
+  offer: EventData["unitOffers"][number],
+  atCeiling: boolean,
+) {
+  const autoTier = offer.tier == null;
+  const ceilingBonus = atCeiling && autoTier ? ROTTING_CARGO_CEILING_BONUS : null;
+  return {
+    ...unit,
+    equip: offer.equipOverride ?? unit.equip,
+    buffAtk: unit.buffAtk + offer.atkBonus + (ceilingBonus?.atk ?? 0),
+    buffHp: unit.buffHp + offer.hpBonus + (ceilingBonus?.hp ?? 0),
+  };
+}
+
 export function buildEventShopUnits(event: EventData, round: number, rng: Rng): ShopSlot[] {
   const atCeiling = getCurrentMaxTier(round) >= 6;
   return event.unitOffers.map((offer) => {
-    const autoTier = offer.tier == null;
-    let unitId: Parameters<typeof createUnit>[0];
-    if (offer.unitId === "random") {
-      const tier = autoTier ? getTierAboveCurrent(round) : offer.tier!;
-      const candidates = getUnitsByTier(tier);
-      unitId = pickRandom([...candidates], rng);
-    } else {
-      unitId = offer.unitId;
-    }
-    const unit = createUnit(unitId);
-    const ceilingBonus = atCeiling && autoTier ? ROTTING_CARGO_CEILING_BONUS : null;
-    const boostedUnit = {
-      ...unit,
-      equip: offer.equipOverride ?? unit.equip,
-      atk: unit.atk + offer.atkBonus + (ceilingBonus?.atk ?? 0),
-      hp: unit.hp + offer.hpBonus + (ceilingBonus?.hp ?? 0),
-    };
+    const unitId = resolveUnitId(offer, round, rng);
+    const unit = boostUnit(createUnit(unitId), offer, atCeiling);
     return {
-      unit: boostedUnit,
+      unit,
       frozen: false,
       ...(offer.cost !== UNIT_COST ? { costOverride: offer.cost } : {}),
+      eventSourced: true,
     };
   });
 }

@@ -64,12 +64,12 @@ export interface UnitInstance {
   name: string;
   baseAtk: number;
   baseHp: number;
+  buffAtk: number;
+  buffHp: number;
   tier: number;
   skillText: string;
   lore: string;
   secretLore?: string;
-  atk: number;
-  hp: number;
   level: number;
   exp: number;
   equip: EquipType | null;
@@ -93,6 +93,7 @@ export interface OriginData {
   name: string;
   desc: string;
   lore: string;
+  icon: string;
 }
 
 export type EventId = "vial" | "surplus" | "rotting_cargo" | "quiet_night" | "patrol";
@@ -122,13 +123,13 @@ export interface EventData {
   shopSizeModifier: number;
   freeRoll: boolean;
   lockRoll: boolean;
-  replacesShopUnits: boolean;
 }
 
 export interface ShopSlot {
   unit: UnitInstance;
   frozen: boolean;
   costOverride?: number;
+  eventSourced: boolean;
 }
 
 export interface ShopItemSlot {
@@ -169,18 +170,34 @@ export type IconType =
 export interface BattleAction {
   type: "clash" | "damage" | "buff" | "heal" | "skill" | "defend" | "summon" | "death";
   value?: string;
+  /** ダメージを与えたユニットのuid */
+  source?: string;
 }
+
+export type LogSegmentKind = "unit" | "effect" | "stat" | "hp";
+export type LogSegment = string | { kind: LogSegmentKind; text: string };
 
 export interface BattleLogEntry {
   id: string;
   type: LogType;
-  text: string;
+  segments: LogSegment[];
   icon: IconType;
 }
 
+export interface BattleUnitSnapshot extends UnitInstance {
+  /** 戦闘中の現在攻撃力（base + buff + 戦闘中バフ） */
+  atk: number;
+  /** 戦闘中の現在HP（base + buff + 戦闘中バフ - 被ダメージ） */
+  hp: number;
+  /** 戦闘開始時の攻撃力（戦闘中バフ適用前） */
+  battleBaseAtk: number;
+  /** 戦闘開始時のHP（戦闘中バフ適用前） */
+  battleBaseHp: number;
+}
+
 export interface BattleFrame {
-  pBoard: UnitInstance[];
-  eBoard: UnitInstance[];
+  pBoard: BattleUnitSnapshot[];
+  eBoard: BattleUnitSnapshot[];
   log: BattleLogEntry;
   actions: Record<string, BattleAction>;
   /** フレーム再生遅延 (ms)。未指定なら通常速度 */

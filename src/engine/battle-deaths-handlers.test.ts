@@ -3,6 +3,7 @@ import type { DeathHandlerUnitId } from "./battle-deaths-handlers";
 import { makeBattleUnit, makeContext } from "./test-helpers";
 import type { BattleUnit } from "./battle-context";
 import { invariant } from "../shared/invariant";
+import { segmentsToPlainText } from "./test-helpers";
 
 function callHandler(
   id: DeathHandlerUnitId,
@@ -385,6 +386,6 @@ describe("enemy-side prefix", () => {
     const ctx = makeContext([], [ally], null, { next: () => 0 });
     const dead = makeBattleUnit({ id: "rat", name: "ネズミ" });
     callHandler("rat", dead, ctx.eBoard, 0, false, ctx);
-    expect(ctx.frames[0]!.log.text).toContain("敵の");
+    expect(segmentsToPlainText(ctx.frames[0]!.log.segments)).toContain("敵の");
   });
 });

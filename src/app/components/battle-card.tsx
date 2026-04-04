@@ -1,10 +1,10 @@
 import { Skull, Swords, Shield } from "lucide-preact";
 import { StatBadge } from "./stat-badge";
 import { EquipIcon } from "./equip-icon";
-import type { UnitInstance, BattleAction } from "../types";
+import type { BattleUnitSnapshot, BattleAction } from "../types";
 
 interface BattleCardProps {
-  unit: UnitInstance | null;
+  unit: BattleUnitSnapshot | null;
   side: "p" | "e";
   actionObj?: BattleAction | undefined;
   fastForward?: boolean | undefined;
@@ -93,6 +93,16 @@ function FloatingText({
   );
 }
 
+const EXTRA_ANIM: Record<string, string> = {
+  death: "animate-death",
+  summon: "animate-summon",
+  skill: "animate-skill",
+};
+
+function getExtraAnim(actionType: string | undefined): string {
+  return (actionType && EXTRA_ANIM[actionType]) || "";
+}
+
 function getNameColor(side: string): string {
   return side === "p" ? "text-zinc-300" : "text-red-300/80";
 }
@@ -101,47 +111,68 @@ function getSkullColor(side: string): string {
   return side === "p" ? "text-zinc-600" : "text-red-900/60";
 }
 
-export function BattleCard({
+function BattleCardStats({
   unit,
   side,
-  actionObj,
-  fastForward,
-  frameIdx,
   atkBaseDiff,
   hpBaseDiff,
   atkDelta,
   hpDelta,
-}: BattleCardProps) {
-  if (!unit) return null;
+  frameIdx,
+}: {
+  unit: BattleUnitSnapshot;
+  side: "p" | "e";
+  atkBaseDiff?: number | undefined;
+  hpBaseDiff?: number | undefined;
+  atkDelta?: number | undefined;
+  hpDelta?: number | undefined;
+  frameIdx?: number | undefined;
+}) {
+  const muted = side === "e";
+  return (
+    <div className="relative z-10 flex items-center justify-between rounded bg-zinc-950 px-1">
+      <StatBadge
+        icon={Swords}
+        value={unit.atk}
+        statType="atk"
+        muted={muted}
+        baseDiff={atkBaseDiff}
+        frameDelta={atkDelta}
+        frameIdx={frameIdx}
+      />
+      <StatBadge
+        icon={Shield}
+        value={unit.hp}
+        statType="hp"
+        muted={muted}
+        baseDiff={hpBaseDiff}
+        frameDelta={hpDelta}
+        frameIdx={frameIdx}
+      />
+    </div>
+  );
+}
+
+function BattleCardBody({
+  unit,
+  side,
+  actionObj,
+  frameIdx,
+}: {
+  unit: BattleUnitSnapshot;
+  side: "p" | "e";
+  actionObj?: BattleAction | undefined;
+  frameIdx?: number | undefined;
+}) {
   const actionType = actionObj?.type;
-  const { transform, anim } = getStyles(actionType, side);
   const nameColor = unit.isChurch ? "text-amber-200" : getNameColor(side);
   const skullColor = unit.isChurch ? "text-amber-700/50" : getSkullColor(side);
-  const statColor = side === "p" ? "text-zinc-400" : "text-red-500/80";
-
-  const extraAnim =
-    actionType === "death"
-      ? "animate-death"
-      : actionType === "summon"
-        ? "animate-summon"
-        : actionType === "skill"
-          ? "animate-skill"
-          : "";
-
   return (
-    <article
-      style={{
-        transitionDuration: fastForward ? "150ms" : "300ms",
-        animationDuration: fastForward ? "0.12s" : undefined,
-      }}
-      data-uid={unit.uid}
-      aria-label={unit.name}
-      className={`relative flex aspect-[2/3] max-w-[72px] min-w-[50px] flex-1 flex-col rounded p-1 transition-all ease-out ${anim} ${transform} ${extraAnim}`}
-    >
+    <>
       {actionType === "damage" && (
         <div
           key={`flash-${frameIdx}`}
-          className="animate-hit-flash pointer-events-none absolute inset-0 rounded bg-white"
+          className="animate-hit-flash pointer-events-none absolute inset-0 rounded-md bg-white"
         />
       )}
       {actionObj?.value && (
@@ -153,27 +184,53 @@ export function BattleCard({
         {unit.name}
       </div>
       <div className="flex flex-1 items-center justify-center">
-        <EquipIcon equipId={unit.equip} />
+        {unit.equip && (
+          <div className="absolute top-1 left-1">
+            <EquipIcon equipId={unit.equip} />
+          </div>
+        )}
         <Skull size={18} className={skullColor} />
       </div>
-      <div className="relative z-10 flex items-center justify-between rounded bg-zinc-950 px-1">
-        <StatBadge
-          icon={Swords}
-          value={unit.atk}
-          className={statColor}
-          baseDiff={atkBaseDiff}
-          frameDelta={atkDelta}
-          frameIdx={frameIdx}
-        />
-        <StatBadge
-          icon={Shield}
-          value={unit.hp}
-          className={statColor}
-          baseDiff={hpBaseDiff}
-          frameDelta={hpDelta}
-          frameIdx={frameIdx}
-        />
-      </div>
+    </>
+  );
+}
+
+export function BattleCard({
+  unit,
+  side,
+  actionObj,
+  fastForward: ff,
+  frameIdx,
+  atkBaseDiff,
+  hpBaseDiff,
+  atkDelta,
+  hpDelta,
+}: BattleCardProps) {
+  if (!unit) return null;
+  const actionType = actionObj?.type;
+  const { transform, anim } = getStyles(actionType, side);
+  const extraAnim = getExtraAnim(actionType);
+
+  return (
+    <article
+      style={{
+        transitionDuration: ff ? "150ms" : "300ms",
+        animationDuration: ff ? "0.12s" : undefined,
+      }}
+      data-uid={unit.uid}
+      aria-label={unit.name}
+      className={`relative flex aspect-[2/3] max-w-[72px] min-w-[50px] flex-1 flex-col rounded-md p-1 transition-all ease-out ${anim} ${transform} ${extraAnim}`}
+    >
+      <BattleCardBody unit={unit} side={side} actionObj={actionObj} frameIdx={frameIdx} />
+      <BattleCardStats
+        unit={unit}
+        side={side}
+        atkBaseDiff={atkBaseDiff}
+        hpBaseDiff={hpBaseDiff}
+        atkDelta={atkDelta}
+        hpDelta={hpDelta}
+        frameIdx={frameIdx}
+      />
     </article>
   );
 }

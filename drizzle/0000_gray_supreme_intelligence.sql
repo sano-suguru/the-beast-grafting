@@ -94,6 +94,7 @@ CREATE TABLE `shop_states` (
 	`active_event` text,
 	`rng_s0` integer NOT NULL,
 	`rng_s1` integer NOT NULL,
+	`reward_slots` text DEFAULT '[]' NOT NULL,
 	`undo_snapshot` text,
 	`version` integer DEFAULT 1 NOT NULL,
 	`created_at` integer NOT NULL,

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "preact/hooks";
 import type { BattleFrame } from "../../types";
 import { LogIcon } from "../../components/log-icon";
+import { LogSegments } from "../../components/log-rich-text";
 
 interface BattleLogProps {
   frames: BattleFrame[];
@@ -38,10 +39,13 @@ export function BattleLog({ frames, frameIdx }: BattleLogProps) {
       className="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto scroll-smooth bg-[#0a0a0a] p-3 pb-8 font-mono text-[10px] leading-relaxed md:p-4 md:text-[11px]"
     >
       {frames.slice(0, frameIdx + 1).map((frame) => (
-        <div key={frame.log.id} className="animate-fade-in mb-2 flex w-full gap-2 md:mb-3">
+        <div
+          key={frame.log.id}
+          className="animate-fade-in mb-2 flex w-full gap-2 border-l-2 border-zinc-800 pl-2 md:mb-3"
+        >
           <LogIcon entry={frame.log} />
           <div className={`min-w-0 flex-1 break-words ${getLogTextClass(frame.log.type)}`}>
-            {frame.log.text}
+            <LogSegments segments={frame.log.segments} />
           </div>
         </div>
       ))}

@@ -139,3 +139,59 @@
 .animate-tooltip {
   animation: tooltipFlicker 2s ease-in-out infinite;
 }
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+.animate-glow-pulse {
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes graftResonance {
+  0%,
+  100% {
+    box-shadow: 0 0 6px rgba(190, 70, 70, 0.1);
+    border-color: rgba(150, 30, 30, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(190, 70, 70, 0.5);
+    border-color: rgba(220, 60, 60, 0.7);
+  }
+}
+.animate-graft-resonance {
+  animation: graftResonance 2.5s ease-in-out infinite;
+}
+
+@keyframes graftResonanceActive {
+  0%,
+  100% {
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.5);
+    border-color: rgba(16, 185, 129, 0.8);
+  }
+}
+.animate-graft-resonance-active {
+  animation: graftResonanceActive 2.5s ease-in-out infinite;
+}
+
+@keyframes iconDrift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.animate-icon-drift {
+  animation: iconDrift 6s ease-in-out infinite;
+}

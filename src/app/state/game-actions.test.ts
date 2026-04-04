@@ -62,6 +62,8 @@ import {
   showHelpOverlay,
   showRetireConfirm,
   recoveryWarning,
+  resourceError,
+  flashResourceError,
   resetAllSignals,
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
@@ -92,9 +94,9 @@ beforeEach(() => {
     ok(
       makeShopState({
         shopUnits: [
-          { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false },
-          { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false },
-          { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false },
+          { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false, eventSourced: false },
+          { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false, eventSourced: false },
+          { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false, eventSourced: false },
         ],
       }),
     ),
@@ -170,9 +172,9 @@ describe("startGame", () => {
       ok(
         makeShopState({
           shopUnits: [
-            { unit: toBoardUnit(makeUnit({ id: "hound" })), frozen: false },
-            { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false },
-            { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false },
+            { unit: toBoardUnit(makeUnit({ id: "hound" })), frozen: false, eventSourced: false },
+            { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false, eventSourced: false },
+            { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false, eventSourced: false },
           ],
         }),
       ),
@@ -546,5 +548,35 @@ describe("retireGame", () => {
     shopActionError.value = { type: "API_FETCH_FAILED", status: 500, cause: null };
     await retireGame();
     expect(shopActionError.value).toBeNull();
+  });
+});
+
+describe("flashResourceError", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("sets resourceError and auto-clears after 500ms", () => {
+    flashResourceError("blood");
+    expect(resourceError.value).toBe("blood");
+    vi.advanceTimersByTime(499);
+    expect(resourceError.value).toBe("blood");
+    vi.advanceTimersByTime(1);
+    expect(resourceError.value).toBeNull();
+  });
+
+  it("consecutive calls cancel previous timer", () => {
+    flashResourceError("blood");
+    vi.advanceTimersByTime(300);
+    flashResourceError("sanity");
+    expect(resourceError.value).toBe("sanity");
+    vi.advanceTimersByTime(300);
+    expect(resourceError.value).toBe("sanity");
+    vi.advanceTimersByTime(200);
+    expect(resourceError.value).toBeNull();
   });
 });

@@ -10,7 +10,7 @@ export function undoLastAction(): void {
   if (!runId) return;
 
   initAudio();
-  runShopAction("[undo]", apiUndoAction(runId), () => {
+  void runShopAction("[undo]", apiUndoAction(runId), () => {
     playSE("select");
   });
 }

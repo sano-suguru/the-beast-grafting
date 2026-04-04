@@ -5,6 +5,7 @@ export interface ShopSlotJson {
   unit: BoardUnit;
   frozen: boolean;
   costOverride?: number;
+  eventSourced: boolean;
 }
 
 export interface ShopItemSlotJson {
@@ -24,4 +25,5 @@ export interface ShopUndoSnapshot {
   rngS0: number;
   rngS1: number;
   sanity: number;
+  rewardSlots: (ShopSlotJson | null)[];
 }

@@ -34,7 +34,7 @@ beforeEach(() => {
   phase.value = "SHOP";
   blood.value = 10;
   sanity.value = 5;
-  board.value = [makeUnit({ uid: "u1", atk: 3 }), null, null, null, null];
+  board.value = [makeUnit({ uid: "u1", baseAtk: 3 }), null, null, null, null];
   shopUnits.value = [];
   shopItems.value = [];
   freeRoll.value = false;
@@ -50,7 +50,7 @@ beforeEach(() => {
 
 describe("undoLastAction", () => {
   it("calls API and restores signals from response", async () => {
-    const restoredUnit = makeUnit({ uid: "u1", atk: 3 });
+    const restoredUnit = makeUnit({ uid: "u1", baseAtk: 3 });
     const restoredShopUnit = makeUnit({ uid: "s1" });
     vi.mocked(apiUndoAction).mockResolvedValue(
       ok(
@@ -58,7 +58,7 @@ describe("undoLastAction", () => {
           blood: 10,
           sanity: 5,
           board: [toBoardUnit(restoredUnit), null, null, null, null],
-          shopUnits: [{ unit: toBoardUnit(restoredShopUnit), frozen: false }],
+          shopUnits: [{ unit: toBoardUnit(restoredShopUnit), frozen: false, eventSourced: false }],
           freeRoll: false,
           cultistUsed: false,
           rotRingUses: 0,

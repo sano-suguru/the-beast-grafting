@@ -1,4 +1,4 @@
-import { signal, batch, type Signal } from "@preact/signals";
+import { signal, computed, batch, type Signal } from "@preact/signals";
 import type {
   GamePhase,
   OriginId,
@@ -43,6 +43,7 @@ export const board = resettableSignal<(UnitInstance | null)[]>(() => [
 ]);
 export const shopUnits = resettableSignal<(ShopSlot | null)[]>(() => []);
 export const shopItems = resettableSignal<(ShopItemSlot | null)[]>(() => []);
+export const shopRewards = resettableSignal<(ShopSlot | null)[]>(() => []);
 export const selection = resettableSignal<Selection | null>(() => null);
 export const freeRoll = resettableSignal(() => false);
 export const cultistUsed = resettableSignal(() => false);
@@ -56,6 +57,12 @@ export const battleResult = resettableSignal<BattleResult>(() => null);
 export const fastForward = resettableSignal(() => false);
 export const lastBattleResult = resettableSignal<BattleResult>(() => null);
 export const lastEnemyTeamType = resettableSignal<EnemyFaction | null>(() => null);
+
+export const battleConcludeData = resettableSignal<{
+  sanityDelta: number;
+  trophyDelta: number;
+  gameEnded: boolean;
+} | null>(() => null);
 
 export const currentRunId = resettableSignal<string | null>(() => null);
 export const lastBattleId = resettableSignal<string | null>(() => null);
@@ -76,6 +83,55 @@ export const showHelpOverlay = resettableSignal(() => false);
 export const showRetireConfirm = resettableSignal(() => false);
 export const recoveryWarning = resettableSignal<string | null>(() => null);
 export const retiring = resettableSignal(() => false);
+export const resourceError = resettableSignal<"blood" | "sanity" | null>(() => null);
+
+const EMPTY_SET: ReadonlySet<string> = new Set();
+
+function collectBoardIds(): Set<string> {
+  const ids = new Set<string>();
+  for (const u of board.value) {
+    if (u && u.level < 3) ids.add(u.id);
+  }
+  return ids;
+}
+
+function collectMatchingShopIds(boardIds: Set<string>): Set<string> {
+  const result = new Set<string>();
+  for (const slot of shopUnits.value) {
+    if (slot && boardIds.has(slot.unit.id)) result.add(slot.unit.id);
+  }
+  for (const slot of shopRewards.value) {
+    if (slot && boardIds.has(slot.unit.id)) result.add(slot.unit.id);
+  }
+  return result;
+}
+
+export const passiveGraftIds = computed<ReadonlySet<string>>(() => {
+  if (selection.value) return EMPTY_SET;
+  const boardIds = collectBoardIds();
+  if (boardIds.size === 0) return EMPTY_SET;
+  return collectMatchingShopIds(boardIds);
+});
+
+let resourceErrorTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function flashResourceError(resource: "blood" | "sanity") {
+  if (resourceErrorTimer) clearTimeout(resourceErrorTimer);
+  resourceError.value = resource;
+  resourceErrorTimer = setTimeout(() => {
+    resourceError.value = null;
+    resourceErrorTimer = null;
+  }, 500);
+}
+
+registry.push({
+  reset() {
+    if (resourceErrorTimer) {
+      clearTimeout(resourceErrorTimer);
+      resourceErrorTimer = null;
+    }
+  },
+});
 
 export function resetAllSignals() {
   batch(() => {

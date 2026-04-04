@@ -1,23 +1,24 @@
 import { makeUnit } from "../../engine/test-helpers";
+import { invariant } from "../../shared/invariant";
 import { createSeededRng } from "../../engine/rng";
 import { unitInstanceToBoardUnit } from "../../shared/board-unit";
 import type { BoardUnit } from "../../shared/board-unit";
+import type { UnitId, EventData } from "../../shared/types";
 import { UNIT_COST } from "../../shared/constants";
+import { effectiveAtk } from "../../shared/unit-stats";
 import { ITEMS } from "../../shared/data/items";
 import type { ShopSlotJson, ShopItemSlotJson } from "../../db/shop-state-types";
-import type { ShopStateRow } from "./shop-service";
+import type { ShopStateRow } from "./shop-state-row";
+import { executeSetup } from "./shop-service";
+import { executeRoll, executeBuy, executeBuyReward, executeSell } from "./shop-actions-trade";
 import {
-  executeSetup,
-  executeRoll,
-  executeBuy,
-  executeSell,
   executeEquip,
   executeFreeze,
   executeSwap,
   executeCultist,
   executeUndo,
   executeReady,
-} from "./shop-service";
+} from "./shop-actions";
 
 function makeState(overrides: Partial<ShopStateRow> = {}): ShopStateRow {
   const rng = createSeededRng(42);
@@ -33,6 +34,7 @@ function makeState(overrides: Partial<ShopStateRow> = {}): ShopStateRow {
     activeEvent: null,
     rngS0: s0,
     rngS1: s1,
+    rewardSlots: [],
     undoSnapshot: null,
     round: 1,
     sanity: 5,
@@ -41,7 +43,11 @@ function makeState(overrides: Partial<ShopStateRow> = {}): ShopStateRow {
 }
 
 function makeShopSlot(id: string = "rat", frozen = false): ShopSlotJson {
-  return { unit: unitInstanceToBoardUnit(makeUnit({ id: id as any })), frozen };
+  return {
+    unit: unitInstanceToBoardUnit(makeUnit({ id: id as UnitId })),
+    frozen,
+    eventSourced: false,
+  };
 }
 
 function makeItemSlot(itemId: string = "preservative", frozen = false): ShopItemSlotJson {
@@ -49,25 +55,28 @@ function makeItemSlot(itemId: string = "preservative", frozen = false): ShopItem
 }
 
 function makeBoardUnit(id: string = "rat"): BoardUnit {
-  return unitInstanceToBoardUnit(makeUnit({ id: id as any }));
+  return unitInstanceToBoardUnit(makeUnit({ id: id as UnitId }));
 }
 
 describe("executeSetup", () => {
   test("tutorial shop generates rat/rat/bat", () => {
-    const result = executeSetup(1, 5, null, 42, [null, null, null, null, null], true);
+    const result = executeSetup(1, 5, null, 42, [null, null, null, null, null], true, [], []);
     const ids = result.shopUnits.filter(Boolean).map((s) => s!.unit.id);
     expect(ids).toEqual(["rat", "rat", "bat"]);
   });
 
   test("thief origin gets freeRoll=true", () => {
-    const result = executeSetup(1, 5, "thief", 42, [null, null, null, null, null], true);
+    const result = executeSetup(1, 5, "thief", 42, [null, null, null, null, null], true, [], []);
     expect(result.freeRoll).toBe(true);
   });
 
   test("inquisitor upgrades one shop unit tier", () => {
-    const results = Array.from({ length: 20 }, (_, i) =>
-      executeSetup(1, 5, "inquisitor", i + 1, [null, null, null, null, null], true),
-    );
+    const results: ReturnType<typeof executeSetup>[] = [];
+    for (let i = 1; i <= 20; i++) {
+      results.push(
+        executeSetup(1, 5, "inquisitor", i, [null, null, null, null, null], true, [], []),
+      );
+    }
     const hasHigherTier = results.some((r) =>
       r.shopUnits.some((s) => s !== null && s.unit.tier > 1),
     );
@@ -75,14 +84,14 @@ describe("executeSetup", () => {
   });
 
   test("non-tutorial generates shop units appropriate for round", () => {
-    const result = executeSetup(3, 5, null, 42, [null, null, null, null, null], false);
+    const result = executeSetup(3, 5, null, 42, [null, null, null, null, null], false, [], []);
     const nonNull = result.shopUnits.filter(Boolean);
     expect(nonNull.length).toBeGreaterThan(0);
     expect(nonNull.length).toBeLessThanOrEqual(5);
   });
 
   test("blood starts at 10", () => {
-    const result = executeSetup(1, 5, null, 42, [null, null, null, null, null], true);
+    const result = executeSetup(1, 5, null, 42, [null, null, null, null, null], true, [], []);
     expect(result.blood).toBe(10);
   });
 });
@@ -117,7 +126,7 @@ describe("executeRoll", () => {
 
   test("lockRoll event blocks roll", () => {
     const state = makeState({
-      activeEvent: { lockRoll: true } as any,
+      activeEvent: { lockRoll: true } as EventData,
     });
     const result = executeRoll(state, null);
     expect(result.isErr()).toBe(true);
@@ -145,7 +154,7 @@ describe("executeBuy", () => {
     const result = executeBuy(state, 0, 0);
     expect(result.isOk()).toBe(true);
     const next = result._unsafeUnwrap();
-    expect(next.board[0]!.atk).toBeGreaterThan(boardUnit.atk);
+    expect(effectiveAtk(next.board[0]!)).toBeGreaterThan(effectiveAtk(boardUnit));
   });
 
   test("fails with INSUFFICIENT_RESOURCE when not enough blood", () => {
@@ -231,8 +240,8 @@ describe("executeSell", () => {
     const next = result._unsafeUnwrap();
     expect(next.board[0]).toBeNull();
     const remaining = next.board[1]!;
-    expect(remaining.atk).toBe(unit1.atk + 1);
-    expect(remaining.hp).toBe(unit1.hp + 1);
+    expect(remaining.buffAtk).toBe(unit1.buffAtk + 1);
+    expect(remaining.buffHp).toBe(unit1.buffHp + 1);
   });
 
   test("fails on empty slot", () => {
@@ -255,8 +264,8 @@ describe("executeEquip", () => {
     expect(result.isOk()).toBe(true);
     const next = result._unsafeUnwrap();
     expect(next.blood).toBe(10 - item.cost);
-    expect(next.board[0]!.atk).toBe(unit.atk + item.atk);
-    expect(next.board[0]!.hp).toBe(unit.hp + item.hp);
+    expect(next.board[0]!.baseAtk).toBe(unit.baseAtk + item.atk);
+    expect(next.board[0]!.baseHp).toBe(unit.baseHp + item.hp);
   });
 
   test("fails when no target unit", () => {
@@ -303,49 +312,63 @@ describe("executeEquip", () => {
 describe("executeFreeze", () => {
   test("freezes an unfrozen unit", () => {
     const state = makeState({ shopUnits: [makeShopSlot("rat", false)] });
-    const result = executeFreeze(state, true, 0, true);
+    const result = executeFreeze(state, "unit", 0, true);
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().shopUnits[0]!.frozen).toBe(true);
   });
 
   test("unfreezes a frozen unit", () => {
     const state = makeState({ shopUnits: [makeShopSlot("rat", true)] });
-    const result = executeFreeze(state, true, 0, false);
+    const result = executeFreeze(state, "unit", 0, false);
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().shopUnits[0]!.frozen).toBe(false);
   });
 
   test("freezes an unfrozen item", () => {
     const state = makeState({ shopItems: [makeItemSlot("preservative", false)] });
-    const result = executeFreeze(state, false, 0, true);
+    const result = executeFreeze(state, "item", 0, true);
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().shopItems[0]!.frozen).toBe(true);
   });
 
+  test("freezes a reward slot", () => {
+    const state = makeState({ rewardSlots: [makeShopSlot("rat", false)] });
+    const result = executeFreeze(state, "reward", 0, true);
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().rewardSlots[0]!.frozen).toBe(true);
+  });
+
   test("no-op when already in desired state", () => {
     const state = makeState({ shopUnits: [makeShopSlot("rat", true)] });
-    const result = executeFreeze(state, true, 0, true);
+    const result = executeFreeze(state, "unit", 0, true);
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap()).toBe(state);
   });
 
   test("fails on empty slot", () => {
     const state = makeState({ shopUnits: [null] });
-    const result = executeFreeze(state, true, 0, true);
+    const result = executeFreeze(state, "unit", 0, true);
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().type).toBe("INVALID_TARGET");
   });
 
   test("fails on out-of-bounds unit index", () => {
     const state = makeState({ shopUnits: [makeShopSlot()] });
-    const result = executeFreeze(state, true, 5, true);
+    const result = executeFreeze(state, "unit", 5, true);
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().type).toBe("INVALID_INDEX");
   });
 
   test("fails on out-of-bounds item index", () => {
     const state = makeState({ shopItems: [makeItemSlot()] });
-    const result = executeFreeze(state, false, 5, true);
+    const result = executeFreeze(state, "item", 5, true);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().type).toBe("INVALID_INDEX");
+  });
+
+  test("fails on out-of-bounds reward index", () => {
+    const state = makeState({ rewardSlots: [makeShopSlot()] });
+    const result = executeFreeze(state, "reward", 5, true);
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().type).toBe("INVALID_INDEX");
   });
@@ -373,7 +396,7 @@ describe("executeSwap", () => {
     expect(result.isOk()).toBe(true);
     const next = result._unsafeUnwrap();
     expect(next.board[0]).toBeNull();
-    expect(next.board[1]!.atk).toBeGreaterThan(unit1.atk);
+    expect(effectiveAtk(next.board[1]!)).toBeGreaterThan(effectiveAtk(unit1));
   });
 
   test("fails on empty from-slot", () => {
@@ -426,6 +449,51 @@ describe("executeCultist", () => {
   });
 });
 
+describe("executeBuyReward", () => {
+  test("places reward unit on empty board slot", () => {
+    const state = makeState({ rewardSlots: [makeShopSlot("rat")] });
+    const result = executeBuyReward(state, 0, 0);
+    expect(result.isOk()).toBe(true);
+    const next = result._unsafeUnwrap();
+    expect(next.blood).toBe(10 - UNIT_COST);
+    expect(next.board[0]).not.toBeNull();
+    expect(next.board[0]!.id).toBe("rat");
+  });
+
+  test("grafts same-id reward unit onto board", () => {
+    const boardUnit = makeBoardUnit("rat");
+    const state = makeState({
+      board: [boardUnit, null, null, null, null],
+      rewardSlots: [makeShopSlot("rat")],
+    });
+    const result = executeBuyReward(state, 0, 0);
+    expect(result.isOk()).toBe(true);
+    const next = result._unsafeUnwrap();
+    expect(effectiveAtk(next.board[0]!)).toBeGreaterThan(effectiveAtk(boardUnit));
+  });
+
+  test("fails with INSUFFICIENT_RESOURCE when blood < UNIT_COST", () => {
+    const state = makeState({ blood: 1, rewardSlots: [makeShopSlot("rat")] });
+    const result = executeBuyReward(state, 0, 0);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().type).toBe("INSUFFICIENT_RESOURCE");
+  });
+
+  test("fails with INVALID_INDEX for out-of-bounds rewardIndex", () => {
+    const state = makeState({ rewardSlots: [makeShopSlot()] });
+    const result = executeBuyReward(state, 5, 0);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().type).toBe("INVALID_INDEX");
+  });
+
+  test("fails with INVALID_TARGET for empty reward slot", () => {
+    const state = makeState({ rewardSlots: [null] });
+    const result = executeBuyReward(state, 0, 0);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().type).toBe("INVALID_TARGET");
+  });
+});
+
 describe("executeUndo", () => {
   test("restores snapshot values", () => {
     const snapshot = {
@@ -440,6 +508,7 @@ describe("executeUndo", () => {
       rngS0: 123,
       rngS1: 456,
       sanity: 5,
+      rewardSlots: [],
     };
     const state = makeState({ blood: 7, undoSnapshot: snapshot });
     const result = executeUndo(state);
@@ -455,6 +524,50 @@ describe("executeUndo", () => {
     const result = executeUndo(state);
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().type).toBe("PRECONDITION_FAILED");
+  });
+});
+
+describe("rotting_cargo event", () => {
+  function findEventRoundSeed(): number {
+    for (let seed = 1; seed <= 200; seed++) {
+      const result = executeSetup(4, 5, null, seed, [null, null, null, null, null], false, [], []);
+      if (result.activeEvent?.id === "rotting_cargo") return seed;
+    }
+    invariant(false, "rotting_cargo seed not found");
+  }
+
+  test("setup mixes event units into normal shop", () => {
+    const seed = findEventRoundSeed();
+    const result = executeSetup(4, 5, null, seed, [null, null, null, null, null], false, [], []);
+    const allSlots = result.shopUnits.filter(Boolean);
+    const eventSlots = allSlots.filter((s) => s!.eventSourced);
+    const normalSlots = allSlots.filter((s) => !s!.eventSourced);
+    expect(eventSlots).toHaveLength(2);
+    expect(normalSlots.length).toBeGreaterThan(0);
+    eventSlots.forEach((s) => {
+      expect(s!.unit.equip).toBe("infection");
+      expect(s!.costOverride).toBe(2);
+    });
+  });
+
+  test("reroll removes non-frozen event units", () => {
+    const seed = findEventRoundSeed();
+    const state = executeSetup(4, 5, null, seed, [null, null, null, null, null], false, [], []);
+    const rolled = executeRoll(state, null)._unsafeUnwrap();
+    const eventSlots = rolled.shopUnits.filter((s) => s?.eventSourced);
+    expect(eventSlots).toHaveLength(0);
+  });
+
+  test("reroll preserves frozen event units", () => {
+    const seed = findEventRoundSeed();
+    const state = executeSetup(4, 5, null, seed, [null, null, null, null, null], false, [], []);
+    const eventIdx = state.shopUnits.findIndex((s) => s?.eventSourced);
+    const frozen = executeFreeze(state, "unit", eventIdx, true)._unsafeUnwrap();
+    const rolled = executeRoll(frozen, null)._unsafeUnwrap();
+    const eventSlots = rolled.shopUnits.filter((s) => s?.eventSourced);
+    expect(eventSlots).toHaveLength(1);
+    expect(eventSlots[0]!.frozen).toBe(true);
+    expect(eventSlots[0]!.unit.equip).toBe("infection");
   });
 });
 
@@ -492,6 +605,7 @@ describe("executeReady", () => {
         rngS0: 1,
         rngS1: 2,
         sanity: 5,
+        rewardSlots: [],
       },
     });
     const result = executeReady(state);

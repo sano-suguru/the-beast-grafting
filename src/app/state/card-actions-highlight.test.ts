@@ -5,17 +5,16 @@ vi.mock("../engine/audio", () => ({
 
 vi.mock("../../engine/shop-effects", () => ({
   graftUnits: vi.fn((base: UnitInstance) => ({
-    ...base,
-    level: base.level + 1,
-    exp: 1,
+    unit: { ...base, level: base.level + 1, exp: 1 },
+    leveledUp: true,
   })),
-  applyBuyEffects: vi.fn((_unit: UnitInstance, board: (UnitInstance | null)[]) => ({
-    board,
+  applyBuyEffects: vi.fn((...args: [UnitInstance, (UnitInstance | null)[]]) => ({
+    board: args[1],
     chaliceTriggered: false,
     rotRingUses: 0,
   })),
   applyChaliceEffect: vi.fn((items: (ShopItemSlot | null)[]) => items),
-  applySummonEffects: vi.fn((_idx: number, board: (UnitInstance | null)[]) => board),
+  applySummonEffects: vi.fn((...args: [number, (UnitInstance | null)[]]) => args[1]),
   applyEndOfTurnEffects: vi.fn((board: (UnitInstance | null)[]) => board),
 }));
 
@@ -25,9 +24,11 @@ import {
   board,
   shopUnits,
   shopItems,
+  shopRewards,
   selection,
   onboardingStep,
   lastBattleResult,
+  passiveGraftIds,
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
 import type { ItemData, ShopItemSlot, UnitInstance } from "../types";
@@ -51,6 +52,7 @@ beforeEach(() => {
   board.value = [null, null, null, null, null];
   shopUnits.value = [];
   shopItems.value = [];
+  shopRewards.value = [];
   selection.value = null;
   onboardingStep.value = null;
   lastBattleResult.value = null;
@@ -144,5 +146,53 @@ describe("checkHighlight – BOARD_UNIT selected", () => {
   it("returns 'swap' for different ID unit at different index", () => {
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit({ id: "hound" }) };
     expect(checkHighlight("BOARD_SLOT", 2, makeUnit({ id: "bat" }))).toBe("swap");
+  });
+});
+
+describe("passiveGraftIds", () => {
+  it("returns empty set when selection is active", () => {
+    board.value = [makeUnit({ id: "hound", level: 1 }), null, null, null, null];
+    shopUnits.value = [{ unit: makeUnit({ id: "hound" }), frozen: false, eventSourced: false }];
+    selection.value = { type: "SHOP_UNIT", index: 0, item: makeUnit({ id: "hound" }) };
+    expect(passiveGraftIds.value.size).toBe(0);
+  });
+
+  it("returns empty set when board is empty", () => {
+    board.value = [null, null, null, null, null];
+    shopUnits.value = [{ unit: makeUnit({ id: "hound" }), frozen: false, eventSourced: false }];
+    expect(passiveGraftIds.value.size).toBe(0);
+  });
+
+  it("returns matching shop unit IDs when board has matching unit with level < 3", () => {
+    board.value = [makeUnit({ id: "hound", level: 1 }), null, null, null, null];
+    shopUnits.value = [{ unit: makeUnit({ id: "hound" }), frozen: false, eventSourced: false }];
+    expect(passiveGraftIds.value.has("hound")).toBe(true);
+  });
+
+  it("includes matching reward unit IDs", () => {
+    board.value = [makeUnit({ id: "bat", level: 2 }), null, null, null, null];
+    shopRewards.value = [{ unit: makeUnit({ id: "bat" }), frozen: false, eventSourced: false }];
+    expect(passiveGraftIds.value.has("bat")).toBe(true);
+  });
+
+  it("excludes level 3 units from board matching", () => {
+    board.value = [makeUnit({ id: "hound", level: 3 }), null, null, null, null];
+    shopUnits.value = [{ unit: makeUnit({ id: "hound" }), frozen: false, eventSourced: false }];
+    expect(passiveGraftIds.value.size).toBe(0);
+  });
+});
+
+describe("checkHighlight – passive-graft", () => {
+  it("returns passive-graft when unit is in passiveGraftIds and no selection", () => {
+    board.value = [makeUnit({ id: "hound", level: 1 }), null, null, null, null];
+    shopUnits.value = [{ unit: makeUnit({ id: "hound" }), frozen: false, eventSourced: false }];
+    expect(checkHighlight("SHOP_UNIT", 0, makeUnit({ id: "hound" }))).toBe("passive-graft");
+  });
+
+  it("does not return passive-graft when selection is active", () => {
+    board.value = [makeUnit({ id: "hound", level: 1 }), null, null, null, null];
+    shopUnits.value = [{ unit: makeUnit({ id: "hound" }), frozen: false, eventSourced: false }];
+    selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit({ id: "hound" }) };
+    expect(checkHighlight("SHOP_UNIT", 0, makeUnit({ id: "hound" }))).toBe(false);
   });
 });

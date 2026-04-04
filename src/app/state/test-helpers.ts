@@ -12,6 +12,7 @@ export function makeShopState(overrides: Partial<ShopStateResponse> = {}): ShopS
     cultistUsed: false,
     rotRingUses: 0,
     activeEvent: null,
+    rewardSlots: [],
     canUndo: false,
     round: 1,
     sanity: 5,

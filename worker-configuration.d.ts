@@ -1,3 +1,4 @@
+/* eslint-disable typescript/consistent-type-imports -- ambient .d.ts requires import() syntax */
 interface SubtleCrypto {
   timingSafeEqual(a: ArrayBuffer, b: ArrayBuffer): boolean;
 }

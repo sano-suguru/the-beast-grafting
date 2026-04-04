@@ -126,7 +126,8 @@ describe("enforceLimit", () => {
   });
 
   it("marks lowest-life particles for removal when over limit", () => {
-    const particles = Array.from({ length: 210 }, (_, i) => makeParticle({ life: i + 1 }));
+    const particles: ReturnType<typeof makeParticle>[] = [];
+    for (let i = 0; i < 210; i++) particles.push(makeParticle({ life: i + 1 }));
     const effects = [makeEffect(particles)];
     enforceLimit(effects);
     const killed = particles.filter((p) => p.life === 0);

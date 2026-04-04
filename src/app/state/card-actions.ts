@@ -1,4 +1,6 @@
 import type { UnitInstance, ItemData, Selection, HighlightKind } from "../types";
+import type { ShopStateResponse } from "../../shared/api-types";
+import type { Result, InfraError } from "../../shared/errors";
 import { initAudio, playSE } from "../engine/audio";
 import {
   blood,
@@ -8,11 +10,14 @@ import {
   onboardingStep,
   shopLocked,
   currentRunId,
+  flashResourceError,
+  passiveGraftIds,
 } from "./game-store";
 import { runShopAction } from "./shop-actions";
 import { markSeen } from "./lore";
 import {
   buyUnit as apiBuyUnit,
+  buyReward as apiBuyReward,
   equipItem as apiEquipItem,
   swapBoard as apiSwapBoard,
 } from "../api/shop-client";
@@ -22,31 +27,36 @@ function getSlotCost(index: number): number {
   return shopUnits.value[index]?.costOverride ?? UNIT_COST;
 }
 
-function rejectAction() {
+function rejectWithResourceError(resource: "blood" | "sanity") {
+  selection.value = null;
+  playSE("error");
+  flashResourceError(resource);
+}
+
+function rejectInvalidAction() {
   selection.value = null;
   playSE("error");
 }
 
-function handleShopUnitToSlot(
-  sel: Extract<Selection, { type: "SHOP_UNIT" }>,
-  index: number,
+function buyUnitToSlot(
+  sel: { type: "SHOP_UNIT" | "REWARD_UNIT"; index: number; item: UnitInstance },
   targetUnit: UnitInstance | null,
+  cost: number,
+  makeApiCall: () => Promise<Result<ShopStateResponse, InfraError>>,
+  label: string,
 ) {
-  const cost = getSlotCost(sel.index);
-  if (blood.value < cost) return rejectAction();
+  if (blood.value < cost) return rejectWithResourceError("blood");
   const canPlace = !targetUnit;
   const canGraft = targetUnit !== null && targetUnit.id === sel.item.id && targetUnit.level < 3;
-  if (!canPlace && !canGraft) return rejectAction();
+  if (!canPlace && !canGraft) return rejectInvalidAction();
 
   if (shopLocked.value) return;
-  const runId = currentRunId.value;
-  if (!runId) return;
 
   const isGraft = !!targetUnit;
   const unitId = sel.item.id;
-  runShopAction("[buy]", apiBuyUnit(runId, sel.index, index), () => {
+  void runShopAction(label, makeApiCall(), () => {
     playSE(isGraft ? "graft" : "buy");
-    if (!isGraft && onboardingStep.value === "buy") {
+    if (sel.type === "SHOP_UNIT" && !isGraft && onboardingStep.value === "buy") {
       const hasSame = board.value.filter((u) => u && u.id === unitId).length > 1;
       const shopHasSame = shopUnits.value.some((s) => s && s.unit.id === unitId);
       onboardingStep.value = hasSame || shopHasSame ? "graft" : "roll";
@@ -61,14 +71,14 @@ function handleShopItemToSlot(
   index: number,
   targetUnit: UnitInstance | null,
 ) {
-  if (!targetUnit) return rejectAction();
-  if (blood.value < sel.item.cost) return rejectAction();
+  if (!targetUnit) return rejectInvalidAction();
+  if (blood.value < sel.item.cost) return rejectWithResourceError("blood");
 
   if (shopLocked.value) return;
   const runId = currentRunId.value;
   if (!runId) return;
 
-  runShopAction("[equip]", apiEquipItem(runId, sel.index, index), () => {
+  void runShopAction("[equip]", apiEquipItem(runId, sel.index, index), () => {
     playSE("graft");
   });
 }
@@ -81,7 +91,7 @@ function handleBoardUnitToSlot(sel: Extract<Selection, { type: "BOARD_UNIT" }>, 
   const targetUnit = board.value[index] ?? null;
   const isGraft =
     !!targetUnit && targetUnit.id === sel.item.id && targetUnit.level < 3 && sel.index !== index;
-  runShopAction("[swap]", apiSwapBoard(runId, sel.index, index), () => {
+  void runShopAction("[swap]", apiSwapBoard(runId, sel.index, index), () => {
     playSE(isGraft ? "graft" : "buy");
     if (isGraft && onboardingStep.value === "graft") onboardingStep.value = "roll";
   });
@@ -101,12 +111,30 @@ function handleBoardSlotClick(sel: Selection | null, index: number) {
 }
 
 function dispatchSlotAction(sel: Selection, index: number, targetUnit: UnitInstance | null) {
+  const runId = currentRunId.value;
+  if (!runId) return;
   if (sel.type === "SHOP_UNIT") {
-    handleShopUnitToSlot(sel, index, targetUnit);
+    buyUnitToSlot(
+      sel,
+      targetUnit,
+      getSlotCost(sel.index),
+      () => apiBuyUnit(runId, sel.index, index),
+      "[buy]",
+    );
     return;
   }
   if (sel.type === "SHOP_ITEM") {
     handleShopItemToSlot(sel, index, targetUnit);
+    return;
+  }
+  if (sel.type === "REWARD_UNIT") {
+    buyUnitToSlot(
+      sel,
+      targetUnit,
+      UNIT_COST,
+      () => apiBuyReward(runId, sel.index, index),
+      "[buy-reward]",
+    );
     return;
   }
   if (sel.type === "BOARD_UNIT") {
@@ -119,7 +147,7 @@ function trySelectShopCard(
   index: number,
   item: UnitInstance | ItemData | null,
 ) {
-  if (type === "SHOP_UNIT" && item && "uid" in item) {
+  if ((type === "SHOP_UNIT" || type === "REWARD_UNIT") && item && "uid" in item) {
     playSE("select");
     selection.value = { type, index, item };
     return;
@@ -167,6 +195,15 @@ function canHighlightForUnit(
   return false;
 }
 
+function canHighlightForReward(unit: UnitInstance | null): HighlightKind {
+  if (blood.value < UNIT_COST) return false;
+  if (!unit) return "move";
+  const sel = selection.value;
+  if (!sel || sel.type !== "REWARD_UNIT") return false;
+  if (unit.id === sel.item.id && unit.level < 3) return "graft";
+  return false;
+}
+
 function canHighlightForBoardUnit(
   sel: Extract<Selection, { type: "BOARD_UNIT" }>,
   index: number,
@@ -183,11 +220,17 @@ export function checkHighlight(
   index: number,
   unit: UnitInstance | null,
 ): HighlightKind {
-  if (targetType !== "BOARD_SLOT") return false;
-  const sel = selection.value;
-  if (!sel) return false;
-  if (sel.type === "SHOP_ITEM") return canHighlightForItem(sel, unit);
-  if (sel.type === "SHOP_UNIT") return canHighlightForUnit(sel, unit);
-  if (sel.type === "BOARD_UNIT") return canHighlightForBoardUnit(sel, index, unit);
+  if (targetType === "BOARD_SLOT") {
+    const sel = selection.value;
+    if (sel) {
+      if (sel.type === "SHOP_ITEM") return canHighlightForItem(sel, unit);
+      if (sel.type === "SHOP_UNIT") return canHighlightForUnit(sel, unit);
+      if (sel.type === "REWARD_UNIT") return canHighlightForReward(unit);
+      if (sel.type === "BOARD_UNIT") return canHighlightForBoardUnit(sel, index, unit);
+      return false;
+    }
+  }
+
+  if (unit && passiveGraftIds.value.has(unit.id)) return "passive-graft";
   return false;
 }

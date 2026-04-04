@@ -29,22 +29,22 @@ describe("UnitCard", () => {
   });
 
   it("renders atk and hp values", () => {
-    const unit = makeUnit({ atk: 5, hp: 3 });
+    const unit = makeUnit({ baseAtk: 5, baseHp: 3 });
     render(<UnitCard unit={unit} type="SHOP_UNIT" index={0} />);
     expect(screen.getByText("5")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
+  });
+
+  it("shows level for all levels", () => {
+    const unit = makeUnit({ level: 1 });
+    render(<UnitCard unit={unit} type="SHOP_UNIT" index={0} />);
+    expect(screen.getByText("Lv1")).toBeInTheDocument();
   });
 
   it("shows level badge for level > 1", () => {
     const unit = makeUnit({ level: 2 });
     render(<UnitCard unit={unit} type="SHOP_UNIT" index={0} />);
     expect(screen.getByText("Lv2")).toBeInTheDocument();
-  });
-
-  it("does not show level badge for level 1", () => {
-    const unit = makeUnit({ level: 1 });
-    render(<UnitCard unit={unit} type="SHOP_UNIT" index={0} />);
-    expect(screen.queryByText("Lv1")).not.toBeInTheDocument();
   });
 
   it("calls handleCardClick on click", () => {
@@ -70,27 +70,26 @@ describe("UnitCard", () => {
     expect(container.innerHTML).not.toContain("red-900");
   });
 
-  it("shows two empty dots for level 1 exp 0", () => {
+  it("shows exp bar for level 1 exp 0", () => {
     const unit = makeUnit({ level: 1, exp: 0 });
     render(<UnitCard unit={unit} type="BOARD_SLOT" index={0} />);
     expect(screen.getByLabelText("経験値0/2")).toBeInTheDocument();
-    expect(screen.getByLabelText("経験値0/2").textContent).toBe("○○");
   });
 
-  it("shows one filled dot for level 1 exp 1", () => {
+  it("shows exp bar for level 1 exp 1", () => {
     const unit = makeUnit({ level: 1, exp: 1 });
     render(<UnitCard unit={unit} type="BOARD_SLOT" index={0} />);
-    expect(screen.getByLabelText("経験値1/2").textContent).toBe("●○");
+    expect(screen.getByLabelText("経験値1/2")).toBeInTheDocument();
   });
 
-  it("shows Lv2 with empty dots for level 2 exp 2", () => {
+  it("shows exp bar for level 2 exp 2", () => {
     const unit = makeUnit({ level: 2, exp: 2 });
     render(<UnitCard unit={unit} type="BOARD_SLOT" index={0} />);
     expect(screen.getByText("Lv2")).toBeInTheDocument();
-    expect(screen.getByLabelText("経験値0/2").textContent).toBe("○○");
+    expect(screen.getByLabelText("経験値0/3")).toBeInTheDocument();
   });
 
-  it("shows no dots for level 3", () => {
+  it("shows no exp bar for level 3", () => {
     const unit = makeUnit({ level: 3, exp: 4 });
     render(<UnitCard unit={unit} type="BOARD_SLOT" index={0} />);
     expect(screen.getByText("Lv3")).toBeInTheDocument();
@@ -102,7 +101,7 @@ describe("UnitCard", () => {
     const { container } = render(
       <UnitCard unit={unit} type="SHOP_UNIT" index={0} costOverride={2} />,
     );
-    const badge = container.querySelector(".-top-1.-right-1");
+    const badge = container.querySelector(".-top-1.-left-1");
     expect(badge).not.toBeNull();
     expect(badge!.textContent).toContain("2");
   });

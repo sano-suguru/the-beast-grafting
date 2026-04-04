@@ -1,4 +1,6 @@
+import type { JSX } from "preact";
 import { BookOpen, Skull, Bookmark, Swords, Shield } from "lucide-preact";
+import { ResourceText } from "../components/resource-text";
 import { UNITS } from "../../shared/data/units";
 import { CHURCH_UNITS } from "../../shared/data/church-units";
 import { phase } from "../state/game-store";
@@ -48,7 +50,7 @@ function ChurchLoreUnitCard({ unit }: { unit: UnitData }) {
           {unit.name} <span className="ml-1 text-[10px] text-amber-600/50">Tier {unit.tier}</span>
         </div>
         <div className="mb-2 text-[9px] font-bold text-amber-600/80 md:text-[10px]">
-          {unit.skillText}
+          <ResourceText text={unit.skillText} />
         </div>
         <div className="mb-2 text-[10px] leading-relaxed text-amber-300/60 md:text-xs">
           {unit.lore}
@@ -112,7 +114,7 @@ function LoreUnitCard({ unit, entry }: { unit: UnitData; entry: LoreEntry }) {
           {unit.name} <span className="ml-1 text-[10px] text-zinc-500">Tier {unit.tier}</span>
         </div>
         <div className="mb-2 text-[9px] font-bold text-emerald-600/80 md:text-[10px]">
-          {unit.skillText}
+          <ResourceText text={unit.skillText} />
         </div>
         <div className="mb-2 text-[10px] leading-relaxed text-zinc-400 md:text-xs">{unit.lore}</div>
         {isMastered ? (
@@ -126,6 +128,59 @@ function LoreUnitCard({ unit, entry }: { unit: UnitData; entry: LoreEntry }) {
         )}
       </div>
     </article>
+  );
+}
+
+function LoreGrid({
+  units,
+  db,
+  renderUnseen,
+  renderSeen,
+}: {
+  units: UnitData[];
+  db: Record<string, LoreEntry>;
+  renderUnseen: (id: string) => JSX.Element;
+  renderSeen: (unit: UnitData, entry: LoreEntry) => JSX.Element;
+}) {
+  return (
+    <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {units.map((unit) => {
+        const entry = db[unit.id];
+        return (
+          <li key={unit.id}>{entry?.seen ? renderSeen(unit, entry) : renderUnseen(unit.id)}</li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function UnitLoreList({ units, db }: { units: UnitData[]; db: Record<string, LoreEntry> }) {
+  return (
+    <LoreGrid
+      units={units}
+      db={db}
+      renderUnseen={(id) => <UnseenCard id={id} />}
+      renderSeen={(unit, entry) => <LoreUnitCard unit={unit} entry={entry} />}
+    />
+  );
+}
+
+function ChurchLoreList({ units, db }: { units: UnitData[]; db: Record<string, LoreEntry> }) {
+  return (
+    <div className="mt-8 border-t border-amber-900/30 pt-6">
+      <h2 className="mb-2 flex items-center gap-2 text-sm font-bold tracking-wider text-amber-700/80">
+        <Shield size={16} /> 教団兵の記録
+      </h2>
+      <p className="mb-4 text-center text-[10px] text-amber-800/60 md:text-xs">
+        戦場で遭遇した教団の兵士たち。敵を知ることは、生き延びる術である。
+      </p>
+      <LoreGrid
+        units={units}
+        db={db}
+        renderUnseen={(id) => <ChurchUnseenCard id={id} />}
+        renderSeen={(unit) => <ChurchLoreUnitCard unit={unit} />}
+      />
+    </div>
   );
 }
 
@@ -160,46 +215,8 @@ export function LoreScreen() {
           <br />
           究極の形(Lv3)で狂宴を生き延びた時、真の恐ろしさが記述される。
         </p>
-        <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {sortedUnits.map((unit) => {
-            const entry = db[unit.id];
-            if (!entry?.seen)
-              return (
-                <li key={unit.id}>
-                  <UnseenCard id={unit.id} />
-                </li>
-              );
-            return (
-              <li key={unit.id}>
-                <LoreUnitCard unit={unit} entry={entry} />
-              </li>
-            );
-          })}
-        </ul>
-        <div className="mt-8 border-t border-amber-900/30 pt-6">
-          <h2 className="mb-2 flex items-center gap-2 text-sm font-bold tracking-wider text-amber-700/80">
-            <Shield size={16} /> 教団兵の記録
-          </h2>
-          <p className="mb-4 text-center text-[10px] text-amber-800/60 md:text-xs">
-            戦場で遭遇した教団の兵士たち。敵を知ることは、生き延びる術である。
-          </p>
-          <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {churchUnits.map((unit) => {
-              const entry = db[unit.id];
-              if (!entry?.seen)
-                return (
-                  <li key={unit.id}>
-                    <ChurchUnseenCard id={unit.id} />
-                  </li>
-                );
-              return (
-                <li key={unit.id}>
-                  <ChurchLoreUnitCard unit={unit} />
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <UnitLoreList units={sortedUnits} db={db} />
+        <ChurchLoreList units={churchUnits} db={db} />
       </div>
     </main>
   );

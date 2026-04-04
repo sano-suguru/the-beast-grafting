@@ -1,19 +1,23 @@
 import { Hono } from "hono";
-import { setCookie, getCookie, deleteCookie } from "hono/cookie";
+import { setCookie, deleteCookie } from "hono/cookie";
 import { eq, and } from "drizzle-orm";
 import type { Context } from "hono";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { ok, err, safeAsync, dbErr } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
 import { invariant } from "../../shared/invariant";
-import { error as logError } from "../../shared/logger";
 import { players, authProviders } from "../../db/schema";
-import { generateId, hashPassword, verifyPassword, signState, verifyState } from "./crypto";
-import { createSession, revokeSession } from "./session";
+import { generateId, hashPassword, verifyPassword, signState } from "./crypto";
+import { createSession, revokeSession, setSessionCookie } from "./session";
 import { generateGuestName, emailLocalToDisplayName } from "./names";
 import { requireAuth, optionalAuth } from "./middleware";
 import { validateEmail, validatePassword } from "./validation";
-import { buildAuthorizeUrl, exchangeCode, fetchUserInfo, findOrCreateByProvider } from "./oauth";
+import {
+  buildAuthorizeUrl,
+  handleOAuthCallback,
+  getOAuthCredentials,
+  getRedirectUri,
+} from "./oauth";
 import type { OAuthProvider } from "./oauth";
 import type { AppEnv } from "./types";
 
@@ -21,33 +25,6 @@ const auth = new Hono<AppEnv>();
 
 function fetchPlayer(db: DrizzleD1Database, playerId: string) {
   return safeAsync(() => db.select().from(players).where(eq(players.id, playerId)).limit(1), dbErr);
-}
-
-function setSessionCookie(
-  c: Parameters<typeof setCookie>[0],
-  token: string,
-  expiresAt: Date,
-  env: Env,
-): void {
-  const isSecure = env.ALLOWED_ORIGIN.startsWith("https://");
-  setCookie(c, "session", token, {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: "Lax",
-    path: "/api",
-    expires: expiresAt,
-  });
-}
-
-function getOAuthCredentials(env: Env, provider: OAuthProvider) {
-  if (provider === "discord") {
-    return { clientId: env.DISCORD_CLIENT_ID, clientSecret: env.DISCORD_CLIENT_SECRET };
-  }
-  return { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET };
-}
-
-function getRedirectUri(env: Env, provider: OAuthProvider): string {
-  return `${env.ALLOWED_ORIGIN}/api/auth/${provider}/callback`;
 }
 
 function parseEmailPassword(body: {
@@ -108,6 +85,42 @@ auth.post("/guest", async (c) => {
   return issueSessionAndRespond(c, db, playerId);
 });
 
+async function insertEmailProvider(
+  db: DrizzleD1Database,
+  playerId: string,
+  existingPlayerId: string | undefined,
+  email: string,
+  hash: { hash: string; salt: string },
+) {
+  const now = new Date();
+  const authProviderValues = {
+    id: generateId(),
+    playerId,
+    provider: "email" as const,
+    providerId: email,
+    credential: hash.hash,
+    credentialSalt: hash.salt,
+    createdAt: now,
+  };
+
+  if (existingPlayerId) {
+    return safeAsync(() => db.insert(authProviders).values(authProviderValues), dbErr);
+  }
+  return safeAsync(
+    () =>
+      db.batch([
+        db.insert(players).values({
+          id: playerId,
+          displayName: emailLocalToDisplayName(email),
+          createdAt: now,
+          updatedAt: now,
+        }),
+        db.insert(authProviders).values(authProviderValues),
+      ]),
+    dbErr,
+  );
+}
+
 auth.post("/register", optionalAuth, async (c) => {
   const credentialsResult = await parseCredentials(c);
   if (credentialsResult.isErr()) return c.json({ error: credentialsResult.error }, 400);
@@ -118,7 +131,6 @@ auth.post("/register", optionalAuth, async (c) => {
   if (hashResult.isErr()) return c.json({ error: { type: "INTERNAL_ERROR" } }, 500);
 
   const db = c.get("db");
-  // optionalAuth sets playerId only when a valid session exists
   const existingPlayerId = c.get("playerId");
 
   const existingResult = await safeAsync(
@@ -134,39 +146,14 @@ auth.post("/register", optionalAuth, async (c) => {
   if (existingResult.value[0]) return c.json({ error: { type: "AUTH_EMAIL_TAKEN" } }, 409);
 
   const playerId = existingPlayerId ?? generateId();
-  const now = new Date();
-  const authProviderValues = {
-    id: generateId(),
+  const insertResult = await insertEmailProvider(
+    db,
     playerId,
-    provider: "email" as const,
-    providerId: email,
-    credential: hashResult.value.hash,
-    credentialSalt: hashResult.value.salt,
-    createdAt: now,
-  };
-
-  if (existingPlayerId) {
-    const insertResult = await safeAsync(
-      () => db.insert(authProviders).values(authProviderValues),
-      dbErr,
-    );
-    if (insertResult.isErr()) return c.json({ error: { type: "INTERNAL_ERROR" } }, 500);
-  } else {
-    const batchResult = await safeAsync(
-      () =>
-        db.batch([
-          db.insert(players).values({
-            id: playerId,
-            displayName: emailLocalToDisplayName(email),
-            createdAt: now,
-            updatedAt: now,
-          }),
-          db.insert(authProviders).values(authProviderValues),
-        ]),
-      dbErr,
-    );
-    if (batchResult.isErr()) return c.json({ error: { type: "INTERNAL_ERROR" } }, 500);
-  }
+    existingPlayerId,
+    email,
+    hashResult.value,
+  );
+  if (insertResult.isErr()) return c.json({ error: { type: "INTERNAL_ERROR" } }, 500);
 
   return issueSessionAndRespond(c, db, playerId);
 });
@@ -223,68 +210,10 @@ function oauthRoutes(provider: OAuthProvider) {
       maxAge: 600,
     });
 
-    const url = buildAuthorizeUrl(provider, creds, redirectUri, state);
-    return c.redirect(url);
+    return c.redirect(buildAuthorizeUrl(provider, creds, redirectUri, state));
   });
 
-  auth.get(`/${provider}/callback`, optionalAuth, async (c) => {
-    const errorRedirect = (code: string) =>
-      c.redirect(`${c.env.ALLOWED_ORIGIN}/?auth_error=${encodeURIComponent(code)}`);
-
-    const code = c.req.query("code");
-    const state = c.req.query("state");
-    const storedSigned = getCookie(c, `oauth_state_${provider}`);
-
-    deleteCookie(c, `oauth_state_${provider}`, { path: "/api" });
-
-    if (!code || !state || !storedSigned) {
-      return errorRedirect("invalid_state");
-    }
-
-    const verifiedState = await verifyState(storedSigned, c.env.OAUTH_STATE_SECRET);
-    if (!verifiedState || verifiedState !== state) {
-      return errorRedirect("invalid_state");
-    }
-
-    const creds = getOAuthCredentials(c.env, provider);
-    const redirectUri = getRedirectUri(c.env, provider);
-
-    const tokenResult = await exchangeCode(provider, code, creds, redirectUri);
-    if (tokenResult.isErr()) {
-      logError(`[oauth/${provider}] token exchange failed`, tokenResult.error);
-      return errorRedirect("oauth_failed");
-    }
-
-    const userResult = await fetchUserInfo(provider, tokenResult.value);
-    if (userResult.isErr()) {
-      logError(`[oauth/${provider}] user info fetch failed`, userResult.error);
-      return errorRedirect("oauth_failed");
-    }
-
-    const db = c.get("db");
-    const existingPlayerId = c.get("playerId") ?? null;
-
-    const linkResult = await findOrCreateByProvider(
-      db,
-      provider,
-      userResult.value,
-      existingPlayerId,
-    );
-    if (linkResult.isErr()) {
-      logError(`[oauth/${provider}] find/create provider failed`, linkResult.error);
-      return errorRedirect("internal_error");
-    }
-
-    const sessionResult = await createSession(db, linkResult.value.playerId);
-    if (sessionResult.isErr()) {
-      logError(`[oauth/${provider}] session creation failed`, sessionResult.error);
-      return errorRedirect("internal_error");
-    }
-
-    setSessionCookie(c, sessionResult.value.token, sessionResult.value.expiresAt, c.env);
-
-    return c.redirect(c.env.ALLOWED_ORIGIN);
-  });
+  auth.get(`/${provider}/callback`, optionalAuth, (c) => handleOAuthCallback(c, provider));
 }
 
 oauthRoutes("discord");

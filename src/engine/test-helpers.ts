@@ -1,7 +1,17 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import type { UnitInstance, EnemyTeam, BattleResult } from "../shared/types";
+import type {
+  UnitInstance,
+  BattleUnitSnapshot,
+  EnemyTeam,
+  BattleResult,
+  LogSegment,
+} from "../shared/types";
 import type { Rng } from "./rng";
 import { createSeededRng } from "./rng";
+
+export function segmentsToPlainText(segments: LogSegment[]): string {
+  return segments.map((s) => (typeof s === "string" ? s : s.text)).join("");
+}
 
 /** トークンはハンドラ登録が構造的に不可能なため、副作用なしのテスト用IDとして使える */
 export const INERT_UNIT_ID = "token" as const;
@@ -12,11 +22,11 @@ export function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
     name: "疫病ネズミ",
     baseAtk: 2,
     baseHp: 1,
+    buffAtk: 0,
+    buffHp: 0,
     tier: 1,
     skillText: "",
     lore: "",
-    atk: 2,
-    hp: 1,
     level: 1,
     exp: 0,
     equip: null,
@@ -27,7 +37,19 @@ export function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
 }
 
 export function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit {
-  return { ...makeUnit(overrides), skillUses: 0, equipUses: 0, ...overrides };
+  const unit = makeUnit(overrides);
+  const atk = unit.baseAtk + unit.buffAtk;
+  const hp = unit.baseHp + unit.buffHp;
+  return {
+    ...unit,
+    atk,
+    hp,
+    battleBaseAtk: atk,
+    battleBaseHp: hp,
+    skillUses: 0,
+    equipUses: 0,
+    ...overrides,
+  };
 }
 
 export function makeContext(
@@ -47,6 +69,20 @@ export function makeContext(
     lastBattleResult,
     opCount: 0,
     opLimitExceeded: false,
+  };
+}
+
+export function makeSnapshot(overrides: Partial<BattleUnitSnapshot> = {}): BattleUnitSnapshot {
+  const unit = makeUnit(overrides as Partial<UnitInstance>);
+  const atk = unit.baseAtk + unit.buffAtk;
+  const hp = unit.baseHp + unit.buffHp;
+  return {
+    ...unit,
+    atk,
+    hp,
+    battleBaseAtk: atk,
+    battleBaseHp: hp,
+    ...overrides,
   };
 }
 
