@@ -3,13 +3,8 @@ vi.mock("../engine/audio", () => ({
   playSE: vi.fn(),
 }));
 
-vi.mock("../api/shop-client", () => ({
-  undoAction: vi.fn(),
-}));
-
 import { undoLastAction } from "./undo-actions";
 import { playSE } from "../engine/audio";
-import { undoAction as apiUndoAction } from "../api/shop-client";
 import {
   blood,
   sanity,
@@ -27,8 +22,7 @@ import {
   phase,
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
-import { ok, err } from "../../shared/errors";
-import { makeShopState, toBoardUnit } from "./test-helpers";
+import { makeShopState, toBoardUnit, stubFetch, shopRoute } from "./test-helpers";
 
 beforeEach(() => {
   phase.value = "SHOP";
@@ -45,27 +39,24 @@ beforeEach(() => {
   canUndo.value = true;
   shopLocked.value = false;
   currentRunId.value = "test-run-id";
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe("undoLastAction", () => {
   it("calls API and restores signals from response", async () => {
     const restoredUnit = makeUnit({ uid: "u1", baseAtk: 3 });
     const restoredShopUnit = makeUnit({ uid: "s1" });
-    vi.mocked(apiUndoAction).mockResolvedValue(
-      ok(
-        makeShopState({
-          blood: 10,
-          sanity: 5,
-          board: [toBoardUnit(restoredUnit), null, null, null, null],
-          shopUnits: [{ unit: toBoardUnit(restoredShopUnit), frozen: false, eventSourced: false }],
-          freeRoll: false,
-          cultistUsed: false,
-          rotRingUses: 0,
-          canUndo: false,
-        }),
-      ),
-    );
+    const state = makeShopState({
+      blood: 10,
+      sanity: 5,
+      board: [toBoardUnit(restoredUnit), null, null, null, null],
+      shopUnits: [{ unit: toBoardUnit(restoredShopUnit), frozen: false, eventSourced: false }],
+      freeRoll: false,
+      cultistUsed: false,
+      rotRingUses: 0,
+      canUndo: false,
+    });
+    stubFetch(shopRoute(state));
 
     blood.value = 0;
     sanity.value = 0;
@@ -83,7 +74,7 @@ describe("undoLastAction", () => {
   });
 
   it("clears selection after undo", async () => {
-    vi.mocked(apiUndoAction).mockResolvedValue(ok(makeShopState({ canUndo: false })));
+    stubFetch(shopRoute(makeShopState({ canUndo: false })));
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
     undoLastAction();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
@@ -91,42 +82,46 @@ describe("undoLastAction", () => {
   });
 
   it("sets canUndo to false after undo (single undo, not stack)", async () => {
-    vi.mocked(apiUndoAction).mockResolvedValue(ok(makeShopState({ canUndo: false })));
+    stubFetch(shopRoute(makeShopState({ canUndo: false })));
     undoLastAction();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(canUndo.value).toBe(false);
   });
 
   it("does nothing when canUndo is false", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     canUndo.value = false;
     blood.value = 7;
     undoLastAction();
     expect(blood.value).toBe(7);
-    expect(apiUndoAction).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing when shopLocked", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
     undoLastAction();
-    expect(apiUndoAction).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
     undoLastAction();
-    expect(apiUndoAction).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("plays select sound effect on success", async () => {
-    vi.mocked(apiUndoAction).mockResolvedValue(ok(makeShopState()));
+    stubFetch(shopRoute(makeShopState()));
     undoLastAction();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(vi.mocked(playSE)).toHaveBeenCalledWith("select");
   });
 
   it("plays error on API failure", async () => {
-    vi.mocked(apiUndoAction).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "fail" }), { status: 500 })),
     );
     undoLastAction();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));

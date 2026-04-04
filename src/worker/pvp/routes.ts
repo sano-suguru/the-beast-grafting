@@ -21,6 +21,7 @@ import { findOpponent } from "./matchmaking";
 import { jsonBody, getParsedBody, bodyField } from "../parse-json";
 import { internalError } from "../error-response";
 import { validateSnapshotBody, validateRound, validateNonEmptyString } from "./pvp-validation";
+import { markSeenAsync } from "../lore/lore-service";
 
 const pvp = new Hono<AuthEnv>();
 
@@ -239,6 +240,9 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
     if (saveError.kind === "infra") return internalError(c, saveError.label, saveError.cause);
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "battle_already_exists" } }, 409);
   }
+
+  const churchIds = opponent.units.filter((u) => u.isChurch).map((u) => u.id);
+  if (churchIds.length > 0) markSeenAsync(db, playerId, churchIds, "[pvp/battle:lore]");
 
   return c.json({ battleId, frames, result, opponent, seed: battleSeed });
 });

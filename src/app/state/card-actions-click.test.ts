@@ -3,20 +3,8 @@ vi.mock("../engine/audio", () => ({
   playSE: vi.fn(),
 }));
 
-vi.mock("../api/shop-client", () => ({
-  buyUnit: vi.fn(),
-  buyReward: vi.fn(),
-  equipItem: vi.fn(),
-  swapBoard: vi.fn(),
-}));
-
 import { handleCardClick } from "./card-actions";
 import { playSE } from "../engine/audio";
-import {
-  buyUnit as apiBuyUnit,
-  buyReward as apiBuyReward,
-  equipItem as apiEquipItem,
-} from "../api/shop-client";
 import {
   blood,
   board,
@@ -30,9 +18,8 @@ import {
   phase,
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
-import { ok } from "../../shared/errors";
 import type { ItemData, ShopSlot, ShopItemSlot } from "../types";
-import { makeShopState, toBoardUnit } from "./test-helpers";
+import { makeShopState, toBoardUnit, stubFetch, shopRoute } from "./test-helpers";
 
 function makeItem(overrides: Partial<ItemData> = {}): ItemData {
   return {
@@ -67,7 +54,7 @@ beforeEach(() => {
   lastBattleResult.value = null;
   shopLocked.value = false;
   currentRunId.value = "test-run-id";
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe("handleCardClick – selection / deselection", () => {
@@ -132,8 +119,8 @@ describe("handleCardClick – buy unit to empty slot", () => {
     shopUnits.value = [makeShopSlot({ id: "hound" })];
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
-    vi.mocked(apiBuyUnit).mockResolvedValue(
-      ok(
+    stubFetch(
+      shopRoute(
         makeShopState({
           blood: 7,
           board: [toBoardUnit(unit), null, null, null, null],
@@ -154,6 +141,7 @@ describe("handleCardClick – buy unit to empty slot", () => {
 
   it("plays error and does nothing when blood < 3", () => {
     blood.value = 2;
+    const spy = stubFetch(shopRoute(makeShopState()));
     const unit = makeUnit();
     shopUnits.value = [makeShopSlot()];
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
@@ -162,7 +150,7 @@ describe("handleCardClick – buy unit to empty slot", () => {
 
     expect(selection.value).toBeNull();
     expect(playSE).toHaveBeenCalledWith("error");
-    expect(apiBuyUnit).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
@@ -175,8 +163,8 @@ describe("handleCardClick – graft shop unit onto board unit", () => {
     selection.value = { type: "SHOP_UNIT", index: 0, item: shopUnit };
 
     const graftedUnit = makeUnit({ id: "hound", level: 2, uid: "board-1" });
-    vi.mocked(apiBuyUnit).mockResolvedValue(
-      ok(
+    stubFetch(
+      shopRoute(
         makeShopState({
           blood: 7,
           board: [toBoardUnit(graftedUnit), null, null, null, null],
@@ -194,6 +182,7 @@ describe("handleCardClick – graft shop unit onto board unit", () => {
   });
 
   it("plays error when IDs differ", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     const shopUnit = makeUnit({ id: "bat" });
     const boardUnit = makeUnit({ id: "hound" });
     board.value = [boardUnit, null, null, null, null];
@@ -204,10 +193,11 @@ describe("handleCardClick – graft shop unit onto board unit", () => {
 
     expect(blood.value).toBe(10);
     expect(playSE).toHaveBeenCalledWith("error");
-    expect(apiBuyUnit).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("plays error when target is level 3", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     const shopUnit = makeUnit({ id: "hound" });
     const boardUnit = makeUnit({ id: "hound", level: 3 });
     board.value = [boardUnit, null, null, null, null];
@@ -218,7 +208,7 @@ describe("handleCardClick – graft shop unit onto board unit", () => {
 
     expect(blood.value).toBe(10);
     expect(playSE).toHaveBeenCalledWith("error");
-    expect(apiBuyUnit).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
@@ -230,9 +220,15 @@ describe("handleCardClick – equip item onto board unit", () => {
     shopItems.value = [makeShopItemSlot({ cost: 2, atk: 1, hp: 3, equip: "iron" })];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
 
-    const equippedUnit = makeUnit({ baseAtk: 5, baseHp: 5, buffAtk: 1, buffHp: 3, equip: "iron" });
-    vi.mocked(apiEquipItem).mockResolvedValue(
-      ok(
+    const equippedUnit = makeUnit({
+      baseAtk: 5,
+      baseHp: 5,
+      buffAtk: 1,
+      buffHp: 3,
+      equip: "iron",
+    });
+    stubFetch(
+      shopRoute(
         makeShopState({
           blood: 8,
           board: [toBoardUnit(equippedUnit), null, null, null, null],
@@ -254,6 +250,7 @@ describe("handleCardClick – equip item onto board unit", () => {
   });
 
   it("plays error when target slot is empty", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     const item = makeItem();
     shopItems.value = [makeShopItemSlot()];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
@@ -261,11 +258,12 @@ describe("handleCardClick – equip item onto board unit", () => {
     handleCardClick("BOARD_SLOT", 0, null);
 
     expect(playSE).toHaveBeenCalledWith("error");
-    expect(apiEquipItem).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("plays error when blood is insufficient", () => {
     blood.value = 1;
+    const spy = stubFetch(shopRoute(makeShopState()));
     const item = makeItem({ cost: 3 });
     const unit = makeUnit();
     board.value = [unit, null, null, null, null];
@@ -276,7 +274,7 @@ describe("handleCardClick – equip item onto board unit", () => {
 
     expect(blood.value).toBe(1);
     expect(playSE).toHaveBeenCalledWith("error");
-    expect(apiEquipItem).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
@@ -328,8 +326,8 @@ describe("handleCardClick – REWARD_UNIT buy to empty slot", () => {
     const unit = makeUnit({ id: "hound" });
     selection.value = { type: "REWARD_UNIT", index: 0, item: unit };
 
-    vi.mocked(apiBuyReward).mockResolvedValue(
-      ok(
+    stubFetch(
+      shopRoute(
         makeShopState({
           blood: 7,
           board: [toBoardUnit(unit), null, null, null, null],
@@ -356,8 +354,8 @@ describe("handleCardClick – REWARD_UNIT graft", () => {
     selection.value = { type: "REWARD_UNIT", index: 0, item: rewardUnit };
 
     const graftedUnit = makeUnit({ id: "hound", level: 2, uid: "board-1" });
-    vi.mocked(apiBuyReward).mockResolvedValue(
-      ok(
+    stubFetch(
+      shopRoute(
         makeShopState({
           blood: 7,
           board: [toBoardUnit(graftedUnit), null, null, null, null],
@@ -378,6 +376,7 @@ describe("handleCardClick – REWARD_UNIT graft", () => {
 describe("handleCardClick – REWARD_UNIT insufficient blood", () => {
   it("plays error when blood < 3", () => {
     blood.value = 2;
+    const spy = stubFetch(shopRoute(makeShopState()));
     const unit = makeUnit({ id: "hound" });
     selection.value = { type: "REWARD_UNIT", index: 0, item: unit };
 
@@ -385,6 +384,6 @@ describe("handleCardClick – REWARD_UNIT insufficient blood", () => {
 
     expect(selection.value).toBeNull();
     expect(playSE).toHaveBeenCalledWith("error");
-    expect(apiBuyReward).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });

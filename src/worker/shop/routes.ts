@@ -25,6 +25,8 @@ import {
   loadShopState,
   loadPrevRoundShop,
 } from "./shop-db";
+import { extractLoreUnitIds } from "../lore/lore-helpers";
+import { markSeenAsync } from "../lore/lore-service";
 import {
   validateRunId,
   validateIndex,
@@ -73,11 +75,21 @@ shopRoutes.post("/setup", requireAuth, jsonBody(), async (c) => {
   const insertResult = await upsertShopState(db, runId, state);
   if (insertResult.isErr()) return internalError(c, "[shop/setup:insert]", insertResult.error);
 
+  const seenIds = extractLoreUnitIds(state.board, state.shopUnits, state.rewardSlots);
+  markSeenAsync(db, playerId, seenIds, "[shop/setup:lore]");
+
   return c.json({ shop: toResponse(state, run.trophy) });
 });
 
 shopRoutes.post("/roll", requireAuth, jsonBody(), (c) =>
-  shopAction(c, (state, run) => executeRoll(state, run.originId)),
+  shopAction(
+    c,
+    (state, run) => executeRoll(state, run.originId),
+    (db, playerId, state) => {
+      const ids = extractLoreUnitIds(state.board, state.shopUnits, state.rewardSlots);
+      markSeenAsync(db, playerId, ids, "[shop/roll:lore]");
+    },
+  ),
 );
 
 shopRoutes.post("/buy", requireAuth, jsonBody(), (c) =>

@@ -45,6 +45,15 @@ CREATE UNIQUE INDEX `idx_snapshots_run_round` ON `board_snapshots` (`run_id`,`ro
 CREATE INDEX `idx_snapshots_round` ON `board_snapshots` (`round`);--> statement-breakpoint
 CREATE INDEX `idx_snapshots_player_id` ON `board_snapshots` (`player_id`);--> statement-breakpoint
 CREATE INDEX `idx_snapshots_created_at` ON `board_snapshots` (`created_at`);--> statement-breakpoint
+CREATE TABLE `lore_entries` (
+	`player_id` text NOT NULL,
+	`unit_id` text NOT NULL,
+	`seen_at` integer NOT NULL,
+	`mastered_at` integer,
+	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_lore_entries_pk` ON `lore_entries` (`player_id`,`unit_id`);--> statement-breakpoint
 CREATE TABLE `players` (
 	`id` text PRIMARY KEY NOT NULL,
 	`display_name` text NOT NULL,

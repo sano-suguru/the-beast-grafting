@@ -12,6 +12,7 @@ import { requireAuth } from "../auth/middleware";
 import type { AuthEnv } from "../auth/types";
 import { jsonBody, getParsedBody, bodyField } from "../parse-json";
 import { internalError } from "../error-response";
+import { markMasteredAsync } from "../lore/lore-service";
 import { generateShopSeed } from "../utils/seed";
 import {
   consumeAndAdvance,
@@ -188,6 +189,13 @@ runRoutes.post("/advance", requireAuth, jsonBody(), async (c) => {
       { error: { type: "PRECONDITION_FAILED", reason: "battle_already_consumed" } },
       409,
     );
+
+  if (fields.status === "won") {
+    const lv3Ids = fields.board
+      .filter((u): u is BoardUnit => u !== null && u.level === 3 && !u.isChurch)
+      .map((u) => u.id);
+    if (lv3Ids.length > 0) markMasteredAsync(db, playerId, lv3Ids, "[run/advance:lore]");
+  }
 
   return c.json({
     run: {

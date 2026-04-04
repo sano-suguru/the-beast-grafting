@@ -41,12 +41,9 @@ export type HighlightKind = "graft" | "swap" | "move" | "passive-graft" | false;
 
 export type OnboardingStep = "buy" | "graft" | "roll" | "battle" | null;
 
-export interface LoreEntry {
-  seen: boolean;
-  mastered: boolean;
-}
+export type { LoreResponse as LoreDb } from "../../shared/api-types";
 
-export type LoreDb = Record<string, LoreEntry>;
+export type LoreEntry = { mastered: boolean };
 
 export type SoundType =
   | "select"

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "67132ecb-b16e-49ac-88b1-f0d655e31daf",
+  "id": "96b5bab3-d88f-4098-bbe6-92ed5b164e5d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_providers": {
@@ -292,6 +292,60 @@
           "tableFrom": "board_snapshots",
           "tableTo": "runs",
           "columnsFrom": ["run_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "lore_entries": {
+      "name": "lore_entries",
+      "columns": {
+        "player_id": {
+          "name": "player_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "unit_id": {
+          "name": "unit_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "seen_at": {
+          "name": "seen_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mastered_at": {
+          "name": "mastered_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_lore_entries_pk": {
+          "name": "idx_lore_entries_pk",
+          "columns": ["player_id", "unit_id"],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "lore_entries_player_id_players_id_fk": {
+          "name": "lore_entries_player_id_players_id_fk",
+          "tableFrom": "lore_entries",
+          "tableTo": "players",
+          "columnsFrom": ["player_id"],
           "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"

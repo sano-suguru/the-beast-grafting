@@ -3,30 +3,17 @@ vi.mock("../engine/audio", () => ({
   playSE: vi.fn(),
 }));
 
-vi.mock("../api/fetch", async () => {
+vi.mock("../api/fetch", async (importOriginal) => {
+  const original = await importOriginal();
   const { ok } = await import("../../shared/errors");
   return {
-    apiFetch: vi.fn(),
+    ...(original as Record<string, unknown>),
     ensureSession: vi.fn().mockResolvedValue(ok(undefined)),
   };
 });
 
-vi.mock("../api/run-client", () => ({
-  startRun: vi.fn(),
-  getCurrentRun: vi.fn(),
-  advanceRun: vi.fn(),
-  retireRun: vi.fn(),
-}));
-
-vi.mock("../api/shop-client", () => ({
-  setupShop: vi.fn(),
-}));
-
 import { startGame, resumeOrSelectOrigin, retireGame } from "./game-actions";
-import { startRun, getCurrentRun, advanceRun, retireRun } from "../api/run-client";
-import { setupShop as apiSetupShop } from "../api/shop-client";
 import { tutorialDone } from "./tutorial";
-import { ok, err } from "../../shared/errors";
 import {
   phase,
   origin,
@@ -68,7 +55,14 @@ import {
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
 import type { CurrentRunState } from "../../shared/api-types";
-import { makeShopState, toBoardUnit } from "./test-helpers";
+import {
+  makeShopState,
+  toBoardUnit,
+  stubFetch,
+  httpError,
+  toUrlString,
+  type RouteHandler,
+} from "./test-helpers";
 
 function defaultRun(overrides: Partial<CurrentRunState> = {}): CurrentRunState {
   return {
@@ -83,24 +77,59 @@ function defaultRun(overrides: Partial<CurrentRunState> = {}): CurrentRunState {
   };
 }
 
+const defaultShopUnits = [
+  { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false, eventSourced: false },
+  { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false, eventSourced: false },
+  { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false, eventSourced: false },
+] as const;
+
+function resolveRunOrError(value: CurrentRunState | number | undefined, fallback: CurrentRunState) {
+  if (typeof value === "number") return httpError(value);
+  return { run: value ?? fallback };
+}
+
+interface GameRouteOpts {
+  currentRun?: CurrentRunState | null;
+  startRun?: CurrentRunState;
+  advanceRun?: CurrentRunState | number;
+  shopState?: Parameters<typeof makeShopState>[0];
+  retireRun?: number;
+}
+
+function gameRoutes(opts?: GameRouteOpts): RouteHandler {
+  const routes: Record<string, () => unknown> = {
+    "/api/run/current": () => ({ run: opts?.currentRun ?? null }),
+    "/api/run/start": () => resolveRunOrError(opts?.startRun, defaultRun()),
+    "/api/run/advance": () => resolveRunOrError(opts?.advanceRun, defaultRun()),
+    "/api/run/retire": () => (opts?.retireRun ? httpError(opts.retireRun) : { ok: true }),
+    "/api/lore": () => ({ lore: {} }),
+  };
+  return (url) => {
+    if (routes[url]) return routes[url]();
+    if (url.startsWith("/api/shop/"))
+      return { shop: makeShopState({ shopUnits: [...defaultShopUnits], ...opts?.shopState }) };
+    return undefined;
+  };
+}
+
+function fetchCallsTo(spy: ReturnType<typeof stubFetch>, path: string) {
+  return spy.mock.calls.filter((c) => {
+    const url = c[0];
+    return typeof url === "string" && url.includes(path);
+  });
+}
+
+function fetchBodyOf(spy: ReturnType<typeof stubFetch>, path: string) {
+  const call = fetchCallsTo(spy, path)[0];
+  return call?.[1]?.body ? JSON.parse(call[1].body as string) : undefined;
+}
+
 beforeEach(() => {
   resetAllSignals();
   tutorialDone.value = false;
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 
-  vi.mocked(getCurrentRun).mockResolvedValue(ok(null));
-  vi.mocked(startRun).mockResolvedValue(ok(defaultRun()));
-  vi.mocked(apiSetupShop).mockResolvedValue(
-    ok(
-      makeShopState({
-        shopUnits: [
-          { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false, eventSourced: false },
-          { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false, eventSourced: false },
-          { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false, eventSourced: false },
-        ],
-      }),
-    ),
-  );
+  stubFetch(gameRoutes());
 });
 
 describe("startGame", () => {
@@ -110,7 +139,7 @@ describe("startGame", () => {
   });
 
   it("sets origin", async () => {
-    vi.mocked(startRun).mockResolvedValue(ok(defaultRun({ originId: "surgeon" })));
+    stubFetch(gameRoutes({ startRun: defaultRun({ originId: "surgeon" }) }));
     await startGame("surgeon");
     expect(origin.value).toBe("surgeon");
   });
@@ -168,16 +197,16 @@ describe("startGame", () => {
 
   it("returning player gets shop from API", async () => {
     tutorialDone.value = true;
-    vi.mocked(apiSetupShop).mockResolvedValue(
-      ok(
-        makeShopState({
+    stubFetch(
+      gameRoutes({
+        shopState: {
           shopUnits: [
             { unit: toBoardUnit(makeUnit({ id: "hound" })), frozen: false, eventSourced: false },
             { unit: toBoardUnit(makeUnit({ id: "bat" })), frozen: false, eventSourced: false },
             { unit: toBoardUnit(makeUnit({ id: "rat" })), frozen: false, eventSourced: false },
           ],
-        }),
-      ),
+        },
+      }),
     );
     await startGame("thief");
     expect(shopUnits.value.filter(Boolean).length).toBe(3);
@@ -189,8 +218,7 @@ describe("startGame", () => {
     expect(activeEvent.value).toBeNull();
 
     tutorialDone.value = true;
-    vi.mocked(startRun).mockResolvedValue(ok(defaultRun()));
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState()));
+    stubFetch(gameRoutes());
     await startGame("thief");
     expect(activeEvent.value).toBeNull();
   });
@@ -201,38 +229,45 @@ describe("startGame", () => {
   });
 
   it("sets currentRunId to null on server error fallback", async () => {
-    vi.mocked(startRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
+    stubFetch((url) => {
+      if (url === "/api/run/start") return httpError(500);
+      if (url === "/api/run/current") return { run: null };
+      return undefined;
+    });
     await startGame("thief");
     expect(currentRunId.value).toBeNull();
   });
 
-  it("calls startRun with originId", async () => {
+  it("sends originId to start endpoint", async () => {
+    const spy = stubFetch(gameRoutes());
     await startGame("surgeon");
-    expect(startRun).toHaveBeenCalledWith("surgeon");
+    expect(fetchBodyOf(spy, "/api/run/start")).toEqual({ originId: "surgeon" });
   });
 
   it("sets startGameError on server error without entering SHOP", async () => {
-    vi.mocked(startRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
+    stubFetch((url) => {
+      if (url === "/api/run/start") return httpError(500);
+      if (url === "/api/run/current") return { run: null };
+      return undefined;
+    });
     await startGame("thief");
     expect(phase.value).toBe("TITLE");
-    expect(startGameError.value).toEqual({ type: "API_FETCH_FAILED", status: 500, cause: null });
+    expect(startGameError.value).toMatchObject({ type: "API_FETCH_FAILED", status: 500 });
     expect(gameLoading.value).toBe(false);
   });
 
   it("resumes existing run when getCurrentRun returns active run", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(ok(defaultRun({ round: 3, sanity: 4, trophy: 2 })));
-    vi.mocked(apiSetupShop).mockResolvedValue(
-      ok(makeShopState({ round: 3, sanity: 4, trophy: 2 })),
+    const spy = stubFetch(
+      gameRoutes({
+        currentRun: defaultRun({ round: 3, sanity: 4, trophy: 2 }),
+        shopState: { round: 3, sanity: 4, trophy: 2 },
+      }),
     );
     await startGame("thief");
     expect(round.value).toBe(3);
     expect(sanity.value).toBe(4);
     expect(trophy.value).toBe(2);
-    expect(startRun).not.toHaveBeenCalled();
+    expect(fetchCallsTo(spy, "/api/run/start")).toHaveLength(0);
   });
 
   it("prevents double startGame via gameLoading", async () => {
@@ -242,28 +277,28 @@ describe("startGame", () => {
   });
 
   it("auto-advances when pendingBattleId exists", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(
-      ok(defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" })),
+    const spy = stubFetch(
+      gameRoutes({
+        currentRun: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        advanceRun: defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null }),
+        shopState: { round: 3, trophy: 2 },
+      }),
     );
-    vi.mocked(advanceRun).mockResolvedValue(
-      ok(defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null })),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 3, trophy: 2 })));
     await startGame("thief");
-    expect(advanceRun).toHaveBeenCalledWith("battle-1");
+    expect(fetchBodyOf(spy, "/api/run/advance")).toEqual({ battleId: "battle-1" });
     expect(round.value).toBe(3);
     expect(trophy.value).toBe(2);
     expect(recoveryWarning.value).toBeNull();
   });
 
   it("falls back to current run state when advance fails on pending battle", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(
-      ok(defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" })),
+    stubFetch(
+      gameRoutes({
+        currentRun: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        advanceRun: 500,
+        shopState: { round: 2 },
+      }),
     );
-    vi.mocked(advanceRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 2 })));
     await startGame("thief");
     expect(round.value).toBe(2);
     expect(phase.value).toBe("SHOP");
@@ -271,17 +306,21 @@ describe("startGame", () => {
   });
 
   it("recovers via re-fetch when advance returns 409", async () => {
-    vi.mocked(getCurrentRun)
-      .mockResolvedValueOnce(
-        ok(defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" })),
-      )
-      .mockResolvedValueOnce(
-        ok(defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null })),
-      );
-    vi.mocked(advanceRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 409, cause: null }),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 3, trophy: 2 })));
+    let currentRunCalls = 0;
+    stubFetch((url) => {
+      if (url === "/api/run/current") {
+        currentRunCalls++;
+        if (currentRunCalls === 1)
+          return {
+            run: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+          };
+        return { run: defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null }) };
+      }
+      if (url === "/api/run/advance") return httpError(409);
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 3, trophy: 2 }) };
+      if (url === "/api/lore") return { lore: {} };
+      return undefined;
+    });
     await startGame("thief");
     expect(round.value).toBe(3);
     expect(trophy.value).toBe(2);
@@ -289,15 +328,21 @@ describe("startGame", () => {
   });
 
   it("falls back when 409 re-fetch also fails", async () => {
-    vi.mocked(getCurrentRun)
-      .mockResolvedValueOnce(
-        ok(defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" })),
-      )
-      .mockResolvedValueOnce(err({ type: "API_FETCH_FAILED", status: 500, cause: null }));
-    vi.mocked(advanceRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 409, cause: null }),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 2 })));
+    let currentRunCalls = 0;
+    stubFetch((url) => {
+      if (url === "/api/run/current") {
+        currentRunCalls++;
+        if (currentRunCalls === 1)
+          return {
+            run: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+          };
+        return httpError(500);
+      }
+      if (url === "/api/run/advance") return httpError(409);
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 2 }) };
+      if (url === "/api/lore") return { lore: {} };
+      return undefined;
+    });
     await startGame("thief");
     expect(round.value).toBe(2);
     expect(recoveryWarning.value).toBe("前回の戦闘結果を反映できませんでした");
@@ -306,9 +351,11 @@ describe("startGame", () => {
 
 describe("resumeOrSelectOrigin", () => {
   it("goes to SHOP when active run exists", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(ok(defaultRun({ round: 3, sanity: 4, trophy: 2 })));
-    vi.mocked(apiSetupShop).mockResolvedValue(
-      ok(makeShopState({ round: 3, sanity: 4, trophy: 2 })),
+    stubFetch(
+      gameRoutes({
+        currentRun: defaultRun({ round: 3, sanity: 4, trophy: 2 }),
+        shopState: { round: 3, sanity: 4, trophy: 2 },
+      }),
     );
     await resumeOrSelectOrigin();
     expect(phase.value).toBe("SHOP");
@@ -318,22 +365,21 @@ describe("resumeOrSelectOrigin", () => {
   });
 
   it("goes to ORIGIN when no active run", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(ok(null));
     await resumeOrSelectOrigin();
     expect(phase.value).toBe("ORIGIN");
   });
 
   it("goes to ORIGIN and sets startGameError when getCurrentRun errors", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
+    stubFetch((url) => {
+      if (url === "/api/run/current") return httpError(500);
+      return undefined;
+    });
     await resumeOrSelectOrigin();
     expect(phase.value).toBe("ORIGIN");
-    expect(startGameError.value).toEqual({ type: "API_FETCH_FAILED", status: 500, cause: null });
+    expect(startGameError.value).toMatchObject({ type: "API_FETCH_FAILED", status: 500 });
   });
 
   it("does not set startGameError when no run exists", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(ok(null));
     await resumeOrSelectOrigin();
     expect(phase.value).toBe("ORIGIN");
     expect(startGameError.value).toBeNull();
@@ -346,28 +392,28 @@ describe("resumeOrSelectOrigin", () => {
   });
 
   it("recovers pending battle before resuming", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(
-      ok(defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" })),
+    const spy = stubFetch(
+      gameRoutes({
+        currentRun: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        advanceRun: defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null }),
+        shopState: { round: 3, trophy: 2 },
+      }),
     );
-    vi.mocked(advanceRun).mockResolvedValue(
-      ok(defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null })),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 3, trophy: 2 })));
     await resumeOrSelectOrigin();
-    expect(advanceRun).toHaveBeenCalledWith("battle-1");
+    expect(fetchBodyOf(spy, "/api/run/advance")).toEqual({ battleId: "battle-1" });
     expect(round.value).toBe(3);
     expect(trophy.value).toBe(2);
     expect(recoveryWarning.value).toBeNull();
   });
 
   it("sets recoveryWarning when pending battle recovery fails", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(
-      ok(defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" })),
+    stubFetch(
+      gameRoutes({
+        currentRun: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        advanceRun: 500,
+        shopState: { round: 2 },
+      }),
     );
-    vi.mocked(advanceRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 2 })));
     await resumeOrSelectOrigin();
     expect(phase.value).toBe("SHOP");
     expect(round.value).toBe(2);
@@ -375,17 +421,21 @@ describe("resumeOrSelectOrigin", () => {
   });
 
   it("recovers via re-fetch when advance returns 409", async () => {
-    vi.mocked(getCurrentRun)
-      .mockResolvedValueOnce(
-        ok(defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" })),
-      )
-      .mockResolvedValueOnce(
-        ok(defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null })),
-      );
-    vi.mocked(advanceRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 409, cause: null }),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 3, trophy: 2 })));
+    let currentRunCalls = 0;
+    stubFetch((url) => {
+      if (url === "/api/run/current") {
+        currentRunCalls++;
+        if (currentRunCalls === 1)
+          return {
+            run: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+          };
+        return { run: defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null }) };
+      }
+      if (url === "/api/run/advance") return httpError(409);
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 3, trophy: 2 }) };
+      if (url === "/api/lore") return { lore: {} };
+      return undefined;
+    });
     await resumeOrSelectOrigin();
     expect(round.value).toBe(3);
     expect(trophy.value).toBe(2);
@@ -393,29 +443,34 @@ describe("resumeOrSelectOrigin", () => {
   });
 
   it("falls back when 409 re-fetch also fails", async () => {
-    vi.mocked(getCurrentRun)
-      .mockResolvedValueOnce(
-        ok(defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" })),
-      )
-      .mockResolvedValueOnce(err({ type: "API_FETCH_FAILED", status: 500, cause: null }));
-    vi.mocked(advanceRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 409, cause: null }),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 2 })));
+    let currentRunCalls = 0;
+    stubFetch((url) => {
+      if (url === "/api/run/current") {
+        currentRunCalls++;
+        if (currentRunCalls === 1)
+          return {
+            run: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+          };
+        return httpError(500);
+      }
+      if (url === "/api/run/advance") return httpError(409);
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 2 }) };
+      if (url === "/api/lore") return { lore: {} };
+      return undefined;
+    });
     await resumeOrSelectOrigin();
     expect(round.value).toBe(2);
     expect(recoveryWarning.value).toBe("前回の戦闘結果を反映できませんでした");
   });
 
   it("goes to ORIGIN when run has invalid originId", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(ok(defaultRun({ originId: null })));
+    stubFetch(gameRoutes({ currentRun: defaultRun({ originId: null }) }));
     await resumeOrSelectOrigin();
     expect(phase.value).toBe("ORIGIN");
     expect(gameLoading.value).toBe(false);
   });
 
   it("resets gameLoading after completion", async () => {
-    vi.mocked(getCurrentRun).mockResolvedValue(ok(null));
     await resumeOrSelectOrigin();
     expect(gameLoading.value).toBe(false);
   });
@@ -423,7 +478,6 @@ describe("resumeOrSelectOrigin", () => {
 
 describe("retireGame", () => {
   beforeEach(() => {
-    vi.mocked(retireRun).mockResolvedValue(ok(undefined));
     phase.value = "SHOP";
     currentRunId.value = "run-1";
     origin.value = "thief";
@@ -496,10 +550,11 @@ describe("retireGame", () => {
   });
 
   it("resets when API fails but server confirms retire succeeded", async () => {
-    vi.mocked(retireRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
-    vi.mocked(getCurrentRun).mockResolvedValue(ok(null));
+    stubFetch((url) => {
+      if (url === "/api/run/retire") return httpError(500);
+      if (url === "/api/run/current") return { run: null };
+      return undefined;
+    });
     await retireGame();
     expect(phase.value).toBe("TITLE");
     expect(currentRunId.value).toBeNull();
@@ -508,39 +563,48 @@ describe("retireGame", () => {
 
   it("sets shopActionError when retire truly failed", async () => {
     showRetireConfirm.value = true;
-    vi.mocked(retireRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
-    vi.mocked(getCurrentRun).mockResolvedValue(ok(defaultRun()));
+    stubFetch((url) => {
+      if (url === "/api/run/retire") return httpError(500);
+      if (url === "/api/run/current") return { run: defaultRun() };
+      return undefined;
+    });
     await retireGame();
     expect(phase.value).toBe("SHOP");
-    expect(shopActionError.value).toEqual({ type: "API_FETCH_FAILED", status: 500, cause: null });
+    expect(shopActionError.value).toMatchObject({ type: "API_FETCH_FAILED", status: 500 });
     expect(showRetireConfirm.value).toBe(true);
   });
 
   it("sets shopActionError when verification also fails", async () => {
     showRetireConfirm.value = true;
-    vi.mocked(retireRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
-    vi.mocked(getCurrentRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
+    stubFetch((url) => {
+      if (url === "/api/run/retire") return httpError(500);
+      if (url === "/api/run/current") return httpError(500);
+      return undefined;
+    });
     await retireGame();
     expect(phase.value).toBe("SHOP");
-    expect(shopActionError.value).toEqual({ type: "API_FETCH_FAILED", status: 500, cause: null });
+    expect(shopActionError.value).toMatchObject({ type: "API_FETCH_FAILED", status: 500 });
     expect(showRetireConfirm.value).toBe(true);
   });
 
   it("skips when already retiring", async () => {
-    // 1回目を開始（resolveされていないPromiseでブロック）
-    let resolve!: (v: ReturnType<typeof retireRun> extends Promise<infer R> ? R : never) => void;
-    vi.mocked(retireRun).mockReturnValue(new Promise((r) => (resolve = r)));
+    let resolveFetch!: (v: Response) => void;
+    const spy = vi.fn((url: string | URL | Request) => {
+      const u = toUrlString(url);
+      if (u === "/api/run/retire")
+        return new Promise<Response>((r) => {
+          resolveFetch = r;
+        });
+      if (u === "/api/run/current")
+        return Promise.resolve(new Response(JSON.stringify({ run: null })));
+      return Promise.resolve(new Response(JSON.stringify({})));
+    });
+    vi.stubGlobal("fetch", spy);
+
     const first = retireGame();
-    // 2回目は即座にスキップされる
     await retireGame();
-    expect(retireRun).toHaveBeenCalledTimes(1);
-    resolve(ok(undefined));
+    expect(fetchCallsTo(spy, "/retire")).toHaveLength(1);
+    resolveFetch(new Response(JSON.stringify({ ok: true })));
     await first;
   });
 

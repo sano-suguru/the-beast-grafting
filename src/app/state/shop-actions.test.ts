@@ -3,22 +3,7 @@ vi.mock("../engine/audio", () => ({
   playSE: vi.fn(),
 }));
 
-vi.mock("../api/shop-client", () => ({
-  setupShop: vi.fn(),
-  rollShop: vi.fn(),
-  freezeSlot: vi.fn(),
-  sellUnit: vi.fn(),
-  useCultist: vi.fn(),
-}));
-
 import { playSE } from "../engine/audio";
-import {
-  setupShop as apiSetupShop,
-  rollShop as apiRollShop,
-  freezeSlot as apiFreezeSlot,
-  sellUnit as apiSellUnit,
-  useCultist as apiUseCultist,
-} from "../api/shop-client";
 import {
   setupNight,
   rollShop,
@@ -49,8 +34,7 @@ import {
   phase,
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
-import { ok, err } from "../../shared/errors";
-import { makeShopState, toBoardUnit } from "./test-helpers";
+import { makeShopState, toBoardUnit, stubFetch, shopRoute } from "./test-helpers";
 
 beforeEach(() => {
   phase.value = "SHOP";
@@ -73,8 +57,15 @@ beforeEach(() => {
   currentRunId.value = "test-run-id";
   rotRingUses.value = 0;
   showHelpOverlay.value = false;
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
+
+function stubError() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "fail" }), { status: 500 })),
+  );
+}
 
 describe("setupNight", () => {
   it("applies shop state from API response", async () => {
@@ -85,7 +76,7 @@ describe("setupNight", () => {
       freeRoll: true,
       round: 2,
     });
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(state));
+    stubFetch(shopRoute(state));
 
     await setupNight("test-run-id", true);
 
@@ -96,47 +87,43 @@ describe("setupNight", () => {
     expect(shopUnits.value[0]!.unit.id).toBe("rat");
   });
 
-  it("calls apiSetupShop with runId and tutorial flag", async () => {
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState()));
+  it("sends runId and tutorial flag to the server", async () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     await setupNight("run-123", true);
-    expect(apiSetupShop).toHaveBeenCalledWith("run-123", true);
+    const body = JSON.parse(spy.mock.calls[0]![1]!.body as string);
+    expect(spy.mock.calls[0]![0]).toBe("/api/shop/setup");
+    expect(body).toEqual({ runId: "run-123", useTutorialShop: true });
   });
 
   it("clears selection via applyShopState", async () => {
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState()));
+    stubFetch(shopRoute(makeShopState()));
     await setupNight("test-run-id");
     expect(selection.value).toBeNull();
   });
 
   it("sets currentEnemyTeam to null via applyShopState", async () => {
-    currentEnemyTeam.value = {
-      teamName: "test",
-      teamType: "同業者",
-      units: [],
-    };
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState()));
+    currentEnemyTeam.value = { teamName: "test", teamType: "同業者", units: [] };
+    stubFetch(shopRoute(makeShopState()));
     await setupNight("test-run-id");
     expect(currentEnemyTeam.value).toBeNull();
   });
 
   it("resets cultistUsed from API response", async () => {
     cultistUsed.value = true;
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ cultistUsed: false })));
+    stubFetch(shopRoute(makeShopState({ cultistUsed: false })));
     await setupNight("test-run-id");
     expect(cultistUsed.value).toBe(false);
   });
 
   it("plays error on API failure", async () => {
-    vi.mocked(apiSetupShop).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
+    stubError();
     await setupNight("test-run-id");
     expect(playSE).toHaveBeenCalledWith("error");
   });
 
   it("sets shopLocked during call and clears after", async () => {
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState()));
+    stubFetch(shopRoute(makeShopState()));
     await setupNight("test-run-id");
     expect(shopLocked.value).toBe(false);
   });
@@ -145,8 +132,8 @@ describe("setupNight", () => {
 describe("rollShop", () => {
   it("calls API and applies response", async () => {
     const unit = makeUnit({ id: "bat" });
-    vi.mocked(apiRollShop).mockResolvedValue(
-      ok(
+    stubFetch(
+      shopRoute(
         makeShopState({
           blood: 9,
           shopUnits: [{ unit: toBoardUnit(unit), frozen: false, eventSourced: false }],
@@ -161,35 +148,36 @@ describe("rollShop", () => {
   });
 
   it("does nothing when shopLocked", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
     rollShop();
-    expect(apiRollShop).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing when activeEvent has lockRoll", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     activeEvent.value = { lockRoll: true } as typeof activeEvent.value;
     rollShop();
-    expect(apiRollShop).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
     rollShop();
-    expect(apiRollShop).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("advances onboardingStep from roll to battle", async () => {
     onboardingStep.value = "roll";
-    vi.mocked(apiRollShop).mockResolvedValue(ok(makeShopState()));
+    stubFetch(shopRoute(makeShopState()));
     rollShop();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(onboardingStep.value).toBe("battle");
   });
 
   it("plays error on API failure", async () => {
-    vi.mocked(apiRollShop).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
+    stubError();
     rollShop();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(playSE).toHaveBeenCalledWith("error");
@@ -198,8 +186,8 @@ describe("rollShop", () => {
 
 describe("handleFreezeClick", () => {
   it("calls API with correct params for unit freeze", async () => {
-    vi.mocked(apiFreezeSlot).mockResolvedValue(
-      ok(
+    const spy = stubFetch(
+      shopRoute(
         makeShopState({
           shopUnits: [{ unit: toBoardUnit(makeUnit()), frozen: true, eventSourced: false }],
         }),
@@ -207,7 +195,8 @@ describe("handleFreezeClick", () => {
     );
     handleFreezeClick("unit", 0, true);
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(apiFreezeSlot).toHaveBeenCalledWith("test-run-id", "unit", 0, true);
+    const body = JSON.parse(spy.mock.calls[0]![1]!.body as string);
+    expect(body).toMatchObject({ runId: "test-run-id", slotType: "unit", index: 0, frozen: true });
     expect(shopUnits.value[0]!.frozen).toBe(true);
   });
 
@@ -222,25 +211,24 @@ describe("handleFreezeClick", () => {
       skillText: "",
       lore: "",
     };
-    vi.mocked(apiFreezeSlot).mockResolvedValue(
-      ok(makeShopState({ shopItems: [{ item, frozen: true }] })),
-    );
+    stubFetch(shopRoute(makeShopState({ shopItems: [{ item, frozen: true }] })));
     handleFreezeClick("item", 0, true);
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(apiFreezeSlot).toHaveBeenCalledWith("test-run-id", "item", 0, true);
     expect(shopItems.value[0]!.frozen).toBe(true);
   });
 
   it("does nothing when shopLocked", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
     handleFreezeClick("unit", 0, true);
-    expect(apiFreezeSlot).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
     handleFreezeClick("unit", 0, true);
-    expect(apiFreezeSlot).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
@@ -249,9 +237,7 @@ describe("executeSellUnit", () => {
     const unit = makeUnit({ id: "hound" });
     board.value = [unit, null, null, null, null];
     selection.value = { type: "BOARD_UNIT", index: 0, item: unit };
-    vi.mocked(apiSellUnit).mockResolvedValue(
-      ok(makeShopState({ blood: 11, board: [null, null, null, null, null] })),
-    );
+    stubFetch(shopRoute(makeShopState({ blood: 11, board: [null, null, null, null, null] })));
     executeSellUnit();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(blood.value).toBe(11);
@@ -261,32 +247,33 @@ describe("executeSellUnit", () => {
   });
 
   it("does nothing without BOARD_UNIT selection", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     selection.value = null;
     executeSellUnit();
-    expect(apiSellUnit).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
     expect(playSE).toHaveBeenCalledWith("error");
   });
 
   it("does nothing when shopLocked", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
     executeSellUnit();
-    expect(apiSellUnit).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
     executeSellUnit();
-    expect(apiSellUnit).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
 describe("useCultistAbility", () => {
   it("calls API and applies response", async () => {
-    vi.mocked(apiUseCultist).mockResolvedValue(
-      ok(makeShopState({ blood: 13, sanity: 4, cultistUsed: true })),
-    );
+    stubFetch(shopRoute(makeShopState({ blood: 13, sanity: 4, cultistUsed: true })));
     useCultistAbility();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(blood.value).toBe(13);
@@ -296,21 +283,21 @@ describe("useCultistAbility", () => {
   });
 
   it("does nothing when shopLocked", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
     useCultistAbility();
-    expect(apiUseCultist).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
     useCultistAbility();
-    expect(apiUseCultist).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("plays error on API failure", async () => {
-    vi.mocked(apiUseCultist).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
+    stubError();
     useCultistAbility();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(playSE).toHaveBeenCalledWith("error");

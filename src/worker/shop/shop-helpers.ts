@@ -105,6 +105,8 @@ function isWithBoard(
 
 type ShopActionErr = { type: string; [key: string]: unknown };
 
+type AfterPersist = (db: DrizzleD1Database, playerId: string, state: ShopStateRow) => void;
+
 async function persistShopState(
   c: Context,
   db: DrizzleD1Database,
@@ -112,6 +114,7 @@ async function persistShopState(
   run: RunInfo,
   shopRow: { id: string; version: number },
   value: ShopActionOk,
+  afterPersist?: AfterPersist,
 ) {
   const newState = isWithBoard(value) ? value.state : value;
   const sanityChanged = newState.sanity !== run.sanity ? newState.sanity : undefined;
@@ -134,6 +137,8 @@ async function persistShopState(
     const snapError = await saveBoardSnapshot(db, playerId, run.id, run.round, value.finalBoard);
     if (snapError) return internalError(c, "[shop:snapshot]", snapError);
   }
+
+  afterPersist?.(db, playerId, newState);
 
   return c.json({ shop: toResponse(newState, run.trophy) });
 }
@@ -167,6 +172,7 @@ async function runShopAction(
   playerId: string,
   runId: string,
   handler: (state: ShopStateRow, run: RunInfo) => Result<ShopActionOk, ShopActionErr>,
+  afterPersist?: AfterPersist,
 ) {
   const loaded = await loadShopState(db, playerId, runId);
   if (loaded.type === "error") return internalError(c, loaded.label, loaded.error);
@@ -177,7 +183,7 @@ async function runShopAction(
   const result = handler(state, run);
   if (result.isErr()) return c.json({ error: result.error }, 400);
 
-  return persistShopState(c, db, playerId, run, shopRow, result.value);
+  return persistShopState(c, db, playerId, run, shopRow, result.value, afterPersist);
 }
 
 function parseContext(c: Context) {
@@ -191,10 +197,11 @@ function parseContext(c: Context) {
 export function shopAction(
   c: Context,
   handler: (state: ShopStateRow, run: RunInfo) => Result<ShopActionOk, ShopActionErr>,
+  afterPersist?: AfterPersist,
 ) {
   const { db, playerId, runId } = parseContext(c);
   if (!runId) return c.json(preconditionFailed("invalid_run_id"), 400);
-  return runShopAction(c, db, playerId, runId, handler);
+  return runShopAction(c, db, playerId, runId, handler, afterPersist);
 }
 
 interface HandlerArgs<T> {

@@ -3,19 +3,6 @@ vi.mock("../engine/audio", () => ({
   playSE: vi.fn(),
 }));
 
-vi.mock("../api/shop-client", () => ({
-  readyForBattle: vi.fn(),
-  setupShop: vi.fn(),
-}));
-
-vi.mock("../api/pvp-client", () => ({
-  requestBattle: vi.fn(),
-}));
-
-vi.mock("../api/run-client", () => ({
-  advanceRun: vi.fn(),
-}));
-
 import {
   startPreBattle,
   startActualBattle,
@@ -23,13 +10,7 @@ import {
   retryBattle,
   proceedFromBattleResult,
 } from "./battle-actions";
-import * as lore from "./lore";
-import { readyForBattle as apiReadyForBattle, setupShop as apiSetupShop } from "../api/shop-client";
-import { requestBattle } from "../api/pvp-client";
-import { advanceRun } from "../api/run-client";
-import { ok, err } from "../../shared/errors";
-import type { InfraError } from "../../shared/errors";
-import type { ShopStateResponse, RunState } from "../../shared/api-types";
+import type { ShopStateResponse, RunState, BattleResponse } from "../../shared/api-types";
 import {
   phase,
   round,
@@ -62,7 +43,8 @@ import {
   rotRingUses,
 } from "./game-store";
 import { makeUnit, makeSnapshot } from "../../engine/test-helpers";
-import { makeShopState as _makeShopState, toBoardUnit } from "./test-helpers";
+import { makeShopState as _makeShopState, toBoardUnit, stubFetch } from "./test-helpers";
+import type { RouteHandler } from "./test-helpers";
 
 function makeShopState(overrides: Partial<ShopStateResponse> = {}): ShopStateResponse {
   return _makeShopState({
@@ -71,7 +53,7 @@ function makeShopState(overrides: Partial<ShopStateResponse> = {}): ShopStateRes
   });
 }
 
-function defaultBattleResponse() {
+function defaultBattleResponse(): BattleResponse {
   return {
     battleId: "test-battle-id",
     frames: [
@@ -82,11 +64,11 @@ function defaultBattleResponse() {
         actions: {},
       },
     ],
-    result: "WIN" as const,
+    result: "WIN",
     opponent: {
       playerId: "opponent-1",
       teamName: "テスト敵",
-      teamType: "同業者" as const,
+      teamType: "同業者",
       units: [],
     },
     seed: 42,
@@ -94,15 +76,39 @@ function defaultBattleResponse() {
 }
 
 function defaultRunState(overrides: Partial<RunState> = {}): RunState {
-  const base: RunState = {
+  return {
     id: "run-1",
     round: 2,
     sanity: 5,
     trophy: 1,
     status: "active",
     originId: null,
+    ...overrides,
   };
-  return { ...base, ...overrides };
+}
+
+function battleRoutes(opts?: {
+  shopState?: ShopStateResponse;
+  battleResponse?: BattleResponse;
+  runState?: RunState;
+}): RouteHandler {
+  const shop = opts?.shopState ?? makeShopState();
+  const battle = opts?.battleResponse ?? defaultBattleResponse();
+  const run = opts?.runState ?? defaultRunState();
+  return (url) => {
+    if (url.startsWith("/api/shop/")) return { shop };
+    if (url === "/api/pvp/battle") return battle;
+    if (url === "/api/run/advance") return { run };
+    if (url === "/api/lore") return { lore: {} };
+    return undefined;
+  };
+}
+
+function stubError() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "fail" }), { status: 500 })),
+  );
 }
 
 beforeEach(() => {
@@ -135,21 +141,19 @@ beforeEach(() => {
   shopLocked.value = false;
   canUndo.value = false;
   rotRingUses.value = 0;
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 
-  vi.mocked(apiReadyForBattle).mockResolvedValue(ok(makeShopState()));
-  vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState()));
-  vi.mocked(requestBattle).mockResolvedValue(ok(defaultBattleResponse()));
-  vi.mocked(advanceRun).mockResolvedValue(ok(defaultRunState()));
+  stubFetch(battleRoutes());
 });
 
 describe("startPreBattle", () => {
   it("transitions to PRE_BATTLE after readyForBattle, then loads battle in background", async () => {
+    const spy = stubFetch(battleRoutes());
     startPreBattle();
     await vi.waitFor(() => expect(phase.value).toBe("PRE_BATTLE"));
-    expect(apiReadyForBattle).toHaveBeenCalledWith("test-run-id");
+    expect(spy).toHaveBeenCalledWith("/api/shop/ready", expect.anything());
     await vi.waitFor(() => expect(battleLoading.value).toBe(false));
-    expect(requestBattle).toHaveBeenCalledWith("test-run-id", 1);
+    expect(spy).toHaveBeenCalledWith("/api/pvp/battle", expect.anything());
   });
 
   it("sets currentEnemyTeam after background battle load", async () => {
@@ -166,28 +170,29 @@ describe("startPreBattle", () => {
   });
 
   it("does nothing with empty board", () => {
+    const spy = stubFetch(battleRoutes());
     board.value = [null, null, null, null, null];
     startPreBattle();
     expect(phase.value).toBe("SHOP");
-    expect(apiReadyForBattle).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("stays on SHOP when readyForBattle fails", async () => {
-    const infraErr: InfraError = { type: "API_FETCH_FAILED", status: 500, cause: null };
-    vi.mocked(apiReadyForBattle).mockResolvedValue(err(infraErr));
+    stubError();
     startPreBattle();
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
     expect(phase.value).toBe("SHOP");
-    expect(requestBattle).not.toHaveBeenCalled();
   });
 
   it("goes to PRE_BATTLE but sets battleLoadError when requestBattle fails", async () => {
-    const infraErr: InfraError = { type: "API_FETCH_FAILED", status: 500, cause: null };
-    vi.mocked(requestBattle).mockResolvedValue(err(infraErr));
+    stubFetch((url) => {
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState() };
+      return undefined;
+    });
     startPreBattle();
     await vi.waitFor(() => expect(phase.value).toBe("PRE_BATTLE"));
     await vi.waitFor(() => expect(battleLoading.value).toBe(false));
-    expect(battleLoadError.value).toEqual(infraErr);
+    expect(battleLoadError.value).not.toBeNull();
   });
 
   it("clears onboarding step when battle", async () => {
@@ -198,26 +203,32 @@ describe("startPreBattle", () => {
   });
 
   it("does nothing when shopLocked", () => {
+    const spy = stubFetch(battleRoutes());
     shopLocked.value = true;
     startPreBattle();
-    expect(apiReadyForBattle).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
+    const spy = stubFetch(battleRoutes());
     currentRunId.value = null;
     startPreBattle();
-    expect(apiReadyForBattle).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
 describe("retryBattle", () => {
   it("re-fetches battle data", async () => {
-    const infraErr: InfraError = { type: "API_FETCH_FAILED", status: 500, cause: null };
-    vi.mocked(requestBattle).mockResolvedValueOnce(err(infraErr));
+    // First attempt fails
+    stubFetch((url) => {
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState() };
+      return undefined;
+    });
     startPreBattle();
     await vi.waitFor(() => expect(battleLoadError.value).not.toBeNull());
 
-    vi.mocked(requestBattle).mockResolvedValueOnce(ok(defaultBattleResponse()));
+    // Retry succeeds
+    stubFetch(battleRoutes());
     retryBattle();
     await vi.waitFor(() => expect(battleLoading.value).toBe(false));
     expect(battleLoadError.value).toBeNull();
@@ -228,16 +239,17 @@ describe("retryBattle", () => {
     startPreBattle();
     await vi.waitFor(() => expect(phase.value).toBe("PRE_BATTLE"));
     battleLoading.value = true;
+    const spy = stubFetch(battleRoutes());
     retryBattle();
-    expect(requestBattle).toHaveBeenCalledTimes(1);
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
 describe("startActualBattle", () => {
   async function setupPreBattle() {
     startPreBattle();
+    await vi.waitFor(() => expect(phase.value).toBe("PRE_BATTLE"));
     await vi.waitFor(() => expect(battleLoading.value).toBe(false));
-    expect(phase.value).toBe("PRE_BATTLE");
   }
 
   it("transitions to BATTLE phase with pre-loaded data", async () => {
@@ -281,27 +293,39 @@ describe("concludeBattle", () => {
     battleResult.value = "WIN";
     trophy.value = 3;
     lastBattleId.value = "b-1";
-    vi.mocked(advanceRun).mockResolvedValue(ok(defaultRunState({ trophy: 4 })));
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ trophy: 4 })));
+    stubFetch(
+      battleRoutes({
+        runState: defaultRunState({ trophy: 4 }),
+        shopState: makeShopState({ trophy: 4 }),
+      }),
+    );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(trophy.value).toBe(4);
   });
 
-  it("calls advanceRun with battleId", async () => {
+  it("sends battleId to advance endpoint", async () => {
     battleResult.value = "WIN";
     lastBattleId.value = "b-1";
+    const spy = stubFetch(battleRoutes());
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
-    expect(advanceRun).toHaveBeenCalledWith("b-1");
+    const advanceCall = spy.mock.calls.find((c) => c[0] === "/api/run/advance");
+    expect(advanceCall).toBeDefined();
+    const body = JSON.parse(advanceCall![1]!.body as string);
+    expect(body.battleId).toBe("b-1");
   });
 
   it("advances round from server response", async () => {
     battleResult.value = "WIN";
     round.value = 2;
     lastBattleId.value = "b-1";
-    vi.mocked(advanceRun).mockResolvedValue(ok(defaultRunState({ round: 3, trophy: 1 })));
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 3, trophy: 1 })));
+    stubFetch(
+      battleRoutes({
+        runState: defaultRunState({ round: 3, trophy: 1 }),
+        shopState: makeShopState({ round: 3, trophy: 1 }),
+      }),
+    );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(round.value).toBe(3);
@@ -312,8 +336,12 @@ describe("concludeBattle", () => {
     battleResult.value = "LOSE";
     sanity.value = 3;
     lastBattleId.value = "b-1";
-    vi.mocked(advanceRun).mockResolvedValue(ok(defaultRunState({ sanity: 2, trophy: 0 })));
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ sanity: 2, trophy: 0 })));
+    stubFetch(
+      battleRoutes({
+        runState: defaultRunState({ sanity: 2, trophy: 0 }),
+        shopState: makeShopState({ sanity: 2, trophy: 0 }),
+      }),
+    );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(sanity.value).toBe(2);
@@ -323,8 +351,8 @@ describe("concludeBattle", () => {
     battleResult.value = "LOSE";
     sanity.value = 1;
     lastBattleId.value = "b-1";
-    vi.mocked(advanceRun).mockResolvedValue(
-      ok(defaultRunState({ sanity: 0, trophy: 0, status: "lost" })),
+    stubFetch(
+      battleRoutes({ runState: defaultRunState({ sanity: 0, trophy: 0, status: "lost" }) }),
     );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
@@ -336,8 +364,8 @@ describe("concludeBattle", () => {
     battleResult.value = "WIN";
     trophy.value = 9;
     lastBattleId.value = "b-1";
-    vi.mocked(advanceRun).mockResolvedValue(
-      ok(defaultRunState({ sanity: 5, trophy: 10, status: "won" })),
+    stubFetch(
+      battleRoutes({ runState: defaultRunState({ sanity: 5, trophy: 10, status: "won" }) }),
     );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
@@ -351,11 +379,11 @@ describe("concludeBattle", () => {
     trophy.value = 3;
     round.value = 2;
     lastBattleId.value = "b-1";
-    vi.mocked(advanceRun).mockResolvedValue(
-      ok(defaultRunState({ round: 3, sanity: 5, trophy: 3 })),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(
-      ok(makeShopState({ round: 3, sanity: 5, trophy: 3 })),
+    stubFetch(
+      battleRoutes({
+        runState: defaultRunState({ round: 3, sanity: 5, trophy: 3 }),
+        shopState: makeShopState({ round: 3, sanity: 5, trophy: 3 }),
+      }),
     );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
@@ -363,27 +391,6 @@ describe("concludeBattle", () => {
     expect(trophy.value).toBe(3);
     expect(round.value).toBe(3);
     expect(phase.value).toBe("BATTLE_RESULT");
-  });
-
-  it("calls markMastered for level 3 non-church units on game clear", async () => {
-    const spy = vi.spyOn(lore, "markMastered");
-    battleResult.value = "WIN";
-    trophy.value = 9;
-    lastBattleId.value = "b-1";
-    vi.mocked(advanceRun).mockResolvedValue(
-      ok(defaultRunState({ sanity: 5, trophy: 10, status: "won" })),
-    );
-    board.value = [
-      makeUnit({ id: "beast", level: 3, isChurch: false }),
-      makeUnit({ id: "rat", level: 1, isChurch: false }),
-      makeUnit({ id: "church_beast", level: 3, isChurch: true }),
-      null,
-      null,
-    ];
-    concludeBattle();
-    await vi.waitFor(() => expect(battleBusy.value).toBe(false));
-    expect(spy).toHaveBeenCalledWith(["beast"]);
-    spy.mockRestore();
   });
 
   it("does nothing when battleBusy is true", () => {
@@ -399,10 +406,11 @@ describe("concludeBattle", () => {
     trophy.value = 3;
     round.value = 2;
     lastBattleId.value = "b-1";
-    vi.mocked(advanceRun).mockResolvedValue(
-      err({ type: "API_FETCH_FAILED", status: 500, cause: null }),
-    );
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 3, trophy: 4 })));
+    stubFetch((url) => {
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 3, trophy: 4 }) };
+      if (url === "/api/lore") return { lore: {} };
+      return undefined;
+    });
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(round.value).toBe(3);
@@ -414,7 +422,7 @@ describe("concludeBattle", () => {
     trophy.value = 3;
     round.value = 2;
     lastBattleId.value = null;
-    vi.mocked(apiSetupShop).mockResolvedValue(ok(makeShopState({ round: 3, trophy: 4 })));
+    stubFetch(battleRoutes({ shopState: makeShopState({ round: 3, trophy: 4 }) }));
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(trophy.value).toBe(4);
@@ -432,11 +440,12 @@ describe("proceedFromBattleResult", () => {
   });
 
   it("transitions to SHOP and calls setupNight when game not ended", async () => {
+    const spy = stubFetch(battleRoutes());
     battleConcludeData.value = { sanityDelta: 0, trophyDelta: 1, gameEnded: false };
     proceedFromBattleResult();
     expect(phase.value).toBe("SHOP");
     expect(battleConcludeData.value).toBeNull();
-    await vi.waitFor(() => expect(apiSetupShop).toHaveBeenCalledWith("test-run-id", false));
+    await vi.waitFor(() => expect(spy).toHaveBeenCalledWith("/api/shop/setup", expect.anything()));
   });
 
   it("does nothing when battleConcludeData is null", () => {
@@ -447,10 +456,11 @@ describe("proceedFromBattleResult", () => {
   });
 
   it("does not call setupNight when no runId", () => {
+    const spy = stubFetch(battleRoutes());
     currentRunId.value = null;
     battleConcludeData.value = { sanityDelta: 0, trophyDelta: 1, gameEnded: false };
     proceedFromBattleResult();
     expect(phase.value).toBe("SHOP");
-    expect(apiSetupShop).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });

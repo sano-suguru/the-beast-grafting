@@ -118,6 +118,19 @@ export const runs = sqliteTable(
   ],
 );
 
+export const loreEntries = sqliteTable(
+  "lore_entries",
+  {
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    unitId: text("unit_id").notNull(),
+    seenAt: integer("seen_at", { mode: "timestamp" }).notNull(),
+    masteredAt: integer("mastered_at", { mode: "timestamp" }),
+  },
+  (table) => [uniqueIndex("idx_lore_entries_pk").on(table.playerId, table.unitId)],
+);
+
 export const shopStates = sqliteTable(
   "shop_states",
   {

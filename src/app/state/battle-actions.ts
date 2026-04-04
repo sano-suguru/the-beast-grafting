@@ -26,7 +26,6 @@ import {
   shopLocked,
   shopActionError,
 } from "./game-store";
-import { markSeen, markMastered } from "./lore";
 import { markTutorialDone } from "./tutorial";
 import { setupNight, applyShopState } from "./shop-actions";
 import { ok, err, safeAsync, fetchErr } from "../../shared/errors";
@@ -59,8 +58,6 @@ function loadBattleInBackground(runId: string, currentRound: number) {
             battleResult.value = battleRes;
             lastBattleResult.value = battleRes;
             lastEnemyTeamType.value = opponent.teamType;
-            const churchIds = opponent.units.filter((u) => u.isChurch).map((u) => u.id);
-            if (churchIds.length > 0) markSeen(churchIds);
           },
           (error) => {
             battleLoadError.value = error;
@@ -86,8 +83,6 @@ export function startPreBattle() {
 
   initAudio();
   playSE("clash");
-  markSeen(board.value.filter((u): u is UnitInstance => u !== null).map((u) => u.id));
-
   const shouldFinishTutorial = onboardingStep.value === "battle";
   const currentRound = round.value;
 
@@ -144,13 +139,8 @@ export function startActualBattle() {
   });
 }
 
-function masterBoardUnits() {
-  const lvl3Ids = board.value
-    .filter((u): u is UnitInstance => u !== null && u.level === 3 && !u.isChurch)
-    .map((u) => u.id);
-  if (lvl3Ids.length > 0) markMastered(lvl3Ids);
-}
-
+// markMasteredはサーバー側 /api/run/advance で処理される。ここでは呼ばず、
+// 次回起動時の pendingBattle recovery による再実行に委ねる。
 function applyLocalFallback(localResult: BattleResult) {
   invariant(localResult !== null, "applyLocalFallback called without battle result");
   const isWin = localResult === "WIN";
@@ -163,7 +153,6 @@ function applyLocalFallback(localResult: BattleResult) {
   if (isWin) {
     trophyDelta = 1;
     if (trophy.value + 1 >= 10) {
-      masterBoardUnits();
       gameEnded = true;
     }
   } else if (isLose) {
@@ -197,7 +186,6 @@ async function executeConclude() {
   const result = await advanceRun(currentBattleId);
   result.match(
     (run) => {
-      if (run.status === "won") masterBoardUnits();
       const prevSanity = sanity.value;
       const prevTrophy = trophy.value;
       const gameEnded = run.status === "won" || run.status === "lost";

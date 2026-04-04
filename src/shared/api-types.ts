@@ -38,6 +38,8 @@ export interface ShopItemSlotResponse {
   frozen: boolean;
 }
 
+export type LoreResponse = Record<string, { mastered: boolean }>;
+
 export interface ShopStateResponse {
   blood: number;
   board: (BoardUnit | null)[];

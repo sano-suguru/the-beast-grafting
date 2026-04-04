@@ -14,7 +14,6 @@ import {
   passiveGraftIds,
 } from "./game-store";
 import { runShopAction } from "./shop-actions";
-import { markSeen } from "./lore";
 import {
   buyUnit as apiBuyUnit,
   buyReward as apiBuyReward,
@@ -62,7 +61,6 @@ function buyUnitToSlot(
       onboardingStep.value = hasSame || shopHasSame ? "graft" : "roll";
     }
     if (isGraft && onboardingStep.value === "graft") onboardingStep.value = "roll";
-    markSeen(board.value.filter((u): u is UnitInstance => u !== null).map((u) => u.id));
   });
 }
 

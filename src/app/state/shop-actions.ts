@@ -2,6 +2,7 @@ import { batch } from "@preact/signals";
 import type { ShopStateResponse } from "../../shared/api-types";
 import { boardUnitToUnitInstance } from "../../shared/board-unit";
 import { fetchErr } from "../../shared/errors";
+import { loadLore } from "./lore";
 import type { Result, InfraError } from "../../shared/errors";
 import { error as logError } from "../../shared/logger";
 import { initAudio, playSE } from "../engine/audio";
@@ -28,7 +29,6 @@ import {
   showHelpOverlay,
   phase,
 } from "./game-store";
-import { markSeen } from "./lore";
 import {
   setupShop as apiSetupShop,
   rollShop as apiRollShop,
@@ -96,10 +96,6 @@ export function runShopAction(
   return promise;
 }
 
-function markShopUnitsSeen(slots: (NonNullable<(typeof shopUnits.value)[number]> | null)[]): void {
-  markSeen(slots.filter((s): s is NonNullable<typeof s> => s !== null).map((s) => s.unit.id));
-}
-
 export function applyShopState(state: ShopStateResponse) {
   batch(() => {
     blood.value = state.blood;
@@ -136,7 +132,7 @@ export function applyShopState(state: ShopStateResponse) {
 export function setupNight(runId: string, useTutorialShop = false): Promise<void> {
   return runShopAction("[setupNight]", apiSetupShop(runId, useTutorialShop), () => {
     showHelpOverlay.value = false;
-    markShopUnitsSeen(shopUnits.value);
+    void loadLore();
   });
 }
 
@@ -150,7 +146,6 @@ export function rollShop() {
   void runShopAction("[rollShop]", apiRollShop(runId), () => {
     playSE("select");
     if (onboardingStep.value === "roll") onboardingStep.value = "battle";
-    markShopUnitsSeen(shopUnits.value);
   });
 }
 

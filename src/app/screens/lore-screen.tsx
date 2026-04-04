@@ -1,10 +1,11 @@
 import type { JSX } from "preact";
+import { useEffect } from "preact/hooks";
 import { BookOpen, Skull, Bookmark, Swords, Shield } from "lucide-preact";
 import { ResourceText } from "../components/resource-text";
 import { UNITS } from "../../shared/data/units";
 import { CHURCH_UNITS } from "../../shared/data/church-units";
 import { phase } from "../state/game-store";
-import { loreDb } from "../state/lore";
+import { loreDb, loadLore } from "../state/lore";
 import { initAudio, playSE } from "../engine/audio";
 import { StatBadge } from "../components/stat-badge";
 import type { UnitData, LoreEntry } from "../types";
@@ -146,9 +147,7 @@ function LoreGrid({
     <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {units.map((unit) => {
         const entry = db[unit.id];
-        return (
-          <li key={unit.id}>{entry?.seen ? renderSeen(unit, entry) : renderUnseen(unit.id)}</li>
-        );
+        return <li key={unit.id}>{entry ? renderSeen(unit, entry) : renderUnseen(unit.id)}</li>;
       })}
     </ul>
   );
@@ -185,6 +184,9 @@ function ChurchLoreList({ units, db }: { units: UnitData[]; db: Record<string, L
 }
 
 export function LoreScreen() {
+  useEffect(() => {
+    void loadLore();
+  }, []);
   const sortedUnits = Object.values(UNITS)
     .filter((u) => u.tier > 0)
     .sort((a, b) => a.tier - b.tier);

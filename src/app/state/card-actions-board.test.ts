@@ -3,15 +3,8 @@ vi.mock("../engine/audio", () => ({
   playSE: vi.fn(),
 }));
 
-vi.mock("../api/shop-client", () => ({
-  buyUnit: vi.fn(),
-  equipItem: vi.fn(),
-  swapBoard: vi.fn(),
-}));
-
 import { handleCardClick } from "./card-actions";
 import { playSE } from "../engine/audio";
-import { buyUnit as apiBuyUnit, swapBoard as apiSwapBoard } from "../api/shop-client";
 import {
   blood,
   board,
@@ -25,9 +18,8 @@ import {
   phase,
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
-import { ok } from "../../shared/errors";
 import type { ShopSlot } from "../types";
-import { makeShopState, toBoardUnit } from "./test-helpers";
+import { makeShopState, toBoardUnit, stubFetch, shopRoute } from "./test-helpers";
 
 function makeShopSlot(overrides: Partial<ReturnType<typeof makeUnit>> = {}): ShopSlot {
   return { unit: makeUnit(overrides), frozen: false, eventSourced: false };
@@ -44,7 +36,7 @@ beforeEach(() => {
   lastBattleResult.value = null;
   shopLocked.value = false;
   currentRunId.value = "test-run-id";
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe("handleCardClick – board unit operations", () => {
@@ -53,13 +45,7 @@ describe("handleCardClick – board unit operations", () => {
     board.value = [unit, null, null, null, null];
     selection.value = { type: "BOARD_UNIT", index: 0, item: unit };
 
-    vi.mocked(apiSwapBoard).mockResolvedValue(
-      ok(
-        makeShopState({
-          board: [null, null, toBoardUnit(unit), null, null],
-        }),
-      ),
-    );
+    stubFetch(shopRoute(makeShopState({ board: [null, null, toBoardUnit(unit), null, null] })));
 
     handleCardClick("BOARD_SLOT", 2, null);
     await vi.waitFor(() => expect(shopLocked.value).toBe(false));
@@ -76,8 +62,8 @@ describe("handleCardClick – board unit operations", () => {
     board.value = [unitA, null, unitB, null, null];
     selection.value = { type: "BOARD_UNIT", index: 0, item: unitA };
 
-    vi.mocked(apiSwapBoard).mockResolvedValue(
-      ok(
+    stubFetch(
+      shopRoute(
         makeShopState({
           board: [toBoardUnit(unitB), null, toBoardUnit(unitA), null, null],
         }),
@@ -98,12 +84,8 @@ describe("handleCardClick – board unit operations", () => {
     selection.value = { type: "BOARD_UNIT", index: 0, item: unitA };
 
     const graftedUnit = makeUnit({ id: "hound", uid: "b", level: 2 });
-    vi.mocked(apiSwapBoard).mockResolvedValue(
-      ok(
-        makeShopState({
-          board: [null, null, toBoardUnit(graftedUnit), null, null],
-        }),
-      ),
+    stubFetch(
+      shopRoute(makeShopState({ board: [null, null, toBoardUnit(graftedUnit), null, null] })),
     );
 
     handleCardClick("BOARD_SLOT", 2, null);
@@ -118,23 +100,25 @@ describe("handleCardClick – board unit operations", () => {
 
 describe("handleCardClick – board slot bounds", () => {
   it("ignores index < 0", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     const unit = makeUnit();
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
     handleCardClick("BOARD_SLOT", -1, null);
 
     expect(blood.value).toBe(10);
-    expect(apiBuyUnit).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("ignores index > 4", () => {
+    const spy = stubFetch(shopRoute(makeShopState()));
     const unit = makeUnit();
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
     handleCardClick("BOARD_SLOT", 5, null);
 
     expect(blood.value).toBe(10);
-    expect(apiBuyUnit).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
@@ -147,8 +131,8 @@ describe("handleCardClick – onboarding transitions", () => {
     shopUnits.value = [makeShopSlot({ id: "rat" })];
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
-    vi.mocked(apiBuyUnit).mockResolvedValue(
-      ok(
+    stubFetch(
+      shopRoute(
         makeShopState({
           blood: 7,
           board: [toBoardUnit(existingUnit), toBoardUnit(unit), null, null, null],
@@ -169,8 +153,8 @@ describe("handleCardClick – onboarding transitions", () => {
     shopUnits.value = [makeShopSlot({ id: "rat" }), makeShopSlot({ id: "bat" })];
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
-    vi.mocked(apiBuyUnit).mockResolvedValue(
-      ok(
+    stubFetch(
+      shopRoute(
         makeShopState({
           blood: 7,
           board: [toBoardUnit(unit), null, null, null, null],
@@ -197,8 +181,8 @@ describe("handleCardClick – onboarding transitions", () => {
     selection.value = { type: "SHOP_UNIT", index: 0, item: shopUnit };
 
     const graftedUnit = makeUnit({ id: "hound", uid: "b", level: 2 });
-    vi.mocked(apiBuyUnit).mockResolvedValue(
-      ok(
+    stubFetch(
+      shopRoute(
         makeShopState({
           blood: 7,
           board: [toBoardUnit(graftedUnit), null, null, null, null],
@@ -221,12 +205,8 @@ describe("handleCardClick – onboarding transitions", () => {
     selection.value = { type: "BOARD_UNIT", index: 0, item: unitA };
 
     const graftedUnit = makeUnit({ id: "hound", uid: "b", level: 2 });
-    vi.mocked(apiSwapBoard).mockResolvedValue(
-      ok(
-        makeShopState({
-          board: [null, null, toBoardUnit(graftedUnit), null, null],
-        }),
-      ),
+    stubFetch(
+      shopRoute(makeShopState({ board: [null, null, toBoardUnit(graftedUnit), null, null] })),
     );
 
     handleCardClick("BOARD_SLOT", 2, null);

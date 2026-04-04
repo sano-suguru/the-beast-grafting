@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { drizzle } from "drizzle-orm/d1";
 import { error } from "../shared/logger";
 import auth from "./auth/routes";
+import lore from "./lore/routes";
 import pvp from "./pvp/routes";
 import run from "./run/routes";
 import shop from "./shop/routes";
@@ -25,6 +26,7 @@ api.get("/health", (c) => {
 });
 
 api.route("/auth", auth);
+api.route("/lore", lore);
 api.route("/pvp", pvp);
 api.route("/run", run);
 api.route("/shop", shop);
