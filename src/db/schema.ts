@@ -63,6 +63,8 @@ export const boardSnapshots = sqliteTable(
       .references(() => runs.id),
     round: integer("round").notNull(),
     board: text("board", { mode: "json" }).$type<BoardUnit[]>().notNull(),
+    life: integer("life").notNull(),
+    trophy: integer("trophy").notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   },
   (table) => [

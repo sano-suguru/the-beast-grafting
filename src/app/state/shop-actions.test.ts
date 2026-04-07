@@ -98,7 +98,14 @@ describe("setupNight", () => {
   });
 
   it("sets currentEnemyTeam to null via applyShopState", async () => {
-    currentEnemyTeam.value = { teamName: "test", teamType: "同業者", units: [] };
+    currentEnemyTeam.value = {
+      teamName: "test",
+      teamType: "同業者",
+      units: [],
+      round: null,
+      life: null,
+      trophy: null,
+    };
     stubFetch(shopRoute(makeShopState()));
     await setupNight("test-run-id");
     expect(currentEnemyTeam.value).toBeNull();

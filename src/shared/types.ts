@@ -150,11 +150,14 @@ export interface PreBattleText {
   readonly closing: string;
 }
 
-export interface EnemyTeam {
+export type OpponentStatsKnown = { round: number; life: number; trophy: number };
+export type OpponentStats = OpponentStatsKnown | { round: null; life: null; trophy: null };
+
+export type EnemyTeam = {
   teamName: string;
   teamType: EnemyFaction;
   units: UnitInstance[];
-}
+} & OpponentStats;
 
 export type LogType = "info" | "clash" | "damage" | "skill" | "death" | "defend" | "result";
 export type IconType =

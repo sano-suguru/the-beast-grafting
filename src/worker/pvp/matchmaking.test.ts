@@ -15,6 +15,8 @@ async function insertSnapshot(pid: string, runId: string, round: number) {
     runId,
     round,
     board: [makeValidUnit()],
+    life: 5,
+    trophy: 0,
     createdAt: new Date(),
   });
 }

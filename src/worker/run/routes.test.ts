@@ -47,7 +47,15 @@ async function insertBattle(
     opponentPlayerId: null,
     round,
     seed: 12345,
-    opponent: { playerId: null, teamName: "test", teamType: "教団", units: [] },
+    opponent: {
+      playerId: null,
+      teamName: "test",
+      teamType: "教団",
+      units: [],
+      round: null,
+      life: null,
+      trophy: null,
+    },
     result,
     createdAt: new Date(),
   });

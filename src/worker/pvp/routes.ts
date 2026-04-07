@@ -8,7 +8,7 @@ import {
   boardUnitToUnitInstance,
   pvpOpponentToEnemyTeam,
 } from "../../shared/board-unit";
-import type { PvpOpponent } from "../../shared/board-unit";
+import type { PvpOpponent, MatchedOpponent } from "../../shared/board-unit";
 import type { EnemyTeam } from "../../shared/types";
 import { simulateBattle } from "../../engine/battle";
 import { generateEnemyTeam } from "../../engine/helpers";
@@ -37,17 +37,19 @@ pvp.post("/snapshot", requireAuth, jsonBody(10_000), async (c) => {
   const runCheck = await safeAsync(
     () =>
       db
-        .select({ id: runs.id })
+        .select({ id: runs.id, life: runs.life, trophy: runs.trophy })
         .from(runs)
         .where(and(eq(runs.id, body.runId), eq(runs.playerId, playerId), eq(runs.status, "active")))
         .limit(1),
     dbErr,
   );
   if (runCheck.isErr()) return internalError(c, "[pvp/snapshot:run]", runCheck.error);
-  if (!runCheck.value[0]) {
+  const run = runCheck.value[0];
+  if (!run) {
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_run" } }, 400);
   }
 
+  const now = new Date();
   const upsertResult = await safeAsync(
     () =>
       db
@@ -58,13 +60,17 @@ pvp.post("/snapshot", requireAuth, jsonBody(10_000), async (c) => {
           runId: body.runId,
           round: body.round,
           board: body.board,
-          createdAt: new Date(),
+          life: run.life,
+          trophy: run.trophy,
+          createdAt: now,
         })
         .onConflictDoUpdate({
           target: [boardSnapshots.runId, boardSnapshots.round],
           set: {
             board: body.board,
-            createdAt: new Date(),
+            life: run.life,
+            trophy: run.trophy,
+            createdAt: now,
           },
         }),
     dbErr,
@@ -81,8 +87,8 @@ function generateBattleSeed(): number {
   return (buf[0] ?? 0) >>> 0 || 1;
 }
 
-function resolveEnemy(pvpOpponent: PvpOpponent | null, round: number): EnemyTeam {
-  if (pvpOpponent) return pvpOpponentToEnemyTeam(pvpOpponent);
+function resolveEnemy(matched: MatchedOpponent | null, round: number): EnemyTeam {
+  if (matched) return pvpOpponentToEnemyTeam(matched);
   return generateEnemyTeam(round, createSeededRng(generateBattleSeed()));
 }
 
@@ -181,24 +187,30 @@ function buildBattleRecord(
   playerId: string,
   runId: string,
   round: number,
-  pvpOpponent: PvpOpponent | null,
+  matchedOpponent: MatchedOpponent | null,
   playerBoard: ReturnType<typeof boardUnitToUnitInstance>[],
 ) {
-  const enemy = resolveEnemy(pvpOpponent, round);
+  const enemy = resolveEnemy(matchedOpponent, round);
   const battleSeed = generateBattleSeed();
   const { frames, result } = simulateBattle(playerBoard, enemy, round, battleSeed);
-  const opponent: PvpOpponent = {
-    playerId: pvpOpponent?.playerId ?? null,
-    teamName: enemy.teamName,
-    teamType: enemy.teamType,
-    units: enemy.units.map(unitInstanceToBoardUnit),
-  };
+  const mappedUnits = enemy.units.map(unitInstanceToBoardUnit);
+  const opponent: PvpOpponent = matchedOpponent
+    ? { ...matchedOpponent, units: mappedUnits }
+    : {
+        playerId: null,
+        teamName: enemy.teamName,
+        teamType: enemy.teamType,
+        units: mappedUnits,
+        round: null,
+        life: null,
+        trophy: null,
+      };
   const battleId = generateId();
   const values: typeof battles.$inferInsert = {
     id: battleId,
     playerId,
     runId,
-    opponentPlayerId: pvpOpponent?.playerId ?? null,
+    opponentPlayerId: matchedOpponent?.playerId ?? null,
     round,
     seed: battleSeed,
     opponent,

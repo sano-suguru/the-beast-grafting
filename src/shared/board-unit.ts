@@ -1,6 +1,14 @@
 import type { EquipType } from "./equip-type";
 import type { EnemyFaction } from "./enemy-faction";
-import type { UnitInstance, UnitId, RegularUnitId, ChurchUnitId, EnemyTeam } from "./types";
+import type {
+  UnitInstance,
+  UnitId,
+  RegularUnitId,
+  ChurchUnitId,
+  EnemyTeam,
+  OpponentStats,
+  OpponentStatsKnown,
+} from "./types";
 import { UNITS } from "./data/units";
 import { CHURCH_UNITS } from "./data/church-units";
 import { invariant } from "./invariant";
@@ -22,12 +30,19 @@ export interface BoardUnit {
   lore: string;
 }
 
-export interface PvpOpponent {
+export type PvpOpponent = {
   playerId: string | null;
   teamName: string;
   teamType: EnemyFaction;
   units: BoardUnit[];
-}
+} & OpponentStats;
+
+export type MatchedOpponent = {
+  playerId: string;
+  teamName: string;
+  teamType: EnemyFaction;
+  units: BoardUnit[];
+} & OpponentStatsKnown;
 
 export function unitInstanceToBoardUnit(u: UnitInstance): BoardUnit {
   return {
@@ -72,9 +87,13 @@ export function boardUnitToUnitInstance(bu: BoardUnit): UnitInstance {
 }
 
 export function pvpOpponentToEnemyTeam(pvp: PvpOpponent): EnemyTeam {
-  return {
+  const base = {
     teamName: pvp.teamName,
     teamType: pvp.teamType,
     units: pvp.units.map(boardUnitToUnitInstance),
   };
+  if (pvp.round != null) {
+    return { ...base, round: pvp.round, life: pvp.life, trophy: pvp.trophy };
+  }
+  return { ...base, round: null, life: null, trophy: null };
 }

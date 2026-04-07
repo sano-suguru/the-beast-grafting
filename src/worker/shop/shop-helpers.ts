@@ -134,7 +134,10 @@ async function persistShopState(
   }
 
   if (isWithBoard(value)) {
-    const snapError = await saveBoardSnapshot(db, playerId, run.id, run.round, value.finalBoard);
+    const snapError = await saveBoardSnapshot(db, playerId, run.id, run.round, value.finalBoard, {
+      life: newState.life,
+      trophy: run.trophy,
+    });
     if (snapError) return internalError(c, "[shop:snapshot]", snapError);
   }
 
@@ -149,6 +152,7 @@ async function saveBoardSnapshot(
   runId: string,
   round: number,
   finalBoard: (BoardUnit | null)[],
+  stats: { life: number; trophy: number },
 ) {
   const boardUnits = finalBoard.filter((u): u is BoardUnit => u !== null);
   const now = new Date();
@@ -156,10 +160,19 @@ async function saveBoardSnapshot(
     () =>
       db
         .insert(boardSnapshots)
-        .values({ id: generateId(), playerId, runId, round, board: boardUnits, createdAt: now })
+        .values({
+          id: generateId(),
+          playerId,
+          runId,
+          round,
+          board: boardUnits,
+          life: stats.life,
+          trophy: stats.trophy,
+          createdAt: now,
+        })
         .onConflictDoUpdate({
           target: [boardSnapshots.runId, boardSnapshots.round],
-          set: { board: boardUnits, createdAt: now },
+          set: { board: boardUnits, life: stats.life, trophy: stats.trophy, createdAt: now },
         }),
     dbErr,
   );

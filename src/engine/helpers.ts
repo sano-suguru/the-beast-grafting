@@ -153,7 +153,7 @@ export const generateEnemyTeam = (round: number, rng: Rng): EnemyTeam => {
     }));
   }
 
-  return { teamName, teamType: type, units };
+  return { teamName, teamType: type, units, round: null, life: null, trophy: null };
 };
 
 export { getEquipInfo } from "../shared/data/equips";

@@ -1,3 +1,4 @@
+import { Heart, Trophy } from "lucide-preact";
 import { currentEnemyTeam, round, life, battleLoading, battleLoadError } from "../state/game-store";
 import { startActualBattle, retryBattle } from "../state/battle-actions";
 import { initAudio, playSE } from "../engine/audio";
@@ -12,6 +13,22 @@ const TIER_CLASS = {
   mid: "text-amber-600/80",
   low: "animate-pulse font-bold text-red-500",
 } as const;
+
+function OpponentStats({ round, life, trophy }: { round: number; life: number; trophy: number }) {
+  return (
+    <span className="mt-2 flex items-center justify-center gap-3 text-xs font-normal tracking-wider text-zinc-500">
+      第{round}夜
+      <span className="flex items-center gap-1">
+        <Heart size={12} />
+        {life}
+      </span>
+      <span className="flex items-center gap-1">
+        <Trophy size={12} />
+        {trophy}
+      </span>
+    </span>
+  );
+}
 
 function PreBattleLoading({ showText }: { showText: boolean }) {
   return (
@@ -63,6 +80,9 @@ export function PreBattleScreen() {
           <span className="mt-2 block text-sm tracking-widest text-red-500 md:text-lg">
             {team.teamName}
           </span>
+          {team.round != null && (
+            <OpponentStats round={team.round} life={team.life} trophy={team.trophy} />
+          )}
         </p>
         <p>{narrative.closing}</p>
       </div>

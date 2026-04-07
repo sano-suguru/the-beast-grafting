@@ -2,7 +2,7 @@ import { eq, and, ne, between, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { safeAsync, dbErr } from "../../shared/errors";
 import type { Result, InfraError } from "../../shared/errors";
-import type { PvpOpponent } from "../../shared/board-unit";
+import type { MatchedOpponent } from "../../shared/board-unit";
 import { players, boardSnapshots, runs } from "../../db/schema";
 
 const ROUND_RANGE = 1;
@@ -14,7 +14,7 @@ export function findOpponent(
   db: DrizzleD1Database,
   playerId: string,
   round: number,
-): Promise<Result<PvpOpponent | null, InfraError>> {
+): Promise<Result<MatchedOpponent | null, InfraError>> {
   const minRound = Math.max(1, round - ROUND_RANGE);
   const maxRound = round + ROUND_RANGE;
 
@@ -24,6 +24,9 @@ export function findOpponent(
         playerId: boardSnapshots.playerId,
         displayName: players.displayName,
         board: boardSnapshots.board,
+        round: boardSnapshots.round,
+        life: boardSnapshots.life,
+        trophy: boardSnapshots.trophy,
       })
       .from(boardSnapshots)
       .innerJoin(players, eq(boardSnapshots.playerId, players.id))
@@ -46,6 +49,9 @@ export function findOpponent(
       teamName: `[同業者] ${row.displayName}`,
       teamType: "同業者" as const,
       units: row.board,
+      round: row.round,
+      life: row.life,
+      trophy: row.trophy,
     };
   }, dbErr);
 }

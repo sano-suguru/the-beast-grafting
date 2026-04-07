@@ -65,6 +65,9 @@ function defaultBattleResponse(): BattleResponse {
       teamName: "テスト敵",
       teamType: "同業者",
       units: [],
+      round: 3,
+      life: 4,
+      trophy: 2,
     },
     seed: 42,
   };

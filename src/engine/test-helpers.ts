@@ -91,5 +91,8 @@ export function makeEnemyTeam(units: UnitInstance[]): EnemyTeam {
     teamName: "[同業者] テスト敵チーム",
     teamType: "同業者",
     units,
+    round: null,
+    life: null,
+    trophy: null,
   };
 }

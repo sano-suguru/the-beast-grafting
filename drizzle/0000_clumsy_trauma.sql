@@ -36,6 +36,8 @@ CREATE TABLE `board_snapshots` (
 	`run_id` text NOT NULL,
 	`round` integer NOT NULL,
 	`board` text NOT NULL,
+	`life` integer NOT NULL,
+	`trophy` integer NOT NULL,
 	`created_at` integer NOT NULL,
 	FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`run_id`) REFERENCES `runs`(`id`) ON UPDATE no action ON DELETE no action

@@ -15,6 +15,8 @@ async function insertSnapshot(db: DrizzleD1Database, round: number, age: Date) {
     runId,
     round,
     board: [makeValidUnit()],
+    life: 5,
+    trophy: 0,
     createdAt: age,
   });
 }
