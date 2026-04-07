@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "the-beast-grafting",
+  "legacy_env": false,
   "main": "./src/worker/index.ts",
   "compatibility_date": "2025-04-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -33,7 +34,7 @@
         {
           "binding": "DB",
           "database_name": "beast-grafting-db",
-          "database_id": "544b8b4a-3f9e-4ccd-9703-55501ed5d324",
+          "database_id": "2dbfd443-a769-4222-8c8d-1640a4ad10fc",
           "migrations_dir": "./drizzle"
         }
       ]
