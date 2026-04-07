@@ -3,6 +3,7 @@ import type { Result, GameError } from "../../shared/errors";
 import type { OriginId } from "../../shared/types";
 import type { BoardUnit } from "../../shared/board-unit";
 import { graftUnits, applyEndOfTurnEffects } from "../../engine/shop-effects";
+import { CULTIST_LIFE_COST, CULTIST_BLOOD_GAIN } from "../../shared/constants";
 import type { ShopStateRow } from "./shop-state-row";
 import { boardToInstances, instancesToBoard, itemSlotsFromJson } from "./shop-serialization";
 import { captureUndo, withRng } from "./shop-helpers";
@@ -26,7 +27,7 @@ export function executeEquip(
     return err({
       type: "INSUFFICIENT_RESOURCE",
       resource: "blood",
-      required: item.cost,
+      minimum: item.cost,
       current: state.blood,
     });
 
@@ -150,18 +151,18 @@ export function executeCultist(
 ): Result<ShopStateRow, GameError> {
   if (originId !== "cultist") return err({ type: "PRECONDITION_FAILED", reason: "not_cultist" });
   if (state.cultistUsed) return err({ type: "PRECONDITION_FAILED", reason: "already_used" });
-  if (state.sanity < 1)
+  if (state.life - CULTIST_LIFE_COST < 1)
     return err({
       type: "INSUFFICIENT_RESOURCE",
-      resource: "sanity",
-      required: 1,
-      current: state.sanity,
+      resource: "life",
+      minimum: CULTIST_LIFE_COST + 1,
+      current: state.life,
     });
 
   return ok({
     ...state,
-    sanity: state.sanity - 1,
-    blood: state.blood + 3,
+    life: state.life - CULTIST_LIFE_COST,
+    blood: state.blood + CULTIST_BLOOD_GAIN,
     cultistUsed: true,
     undoSnapshot: captureUndo(state),
   });
@@ -183,7 +184,7 @@ export function executeUndo(state: ShopStateRow): Result<ShopStateRow, GameError
     activeEvent: snap.activeEvent,
     rngS0: snap.rngS0,
     rngS1: snap.rngS1,
-    sanity: snap.sanity,
+    life: snap.life,
     rewardSlots: snap.rewardSlots,
     undoSnapshot: null,
   });

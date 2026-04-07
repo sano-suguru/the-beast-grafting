@@ -2,10 +2,10 @@ import { Hono } from "hono";
 import type { MiddlewareHandler } from "hono";
 import { createTestDb } from "./test-db";
 import { createSession } from "./session";
-import { requireAuth, optionalAuth } from "./middleware";
+import { requireAuth, optionalAuth, csrfGuard } from "./middleware";
 import { sessions } from "../../db/schema";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import type { AuthEnv, OptionalAuthEnv } from "./types";
+import type { AppEnv, AuthEnv, OptionalAuthEnv } from "./types";
 import { TEST_ENV } from "./test-helpers";
 import { invariant } from "../../shared/invariant";
 
@@ -177,5 +177,89 @@ describe("optionalAuth", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { playerId: string | null };
     expect(body.playerId).toBeNull();
+  });
+});
+
+describe("csrfGuard", () => {
+  let app: Hono<AppEnv>;
+
+  beforeEach(() => {
+    app = new Hono<AppEnv>();
+    app.use("*", csrfGuard);
+    app.post("/action", (c) => c.json({ ok: true }));
+    app.get("/read", (c) => c.json({ ok: true }));
+    app.put("/action", (c) => c.json({ ok: true }));
+    app.delete("/action", (c) => c.json({ ok: true }));
+    app.on("PATCH", "/action", (c) => c.json({ ok: true }));
+  });
+
+  it("allows POST with matching Origin", async () => {
+    const res = await app.request(
+      "/action",
+      { method: "POST", headers: { Origin: TEST_ENV.ALLOWED_ORIGIN as string } },
+      TEST_ENV,
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects POST with wrong Origin", async () => {
+    const res = await app.request(
+      "/action",
+      { method: "POST", headers: { Origin: "https://evil.example.com" } },
+      TEST_ENV,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("rejects POST with missing Origin", async () => {
+    const res = await app.request("/action", { method: "POST" }, TEST_ENV);
+    expect(res.status).toBe(403);
+  });
+
+  it("allows GET without Origin", async () => {
+    const res = await app.request("/read", { method: "GET" }, TEST_ENV);
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects PUT with wrong Origin", async () => {
+    const res = await app.request(
+      "/action",
+      { method: "PUT", headers: { Origin: "https://evil.example.com" } },
+      TEST_ENV,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("allows PUT with matching Origin", async () => {
+    const res = await app.request(
+      "/action",
+      { method: "PUT", headers: { Origin: TEST_ENV.ALLOWED_ORIGIN as string } },
+      TEST_ENV,
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects DELETE with missing Origin", async () => {
+    const res = await app.request("/action", { method: "DELETE" }, TEST_ENV);
+    expect(res.status).toBe(403);
+  });
+
+  it("rejects PATCH with wrong Origin", async () => {
+    const res = await app.request(
+      "/action",
+      { method: "PATCH", headers: { Origin: "https://evil.example.com" } },
+      TEST_ENV,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("allows HEAD without Origin", async () => {
+    const res = await app.request("/read", { method: "HEAD" }, TEST_ENV);
+    expect(res.status).toBe(200);
+  });
+
+  it("allows OPTIONS without Origin", async () => {
+    const res = await app.request("/read", { method: "OPTIONS" }, TEST_ENV);
+    expect(res.status).not.toBe(403);
   });
 });

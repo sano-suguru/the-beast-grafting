@@ -1,11 +1,11 @@
 import { batch } from "@preact/signals";
-import type { UnitInstance, BattleResult } from "../types";
-import { initAudio, playSE } from "../engine/audio";
+import type { UnitInstance } from "../types";
+import type { ServerBattleResult } from "../../shared/api-types";
 import { pvpOpponentToEnemyTeam } from "../../shared/board-unit";
 import {
   phase,
   round,
-  sanity,
+  life,
   trophy,
   board,
   currentEnemyTeam,
@@ -81,8 +81,6 @@ export function startPreBattle() {
   const runId = currentRunId.value;
   if (!runId) return;
 
-  initAudio();
-  playSE("clash");
   const shouldFinishTutorial = onboardingStep.value === "battle";
   const currentRound = round.value;
 
@@ -120,6 +118,7 @@ export function retryBattle() {
   if (battleLoading.value) return;
   const runId = currentRunId.value;
   if (!runId) return;
+  battleLoadError.value = null;
   loadBattleInBackground(runId, round.value);
 }
 
@@ -129,9 +128,6 @@ export function startActualBattle() {
   if (battleLoadError.value !== null) return;
   if (battleFrames.value.length === 0) return;
 
-  initAudio();
-  playSE("select");
-
   batch(() => {
     phase.value = "BATTLE";
     fastForward.value = false;
@@ -139,15 +135,20 @@ export function startActualBattle() {
   });
 }
 
+function requireBattleResult(): ServerBattleResult {
+  const result = battleResult.value;
+  invariant(result !== null, "battleResult must be set");
+  return result;
+}
+
 // markMasteredはサーバー側 /api/run/advance で処理される。ここでは呼ばず、
 // 次回起動時の pendingBattle recovery による再実行に委ねる。
-function applyLocalFallback(localResult: BattleResult) {
-  invariant(localResult !== null, "applyLocalFallback called without battle result");
+function applyLocalFallback(localResult: ServerBattleResult) {
   const isWin = localResult === "WIN";
   const isLose = localResult === "LOSE";
 
   let trophyDelta = 0;
-  let sanityDelta = 0;
+  let lifeDelta = 0;
   let gameEnded = false;
 
   if (isWin) {
@@ -156,45 +157,41 @@ function applyLocalFallback(localResult: BattleResult) {
       gameEnded = true;
     }
   } else if (isLose) {
-    sanityDelta = -1;
-    if (sanity.value - 1 <= 0) {
+    lifeDelta = -1;
+    if (life.value - 1 <= 0) {
       gameEnded = true;
     }
   }
 
   batch(() => {
     trophy.value = Math.min(trophy.value + trophyDelta, 10);
-    sanity.value = Math.max(sanity.value + sanityDelta, 0);
+    life.value = Math.max(life.value + lifeDelta, 0);
     if (!gameEnded) round.value = round.value + 1;
-    battleConcludeData.value = { sanityDelta, trophyDelta, gameEnded };
+    battleConcludeData.value = { lifeDelta, trophyDelta, gameEnded };
     phase.value = "BATTLE_RESULT";
   });
 }
 
 async function executeConclude() {
-  initAudio();
-  playSE("select");
-
   const currentBattleId = lastBattleId.value;
-  const localResult = battleResult.value;
 
   if (!currentBattleId) {
-    applyLocalFallback(localResult);
+    applyLocalFallback(requireBattleResult());
     return;
   }
 
   const result = await advanceRun(currentBattleId);
   result.match(
     (run) => {
-      const prevSanity = sanity.value;
+      const prevLife = life.value;
       const prevTrophy = trophy.value;
       const gameEnded = run.status === "won" || run.status === "lost";
       batch(() => {
-        sanity.value = run.sanity;
+        life.value = run.life;
         trophy.value = run.trophy;
         round.value = run.round;
         battleConcludeData.value = {
-          sanityDelta: run.sanity - prevSanity,
+          lifeDelta: run.life - prevLife,
           trophyDelta: run.trophy - prevTrophy,
           gameEnded,
         };
@@ -203,7 +200,7 @@ async function executeConclude() {
     },
     (e) => {
       logError("[RunAdvance:localFallback]", e);
-      applyLocalFallback(localResult);
+      applyLocalFallback(requireBattleResult());
     },
   );
 }
@@ -216,7 +213,7 @@ export function concludeBattle() {
     if (result.isErr()) {
       logError("[ConcludeBattleCrash]", result.error);
       battleError.value = result.error;
-      applyLocalFallback(battleResult.value);
+      applyLocalFallback(requireBattleResult());
     }
     battleBusy.value = false;
   });
@@ -225,9 +222,6 @@ export function concludeBattle() {
 export function proceedFromBattleResult() {
   const data = battleConcludeData.value;
   if (!data) return;
-
-  initAudio();
-  playSE("select");
 
   if (data.gameEnded) {
     batch(() => {

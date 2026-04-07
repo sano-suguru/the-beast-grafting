@@ -1,19 +1,14 @@
 // @vitest-environment jsdom
 /// <reference types="@testing-library/jest-dom" />
-vi.mock("../state/card-actions", () => ({
-  handleCardClick: vi.fn(),
-}));
-
 import { render, screen, fireEvent } from "@testing-library/preact";
 import { ItemCard } from "./item-card";
-import { selection, blood } from "../state/game-store";
-import { handleCardClick } from "../state/card-actions";
+import { selection, blood, phase } from "../state/game-store";
 import { ITEMS } from "../../shared/data/items";
 
 beforeEach(() => {
   selection.value = null;
   blood.value = 10;
-  vi.clearAllMocks();
+  phase.value = "SHOP";
 });
 
 describe("ItemCard", () => {
@@ -27,11 +22,11 @@ describe("ItemCard", () => {
     expect(screen.getByText("縫合された鉄板")).toBeInTheDocument();
   });
 
-  it("calls handleCardClick on click", () => {
+  it("selects item on click", () => {
     const item = ITEMS["bile"]!;
     render(<ItemCard item={item} index={1} />);
     fireEvent.click(screen.getByRole("button", { name: item.name }));
-    expect(handleCardClick).toHaveBeenCalledWith("SHOP_ITEM", 1, item);
+    expect(selection.value).toEqual({ type: "SHOP_ITEM", index: 1, item });
   });
 
   it("shows cost badge for free items", () => {

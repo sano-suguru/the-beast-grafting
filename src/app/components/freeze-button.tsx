@@ -1,5 +1,6 @@
 import { Lock, LockOpen } from "lucide-preact";
 import { handleFreezeClick } from "../state/shop-actions";
+import { initAudio, playSEFrom } from "../engine/audio";
 
 interface FreezeButtonProps {
   slotType: "unit" | "item" | "reward";
@@ -12,7 +13,8 @@ export function FreezeButton({ slotType, index, isFrozen, iconSize = 12 }: Freez
   const onClick = (e: Event) => {
     e.stopPropagation();
     e.preventDefault();
-    handleFreezeClick(slotType, index, !isFrozen);
+    initAudio();
+    playSEFrom(handleFreezeClick(slotType, index, !isFrozen));
   };
   return (
     <button

@@ -1,11 +1,10 @@
-import { useEffect } from "preact/hooks";
-import { ChevronRight, Trash2, Undo2, X } from "lucide-preact";
+import { ChevronRight, Trash2, Undo2 } from "lucide-preact";
 import { ResourceText } from "../components/resource-text";
 import { useDelayedFlag } from "../hooks/use-delayed-flag";
 import type { OnboardingStep, UnitInstance } from "../types";
 import {
   board,
-  sanity,
+  life,
   selection,
   onboardingStep,
   canUndo,
@@ -14,7 +13,6 @@ import {
   shopActionError,
   showRetireConfirm,
   recoveryWarning,
-  retiring,
 } from "../state/game-store";
 import { executeSellUnit } from "../state/shop-actions";
 import { undoLastAction } from "../state/undo-actions";
@@ -25,12 +23,17 @@ import { ShopHeader } from "./shop/shop-header";
 import { ShopInfoPanel } from "./shop/shop-info-panel";
 import { ShopFooter } from "./shop/shop-footer";
 import { ShopSection } from "./shop/shop-section";
-import { retireGame } from "../state/game-actions";
-import { playSE } from "../engine/audio";
+import {
+  ShopBusyOverlay,
+  RetireConfirmOverlay,
+  ShopErrorBanner,
+  RecoveryWarningBanner,
+} from "./shop/shop-overlays";
+import { playSEFrom } from "../engine/audio";
 
 export function ShopScreen() {
   const sel = selection.value;
-  const currentSanity = sanity.value;
+  const currentLife = life.value;
   const currentBoard = board.value;
   const currentOnboarding = onboardingStep.value;
   const busy = shopLocked.value;
@@ -50,7 +53,7 @@ export function ShopScreen() {
       <ShopHeader />
 
       <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto p-2 pb-0 md:p-4">
-        <ShopInfoPanel sel={sel} currentSanity={currentSanity} />
+        <ShopInfoPanel sel={sel} currentLife={currentLife} />
         <BoardSection board={currentBoard} />
         <div className="mb-4 flex shrink-0 gap-2">
           <SellButton isActive={sel?.type === "BOARD_UNIT" && !busy} />
@@ -147,7 +150,9 @@ function BoardSection({ board: b }: { board: (UnitInstance | null)[] }) {
 function SellButton({ isActive }: { isActive: boolean }) {
   return (
     <button
-      onClick={executeSellUnit}
+      onClick={() => {
+        playSEFrom(executeSellUnit());
+      }}
       disabled={!isActive}
       className={`flex h-10 flex-1 shrink-0 items-center justify-center rounded border transition-all md:h-12 ${
         isActive
@@ -167,7 +172,9 @@ function UndoButton({ disabled }: { disabled: boolean }) {
   const enabled = canUndo.value && !disabled;
   return (
     <button
-      onClick={undoLastAction}
+      onClick={() => {
+        playSEFrom(undoLastAction());
+      }}
       disabled={!enabled}
       className={`flex h-10 shrink-0 items-center justify-center rounded border px-3 transition-all md:h-12 md:px-4 ${
         enabled
@@ -178,103 +185,5 @@ function UndoButton({ disabled }: { disabled: boolean }) {
       <Undo2 size={14} className="mr-1" />
       <span className="text-[10px] font-bold md:text-xs">元に戻す</span>
     </button>
-  );
-}
-
-function ShopBusyOverlay() {
-  return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
-      <p className="animate-pulse text-sm tracking-widest text-red-800">……暗闇の中で蠢いている……</p>
-    </div>
-  );
-}
-
-function RetireConfirmOverlay() {
-  return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="mx-4 flex max-w-sm flex-col items-center gap-6 border border-zinc-800 bg-zinc-950 p-6">
-        <p className="text-center text-sm leading-relaxed text-zinc-300">
-          この地下室を捨てて逃げますか？
-          <br />
-          <span className="text-xs text-zinc-500">進行状況は失われます。</span>
-        </p>
-        {shopActionError.value && (
-          <p className="text-center text-xs text-red-400">
-            接続に失敗しました。再度お試しください。
-          </p>
-        )}
-        <div className="flex gap-3">
-          <button
-            onClick={() => {
-              shopActionError.value = null;
-              showRetireConfirm.value = false;
-            }}
-            disabled={retiring.value}
-            className={`border border-zinc-700 px-4 py-2 text-xs tracking-widest transition-all ${
-              retiring.value
-                ? "cursor-wait text-zinc-700"
-                : "cursor-pointer text-zinc-400 hover:bg-zinc-900 active:scale-95"
-            }`}
-          >
-            留まる
-          </button>
-          <button
-            onClick={() => {
-              playSE("select");
-              void retireGame();
-            }}
-            disabled={retiring.value}
-            className={`border border-red-900 px-4 py-2 text-xs tracking-widest transition-all ${
-              retiring.value
-                ? "animate-pulse cursor-wait bg-red-950/10 text-red-900"
-                : "cursor-pointer bg-red-950/30 text-red-500 hover:bg-red-950/50 active:scale-95"
-            }`}
-          >
-            {retiring.value ? "……" : "逃げ出す"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ShopErrorBanner() {
-  return (
-    <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-between bg-red-950/90 px-3 py-2 text-xs text-red-400">
-      <span>接続に失敗しました。再度お試しください。</span>
-      <button
-        onClick={() => {
-          shopActionError.value = null;
-        }}
-        className="ml-2 shrink-0 cursor-pointer text-red-600 hover:text-red-400"
-      >
-        <X size={14} />
-      </button>
-    </div>
-  );
-}
-
-const RECOVERY_BANNER_MS = 8000;
-
-function RecoveryWarningBanner() {
-  useEffect(() => {
-    const id = setTimeout(() => {
-      recoveryWarning.value = null;
-    }, RECOVERY_BANNER_MS);
-    return () => clearTimeout(id);
-  }, []);
-
-  return (
-    <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-between bg-amber-950/90 px-3 py-2 text-xs text-amber-400">
-      <span>{recoveryWarning.value}</span>
-      <button
-        onClick={() => {
-          recoveryWarning.value = null;
-        }}
-        className="ml-2 shrink-0 cursor-pointer text-amber-600 hover:text-amber-400"
-      >
-        <X size={14} />
-      </button>
-    </div>
   );
 }

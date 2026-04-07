@@ -1,4 +1,4 @@
-import type { SoundType } from "../types";
+import type { SoundType, SoundResult } from "../types";
 import { fromThrowable } from "../../shared/errors";
 import type { InfraError } from "../../shared/errors";
 import { warn } from "../../shared/logger";
@@ -18,6 +18,7 @@ const safeInitAudio = fromThrowable(
   (e): InfraError => ({ type: "AUDIO_INIT_FAILED", cause: e }),
 );
 
+/** Web Audio APIの制約上、ユーザージェスチャー内でのみresume可能。各クリックハンドラから呼ぶ設計 */
 export const initAudio = (): void => {
   safeInitAudio().mapErr((e) => warn("Audio Context initialization failed", e));
 };
@@ -120,3 +121,9 @@ export const playSE = (type: SoundType): void => {
   );
   safePlay().mapErr((e) => warn("Failed to play SE", e));
 };
+
+export function playSEFrom(result: SoundResult): void {
+  void result.then((se) => {
+    if (se) playSE(se);
+  });
+}

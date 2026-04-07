@@ -1,12 +1,11 @@
 import { batch } from "@preact/signals";
 import type { OriginId } from "../types";
 import type { RunState, CurrentRunState } from "../../shared/api-types";
-import { initAudio, playSE } from "../engine/audio";
 import {
   origin,
   phase,
   blood,
-  sanity,
+  life,
   trophy,
   round,
   board,
@@ -60,7 +59,7 @@ function applyLocalGameState(
     origin.value = selectedOrigin;
     phase.value = "SHOP";
     blood.value = 10;
-    sanity.value = s;
+    life.value = s;
     trophy.value = t;
     round.value = r;
     board.value = [null, null, null, null, null];
@@ -84,7 +83,7 @@ async function resumeExistingRun(
   const rawOriginId = run.originId ?? fallbackOrigin;
   if (!rawOriginId || !isOriginId(rawOriginId)) return false;
 
-  applyLocalGameState(rawOriginId, run.round, run.sanity, run.trophy, run.id);
+  applyLocalGameState(rawOriginId, run.round, run.life, run.trophy, run.id);
   await setupNight(run.id, false);
   return true;
 }
@@ -93,8 +92,6 @@ export async function startGame(selectedOrigin: OriginId) {
   if (gameLoading.value) return;
   gameLoading.value = true;
   startGameError.value = null;
-  initAudio();
-  playSE("clash");
 
   const sessionResult = await ensureSession();
   if (sessionResult.isErr()) {
@@ -111,7 +108,7 @@ export async function startGame(selectedOrigin: OriginId) {
   const result = await startRun(selectedOrigin);
   if (result.isOk()) {
     const run = result.value;
-    applyLocalGameState(selectedOrigin, run.round, run.sanity, run.trophy, run.id);
+    applyLocalGameState(selectedOrigin, run.round, run.life, run.trophy, run.id);
     await setupNight(run.id, !tutorialDone.value);
     gameLoading.value = false;
     return;

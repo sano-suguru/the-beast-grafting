@@ -124,6 +124,15 @@ module.exports = {
       to: { path: "^src/engine" },
     },
 
+    // ── state層の境界 ──
+    {
+      name: "no-state-to-engine",
+      severity: "error",
+      comment: "state層はengine層に依存してはならない",
+      from: { path: "^src/app/state" },
+      to: { path: "^src/app/engine" },
+    },
+
     // ── 内部レイヤー境界 ──
     {
       name: "no-data-to-upper-layers",
@@ -138,6 +147,13 @@ module.exports = {
       comment: "エンジン層(app内)はstate/screens/componentsに依存してはならない",
       from: { path: "^src/app/engine" },
       to: { path: "^src/app/(state|screens|components)" },
+    },
+    {
+      name: "no-api-to-state",
+      severity: "error",
+      comment: "API層(app/api)はstate層に依存してはならない（副作用はaction層で処理すること）",
+      from: { path: "^src/app/api" },
+      to: { path: "^src/app/state" },
     },
     {
       name: "no-components-to-screens",

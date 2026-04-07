@@ -1,13 +1,8 @@
-import {
-  currentEnemyTeam,
-  round,
-  sanity,
-  battleLoading,
-  battleLoadError,
-} from "../state/game-store";
+import { currentEnemyTeam, round, life, battleLoading, battleLoadError } from "../state/game-store";
 import { startActualBattle, retryBattle } from "../state/battle-actions";
+import { initAudio, playSE } from "../engine/audio";
 import { selectPreBattleNarrative } from "../data/pre-battle-narrative";
-import { toSanityTier } from "../../shared/types";
+import { toLifeTier } from "../../shared/types";
 import { invariant } from "../../shared/invariant";
 import { useDelayedFlag } from "../hooks/use-delayed-flag";
 import { GradientBackground } from "../components/gradient-background";
@@ -52,8 +47,8 @@ export function PreBattleScreen() {
   if (error) return <PreBattleError />;
 
   invariant(team, "PreBattleScreen: team must exist after loading/error guards");
-  const narrative = selectPreBattleNarrative(sanity.value, team.teamType, round.value);
-  const tier = toSanityTier(sanity.value);
+  const narrative = selectPreBattleNarrative(life.value, team.teamType, round.value);
+  const tier = toLifeTier(life.value);
 
   return (
     <main className="animate-fade-in relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-6 text-center font-serif text-zinc-300">
@@ -72,7 +67,11 @@ export function PreBattleScreen() {
         <p>{narrative.closing}</p>
       </div>
       <button
-        onClick={startActualBattle}
+        onClick={() => {
+          initAudio();
+          playSE("select");
+          startActualBattle();
+        }}
         className="relative z-10 mt-12 cursor-pointer rounded-sm border border-red-900 bg-red-950/20 px-8 py-3 text-sm tracking-widest text-red-500 shadow-[0_0_15px_rgba(127,29,29,0.3)] transition-all hover:bg-red-950/40 hover:text-red-400"
       >
         見届ける。

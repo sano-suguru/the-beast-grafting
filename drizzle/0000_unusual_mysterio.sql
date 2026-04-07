@@ -61,11 +61,17 @@ CREATE TABLE `players` (
 	`updated_at` integer NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE `rate_limits` (
+	`key` text PRIMARY KEY NOT NULL,
+	`count` integer DEFAULT 1 NOT NULL,
+	`window_start` integer NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE `runs` (
 	`id` text PRIMARY KEY NOT NULL,
 	`player_id` text NOT NULL,
 	`round` integer DEFAULT 1 NOT NULL,
-	`sanity` integer DEFAULT 5 NOT NULL,
+	`life` integer DEFAULT 5 NOT NULL,
 	`trophy` integer DEFAULT 0 NOT NULL,
 	`board` text NOT NULL,
 	`origin_id` text,

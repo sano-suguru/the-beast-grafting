@@ -2,6 +2,7 @@ import { Dna } from "lucide-preact";
 import type { ComponentChildren } from "preact";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick } from "../state/card-actions";
+import { initAudio, playSEFrom } from "../engine/audio";
 import { UNIT_COST, expPerLevel, MAX_UNIT_LEVEL, CUMULATIVE_EXP } from "../../shared/constants";
 import { effectiveAtk, effectiveHp } from "../../shared/unit-stats";
 import { StatBadge } from "./stat-badge";
@@ -77,7 +78,10 @@ function EmptySlot({
     <button
       type="button"
       aria-label="空きスロット"
-      onClick={() => handleCardClick(isSlot ? "BOARD_SLOT" : type, index, null)}
+      onClick={() => {
+        initAudio();
+        playSEFrom(handleCardClick(isSlot ? "BOARD_SLOT" : type, index, null));
+      }}
       className={`group flex aspect-[2/3] w-full cursor-pointer items-center justify-center rounded-md border border-dashed bg-zinc-900/50 transition-colors ${isHighlight ? "border-emerald-700/50 bg-emerald-950/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)] hover:border-emerald-500" : "border-zinc-800"}`}
     >
       <span className="text-[8px] tracking-widest text-zinc-700 opacity-50 transition-opacity group-hover:opacity-100">
@@ -162,7 +166,10 @@ export function UnitCard({
       <button
         type="button"
         aria-label={unit.name}
-        onClick={() => handleCardClick(isSlot ? "BOARD_SLOT" : type, index, unit)}
+        onClick={() => {
+          initAudio();
+          playSEFrom(handleCardClick(isSlot ? "BOARD_SLOT" : type, index, unit));
+        }}
         className={getCardClass(border, cantAfford)}
       >
         <UnitCardContent unit={unit} />

@@ -1,10 +1,4 @@
-vi.mock("../engine/audio", () => ({
-  initAudio: vi.fn(),
-  playSE: vi.fn(),
-}));
-
 import { handleCardClick } from "./card-actions";
-import { playSE } from "../engine/audio";
 import {
   blood,
   board,
@@ -58,57 +52,57 @@ beforeEach(() => {
 });
 
 describe("handleCardClick – selection / deselection", () => {
-  it("deselects when clicking the same shop unit", () => {
+  it("deselects when clicking the same shop unit", async () => {
     const unit = makeUnit();
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
-    handleCardClick("SHOP_UNIT", 0, unit);
+    const se = await handleCardClick("SHOP_UNIT", 0, unit);
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("select");
+    expect(se).toBe("select");
   });
 
-  it("deselects when clicking the same shop item", () => {
+  it("deselects when clicking the same shop item", async () => {
     const item = makeItem();
     selection.value = { type: "SHOP_ITEM", index: 1, item };
-    handleCardClick("SHOP_ITEM", 1, item);
+    await handleCardClick("SHOP_ITEM", 1, item);
     expect(selection.value).toBeNull();
   });
 
-  it("deselects when clicking the same board unit", () => {
+  it("deselects when clicking the same board unit", async () => {
     const unit = makeUnit();
     selection.value = { type: "BOARD_UNIT", index: 2, item: unit };
-    handleCardClick("BOARD_UNIT", 2, unit);
+    await handleCardClick("BOARD_UNIT", 2, unit);
     expect(selection.value).toBeNull();
   });
 
-  it("selects a shop unit", () => {
+  it("selects a shop unit", async () => {
     const unit = makeUnit();
-    handleCardClick("SHOP_UNIT", 1, unit);
+    const se = await handleCardClick("SHOP_UNIT", 1, unit);
     expect(selection.value).toEqual({ type: "SHOP_UNIT", index: 1, item: unit });
-    expect(playSE).toHaveBeenCalledWith("select");
+    expect(se).toBe("select");
   });
 
-  it("selects a shop item", () => {
+  it("selects a shop item", async () => {
     const item = makeItem();
-    handleCardClick("SHOP_ITEM", 0, item);
+    const se = await handleCardClick("SHOP_ITEM", 0, item);
     expect(selection.value).toEqual({ type: "SHOP_ITEM", index: 0, item });
-    expect(playSE).toHaveBeenCalledWith("select");
+    expect(se).toBe("select");
   });
 
-  it("selects a board unit from occupied slot", () => {
+  it("selects a board unit from occupied slot", async () => {
     const unit = makeUnit();
     board.value = [unit, null, null, null, null];
-    handleCardClick("BOARD_SLOT", 0, null);
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
     expect(selection.value).toEqual({ type: "BOARD_UNIT", index: 0, item: unit });
-    expect(playSE).toHaveBeenCalledWith("select");
+    expect(se).toBe("select");
   });
 
-  it("does nothing when clicking empty board slot with no selection", () => {
-    handleCardClick("BOARD_SLOT", 3, null);
+  it("does nothing when clicking empty board slot with no selection", async () => {
+    await handleCardClick("BOARD_SLOT", 3, null);
     expect(selection.value).toBeNull();
   });
 
-  it("does not select when item is null for SHOP_UNIT", () => {
-    handleCardClick("SHOP_UNIT", 0, null);
+  it("does not select when item is null for SHOP_UNIT", async () => {
+    await handleCardClick("SHOP_UNIT", 0, null);
     expect(selection.value).toBeNull();
   });
 });
@@ -129,27 +123,26 @@ describe("handleCardClick – buy unit to empty slot", () => {
       ),
     );
 
-    handleCardClick("BOARD_SLOT", 0, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(7);
     expect(board.value[0]!.id).toBe("hound");
     expect(shopUnits.value[0]).toBeNull();
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("buy");
+    expect(se).toBe("buy");
   });
 
-  it("plays error and does nothing when blood < 3", () => {
+  it("returns error and does nothing when blood < 3", async () => {
     blood.value = 2;
     const spy = stubFetch(shopRoute(makeShopState()));
     const unit = makeUnit();
     shopUnits.value = [makeShopSlot()];
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
-    handleCardClick("BOARD_SLOT", 0, null);
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("error");
+    expect(se).toBe("error");
     expect(spy).not.toHaveBeenCalled();
   });
 });
@@ -173,15 +166,14 @@ describe("handleCardClick – graft shop unit onto board unit", () => {
       ),
     );
 
-    handleCardClick("BOARD_SLOT", 0, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(7);
     expect(board.value[0]!.level).toBe(2);
-    expect(playSE).toHaveBeenCalledWith("graft");
+    expect(se).toBe("graft");
   });
 
-  it("plays error when IDs differ", () => {
+  it("returns error when IDs differ", async () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     const shopUnit = makeUnit({ id: "bat" });
     const boardUnit = makeUnit({ id: "hound" });
@@ -189,14 +181,14 @@ describe("handleCardClick – graft shop unit onto board unit", () => {
     shopUnits.value = [makeShopSlot({ id: "bat" })];
     selection.value = { type: "SHOP_UNIT", index: 0, item: shopUnit };
 
-    handleCardClick("BOARD_SLOT", 0, null);
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(10);
-    expect(playSE).toHaveBeenCalledWith("error");
+    expect(se).toBe("error");
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("plays error when target is level 3", () => {
+  it("returns error when target is level 3", async () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     const shopUnit = makeUnit({ id: "hound" });
     const boardUnit = makeUnit({ id: "hound", level: 3 });
@@ -204,10 +196,10 @@ describe("handleCardClick – graft shop unit onto board unit", () => {
     shopUnits.value = [makeShopSlot({ id: "hound" })];
     selection.value = { type: "SHOP_UNIT", index: 0, item: shopUnit };
 
-    handleCardClick("BOARD_SLOT", 0, null);
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(10);
-    expect(playSE).toHaveBeenCalledWith("error");
+    expect(se).toBe("error");
     expect(spy).not.toHaveBeenCalled();
   });
 });
@@ -237,8 +229,7 @@ describe("handleCardClick – equip item onto board unit", () => {
       ),
     );
 
-    handleCardClick("BOARD_SLOT", 0, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(8);
     expect(board.value[0]!.baseAtk + board.value[0]!.buffAtk).toBe(6);
@@ -246,22 +237,22 @@ describe("handleCardClick – equip item onto board unit", () => {
     expect(board.value[0]!.equip).toBe("iron");
     expect(shopItems.value[0]).toBeNull();
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("graft");
+    expect(se).toBe("graft");
   });
 
-  it("plays error when target slot is empty", () => {
+  it("returns error when target slot is empty", async () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     const item = makeItem();
     shopItems.value = [makeShopItemSlot()];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
 
-    handleCardClick("BOARD_SLOT", 0, null);
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
-    expect(playSE).toHaveBeenCalledWith("error");
+    expect(se).toBe("error");
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("plays error when blood is insufficient", () => {
+  it("returns error when blood is insufficient", async () => {
     blood.value = 1;
     const spy = stubFetch(shopRoute(makeShopState()));
     const item = makeItem({ cost: 3 });
@@ -270,54 +261,54 @@ describe("handleCardClick – equip item onto board unit", () => {
     shopItems.value = [makeShopItemSlot({ cost: 3 })];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
 
-    handleCardClick("BOARD_SLOT", 0, null);
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(1);
-    expect(playSE).toHaveBeenCalledWith("error");
+    expect(se).toBe("error");
     expect(spy).not.toHaveBeenCalled();
   });
 });
 
 describe("handleCardClick – clears selection on validation error", () => {
-  it("clears selection when buying unit with insufficient blood", () => {
+  it("clears selection when buying unit with insufficient blood", async () => {
     blood.value = 2;
     const unit = makeUnit();
     shopUnits.value = [makeShopSlot()];
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
-    handleCardClick("BOARD_SLOT", 0, null);
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("error");
+    expect(se).toBe("error");
   });
 
-  it("clears selection when equipping item to empty slot", () => {
+  it("clears selection when equipping item to empty slot", async () => {
     blood.value = 10;
     const item = makeItem();
     shopItems.value = [makeShopItemSlot()];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
 
-    handleCardClick("BOARD_SLOT", 0, null);
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("error");
+    expect(se).toBe("error");
   });
 });
 
 describe("handleCardClick – REWARD_UNIT selection / deselection", () => {
-  it("selects a reward unit", () => {
+  it("selects a reward unit", async () => {
     const unit = makeUnit({ id: "hound" });
-    handleCardClick("REWARD_UNIT", 0, unit);
+    const se = await handleCardClick("REWARD_UNIT", 0, unit);
     expect(selection.value).toEqual({ type: "REWARD_UNIT", index: 0, item: unit });
-    expect(playSE).toHaveBeenCalledWith("select");
+    expect(se).toBe("select");
   });
 
-  it("deselects when clicking the same reward unit", () => {
+  it("deselects when clicking the same reward unit", async () => {
     const unit = makeUnit({ id: "hound" });
     selection.value = { type: "REWARD_UNIT", index: 0, item: unit };
-    handleCardClick("REWARD_UNIT", 0, unit);
+    const se = await handleCardClick("REWARD_UNIT", 0, unit);
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("select");
+    expect(se).toBe("select");
   });
 });
 
@@ -336,13 +327,12 @@ describe("handleCardClick – REWARD_UNIT buy to empty slot", () => {
       ),
     );
 
-    handleCardClick("BOARD_SLOT", 0, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(7);
     expect(board.value[0]!.id).toBe("hound");
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("buy");
+    expect(se).toBe("buy");
   });
 });
 
@@ -364,26 +354,25 @@ describe("handleCardClick – REWARD_UNIT graft", () => {
       ),
     );
 
-    handleCardClick("BOARD_SLOT", 0, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(blood.value).toBe(7);
     expect(board.value[0]!.level).toBe(2);
-    expect(playSE).toHaveBeenCalledWith("graft");
+    expect(se).toBe("graft");
   });
 });
 
 describe("handleCardClick – REWARD_UNIT insufficient blood", () => {
-  it("plays error when blood < 3", () => {
+  it("returns error when blood < 3", async () => {
     blood.value = 2;
     const spy = stubFetch(shopRoute(makeShopState()));
     const unit = makeUnit({ id: "hound" });
     selection.value = { type: "REWARD_UNIT", index: 0, item: unit };
 
-    handleCardClick("BOARD_SLOT", 0, null);
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("error");
+    expect(se).toBe("error");
     expect(spy).not.toHaveBeenCalled();
   });
 });

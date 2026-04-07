@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "96b5bab3-d88f-4098-bbe6-92ed5b164e5d",
+  "id": "30b97335-1b31-4d7f-88a5-0be52d02d599",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_providers": {
@@ -393,6 +393,38 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "rate_limits": {
+      "name": "rate_limits",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "window_start": {
+          "name": "window_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "runs": {
       "name": "runs",
       "columns": {
@@ -418,8 +450,8 @@
           "autoincrement": false,
           "default": 1
         },
-        "sanity": {
-          "name": "sanity",
+        "life": {
+          "name": "life",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,

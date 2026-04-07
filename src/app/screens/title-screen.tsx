@@ -2,10 +2,13 @@ import { Skull, Book, Dna, ChevronRight } from "lucide-preact";
 import { GradientBackground } from "../components/gradient-background";
 import { UNITS } from "../../shared/data/units";
 import { phase, gameLoading } from "../state/game-store";
+import { showAccountOverlay } from "../state/auth-store";
 import { useDelayedFlag } from "../hooks/use-delayed-flag";
 import { loreDb } from "../state/lore";
 import { initAudio, playSE } from "../engine/audio";
 import { resumeOrSelectOrigin } from "../state/game-actions";
+import { IdentityBadge } from "./title/identity-badge";
+import { AccountOverlay } from "./title/account-overlay";
 
 const enterGame = () => {
   initAudio();
@@ -28,6 +31,8 @@ export function TitleScreen() {
   return (
     <main className="relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-4 font-serif text-zinc-300">
       <GradientBackground />
+      <IdentityBadge />
+      {showAccountOverlay.value && <AccountOverlay />}
 
       <div className="relative z-10 flex flex-col items-center text-center">
         <div className="animate-icon-drift relative mb-8 h-24 w-24 md:h-32 md:w-32">

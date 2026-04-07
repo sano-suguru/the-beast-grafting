@@ -66,7 +66,7 @@ function buildNormalShop(
 
 export function executeSetup(
   round: number,
-  sanity: number,
+  life: number,
   originId: OriginId | null,
   shopSeed: number,
   prevBoard: (BoardUnit | null)[],
@@ -97,6 +97,6 @@ export function executeSetup(
     rewardSlots: [],
     undoSnapshot: null,
     round,
-    sanity,
+    life,
   };
 }

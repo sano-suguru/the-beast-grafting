@@ -13,7 +13,7 @@ interface RunResponse {
   run: {
     id: string;
     round: number;
-    sanity: number;
+    life: number;
     trophy: number;
     status: string;
     originId: string | null;
@@ -115,9 +115,9 @@ describe("POST /start", () => {
     const { token } = await createTestPlayer(testDb);
     const res = await postStart(app, token, { originId: "thief" });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { run: { round: number; sanity: number; trophy: number } };
+    const body = (await res.json()) as { run: { round: number; life: number; trophy: number } };
     expect(body.run.round).toBe(1);
-    expect(body.run.sanity).toBe(5);
+    expect(body.run.life).toBe(5);
     expect(body.run.trophy).toBe(0);
   });
 
@@ -191,15 +191,15 @@ describe("POST /advance", () => {
     const res = await postAdvance(app, token, battleId);
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
-      run: { round: number; trophy: number; sanity: number; status: string };
+      run: { round: number; trophy: number; life: number; status: string };
     };
     expect(body.run.round).toBe(2);
     expect(body.run.trophy).toBe(1);
-    expect(body.run.sanity).toBe(5);
+    expect(body.run.life).toBe(5);
     expect(body.run.status).toBe("active");
   });
 
-  it("decrements sanity on LOSE", async () => {
+  it("decrements life on LOSE", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const startRes = await postStart(app, token);
     const { run } = (await startRes.json()) as RunResponse;
@@ -207,8 +207,8 @@ describe("POST /advance", () => {
 
     const res = await postAdvance(app, token, battleId);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { run: { sanity: number; status: string } };
-    expect(body.run.sanity).toBe(4);
+    const body = (await res.json()) as { run: { life: number; status: string } };
+    expect(body.run.life).toBe(4);
     expect(body.run.status).toBe("active");
   });
 
@@ -220,8 +220,8 @@ describe("POST /advance", () => {
 
     const res = await postAdvance(app, token, battleId);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { run: { sanity: number; trophy: number } };
-    expect(body.run.sanity).toBe(5);
+    const body = (await res.json()) as { run: { life: number; trophy: number } };
+    expect(body.run.life).toBe(5);
     expect(body.run.trophy).toBe(0);
   });
 
@@ -240,18 +240,18 @@ describe("POST /advance", () => {
     expect(body.run.status).toBe("won");
   });
 
-  it("sets status to 'lost' when sanity reaches 0", async () => {
+  it("sets status to 'lost' when life reaches 0", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const startRes = await postStart(app, token);
     const { run } = (await startRes.json()) as RunResponse;
 
-    await testDb.update(runs).set({ sanity: 1 }).where(eq(runs.id, run.id));
+    await testDb.update(runs).set({ life: 1 }).where(eq(runs.id, run.id));
 
     const battleId = await insertBattle(testDb, playerId, run.id, 1, "LOSE");
     const res = await postAdvance(app, token, battleId);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { run: { sanity: number; status: string } };
-    expect(body.run.sanity).toBe(0);
+    const body = (await res.json()) as { run: { life: number; status: string } };
+    expect(body.run.life).toBe(0);
     expect(body.run.status).toBe("lost");
   });
 
@@ -277,7 +277,7 @@ describe("POST /advance", () => {
       id: runId,
       playerId,
       round: 1,
-      sanity: 5,
+      life: 5,
       trophy: 0,
       board: [],
       originId: null,
@@ -289,7 +289,7 @@ describe("POST /advance", () => {
 
     const first = await consumeAndAdvance(testDb, battleId, runId, {
       round: 2,
-      sanity: 5,
+      life: 5,
       trophy: 1,
       board: [],
       status: "active",
@@ -299,7 +299,7 @@ describe("POST /advance", () => {
 
     const second = await consumeAndAdvance(testDb, battleId, runId, {
       round: 3,
-      sanity: 5,
+      life: 5,
       trophy: 2,
       board: [],
       status: "active",
@@ -319,7 +319,7 @@ describe("POST /advance", () => {
       id: runId,
       playerId,
       round: 1,
-      sanity: 5,
+      life: 5,
       trophy: 0,
       board: [],
       originId: null,
@@ -331,7 +331,7 @@ describe("POST /advance", () => {
 
     const result = await consumeAndAdvance(testDb, battleId, runId, {
       round: 2,
-      sanity: 5,
+      life: 5,
       trophy: 1,
       board: [],
       status: "active",
@@ -375,7 +375,7 @@ describe("POST /advance", () => {
       id: otherRunId,
       playerId,
       round: 1,
-      sanity: 0,
+      life: 0,
       trophy: 3,
       board: [],
       originId: null,
@@ -410,7 +410,7 @@ describe("POST /advance", () => {
     const startRes = await postStart(app, token);
     const { run } = (await startRes.json()) as RunResponse;
 
-    await testDb.update(runs).set({ status: "lost", sanity: 0 }).where(eq(runs.id, run.id));
+    await testDb.update(runs).set({ status: "lost", life: 0 }).where(eq(runs.id, run.id));
 
     const battleId = await insertBattle(testDb, playerId, run.id, 1, "LOSE");
     const res = await postAdvance(app, token, battleId);

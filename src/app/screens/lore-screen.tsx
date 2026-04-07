@@ -93,7 +93,7 @@ function LoreUnitCard({ unit, entry }: { unit: UnitData; entry: LoreEntry }) {
       {isMastered && (
         <div
           className="absolute -top-1 -right-1 z-10 text-red-600 drop-shadow-[0_0_5px_rgba(220,38,38,0.5)]"
-          title="血印 (Lv3クリア)"
+          title="傑作 — Lv3で10勝を達成"
         >
           <Bookmark size={24} fill="currentColor" />
         </div>

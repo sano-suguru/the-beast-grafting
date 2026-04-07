@@ -1,6 +1,6 @@
 import { ok, err, safeAsync } from "../../shared/errors";
 import type { Result, InfraError } from "../../shared/errors";
-
+import { invariant } from "../../shared/invariant";
 const TIMEOUT_MS = 15_000;
 
 const apiFetchErr =
@@ -45,22 +45,38 @@ export async function apiFetch<T>(
 }
 
 let sessionPromise: Promise<Result<void, InfraError>> | null = null;
+let sessionRecoveryFn: (() => Promise<Result<void, InfraError>>) | null = null;
 
+/**
+ * セッション回復関数を登録し、即座に初回実行する。
+ * アプリ起動時に1回だけ呼ぶこと（main.tsx → initAuth → initSession）。
+ */
+export function initSession(fn: () => Promise<Result<void, InfraError>>): void {
+  sessionRecoveryFn = fn;
+  const p = fn();
+  sessionPromise = p;
+  void p.then((result) => {
+    if (result.isErr() && sessionPromise === p) sessionPromise = null;
+  });
+}
+
+/**
+ * セッションが確立済みならキャッシュされたPromiseを返す。
+ * 未確立or失敗済みならrecoveryFnを再実行して新しいPromiseを返す。
+ */
 export async function ensureSession(): Promise<Result<void, InfraError>> {
   if (sessionPromise) return sessionPromise;
-
-  sessionPromise = doEnsureSession();
+  invariant(sessionRecoveryFn, "ensureSession called before initAuth");
+  sessionPromise = sessionRecoveryFn();
   const result = await sessionPromise;
   if (result.isErr()) sessionPromise = null;
   return result;
 }
 
-async function doEnsureSession(): Promise<Result<void, InfraError>> {
-  const me = await apiFetch<{ playerId: string }>("/api/auth/me");
-  if (me.isOk()) return ok(undefined);
-
-  const guest = await apiFetch<{ playerId: string }>("/api/auth/guest", {
-    method: "POST",
-  });
-  return guest.map(() => undefined);
+/**
+ * 外部で作成したセッションPromiseを注入する。
+ * logoutAction後のゲスト再作成など、recoveryFn以外のフローで使う。
+ */
+export function setSessionPromise(p: Promise<Result<void, InfraError>>): void {
+  sessionPromise = p;
 }

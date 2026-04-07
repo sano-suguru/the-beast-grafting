@@ -35,7 +35,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **No throw/try-catch**: oxlint (`eslint-js/no-restricted-syntax` via JS plugin) enforces using `neverthrow` Result types instead. Error types are defined in `src/shared/errors.ts` (`GameError`, `InfraError`). Use `ok()`, `err()`, `fromThrowable()`.
 - **Battle simulation is frame-based**: `battle.ts` produces `BattleFrame[]` via `BattleContext`. Each frame snapshots both boards + a log entry + per-unit actions. The visualizer replays these frames for animation.
-- **Signals-based state**: No Redux/Zustand. State is `@preact/signals` signals in `game-store.ts`. Screens read signals directly; action modules mutate them.
+- **Signals-based state**: No Redux/Zustand. State is `@preact/signals` signals in `game-store.ts`。
+  - **ゲーム/ビジネスロジック系signal**（phase, blood, life, trophy, board等）: action関数経由で変更。
+  - **UI表示系signal**（showAccountOverlay, editingName, showRetireConfirm, recoveryWarning等）: screens/componentsから直接 `.value =` で変更してよい。
+- **Audio呼び出しパターン**: screen層(`screens/`)からの`engine/audio`依存は許容（`no-state-to-engine`はstate層のみ対象）。
+  - **UIフィードバック音**（ナビゲーション、トグル等の固定音）→ `initAudio()` + `playSE()` 直接呼び出し
+  - **アクション結果音**（buy/sell/roll等、結果によって音が変わる）→ action関数が `SoundResult` を返し、screen層で `playSEFrom()` で消費
 - **Vite-plus**: Uses `vite-plus` (vp) as a wrapper around Vite for dev/build/lint/fmt/check commands. Config is in `vite.config.ts`.
 - **パスエイリアス**: `@/*` → `./src/*`（`tsconfig.app.json` で定義）。
 - **oxlint複雑度制限**: max-lines: 300, max-lines-per-function: 50, max-depth: 4, complexity: 10（テストファイルは行数制限免除）。ファイル名はkebab-case必須。

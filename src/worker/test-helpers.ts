@@ -33,7 +33,7 @@ export async function createTestRun(db: DrizzleD1Database, playerId: string): Pr
     id: runId,
     playerId,
     round: 1,
-    sanity: 5,
+    life: 5,
     trophy: 0,
     board: [],
     originId: null,

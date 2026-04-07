@@ -9,9 +9,9 @@ import { invariant } from "../../shared/invariant";
 import { players, authProviders } from "../../db/schema";
 import { generateId, hashPassword, verifyPassword, signState } from "./crypto";
 import { createSession, revokeSession, setSessionCookie } from "./session";
-import { generateGuestName, emailLocalToDisplayName } from "./names";
-import { requireAuth, optionalAuth } from "./middleware";
-import { validateEmail, validatePassword } from "./validation";
+import { generateGuestName } from "./names";
+import { requireAuth, optionalAuth, csrfGuard, noCacheAuth } from "./middleware";
+import { validateEmail, validatePassword, validateDisplayName } from "./validation";
 import {
   buildAuthorizeUrl,
   handleOAuthCallback,
@@ -19,9 +19,18 @@ import {
   getRedirectUri,
 } from "./oauth";
 import type { OAuthProvider } from "./oauth";
+import { rateLimit } from "./rate-limit";
 import type { AppEnv } from "./types";
 
 const auth = new Hono<AppEnv>();
+auth.use("*", csrfGuard);
+auth.use("*", noCacheAuth);
+
+const loginLimit = rateLimit({ prefix: "login", max: 5, windowSec: 300 });
+const registerLimit = rateLimit({ prefix: "register", max: 3, windowSec: 600 });
+const guestLimit = rateLimit({ prefix: "guest", max: 10, windowSec: 60 });
+const oauthLimit = rateLimit({ prefix: "oauth", max: 10, windowSec: 300 });
+const nameLimit = rateLimit({ prefix: "name", max: 5, windowSec: 300 });
 
 function fetchPlayer(db: DrizzleD1Database, playerId: string) {
   return safeAsync(() => db.select().from(players).where(eq(players.id, playerId)).limit(1), dbErr);
@@ -65,7 +74,7 @@ async function issueSessionAndRespond<E extends { Bindings: Env }>(
   return c.json({ playerId, displayName: playerResult.value[0].displayName });
 }
 
-auth.post("/guest", async (c) => {
+auth.post("/guest", guestLimit, async (c) => {
   const db = c.get("db");
   const playerId = generateId();
   const now = new Date();
@@ -111,7 +120,7 @@ async function insertEmailProvider(
       db.batch([
         db.insert(players).values({
           id: playerId,
-          displayName: emailLocalToDisplayName(email),
+          displayName: generateGuestName(),
           createdAt: now,
           updatedAt: now,
         }),
@@ -121,7 +130,7 @@ async function insertEmailProvider(
   );
 }
 
-auth.post("/register", optionalAuth, async (c) => {
+auth.post("/register", optionalAuth, registerLimit, async (c) => {
   const credentialsResult = await parseCredentials(c);
   if (credentialsResult.isErr()) return c.json({ error: credentialsResult.error }, 400);
 
@@ -158,7 +167,7 @@ auth.post("/register", optionalAuth, async (c) => {
   return issueSessionAndRespond(c, db, playerId);
 });
 
-auth.post("/login", async (c) => {
+auth.post("/login", loginLimit, async (c) => {
   const credentialsResult = await parseCredentials(c);
   if (credentialsResult.isErr()) return c.json({ error: credentialsResult.error }, 400);
 
@@ -196,8 +205,11 @@ auth.post("/login", async (c) => {
 });
 
 function oauthRoutes(provider: OAuthProvider) {
-  auth.get(`/${provider}`, async (c) => {
+  auth.get(`/${provider}`, oauthLimit, async (c) => {
     const creds = getOAuthCredentials(c.env, provider);
+    if (creds.isErr()) {
+      return c.redirect(`${c.env.ALLOWED_ORIGIN}/?auth_error=provider_not_configured`);
+    }
     const redirectUri = getRedirectUri(c.env, provider);
     const state = generateId();
     const signed = await signState(state, c.env.OAUTH_STATE_SECRET);
@@ -210,10 +222,12 @@ function oauthRoutes(provider: OAuthProvider) {
       maxAge: 600,
     });
 
-    return c.redirect(buildAuthorizeUrl(provider, creds, redirectUri, state));
+    return c.redirect(buildAuthorizeUrl(provider, creds.value, redirectUri, state));
   });
 
-  auth.get(`/${provider}/callback`, optionalAuth, (c) => handleOAuthCallback(c, provider));
+  auth.get(`/${provider}/callback`, optionalAuth, async (c) => {
+    return handleOAuthCallback(c, provider);
+  });
 }
 
 oauthRoutes("discord");
@@ -225,6 +239,31 @@ auth.post("/logout", requireAuth, async (c) => {
   if (result.isErr()) return c.json({ error: { type: "INTERNAL_ERROR" } }, 500);
   deleteCookie(c, "session", { path: "/api" });
   return c.json({ ok: true });
+});
+
+auth.patch("/name", requireAuth, nameLimit, async (c) => {
+  const bodyResult = await safeAsync(
+    () => c.req.json<{ displayName?: unknown }>(),
+    (): GameError => ({ type: "PRECONDITION_FAILED", reason: "invalid_json" }),
+  );
+  if (bodyResult.isErr()) return c.json({ error: bodyResult.error }, 400);
+
+  const nameResult = validateDisplayName(bodyResult.value.displayName);
+  if (nameResult.isErr()) return c.json({ error: nameResult.error }, 400);
+
+  const db = c.get("db");
+  const playerId = c.get("playerId");
+  const updateResult = await safeAsync(
+    () =>
+      db
+        .update(players)
+        .set({ displayName: nameResult.value, updatedAt: new Date() })
+        .where(eq(players.id, playerId)),
+    dbErr,
+  );
+  if (updateResult.isErr()) return c.json({ error: { type: "INTERNAL_ERROR" } }, 500);
+
+  return c.json({ displayName: nameResult.value });
 });
 
 auth.get("/me", requireAuth, async (c) => {

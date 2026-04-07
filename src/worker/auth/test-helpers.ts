@@ -5,10 +5,10 @@ import type { AppEnv } from "./types";
 export const TEST_ENV = {
   DB: {},
   ALLOWED_ORIGIN: "http://localhost:5173",
-  DISCORD_CLIENT_ID: "",
-  DISCORD_CLIENT_SECRET: "",
-  GOOGLE_CLIENT_ID: "",
-  GOOGLE_CLIENT_SECRET: "",
+  DISCORD_CLIENT_ID: "test-discord-client-id",
+  DISCORD_CLIENT_SECRET: "test-discord-client-secret",
+  GOOGLE_CLIENT_ID: "test-google-client-id",
+  GOOGLE_CLIENT_SECRET: "test-google-client-secret",
   OAUTH_STATE_SECRET: "test-secret",
 } as Env;
 
@@ -25,19 +25,26 @@ export function createAuthTestApp(
   return app;
 }
 
-export function post(
+function mutate(
+  method: string,
   app: Hono<AppEnv>,
   path: string,
   body?: Record<string, unknown>,
   headers: Record<string, string> = {},
 ) {
-  const init: RequestInit = { method: "POST", headers: { ...headers } };
+  const init: RequestInit = {
+    method,
+    headers: { Origin: TEST_ENV.ALLOWED_ORIGIN as string, ...headers },
+  };
   if (body) {
     (init.headers as Record<string, string>)["Content-Type"] = "application/json";
     init.body = JSON.stringify(body);
   }
   return app.request(path, init, TEST_ENV);
 }
+
+export const post = mutate.bind(null, "POST");
+export const patch = mutate.bind(null, "PATCH");
 
 export function get(app: Hono<AppEnv>, path: string, headers: Record<string, string> = {}) {
   return app.request(path, { method: "GET", headers }, TEST_ENV);

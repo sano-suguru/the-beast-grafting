@@ -4,13 +4,14 @@ import { boardUnitToUnitInstance } from "../../shared/board-unit";
 import { fetchErr } from "../../shared/errors";
 import { loadLore } from "./lore";
 import type { Result, InfraError } from "../../shared/errors";
+import type { SoundType, SoundResult } from "../types";
+import { NO_SOUND, SE_ERROR } from "../sound-results";
 import { error as logError } from "../../shared/logger";
-import { initAudio, playSE } from "../engine/audio";
 import {
   blood,
   board,
   round,
-  sanity,
+  life,
   trophy,
   freeRoll,
   cultistUsed,
@@ -41,7 +42,6 @@ import {
 function handleShopError(label: string) {
   return (e: InfraError) => {
     logError(label, e);
-    playSE("error");
     shopActionError.value = e;
   };
 }
@@ -62,38 +62,47 @@ async function resyncShopState(): Promise<boolean> {
 export function runShopAction(
   label: string,
   request: Promise<Result<ShopStateResponse, InfraError>>,
-  onSuccess: (state: ShopStateResponse) => void = () => {},
-): Promise<void> {
+  onSuccess: (state: ShopStateResponse) => SoundType | null = () => null,
+): SoundResult {
   shopLocked.value = true;
   shopActionError.value = null;
-  const promise = request
-    .then(async (result) => {
+  return request
+    .then(async (result): SoundResult => {
       if (phase.value !== "SHOP") {
         shopLocked.value = false;
-        return;
+        return null;
       }
       if (result.isErr() && isConflict(result.error)) {
         const synced = await resyncShopState();
         shopLocked.value = false;
-        if (!synced) handleShopError(`${label}:resync`)(result.error);
-        return;
+        if (!synced) {
+          selection.value = null;
+          handleShopError(`${label}:resync`)(result.error);
+          return "error";
+        }
+        return null;
       }
+      let sound: SoundType | null = null;
       batch(() => {
-        result.match((state) => {
-          applyShopState(state);
-          onSuccess(state);
-        }, handleShopError(label));
+        if (result.isOk()) {
+          applyShopState(result.value);
+          sound = onSuccess(result.value);
+        } else {
+          handleShopError(label)(result.error);
+          sound = "error";
+        }
         shopLocked.value = false;
       });
+      return sound;
     })
-    .catch((error: unknown) => {
+    .catch((error: unknown): null => {
       batch(() => {
         shopLocked.value = false;
         shopActionError.value = fetchErr(error);
       });
       logError(`${label}:crash`, error);
+      return null;
     });
-  return promise;
 }
 
 export function applyShopState(state: ShopStateResponse) {
@@ -122,30 +131,30 @@ export function applyShopState(state: ShopStateResponse) {
     activeEvent.value = state.activeEvent;
     canUndo.value = state.canUndo;
     round.value = state.round;
-    sanity.value = state.sanity;
+    life.value = state.life;
     trophy.value = state.trophy;
     selection.value = null;
     currentEnemyTeam.value = null;
   });
 }
 
-export function setupNight(runId: string, useTutorialShop = false): Promise<void> {
+export function setupNight(runId: string, useTutorialShop = false): SoundResult {
   return runShopAction("[setupNight]", apiSetupShop(runId, useTutorialShop), () => {
     showHelpOverlay.value = false;
     void loadLore();
+    return null;
   });
 }
 
-export function rollShop() {
-  if (shopLocked.value) return;
-  if (activeEvent.value?.lockRoll) return;
+export function rollShop(): SoundResult {
+  if (shopLocked.value) return NO_SOUND;
+  if (activeEvent.value?.lockRoll) return NO_SOUND;
   const runId = currentRunId.value;
-  if (!runId) return;
+  if (!runId) return NO_SOUND;
 
-  initAudio();
-  void runShopAction("[rollShop]", apiRollShop(runId), () => {
-    playSE("select");
+  return runShopAction("[rollShop]", apiRollShop(runId), () => {
     if (onboardingStep.value === "roll") onboardingStep.value = "battle";
+    return "select";
   });
 }
 
@@ -153,39 +162,28 @@ export function handleFreezeClick(
   slotType: "unit" | "item" | "reward",
   index: number,
   frozen: boolean,
-) {
-  if (shopLocked.value) return;
+): SoundResult {
+  if (shopLocked.value) return NO_SOUND;
   const runId = currentRunId.value;
-  if (!runId) return;
+  if (!runId) return NO_SOUND;
 
-  initAudio();
-  void runShopAction("[freeze]", apiFreezeSlot(runId, slotType, index, frozen), () => {
-    playSE("select");
-  });
+  return runShopAction("[freeze]", apiFreezeSlot(runId, slotType, index, frozen), () => "select");
 }
 
-export function executeSellUnit() {
-  if (shopLocked.value) return;
+export function executeSellUnit(): SoundResult {
+  if (shopLocked.value) return NO_SOUND;
   const runId = currentRunId.value;
-  if (!runId) return;
+  if (!runId) return NO_SOUND;
   const sel = selection.value;
-  if (!sel || sel.type !== "BOARD_UNIT") {
-    playSE("error");
-    return;
-  }
+  if (!sel || sel.type !== "BOARD_UNIT") return SE_ERROR;
 
-  void runShopAction("[sell]", apiSellUnit(runId, sel.index), () => {
-    playSE("graft");
-  });
+  return runShopAction("[sell]", apiSellUnit(runId, sel.index), () => "graft");
 }
 
-export function useCultistAbility() {
-  if (shopLocked.value) return;
+export function useCultistAbility(): SoundResult {
+  if (shopLocked.value) return NO_SOUND;
   const runId = currentRunId.value;
-  if (!runId) return;
+  if (!runId) return NO_SOUND;
 
-  initAudio();
-  void runShopAction("[cultist]", apiUseCultist(runId), () => {
-    playSE("graft");
-  });
+  return runShopAction("[cultist]", apiUseCultist(runId), () => "graft");
 }

@@ -18,7 +18,7 @@ import type { ShopStateRow } from "./shop-state-row";
 export type RunInfo = {
   id: string;
   round: number;
-  sanity: number;
+  life: number;
   trophy: number;
   originId: OriginId | null;
 };
@@ -57,7 +57,7 @@ export function toResponse(state: ShopStateRow, trophy: number): ShopStateRespon
     activeEvent: state.activeEvent,
     canUndo: state.undoSnapshot !== null,
     round: state.round,
-    sanity: state.sanity,
+    life: state.life,
     trophy,
   };
 }
@@ -84,7 +84,7 @@ function dbRowToState(
     rewardSlots: (ShopSlotJson | null)[];
     undoSnapshot: ShopUndoSnapshot | null;
   },
-  sanity: number,
+  life: number,
 ): ShopStateRow {
   return {
     blood: row.blood,
@@ -100,7 +100,7 @@ function dbRowToState(
     rewardSlots: row.rewardSlots,
     undoSnapshot: row.undoSnapshot ?? null,
     round: row.round,
-    sanity,
+    life,
   };
 }
 
@@ -145,7 +145,7 @@ export async function loadShopState(
         .select({
           id: runs.id,
           round: runs.round,
-          sanity: runs.sanity,
+          life: runs.life,
           trophy: runs.trophy,
           originId: runs.originId,
           status: runs.status,
@@ -177,12 +177,12 @@ export async function loadShopState(
     run: {
       id: run.id,
       round: run.round,
-      sanity: run.sanity,
+      life: run.life,
       trophy: run.trophy,
       originId: parseOriginId(run.originId),
     },
     shopRow: { id: shopRow.id, version: shopRow.version },
-    state: dbRowToState(shopRow, run.sanity),
+    state: dbRowToState(shopRow, run.life),
   };
 }
 
@@ -191,7 +191,7 @@ export async function saveShopState(
   shopRowId: string,
   expectedVersion: number,
   state: ShopStateRow,
-  sanity?: number,
+  life?: number,
   runId?: string,
 ): Promise<Result<unknown, InfraError | GameError>> {
   const now = new Date();
@@ -201,8 +201,8 @@ export async function saveShopState(
     .where(and(eq(shopStates.id, shopRowId), eq(shopStates.version, expectedVersion)))
     .returning({ id: shopStates.id });
 
-  if (sanity !== undefined && runId) {
-    const runUpdate = db.update(runs).set({ sanity, updatedAt: now }).where(eq(runs.id, runId));
+  if (life !== undefined && runId) {
+    const runUpdate = db.update(runs).set({ life, updatedAt: now }).where(eq(runs.id, runId));
     const batchResult = await safeAsync(() => db.batch([shopUpdate, runUpdate] as const), dbErr);
     if (batchResult.isErr()) return batchResult;
     const [shopRows] = batchResult.value;

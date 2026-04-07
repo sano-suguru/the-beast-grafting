@@ -1,30 +1,30 @@
 import { toHex } from "./crypto";
-
-export const GUEST_NAME_PREFIX = "名もなき術師#";
+import { GUEST_NAME_PREFIX } from "../../shared/guest-name";
 
 export function generateGuestName(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(2));
   return `${GUEST_NAME_PREFIX}${toHex(bytes).toUpperCase()}`;
 }
 
-const MAX_DISPLAY_NAME_LENGTH = 20;
+export const MAX_DISPLAY_NAME_LENGTH = 20;
 
-function isControlChar(code: number): boolean {
-  return (code >= 0 && code <= 0x1f) || (code >= 0x7f && code <= 0x9f);
+/** ASCII制御文字 (C0, DEL, C1) + BiDi制御文字 */
+const UNSAFE_CODEPOINTS = new Set([0x061c, 0xfeff]);
+const UNSAFE_RANGES: [number, number][] = [
+  [0x00, 0x1f],
+  [0x7f, 0x9f],
+  [0x200e, 0x200f],
+  [0x202a, 0x202e],
+  [0x2066, 0x2069],
+];
+
+function isUnsafeChar(code: number): boolean {
+  if (UNSAFE_CODEPOINTS.has(code)) return true;
+  return UNSAFE_RANGES.some(([lo, hi]) => code >= lo && code <= hi);
 }
 
-export function emailLocalToDisplayName(email: string): string {
-  const local = email.split("@")[0]!;
-  const stripped = local.split("+")[0]!;
-  return sanitizeDisplayName(stripped || local);
-}
-
-export function sanitizeDisplayName(raw: string): string {
-  const cleaned = Array.from(raw)
-    .filter((ch) => !isControlChar(ch.codePointAt(0)!))
+export function stripControlChars(raw: string): string {
+  return Array.from(raw)
+    .filter((ch) => !isUnsafeChar(ch.codePointAt(0)!))
     .join("");
-  if (cleaned.length === 0) return "User";
-  if (cleaned.length > MAX_DISPLAY_NAME_LENGTH)
-    return Array.from(cleaned).slice(0, MAX_DISPLAY_NAME_LENGTH).join("");
-  return cleaned;
 }

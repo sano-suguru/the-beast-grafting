@@ -1,4 +1,4 @@
-import { Trophy, Brain } from "lucide-preact";
+import { Trophy, Heart } from "lucide-preact";
 
 function deltaSign(value: number): string {
   if (value > 0) return "+";
@@ -18,10 +18,10 @@ function DeltaText({ value, color }: { value: number; color: string }) {
 
 export function RewardSummary({
   trophyDelta,
-  sanityDelta,
+  lifeDelta,
 }: {
   trophyDelta: number;
-  sanityDelta: number;
+  lifeDelta: number;
 }) {
   return (
     <div className="flex items-center gap-6">
@@ -30,8 +30,8 @@ export function RewardSummary({
         <DeltaText value={trophyDelta} color="text-amber-500" />
       </div>
       <div className="flex items-center gap-1.5">
-        <Brain size={14} className="text-rose-600" />
-        <DeltaText value={sanityDelta} color="text-rose-500" />
+        <Heart size={14} className="text-rose-600" />
+        <DeltaText value={lifeDelta} color="text-rose-500" />
       </div>
     </div>
   );

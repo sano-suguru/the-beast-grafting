@@ -5,13 +5,14 @@ import auth from "./routes";
 import {
   createAuthTestApp,
   post,
+  patch,
   get,
   extractSessionCookie,
   extractCookie,
   TEST_ENV,
 } from "./test-helpers";
 import type { AppEnv } from "./types";
-import type { Hono } from "hono";
+import { Hono } from "hono";
 
 let testDb: DrizzleD1Database;
 let testApp: Hono<AppEnv>;
@@ -59,6 +60,7 @@ describe("auth routes -- integration", () => {
     expect(body.playerId).toBeDefined();
     expect(body.displayName).toMatch(/^名もなき術師#/);
     expect(extractSessionCookie(res)).not.toBe("");
+    expect(res.headers.get("cache-control")).toBe("no-store");
   });
 
   it("POST /register creates player + auth_provider and issues session", async () => {
@@ -69,7 +71,7 @@ describe("auth routes -- integration", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { playerId: string; displayName: string };
     expect(body.playerId).toBeDefined();
-    expect(body.displayName).toBe("test");
+    expect(body.displayName).toMatch(/^名もなき術師#/);
     expect(extractSessionCookie(res)).not.toBe("");
   });
 
@@ -119,6 +121,19 @@ describe("auth routes -- integration", () => {
     expect(meBody.providers).toEqual([]);
   });
 
+  it("GET /me includes email in providers after register", async () => {
+    const regRes = await post(testApp, "/register", {
+      email: "me-test@example.com",
+      password: "password123",
+    });
+    const cookie = extractSessionCookie(regRes);
+
+    const meRes = await get(testApp, "/me", { Cookie: `session=${cookie}` });
+    expect(meRes.status).toBe(200);
+    const meBody = (await meRes.json()) as { providers: string[] };
+    expect(meBody.providers).toContain("email");
+  });
+
   it("POST /logout invalidates session", async () => {
     const guestRes = await post(testApp, "/guest");
     const cookie = extractSessionCookie(guestRes);
@@ -156,7 +171,7 @@ describe("auth routes -- integration", () => {
     expect(res.status).toBe(401);
   });
 
-  it("GET /me displayName reflects email local part after register", async () => {
+  it("GET /me displayName is guest name after register", async () => {
     const regRes = await post(testApp, "/register", {
       email: "alice@example.com",
       password: "password123",
@@ -166,7 +181,55 @@ describe("auth routes -- integration", () => {
     const meRes = await get(testApp, "/me", { Cookie: `session=${cookie}` });
     expect(meRes.status).toBe(200);
     const meBody = (await meRes.json()) as { displayName: string };
-    expect(meBody.displayName).toBe("alice");
+    expect(meBody.displayName).toMatch(/^名もなき術師#/);
+  });
+
+  it("PATCH /name updates display name", async () => {
+    const guestRes = await post(testApp, "/guest");
+    const cookie = extractSessionCookie(guestRes);
+
+    const renameRes = await patch(
+      testApp,
+      "/name",
+      { displayName: "術師太郎" },
+      { Cookie: `session=${cookie}` },
+    );
+    expect(renameRes.status).toBe(200);
+    const renameBody = (await renameRes.json()) as { displayName: string };
+    expect(renameBody.displayName).toBe("術師太郎");
+
+    const meRes = await get(testApp, "/me", { Cookie: `session=${cookie}` });
+    const meBody = (await meRes.json()) as { displayName: string };
+    expect(meBody.displayName).toBe("術師太郎");
+  });
+
+  it("PATCH /name requires authentication", async () => {
+    const res = await patch(testApp, "/name", { displayName: "test" });
+    expect(res.status).toBe(401);
+  });
+
+  it("PATCH /name rejects empty name", async () => {
+    const guestRes = await post(testApp, "/guest");
+    const cookie = extractSessionCookie(guestRes);
+
+    const res = await patch(testApp, "/name", { displayName: "" }, { Cookie: `session=${cookie}` });
+    expect(res.status).toBe(400);
+  });
+
+  it("PATCH /name returns 429 after rate limit exceeded", async () => {
+    const guestRes = await post(testApp, "/guest");
+    const cookie = extractSessionCookie(guestRes);
+
+    for (let i = 0; i < 5; i++) {
+      await patch(testApp, "/name", { displayName: `name${i}` }, { Cookie: `session=${cookie}` });
+    }
+    const res = await patch(
+      testApp,
+      "/name",
+      { displayName: "overflow" },
+      { Cookie: `session=${cookie}` },
+    );
+    expect(res.status).toBe(429);
   });
 
   it("full lifecycle: guest -> register -> logout -> login preserves playerId", async () => {
@@ -234,6 +297,7 @@ describe("OAuth callback -- integration", () => {
     });
 
     expect(cbRes.status).toBe(302);
+    expect(cbRes.headers.get("cache-control")).toBe("no-store");
     expect(cbRes.headers.get("location")).toBe(TEST_ENV.ALLOWED_ORIGIN);
     expect(extractSessionCookie(cbRes)).not.toBe("");
   });
@@ -325,17 +389,19 @@ describe("OAuth callback -- integration", () => {
     expect(meBody.providers).toContain("google");
   });
 
-  it("non-guest player linking OAuth does not update displayName", async () => {
+  it("linking OAuth does not change displayName", async () => {
     const regRes = await post(testApp, "/register", {
       email: "keep-name@example.com",
       password: "password123",
     });
     const regCookie = extractSessionCookie(regRes);
+    const regBody = (await regRes.json()) as { displayName: string };
+    const originalName = regBody.displayName;
 
     const { state, stateCookie } = await initiateOAuth("discord");
     mockOAuthFetch(
       { status: 200, body: { access_token: "tok-keep", token_type: "Bearer" } },
-      { status: 200, body: { id: "d-keep", global_name: "OAuthName", username: "oauth" } },
+      { status: 200, body: { id: "d-keep" } },
     );
     const cbRes = await get(testApp, `/discord/callback?code=c&state=${state}`, {
       Cookie: `oauth_state_discord=${stateCookie}; session=${regCookie}`,
@@ -344,7 +410,7 @@ describe("OAuth callback -- integration", () => {
 
     const meRes = await get(testApp, "/me", { Cookie: `session=${newSession}` });
     const meBody = (await meRes.json()) as { displayName: string };
-    expect(meBody.displayName).toBe("keep-name");
+    expect(meBody.displayName).toBe(originalName);
   });
 
   it("invalid state cookie redirects with auth_error", async () => {
@@ -353,6 +419,7 @@ describe("OAuth callback -- integration", () => {
     });
 
     expect(cbRes.status).toBe(302);
+    expect(cbRes.headers.get("cache-control")).toBe("no-store");
     const location = cbRes.headers.get("location") ?? "";
     expect(location).toContain("auth_error=invalid_state");
   });
@@ -360,6 +427,7 @@ describe("OAuth callback -- integration", () => {
   it("missing state params redirects with auth_error", async () => {
     const cbRes = await get(testApp, "/discord/callback");
     expect(cbRes.status).toBe(302);
+    expect(cbRes.headers.get("cache-control")).toBe("no-store");
     expect(cbRes.headers.get("location")).toContain("auth_error=invalid_state");
   });
 
@@ -372,6 +440,7 @@ describe("OAuth callback -- integration", () => {
     });
 
     expect(cbRes.status).toBe(302);
+    expect(cbRes.headers.get("cache-control")).toBe("no-store");
     expect(cbRes.headers.get("location")).toContain("auth_error=oauth_failed");
   });
 
@@ -387,7 +456,54 @@ describe("OAuth callback -- integration", () => {
     });
 
     expect(cbRes.status).toBe(302);
+    expect(cbRes.headers.get("cache-control")).toBe("no-store");
     expect(cbRes.headers.get("location")).toContain("auth_error=oauth_failed");
+  });
+});
+
+describe("OAuth credentials not configured", () => {
+  let unconfiguredApp: Hono<AppEnv>;
+
+  beforeEach(() => {
+    const envWithoutCreds = {
+      ...TEST_ENV,
+      GOOGLE_CLIENT_ID: "",
+      GOOGLE_CLIENT_SECRET: "",
+      DISCORD_CLIENT_ID: "",
+      DISCORD_CLIENT_SECRET: "",
+    } as Env;
+    const app = new Hono<AppEnv>();
+    app.use("*", async (c, next) => {
+      c.set("db", testDb);
+      await next();
+    });
+    app.route("/", auth);
+    unconfiguredApp = app;
+
+    // Override request to use envWithoutCreds
+    const origRequest = unconfiguredApp.request.bind(unconfiguredApp);
+    unconfiguredApp.request = ((path: string, init?: RequestInit) =>
+      origRequest(path, init, envWithoutCreds)) as typeof unconfiguredApp.request;
+  });
+
+  it("GET /google redirects with provider_not_configured when credentials missing", async () => {
+    const res = await unconfiguredApp.request("/google");
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toContain("auth_error=provider_not_configured");
+  });
+
+  it("GET /discord redirects with provider_not_configured when credentials missing", async () => {
+    const res = await unconfiguredApp.request("/discord");
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toContain("auth_error=provider_not_configured");
+  });
+
+  it("callback also returns provider_not_configured when credentials missing", async () => {
+    const res = await unconfiguredApp.request("/google/callback?code=test&state=test", {
+      headers: { Cookie: "oauth_state_google=fake" },
+    });
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toContain("auth_error=");
   });
 });
 
@@ -413,7 +529,30 @@ describe("Google OAuth callback -- integration", () => {
       displayName: string;
       providers: string[];
     };
-    expect(meBody.displayName).toBe("GoogleUser");
+    expect(meBody.displayName).toMatch(/^名もなき術師#/);
     expect(meBody.providers).toContain("google");
+  });
+});
+
+describe("CSRF guard", () => {
+  it("POST without Origin returns 403", async () => {
+    const res = await testApp.request("/guest", { method: "POST" }, TEST_ENV);
+    expect(res.status).toBe(403);
+  });
+
+  it("POST with wrong Origin returns 403", async () => {
+    const res = await testApp.request(
+      "/guest",
+      { method: "POST", headers: { Origin: "https://evil.example.com" } },
+      TEST_ENV,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("GET without Origin passes", async () => {
+    const guestRes = await post(testApp, "/guest");
+    const cookie = extractSessionCookie(guestRes);
+    const res = await get(testApp, "/me", { Cookie: `session=${cookie}` });
+    expect(res.status).toBe(200);
   });
 });

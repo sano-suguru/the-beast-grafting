@@ -45,6 +45,12 @@ export const sessions = sqliteTable(
   ],
 );
 
+export const rateLimits = sqliteTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull().default(1),
+  windowStart: integer("window_start").notNull(),
+});
+
 export const boardSnapshots = sqliteTable(
   "board_snapshots",
   {
@@ -100,7 +106,7 @@ export const runs = sqliteTable(
       .notNull()
       .references(() => players.id),
     round: integer("round").notNull().default(1),
-    sanity: integer("sanity").notNull().default(5),
+    life: integer("life").notNull().default(5),
     trophy: integer("trophy").notNull().default(0),
     board: text("board", { mode: "json" }).$type<(BoardUnit | null)[]>().notNull(),
     originId: text("origin_id"),

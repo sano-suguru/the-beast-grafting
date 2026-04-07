@@ -4,7 +4,7 @@ import type { Context } from "hono";
 import { validateSession } from "./session";
 
 import { warn } from "../../shared/logger";
-import type { AuthEnv, OptionalAuthEnv } from "./types";
+import type { AppEnv, AuthEnv, OptionalAuthEnv } from "./types";
 
 function extractToken(c: Context): string | null {
   const cookie = getCookie(c, "session");
@@ -43,4 +43,21 @@ export const optionalAuth = createMiddleware<OptionalAuthEnv>(async (c, next) =>
     }
   }
   await next();
+});
+
+const CSRF_SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+export const csrfGuard = createMiddleware<AppEnv>(async (c, next) => {
+  if (!CSRF_SAFE_METHODS.has(c.req.method)) {
+    const origin = c.req.header("Origin");
+    if (!origin || origin !== c.env.ALLOWED_ORIGIN) {
+      return c.json({ error: { type: "FORBIDDEN" } }, 403) as never;
+    }
+  }
+  await next();
+});
+
+export const noCacheAuth = createMiddleware<AppEnv>(async (c, next) => {
+  await next();
+  c.res.headers.set("Cache-Control", "no-store");
 });

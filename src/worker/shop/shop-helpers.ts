@@ -33,7 +33,7 @@ export function captureUndo(state: ShopStateRow): ShopUndoSnapshot {
     activeEvent: state.activeEvent,
     rngS0: state.rngS0,
     rngS1: state.rngS1,
-    sanity: state.sanity,
+    life: state.life,
     rewardSlots: state.rewardSlots,
   };
 }
@@ -79,10 +79,10 @@ export function validateRunId(body: unknown): string | null {
   return typeof runId === "string" ? runId : null;
 }
 
-export function validateIndex(body: unknown, key: string, max?: number): number | null {
+export function validateIndex(body: unknown, key: string, maxInclusive?: number): number | null {
   const val = bodyField(body, key);
   if (typeof val !== "number" || !Number.isInteger(val) || val < 0) return null;
-  if (max !== undefined && val > max) return null;
+  if (maxInclusive !== undefined && val > maxInclusive) return null;
   return val;
 }
 
@@ -117,14 +117,14 @@ async function persistShopState(
   afterPersist?: AfterPersist,
 ) {
   const newState = isWithBoard(value) ? value.state : value;
-  const sanityChanged = newState.sanity !== run.sanity ? newState.sanity : undefined;
+  const lifeChanged = newState.life !== run.life ? newState.life : undefined;
   const saveResult = await saveShopState(
     db,
     shopRow.id,
     shopRow.version,
     newState,
-    sanityChanged,
-    sanityChanged !== undefined ? run.id : undefined,
+    lifeChanged,
+    lifeChanged !== undefined ? run.id : undefined,
   );
   if (saveResult.isErr()) {
     const e = saveResult.error;

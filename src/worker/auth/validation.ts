@@ -1,5 +1,6 @@
 import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
+import { stripControlChars, MAX_DISPLAY_NAME_LENGTH } from "./names";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;
@@ -25,4 +26,14 @@ export function validatePassword(input: unknown): Result<string, GameError> {
   if (input.length > MAX_PASSWORD_LENGTH)
     return err({ type: "PRECONDITION_FAILED", reason: "password_too_long" });
   return ok(input);
+}
+
+export function validateDisplayName(input: unknown): Result<string, GameError> {
+  if (typeof input !== "string")
+    return err({ type: "PRECONDITION_FAILED", reason: "name_must_be_string" });
+  const cleaned = stripControlChars(input).trim();
+  if (cleaned.length === 0) return err({ type: "PRECONDITION_FAILED", reason: "name_empty" });
+  if (Array.from(cleaned).length > MAX_DISPLAY_NAME_LENGTH)
+    return err({ type: "PRECONDITION_FAILED", reason: "name_too_long" });
+  return ok(cleaned);
 }

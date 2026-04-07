@@ -31,7 +31,7 @@ export const phase = resettableSignal<GamePhase>(() => "TITLE");
 export const origin = resettableSignal<OriginId | null>(() => null);
 export const round = resettableSignal(() => 1);
 export const blood = resettableSignal(() => 10);
-export const sanity = resettableSignal(() => 5);
+export const life = resettableSignal(() => 5);
 export const trophy = resettableSignal(() => 0);
 
 export const board = resettableSignal<(UnitInstance | null)[]>(() => [
@@ -59,7 +59,7 @@ export const lastBattleResult = resettableSignal<BattleResult>(() => null);
 export const lastEnemyTeamType = resettableSignal<EnemyFaction | null>(() => null);
 
 export const battleConcludeData = resettableSignal<{
-  sanityDelta: number;
+  lifeDelta: number;
   trophyDelta: number;
   gameEnded: boolean;
 } | null>(() => null);
@@ -83,7 +83,7 @@ export const showHelpOverlay = resettableSignal(() => false);
 export const showRetireConfirm = resettableSignal(() => false);
 export const recoveryWarning = resettableSignal<string | null>(() => null);
 export const retiring = resettableSignal(() => false);
-export const resourceError = resettableSignal<"blood" | "sanity" | null>(() => null);
+export const resourceError = resettableSignal<"blood" | "life" | null>(() => null);
 
 const EMPTY_SET: ReadonlySet<string> = new Set();
 
@@ -115,7 +115,7 @@ export const passiveGraftIds = computed<ReadonlySet<string>>(() => {
 
 let resourceErrorTimer: ReturnType<typeof setTimeout> | null = null;
 
-export function flashResourceError(resource: "blood" | "sanity") {
+export function flashResourceError(resource: "blood" | "life") {
   if (resourceErrorTimer) clearTimeout(resourceErrorTimer);
   resourceError.value = resource;
   resourceErrorTimer = setTimeout(() => {

@@ -2,7 +2,7 @@ import { err, ok, fromThrowable } from "neverthrow";
 import type { Result } from "neverthrow";
 
 export type GameError =
-  | { type: "INSUFFICIENT_RESOURCE"; resource: string; required: number; current: number }
+  | { type: "INSUFFICIENT_RESOURCE"; resource: string; minimum: number; current: number }
   | { type: "INVALID_TARGET"; reason: string }
   | { type: "INVALID_INDEX"; index: number }
   | { type: "PRECONDITION_FAILED"; reason: string }

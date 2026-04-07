@@ -63,7 +63,7 @@ shopRoutes.post("/setup", requireAuth, jsonBody(), async (c) => {
   const useTutorialShop = bodyField(body, "useTutorialShop") === true;
   const state = executeSetup(
     run.round,
-    run.sanity,
+    run.life,
     parseOriginId(run.originId),
     shopSeed,
     normalizePrevBoard(run.board),

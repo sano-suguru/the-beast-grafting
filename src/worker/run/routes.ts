@@ -27,7 +27,7 @@ export { consumeAndAdvance };
 
 const runRoutes = new Hono<AuthEnv>();
 
-const INITIAL_SANITY = 5;
+const INITIAL_LIFE = 5;
 
 function findActiveRunId(db: DrizzleD1Database, playerId: string) {
   return safeAsync(
@@ -67,7 +67,7 @@ runRoutes.post("/start", requireAuth, jsonBody(), async (c) => {
         id: runId,
         playerId,
         round: 1,
-        sanity: INITIAL_SANITY,
+        life: INITIAL_LIFE,
         trophy: 0,
         board: [] as (BoardUnit | null)[],
         originId: originId ?? null,
@@ -83,7 +83,7 @@ runRoutes.post("/start", requireAuth, jsonBody(), async (c) => {
   const run: RunState = {
     id: runId,
     round: 1,
-    sanity: INITIAL_SANITY,
+    life: INITIAL_LIFE,
     trophy: 0,
     status: "active",
     originId: originId ?? null,
@@ -101,7 +101,7 @@ runRoutes.get("/current", requireAuth, async (c) => {
         .select({
           id: runs.id,
           round: runs.round,
-          sanity: runs.sanity,
+          life: runs.life,
           trophy: runs.trophy,
           originId: runs.originId,
           status: runs.status,
@@ -128,7 +128,7 @@ runRoutes.get("/current", requireAuth, async (c) => {
   const run: CurrentRunState = {
     id: row.id,
     round: row.round,
-    sanity: row.sanity,
+    life: row.life,
     trophy: row.trophy,
     status: row.status,
     originId: row.originId,
@@ -201,7 +201,7 @@ runRoutes.post("/advance", requireAuth, jsonBody(), async (c) => {
     run: {
       id: run.id,
       round: fields.round,
-      sanity: fields.sanity,
+      life: fields.life,
       trophy: fields.trophy,
       status: fields.status,
       originId: run.originId,

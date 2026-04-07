@@ -4,7 +4,14 @@ import { sql } from "drizzle-orm";
 import { players } from "../../db/schema";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import auth from "./routes";
-import { createAuthTestApp, post, get, extractSessionCookie, TEST_ENV } from "./test-helpers";
+import {
+  createAuthTestApp,
+  post,
+  patch,
+  get,
+  extractSessionCookie,
+  TEST_ENV,
+} from "./test-helpers";
 
 let testDb: DrizzleD1Database;
 
@@ -49,7 +56,14 @@ describe("input validation", () => {
     const a = app();
     const res = await a.request(
       "/login",
-      { method: "POST", headers: { "Content-Type": "application/json" }, body: "not json" },
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: TEST_ENV.ALLOWED_ORIGIN as string,
+        },
+        body: "not json",
+      },
       TEST_ENV,
     );
     expect(res.status).toBe(400);
@@ -60,6 +74,31 @@ describe("input validation", () => {
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: { reason: string } };
     expect(body.error.reason).toBe("email_must_be_string");
+  });
+
+  it("PATCH /name rejects empty name", async () => {
+    const a = app();
+    const guestRes = await post(a, "/guest");
+    const cookie = extractSessionCookie(guestRes);
+    const res = await patch(a, "/name", { displayName: "" }, { Cookie: `session=${cookie}` });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: { reason: string } };
+    expect(body.error.reason).toBe("name_empty");
+  });
+
+  it("PATCH /name rejects too-long name", async () => {
+    const a = app();
+    const guestRes = await post(a, "/guest");
+    const cookie = extractSessionCookie(guestRes);
+    const res = await patch(
+      a,
+      "/name",
+      { displayName: "a".repeat(21) },
+      { Cookie: `session=${cookie}` },
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: { reason: string } };
+    expect(body.error.reason).toBe("name_too_long");
   });
 });
 

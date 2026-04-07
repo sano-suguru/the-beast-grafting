@@ -1,19 +1,14 @@
 // @vitest-environment jsdom
 /// <reference types="@testing-library/jest-dom" />
-vi.mock("../state/card-actions", () => ({
-  handleCardClick: vi.fn(),
-}));
-
 import { render, screen, fireEvent } from "@testing-library/preact";
 import { UnitCard } from "./unit-card";
-import { selection, blood } from "../state/game-store";
-import { handleCardClick } from "../state/card-actions";
+import { selection, blood, phase } from "../state/game-store";
 import { makeUnit } from "../../engine/test-helpers";
 
 beforeEach(() => {
   selection.value = null;
   blood.value = 10;
-  vi.clearAllMocks();
+  phase.value = "SHOP";
 });
 
 describe("UnitCard", () => {
@@ -47,11 +42,11 @@ describe("UnitCard", () => {
     expect(screen.getByText("Lv2")).toBeInTheDocument();
   });
 
-  it("calls handleCardClick on click", () => {
+  it("selects unit on click", () => {
     const unit = makeUnit();
     render(<UnitCard unit={unit} type="SHOP_UNIT" index={2} />);
     fireEvent.click(screen.getByRole("button", { name: unit.name }));
-    expect(handleCardClick).toHaveBeenCalledWith("SHOP_UNIT", 2, unit);
+    expect(selection.value).toEqual({ type: "SHOP_UNIT", index: 2, item: unit });
   });
 
   it("applies cant-afford style when blood < 3 for shop unit", () => {

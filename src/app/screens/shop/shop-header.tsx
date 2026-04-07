@@ -1,9 +1,10 @@
 import { Heart, Trophy, Droplet, HelpCircle, LogOut } from "lucide-preact";
+import { toLifeTier } from "../../../shared/types";
 import { ORIGINS } from "../../../shared/data/origins";
 import {
   round,
   origin,
-  sanity,
+  life,
   trophy,
   blood,
   showHelpOverlay,
@@ -21,24 +22,24 @@ function toggleHelp() {
   if (next) onboardingStep.value = null;
 }
 
-function SanityDisplay({ currentSanity, isAlert }: { currentSanity: number; isAlert: boolean }) {
-  const pulse = currentSanity <= 2 || isAlert;
+function LifeDisplay({ currentLife, isAlert }: { currentLife: number; isAlert: boolean }) {
+  const pulse = toLifeTier(currentLife) !== "high" || isAlert;
   return (
     <div
       className={`flex flex-col items-center ${pulse ? "animate-pulse" : ""} ${isAlert ? "rounded border border-red-500 p-0.5" : ""}`}
     >
       <Heart size={14} className={`mb-0.5 ${pulse ? "text-red-600" : "text-zinc-500"}`} />
       <span className={`text-[10px] font-bold md:text-xs ${pulse ? "text-red-500" : ""}`}>
-        {currentSanity}
+        {currentLife}
       </span>
     </div>
   );
 }
 
-function ResourceBar({ resErr }: { resErr: "blood" | "sanity" | null }) {
+function ResourceBar({ resErr }: { resErr: "blood" | "life" | null }) {
   return (
     <div className="flex gap-3 md:gap-4">
-      <SanityDisplay currentSanity={sanity.value} isAlert={resErr === "sanity"} />
+      <LifeDisplay currentLife={life.value} isAlert={resErr === "life"} />
       <div className="flex flex-col items-center">
         <Trophy size={14} className="mb-0.5 text-zinc-500" />
         <span className="text-[10px] font-bold md:text-xs">{trophy.value}</span>

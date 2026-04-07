@@ -1,8 +1,3 @@
-vi.mock("../engine/audio", () => ({
-  initAudio: vi.fn(),
-  playSE: vi.fn(),
-}));
-
 import {
   startPreBattle,
   startActualBattle,
@@ -14,7 +9,7 @@ import type { ShopStateResponse, RunState, BattleResponse } from "../../shared/a
 import {
   phase,
   round,
-  sanity,
+  life,
   trophy,
   board,
   selection,
@@ -79,7 +74,7 @@ function defaultRunState(overrides: Partial<RunState> = {}): RunState {
   return {
     id: "run-1",
     round: 2,
-    sanity: 5,
+    life: 5,
     trophy: 1,
     status: "active",
     originId: null,
@@ -114,7 +109,7 @@ function stubError() {
 beforeEach(() => {
   phase.value = "SHOP";
   round.value = 1;
-  sanity.value = 5;
+  life.value = 5;
   trophy.value = 0;
   board.value = [makeUnit({ baseAtk: 10, baseHp: 10 }), null, null, null, null];
   selection.value = null;
@@ -332,31 +327,29 @@ describe("concludeBattle", () => {
     expect(phase.value).toBe("BATTLE_RESULT");
   });
 
-  it("decrements sanity on loss from server", async () => {
+  it("decrements life on loss from server", async () => {
     battleResult.value = "LOSE";
-    sanity.value = 3;
+    life.value = 3;
     lastBattleId.value = "b-1";
     stubFetch(
       battleRoutes({
-        runState: defaultRunState({ sanity: 2, trophy: 0 }),
-        shopState: makeShopState({ sanity: 2, trophy: 0 }),
+        runState: defaultRunState({ life: 2, trophy: 0 }),
+        shopState: makeShopState({ life: 2, trophy: 0 }),
       }),
     );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
-    expect(sanity.value).toBe(2);
+    expect(life.value).toBe(2);
   });
 
   it("game over when server returns lost status", async () => {
     battleResult.value = "LOSE";
-    sanity.value = 1;
+    life.value = 1;
     lastBattleId.value = "b-1";
-    stubFetch(
-      battleRoutes({ runState: defaultRunState({ sanity: 0, trophy: 0, status: "lost" }) }),
-    );
+    stubFetch(battleRoutes({ runState: defaultRunState({ life: 0, trophy: 0, status: "lost" }) }));
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
-    expect(sanity.value).toBe(0);
+    expect(life.value).toBe(0);
     expect(phase.value).toBe("BATTLE_RESULT");
   });
 
@@ -364,30 +357,28 @@ describe("concludeBattle", () => {
     battleResult.value = "WIN";
     trophy.value = 9;
     lastBattleId.value = "b-1";
-    stubFetch(
-      battleRoutes({ runState: defaultRunState({ sanity: 5, trophy: 10, status: "won" }) }),
-    );
+    stubFetch(battleRoutes({ runState: defaultRunState({ life: 5, trophy: 10, status: "won" }) }));
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(trophy.value).toBe(10);
     expect(phase.value).toBe("BATTLE_RESULT");
   });
 
-  it("draw advances round without changing sanity or trophy", async () => {
+  it("draw advances round without changing life or trophy", async () => {
     battleResult.value = "DRAW";
-    sanity.value = 5;
+    life.value = 5;
     trophy.value = 3;
     round.value = 2;
     lastBattleId.value = "b-1";
     stubFetch(
       battleRoutes({
-        runState: defaultRunState({ round: 3, sanity: 5, trophy: 3 }),
-        shopState: makeShopState({ round: 3, sanity: 5, trophy: 3 }),
+        runState: defaultRunState({ round: 3, life: 5, trophy: 3 }),
+        shopState: makeShopState({ round: 3, life: 5, trophy: 3 }),
       }),
     );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
-    expect(sanity.value).toBe(5);
+    expect(life.value).toBe(5);
     expect(trophy.value).toBe(3);
     expect(round.value).toBe(3);
     expect(phase.value).toBe("BATTLE_RESULT");
@@ -433,7 +424,7 @@ describe("concludeBattle", () => {
 
 describe("proceedFromBattleResult", () => {
   it("transitions to RESULT and clears battleConcludeData when gameEnded", () => {
-    battleConcludeData.value = { sanityDelta: -1, trophyDelta: 0, gameEnded: true };
+    battleConcludeData.value = { lifeDelta: -1, trophyDelta: 0, gameEnded: true };
     proceedFromBattleResult();
     expect(phase.value).toBe("RESULT");
     expect(battleConcludeData.value).toBeNull();
@@ -441,7 +432,7 @@ describe("proceedFromBattleResult", () => {
 
   it("transitions to SHOP and calls setupNight when game not ended", async () => {
     const spy = stubFetch(battleRoutes());
-    battleConcludeData.value = { sanityDelta: 0, trophyDelta: 1, gameEnded: false };
+    battleConcludeData.value = { lifeDelta: 0, trophyDelta: 1, gameEnded: false };
     proceedFromBattleResult();
     expect(phase.value).toBe("SHOP");
     expect(battleConcludeData.value).toBeNull();
@@ -458,7 +449,7 @@ describe("proceedFromBattleResult", () => {
   it("does not call setupNight when no runId", () => {
     const spy = stubFetch(battleRoutes());
     currentRunId.value = null;
-    battleConcludeData.value = { sanityDelta: 0, trophyDelta: 1, gameEnded: false };
+    battleConcludeData.value = { lifeDelta: 0, trophyDelta: 1, gameEnded: false };
     proceedFromBattleResult();
     expect(phase.value).toBe("SHOP");
     expect(spy).not.toHaveBeenCalled();

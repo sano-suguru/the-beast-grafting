@@ -37,7 +37,7 @@ function makeState(overrides: Partial<ShopStateRow> = {}): ShopStateRow {
     rewardSlots: [],
     undoSnapshot: null,
     round: 1,
-    sanity: 5,
+    life: 5,
     ...overrides,
   };
 }
@@ -431,18 +431,35 @@ describe("executeCultist", () => {
     expect(result._unsafeUnwrapErr().type).toBe("PRECONDITION_FAILED");
   });
 
-  test("deducts 1 sanity, adds 3 blood", () => {
-    const state = makeState({ blood: 5, sanity: 3 });
+  test("deducts 1 life, adds 3 blood", () => {
+    const state = makeState({ blood: 5, life: 3 });
     const result = executeCultist(state, "cultist");
     expect(result.isOk()).toBe(true);
     const next = result._unsafeUnwrap();
-    expect(next.sanity).toBe(2);
+    expect(next.life).toBe(2);
     expect(next.blood).toBe(8);
     expect(next.cultistUsed).toBe(true);
   });
 
-  test("insufficient sanity fails", () => {
-    const state = makeState({ sanity: 0 });
+  test("rejects at life=1 (would die)", () => {
+    const state = makeState({ blood: 0, life: 1 });
+    const result = executeCultist(state, "cultist");
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().type).toBe("INSUFFICIENT_RESOURCE");
+  });
+
+  test("allows at life=2, resulting in life=1", () => {
+    const state = makeState({ blood: 0, life: 2 });
+    const result = executeCultist(state, "cultist");
+    expect(result.isOk()).toBe(true);
+    const next = result._unsafeUnwrap();
+    expect(next.life).toBe(1);
+    expect(next.blood).toBe(3);
+    expect(next.cultistUsed).toBe(true);
+  });
+
+  test("insufficient life fails", () => {
+    const state = makeState({ life: 0 });
     const result = executeCultist(state, "cultist");
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().type).toBe("INSUFFICIENT_RESOURCE");
@@ -507,7 +524,7 @@ describe("executeUndo", () => {
       activeEvent: null,
       rngS0: 123,
       rngS1: 456,
-      sanity: 5,
+      life: 5,
       rewardSlots: [],
     };
     const state = makeState({ blood: 7, undoSnapshot: snapshot });
@@ -604,7 +621,7 @@ describe("executeReady", () => {
         activeEvent: null,
         rngS0: 1,
         rngS1: 2,
-        sanity: 5,
+        life: 5,
         rewardSlots: [],
       },
     });

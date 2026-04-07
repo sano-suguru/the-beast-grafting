@@ -8,6 +8,7 @@ import {
   currentEnemyTeam,
 } from "../../state/game-store";
 import { proceedFromBattleResult } from "../../state/battle-actions";
+import { initAudio, playSE } from "../../engine/audio";
 import { invariant } from "../../../shared/invariant";
 import { computeBattleStats } from "./compute-stats";
 import { GradientBackground } from "../../components/gradient-background";
@@ -69,7 +70,7 @@ export function BattleResultScreen() {
       <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-6 md:max-w-lg">
         <ResultHeader result={result} />
 
-        {data && <RewardSummary trophyDelta={data.trophyDelta} sanityDelta={data.sanityDelta} />}
+        {data && <RewardSummary trophyDelta={data.trophyDelta} lifeDelta={data.lifeDelta} />}
 
         <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
           <UnitStatsList label="あなたの傑作" units={stats.playerUnits} />
@@ -81,7 +82,11 @@ export function BattleResultScreen() {
 
         <button
           disabled={battleBusy.value}
-          onClick={() => proceedFromBattleResult()}
+          onClick={() => {
+            initAudio();
+            playSE("select");
+            proceedFromBattleResult();
+          }}
           className="mt-4 cursor-pointer rounded-sm border border-zinc-700 px-6 py-3 text-sm tracking-widest text-zinc-400 shadow-[0_0_15px_rgba(113,113,122,0.2)] transition-all hover:bg-zinc-900 hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
           type="button"
         >

@@ -6,3 +6,6 @@ export const CUMULATIVE_EXP = { 2: 2, 3: 5 } as const;
 
 /** 各レベル内の必要exp数（expバー表示用） */
 export const expPerLevel = (level: number): number => (level === 1 ? 2 : 3);
+
+export const CULTIST_LIFE_COST = 1;
+export const CULTIST_BLOOD_GAIN = 3;

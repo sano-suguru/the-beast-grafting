@@ -55,3 +55,5 @@ export type SoundType =
   | "defend"
   | "skill"
   | "death";
+
+export type SoundResult = Promise<SoundType | null>;

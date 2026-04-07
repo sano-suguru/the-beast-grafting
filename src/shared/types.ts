@@ -137,11 +137,11 @@ export interface ShopItemSlot {
   frozen: boolean;
 }
 
-export type SanityTier = "high" | "mid" | "low";
+export type LifeTier = "high" | "mid" | "low";
 
-export function toSanityTier(sanity: number): SanityTier {
-  if (sanity >= 4) return "high";
-  if (sanity >= 2) return "mid";
+export function toLifeTier(life: number): LifeTier {
+  if (life >= 4) return "high";
+  if (life >= 2) return "mid";
   return "low";
 }
 

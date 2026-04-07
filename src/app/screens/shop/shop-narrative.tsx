@@ -1,7 +1,9 @@
 import { Info, AlertTriangle, Skull } from "lucide-preact";
+import { toLifeTier } from "../../../shared/types";
 
-export function ShopNarrative({ currentSanity }: { currentSanity: number }) {
-  if (currentSanity >= 4) {
+export function ShopNarrative({ currentLife }: { currentLife: number }) {
+  const tier = toLifeTier(currentLife);
+  if (tier === "high") {
     return (
       <div className="flex flex-col items-center gap-1 text-center text-[10px] text-zinc-500 md:text-xs">
         <Info size={16} className="mb-1 text-zinc-600" />
@@ -15,7 +17,7 @@ export function ShopNarrative({ currentSanity }: { currentSanity: number }) {
       </div>
     );
   }
-  if (currentSanity >= 2) {
+  if (tier === "mid") {
     return (
       <div className="animate-fade-in flex flex-col items-center gap-1 text-center text-[10px] text-amber-600/80 md:text-xs">
         <AlertTriangle size={16} className="mb-1 text-amber-700" />

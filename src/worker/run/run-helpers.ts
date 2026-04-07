@@ -3,12 +3,12 @@ import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { safeAsync, dbErr, ok, err } from "../../shared/errors";
 import type { Result, InfraError } from "../../shared/errors";
 import type { BoardUnit } from "../../shared/board-unit";
-import type { RunStatus } from "../../shared/api-types";
+import type { RunStatus, ServerBattleResult } from "../../shared/api-types";
 import { runs, battles, shopStates } from "../../db/schema";
 
 interface AdvanceFields {
   round: number;
-  sanity: number;
+  life: number;
   trophy: number;
   board: (BoardUnit | null)[];
   status: RunStatus;
@@ -55,7 +55,7 @@ export async function consumeAndAdvance(
 const WIN_THRESHOLD = 10;
 
 export type BattleRow = {
-  result: string;
+  result: ServerBattleResult;
   playerId: string;
   runId: string;
   round: number;
@@ -93,14 +93,14 @@ export function validateBattleForRun(
 export function computeAdvanceFields(
   run: {
     round: number;
-    sanity: number;
+    life: number;
     trophy: number;
     status: RunStatus;
     board: (BoardUnit | null)[];
   },
-  battleResultStr: string,
+  battleResultStr: ServerBattleResult,
 ): AdvanceFields {
-  let sanity = run.sanity;
+  let life = run.life;
   let trophy = run.trophy;
   let status: RunStatus = run.status;
 
@@ -108,13 +108,13 @@ export function computeAdvanceFields(
     trophy += 1;
     if (trophy >= WIN_THRESHOLD) status = "won";
   } else if (battleResultStr === "LOSE") {
-    sanity = Math.max(0, sanity - 1);
-    if (sanity <= 0) status = "lost";
+    life = Math.max(0, life - 1);
+    if (life <= 0) status = "lost";
   }
 
   return {
     round: status === "active" ? run.round + 1 : run.round,
-    sanity,
+    life,
     trophy,
     board: run.board as (BoardUnit | null)[],
     status,

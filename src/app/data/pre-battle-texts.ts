@@ -1,9 +1,6 @@
-import type { EnemyFaction, PreBattleText, SanityTier } from "../../shared/types";
+import type { EnemyFaction, PreBattleText, LifeTier } from "../../shared/types";
 
-export const PRE_BATTLE_TEXTS: Record<
-  SanityTier,
-  Record<EnemyFaction, readonly PreBattleText[]>
-> = {
+export const PRE_BATTLE_TEXTS: Record<LifeTier, Record<EnemyFaction, readonly PreBattleText[]>> = {
   high: {
     教団: [
       {

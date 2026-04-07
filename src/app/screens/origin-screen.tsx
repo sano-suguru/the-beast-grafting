@@ -7,6 +7,7 @@ import type { LucideProps } from "lucide-preact";
 import { ORIGINS } from "../../shared/data/origins";
 import { startGame } from "../state/game-actions";
 import { gameLoading, startGameError } from "../state/game-store";
+import { initAudio, playSE } from "../engine/audio";
 
 const ORIGIN_ICONS: Record<string, FunctionComponent<LucideProps>> = {
   Shovel,
@@ -28,7 +29,11 @@ function OriginCard({
       <button
         type="button"
         disabled={loading}
-        onClick={() => void startGame(org.id)}
+        onClick={() => {
+          initAudio();
+          playSE("clash");
+          void startGame(org.id);
+        }}
         className="group relative h-full w-full cursor-pointer overflow-hidden rounded-sm border border-zinc-800 bg-black/60 p-5 text-center transition-all hover:border-red-900 hover:bg-zinc-900/80 hover:shadow-[0_0_20px_rgba(127,29,29,0.2)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <div className="absolute -right-4 -bottom-4 opacity-5 transition-opacity group-hover:opacity-10">

@@ -1,7 +1,7 @@
-import type { UnitInstance, ItemData, Selection, HighlightKind } from "../types";
+import type { UnitInstance, ItemData, Selection, HighlightKind, SoundResult } from "../types";
 import type { ShopStateResponse } from "../../shared/api-types";
 import type { Result, InfraError } from "../../shared/errors";
-import { initAudio, playSE } from "../engine/audio";
+import { NO_SOUND, SE_SELECT, SE_ERROR } from "../sound-results";
 import {
   blood,
   board,
@@ -26,15 +26,15 @@ function getSlotCost(index: number): number {
   return shopUnits.value[index]?.costOverride ?? UNIT_COST;
 }
 
-function rejectWithResourceError(resource: "blood" | "sanity") {
+function rejectWithResourceError(resource: "blood" | "life"): SoundResult {
   selection.value = null;
-  playSE("error");
   flashResourceError(resource);
+  return SE_ERROR;
 }
 
-function rejectInvalidAction() {
+function rejectInvalidAction(): SoundResult {
   selection.value = null;
-  playSE("error");
+  return SE_ERROR;
 }
 
 function buyUnitToSlot(
@@ -43,24 +43,24 @@ function buyUnitToSlot(
   cost: number,
   makeApiCall: () => Promise<Result<ShopStateResponse, InfraError>>,
   label: string,
-) {
+): SoundResult {
   if (blood.value < cost) return rejectWithResourceError("blood");
   const canPlace = !targetUnit;
   const canGraft = targetUnit !== null && targetUnit.id === sel.item.id && targetUnit.level < 3;
   if (!canPlace && !canGraft) return rejectInvalidAction();
 
-  if (shopLocked.value) return;
+  if (shopLocked.value) return NO_SOUND;
 
   const isGraft = !!targetUnit;
   const unitId = sel.item.id;
-  void runShopAction(label, makeApiCall(), () => {
-    playSE(isGraft ? "graft" : "buy");
+  return runShopAction(label, makeApiCall(), () => {
     if (sel.type === "SHOP_UNIT" && !isGraft && onboardingStep.value === "buy") {
       const hasSame = board.value.filter((u) => u && u.id === unitId).length > 1;
       const shopHasSame = shopUnits.value.some((s) => s && s.unit.id === unitId);
       onboardingStep.value = hasSame || shopHasSame ? "graft" : "roll";
     }
     if (isGraft && onboardingStep.value === "graft") onboardingStep.value = "roll";
+    return isGraft ? "graft" : "buy";
   });
 }
 
@@ -68,111 +68,111 @@ function handleShopItemToSlot(
   sel: Extract<Selection, { type: "SHOP_ITEM" }>,
   index: number,
   targetUnit: UnitInstance | null,
-) {
+): SoundResult {
   if (!targetUnit) return rejectInvalidAction();
   if (blood.value < sel.item.cost) return rejectWithResourceError("blood");
 
-  if (shopLocked.value) return;
+  if (shopLocked.value) return NO_SOUND;
   const runId = currentRunId.value;
-  if (!runId) return;
+  if (!runId) return NO_SOUND;
 
-  void runShopAction("[equip]", apiEquipItem(runId, sel.index, index), () => {
-    playSE("graft");
-  });
+  return runShopAction("[equip]", apiEquipItem(runId, sel.index, index), () => "graft");
 }
 
-function handleBoardUnitToSlot(sel: Extract<Selection, { type: "BOARD_UNIT" }>, index: number) {
-  if (shopLocked.value) return;
+function handleBoardUnitToSlot(
+  sel: Extract<Selection, { type: "BOARD_UNIT" }>,
+  index: number,
+): SoundResult {
+  if (shopLocked.value) return NO_SOUND;
   const runId = currentRunId.value;
-  if (!runId) return;
+  if (!runId) return NO_SOUND;
 
   const targetUnit = board.value[index] ?? null;
   const isGraft =
     !!targetUnit && targetUnit.id === sel.item.id && targetUnit.level < 3 && sel.index !== index;
-  void runShopAction("[swap]", apiSwapBoard(runId, sel.index, index), () => {
-    playSE(isGraft ? "graft" : "buy");
+  return runShopAction("[swap]", apiSwapBoard(runId, sel.index, index), () => {
     if (isGraft && onboardingStep.value === "graft") onboardingStep.value = "roll";
+    return isGraft ? "graft" : "buy";
   });
 }
 
-function handleBoardSlotClick(sel: Selection | null, index: number) {
-  if (index < 0 || index > 4) return;
+function handleBoardSlotClick(sel: Selection | null, index: number): SoundResult {
+  if (index < 0 || index > 4) return NO_SOUND;
   const targetUnit = board.value[index] ?? null;
   if (!sel) {
     if (targetUnit) {
-      playSE("select");
       selection.value = { type: "BOARD_UNIT", index, item: targetUnit };
+      return SE_SELECT;
     }
-    return;
+    return NO_SOUND;
   }
-  dispatchSlotAction(sel, index, targetUnit);
+  return dispatchSlotAction(sel, index, targetUnit);
 }
 
-function dispatchSlotAction(sel: Selection, index: number, targetUnit: UnitInstance | null) {
+function dispatchSlotAction(
+  sel: Selection,
+  index: number,
+  targetUnit: UnitInstance | null,
+): SoundResult {
   const runId = currentRunId.value;
-  if (!runId) return;
+  if (!runId) return NO_SOUND;
   if (sel.type === "SHOP_UNIT") {
-    buyUnitToSlot(
+    return buyUnitToSlot(
       sel,
       targetUnit,
       getSlotCost(sel.index),
       () => apiBuyUnit(runId, sel.index, index),
       "[buy]",
     );
-    return;
   }
   if (sel.type === "SHOP_ITEM") {
-    handleShopItemToSlot(sel, index, targetUnit);
-    return;
+    return handleShopItemToSlot(sel, index, targetUnit);
   }
   if (sel.type === "REWARD_UNIT") {
-    buyUnitToSlot(
+    return buyUnitToSlot(
       sel,
       targetUnit,
       UNIT_COST,
       () => apiBuyReward(runId, sel.index, index),
       "[buy-reward]",
     );
-    return;
   }
   if (sel.type === "BOARD_UNIT") {
-    handleBoardUnitToSlot(sel, index);
+    return handleBoardUnitToSlot(sel, index);
   }
+  return NO_SOUND;
 }
 
 function trySelectShopCard(
   type: Selection["type"],
   index: number,
   item: UnitInstance | ItemData | null,
-) {
+): SoundResult {
   if ((type === "SHOP_UNIT" || type === "REWARD_UNIT") && item && "uid" in item) {
-    playSE("select");
     selection.value = { type, index, item };
-    return;
+    return SE_SELECT;
   }
   if (type === "SHOP_ITEM" && item && "cost" in item && !("uid" in item)) {
-    playSE("select");
     selection.value = { type, index, item };
+    return SE_SELECT;
   }
+  return NO_SOUND;
 }
 
 export function handleCardClick(
   type: Selection["type"] | "BOARD_SLOT",
   index: number,
   item: UnitInstance | ItemData | null,
-) {
-  initAudio();
+): SoundResult {
   const sel = selection.value;
   if (sel && sel.type === type && sel.index === index) {
-    playSE("select");
     selection.value = null;
-    return;
+    return SE_SELECT;
   }
   if (type === "BOARD_SLOT") {
-    handleBoardSlotClick(sel, index);
-    return;
+    return handleBoardSlotClick(sel, index);
   }
-  trySelectShopCard(type, index, item);
+  return trySelectShopCard(type, index, item);
 }
 
 function canHighlightForItem(
@@ -193,11 +193,12 @@ function canHighlightForUnit(
   return false;
 }
 
-function canHighlightForReward(unit: UnitInstance | null): HighlightKind {
+function canHighlightForReward(
+  sel: Extract<Selection, { type: "REWARD_UNIT" }>,
+  unit: UnitInstance | null,
+): HighlightKind {
   if (blood.value < UNIT_COST) return false;
   if (!unit) return "move";
-  const sel = selection.value;
-  if (!sel || sel.type !== "REWARD_UNIT") return false;
   if (unit.id === sel.item.id && unit.level < 3) return "graft";
   return false;
 }
@@ -223,7 +224,7 @@ export function checkHighlight(
     if (sel) {
       if (sel.type === "SHOP_ITEM") return canHighlightForItem(sel, unit);
       if (sel.type === "SHOP_UNIT") return canHighlightForUnit(sel, unit);
-      if (sel.type === "REWARD_UNIT") return canHighlightForReward(unit);
+      if (sel.type === "REWARD_UNIT") return canHighlightForReward(sel, unit);
       if (sel.type === "BOARD_UNIT") return canHighlightForBoardUnit(sel, index, unit);
       return false;
     }

@@ -1,6 +1,7 @@
 import { Droplet, Activity } from "lucide-preact";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick } from "../state/card-actions";
+import { initAudio, playSEFrom } from "../engine/audio";
 import type { ItemData } from "../types";
 
 interface ItemCardProps {
@@ -53,7 +54,10 @@ export function ItemCard({ item, index, isFrozen }: ItemCardProps) {
     <button
       type="button"
       aria-label={item.name}
-      onClick={() => handleCardClick("SHOP_ITEM", index, item)}
+      onClick={() => {
+        initAudio();
+        playSEFrom(handleCardClick("SHOP_ITEM", index, item));
+      }}
       className={getCardClass(borderClass, cantAfford, isEquip)}
     >
       <div className="flex flex-1 flex-col p-1">

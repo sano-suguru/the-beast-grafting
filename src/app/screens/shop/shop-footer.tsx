@@ -6,15 +6,17 @@ import {
   origin,
   freeRoll,
   cultistUsed,
-  sanity,
+  life,
   board,
   activeEvent,
   showHelpOverlay,
   shopLocked,
 } from "../../state/game-store";
 import { OnboardingTooltip } from "../../components/onboarding-tooltip";
+import { CULTIST_LIFE_COST } from "../../../shared/constants";
 import { rollShop, useCultistAbility } from "../../state/shop-actions";
 import { startPreBattle } from "../../state/battle-actions";
+import { initAudio, playSE, playSEFrom } from "../../engine/audio";
 
 function isRollDisabled(hasFreeRoll: boolean, currentBlood: number, step: OnboardingStep): boolean {
   if (activeEvent.value?.lockRoll) return true;
@@ -72,7 +74,10 @@ function RollSection({
         />
       )}
       <button
-        onClick={rollShop}
+        onClick={() => {
+          initAudio();
+          playSEFrom(rollShop());
+        }}
         disabled={rollDisabled}
         className={getRollButtonClass(
           currentFreeRoll,
@@ -83,9 +88,12 @@ function RollSection({
       >
         <RefreshCw size={14} /> 墓暴き ({currentFreeRoll ? "無料" : "1"})
       </button>
-      {origin.value === "cultist" && !cultistUsed.value && sanity.value > 1 && (
+      {origin.value === "cultist" && !cultistUsed.value && life.value > CULTIST_LIFE_COST && (
         <button
-          onClick={useCultistAbility}
+          onClick={() => {
+            initAudio();
+            playSEFrom(useCultistAbility());
+          }}
           disabled={busy}
           className="cursor-pointer rounded border border-red-900 bg-red-950/30 px-2 text-[10px] text-red-600 hover:bg-red-900/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -113,7 +121,11 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
           />
         )}
         <button
-          onClick={startPreBattle}
+          onClick={() => {
+            initAudio();
+            playSE("clash");
+            startPreBattle();
+          }}
           disabled={battleDisabled}
           className={`flex-1 ${getBattleButtonClass(hasUnit, currentOnboarding)}`}
         >

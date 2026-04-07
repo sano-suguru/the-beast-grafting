@@ -1,9 +1,3 @@
-vi.mock("../engine/audio", () => ({
-  initAudio: vi.fn(),
-  playSE: vi.fn(),
-}));
-
-import { playSE } from "../engine/audio";
 import {
   setupNight,
   rollShop,
@@ -18,7 +12,7 @@ import {
   board,
   freeRoll,
   cultistUsed,
-  sanity,
+  life,
   trophy,
   selection,
   shopUnits,
@@ -28,6 +22,7 @@ import {
   activeEvent,
   canUndo,
   shopLocked,
+  shopActionError,
   currentRunId,
   rotRingUses,
   showHelpOverlay,
@@ -44,7 +39,7 @@ beforeEach(() => {
   board.value = [null, null, null, null, null];
   freeRoll.value = false;
   cultistUsed.value = false;
-  sanity.value = 5;
+  life.value = 5;
   trophy.value = 0;
   selection.value = null;
   shopUnits.value = [];
@@ -116,10 +111,10 @@ describe("setupNight", () => {
     expect(cultistUsed.value).toBe(false);
   });
 
-  it("plays error on API failure", async () => {
+  it("returns error sound on API failure", async () => {
     stubError();
-    await setupNight("test-run-id");
-    expect(playSE).toHaveBeenCalledWith("error");
+    const se = await setupNight("test-run-id");
+    expect(se).toBe("error");
   });
 
   it("sets shopLocked during call and clears after", async () => {
@@ -140,47 +135,44 @@ describe("rollShop", () => {
         }),
       ),
     );
-    rollShop();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await rollShop();
     expect(blood.value).toBe(9);
     expect(shopUnits.value).toHaveLength(1);
-    expect(playSE).toHaveBeenCalledWith("select");
+    expect(se).toBe("select");
   });
 
   it("does nothing when shopLocked", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
-    rollShop();
+    void rollShop();
     expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing when activeEvent has lockRoll", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     activeEvent.value = { lockRoll: true } as typeof activeEvent.value;
-    rollShop();
+    void rollShop();
     expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
-    rollShop();
+    void rollShop();
     expect(spy).not.toHaveBeenCalled();
   });
 
   it("advances onboardingStep from roll to battle", async () => {
     onboardingStep.value = "roll";
     stubFetch(shopRoute(makeShopState()));
-    rollShop();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await rollShop();
     expect(onboardingStep.value).toBe("battle");
   });
 
-  it("plays error on API failure", async () => {
+  it("returns error sound on API failure", async () => {
     stubError();
-    rollShop();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(playSE).toHaveBeenCalledWith("error");
+    const se = await rollShop();
+    expect(se).toBe("error");
   });
 });
 
@@ -193,8 +185,7 @@ describe("handleFreezeClick", () => {
         }),
       ),
     );
-    handleFreezeClick("unit", 0, true);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await handleFreezeClick("unit", 0, true);
     const body = JSON.parse(spy.mock.calls[0]![1]!.body as string);
     expect(body).toMatchObject({ runId: "test-run-id", slotType: "unit", index: 0, frozen: true });
     expect(shopUnits.value[0]!.frozen).toBe(true);
@@ -212,22 +203,21 @@ describe("handleFreezeClick", () => {
       lore: "",
     };
     stubFetch(shopRoute(makeShopState({ shopItems: [{ item, frozen: true }] })));
-    handleFreezeClick("item", 0, true);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await handleFreezeClick("item", 0, true);
     expect(shopItems.value[0]!.frozen).toBe(true);
   });
 
   it("does nothing when shopLocked", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
-    handleFreezeClick("unit", 0, true);
+    void handleFreezeClick("unit", 0, true);
     expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
-    handleFreezeClick("unit", 0, true);
+    void handleFreezeClick("unit", 0, true);
     expect(spy).not.toHaveBeenCalled();
   });
 });
@@ -238,27 +228,26 @@ describe("executeSellUnit", () => {
     board.value = [unit, null, null, null, null];
     selection.value = { type: "BOARD_UNIT", index: 0, item: unit };
     stubFetch(shopRoute(makeShopState({ blood: 11, board: [null, null, null, null, null] })));
-    executeSellUnit();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await executeSellUnit();
     expect(blood.value).toBe(11);
     expect(board.value[0]).toBeNull();
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("graft");
+    expect(se).toBe("graft");
   });
 
-  it("does nothing without BOARD_UNIT selection", () => {
+  it("returns error sound without BOARD_UNIT selection", async () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     selection.value = null;
-    executeSellUnit();
+    const se = await executeSellUnit();
     expect(spy).not.toHaveBeenCalled();
-    expect(playSE).toHaveBeenCalledWith("error");
+    expect(se).toBe("error");
   });
 
   it("does nothing when shopLocked", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
-    executeSellUnit();
+    void executeSellUnit();
     expect(spy).not.toHaveBeenCalled();
   });
 
@@ -266,40 +255,63 @@ describe("executeSellUnit", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
-    executeSellUnit();
+    void executeSellUnit();
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe("conflict handling", () => {
+  it("clears selection on conflict when resync fails", async () => {
+    selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
+    let callCount = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        callCount++;
+        if (callCount === 1) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ error: "conflict" }), { status: 409 }),
+          );
+        }
+        return Promise.resolve(new Response(JSON.stringify({ error: "fail" }), { status: 500 }));
+      }),
+    );
+
+    const se = await rollShop();
+
+    expect(selection.value).toBeNull();
+    expect(se).toBe("error");
+    expect(shopActionError.value).not.toBeNull();
   });
 });
 
 describe("useCultistAbility", () => {
   it("calls API and applies response", async () => {
-    stubFetch(shopRoute(makeShopState({ blood: 13, sanity: 4, cultistUsed: true })));
-    useCultistAbility();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    stubFetch(shopRoute(makeShopState({ blood: 13, life: 4, cultistUsed: true })));
+    const se = await useCultistAbility();
     expect(blood.value).toBe(13);
-    expect(sanity.value).toBe(4);
+    expect(life.value).toBe(4);
     expect(cultistUsed.value).toBe(true);
-    expect(playSE).toHaveBeenCalledWith("graft");
+    expect(se).toBe("graft");
   });
 
   it("does nothing when shopLocked", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
-    useCultistAbility();
+    void useCultistAbility();
     expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
-    useCultistAbility();
+    void useCultistAbility();
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("plays error on API failure", async () => {
+  it("returns error sound on API failure", async () => {
     stubError();
-    useCultistAbility();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(playSE).toHaveBeenCalledWith("error");
+    const se = await useCultistAbility();
+    expect(se).toBe("error");
   });
 });

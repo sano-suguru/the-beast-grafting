@@ -24,6 +24,6 @@ export interface ShopUndoSnapshot {
   activeEvent: EventData | null;
   rngS0: number;
   rngS1: number;
-  sanity: number;
+  life: number;
   rewardSlots: (ShopSlotJson | null)[];
 }

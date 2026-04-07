@@ -1,23 +1,3 @@
-vi.mock("../engine/audio", () => ({
-  initAudio: vi.fn(),
-  playSE: vi.fn(),
-}));
-
-vi.mock("../../engine/shop-effects", () => ({
-  graftUnits: vi.fn((base: UnitInstance) => ({
-    unit: { ...base, level: base.level + 1, exp: 1 },
-    leveledUp: true,
-  })),
-  applyBuyEffects: vi.fn((...args: [UnitInstance, (UnitInstance | null)[]]) => ({
-    board: args[1],
-    chaliceTriggered: false,
-    rotRingUses: 0,
-  })),
-  applyChaliceEffect: vi.fn((items: (ShopItemSlot | null)[]) => items),
-  applySummonEffects: vi.fn((...args: [number, (UnitInstance | null)[]]) => args[1]),
-  applyEndOfTurnEffects: vi.fn((board: (UnitInstance | null)[]) => board),
-}));
-
 import { checkHighlight } from "./card-actions";
 import {
   blood,
@@ -31,7 +11,7 @@ import {
   passiveGraftIds,
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
-import type { ItemData, ShopItemSlot, UnitInstance } from "../types";
+import type { ItemData } from "../types";
 
 function makeItem(overrides: Partial<ItemData> = {}): ItemData {
   return {

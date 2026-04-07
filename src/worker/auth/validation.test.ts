@@ -1,4 +1,4 @@
-import { validateEmail, validatePassword } from "./validation";
+import { validateEmail, validatePassword, validateDisplayName } from "./validation";
 
 describe("validateEmail", () => {
   it("accepts valid email", () => {
@@ -74,5 +74,95 @@ describe("validatePassword", () => {
   it("accepts password at max length boundary", () => {
     const result = validatePassword("a".repeat(128));
     expect(result.isOk()).toBe(true);
+  });
+});
+
+describe("validateDisplayName", () => {
+  it("accepts valid name", () => {
+    const result = validateDisplayName("術師太郎");
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) expect(result.value).toBe("術師太郎");
+  });
+
+  it("rejects non-string input", () => {
+    const result = validateDisplayName(42);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr())
+      expect((result.error as { reason: string }).reason).toBe("name_must_be_string");
+  });
+
+  it("rejects empty string", () => {
+    const result = validateDisplayName("");
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect((result.error as { reason: string }).reason).toBe("name_empty");
+  });
+
+  it("rejects string of only control characters", () => {
+    const result = validateDisplayName("\x00\x01\x02");
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect((result.error as { reason: string }).reason).toBe("name_empty");
+  });
+
+  it("rejects name exceeding 20 characters", () => {
+    const result = validateDisplayName("a".repeat(21));
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect((result.error as { reason: string }).reason).toBe("name_too_long");
+  });
+
+  it("accepts exactly 20 characters", () => {
+    const result = validateDisplayName("a".repeat(20));
+    expect(result.isOk()).toBe(true);
+  });
+
+  it("strips control characters from valid input", () => {
+    const result = validateDisplayName("hello\x00world");
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) expect(result.value).toBe("helloworld");
+  });
+
+  it("rejects combining characters that exceed 20 codepoints", () => {
+    const result = validateDisplayName("e\u0301".repeat(11));
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect((result.error as { reason: string }).reason).toBe("name_too_long");
+  });
+
+  it("accepts emoji within length limit", () => {
+    const result = validateDisplayName("\u{1F400}Player");
+    expect(result.isOk()).toBe(true);
+  });
+
+  it("rejects when emoji push over 20 codepoints", () => {
+    const result = validateDisplayName("\u{1F400}".repeat(21));
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect((result.error as { reason: string }).reason).toBe("name_too_long");
+  });
+
+  it("accepts 20 emoji exactly", () => {
+    const result = validateDisplayName("\u{1F400}".repeat(20));
+    expect(result.isOk()).toBe(true);
+  });
+
+  it("strips BiDi override characters", () => {
+    const result = validateDisplayName("hello\u202Eworld");
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) expect(result.value).toBe("helloworld");
+  });
+
+  it("strips all BiDi control characters", () => {
+    const result = validateDisplayName("a\u200Eb\u202Ac\u2066d\u061Ce\uFEFFf");
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) expect(result.value).toBe("abcdef");
+  });
+
+  it("rejects whitespace-only string", () => {
+    const result = validateDisplayName("   ");
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect((result.error as { reason: string }).reason).toBe("name_empty");
+  });
+
+  it("trims surrounding whitespace", () => {
+    const result = validateDisplayName("  Alice  ");
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) expect(result.value).toBe("Alice");
   });
 });

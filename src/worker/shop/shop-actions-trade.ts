@@ -27,7 +27,7 @@ export function executeRoll(
     return err({
       type: "INSUFFICIENT_RESOURCE",
       resource: "blood",
-      required: 1,
+      minimum: 1,
       current: state.blood,
     });
 
@@ -72,7 +72,7 @@ export function executeBuy(
     return err({
       type: "INSUFFICIENT_RESOURCE",
       resource: "blood",
-      required: cost,
+      minimum: cost,
       current: state.blood,
     });
 
@@ -96,7 +96,7 @@ export function executeBuyReward(
     return err({
       type: "INSUFFICIENT_RESOURCE",
       resource: "blood",
-      required: UNIT_COST,
+      minimum: UNIT_COST,
       current: state.blood,
     });
 

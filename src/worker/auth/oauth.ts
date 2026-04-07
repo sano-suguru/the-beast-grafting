@@ -7,11 +7,12 @@ import type { Result, InfraError } from "../../shared/errors";
 import { error as logError, warn as logWarn } from "../../shared/logger";
 import { players, authProviders } from "../../db/schema";
 import { generateId, verifyState } from "./crypto";
-import { GUEST_NAME_PREFIX, sanitizeDisplayName } from "./names";
+import { generateGuestName } from "./names";
 import { createSession, setSessionCookie } from "./session";
 import type { OptionalAuthEnv } from "./types";
 
-export type OAuthProvider = "discord" | "google";
+import type { OAuthProvider } from "../../shared/auth-provider";
+export type { OAuthProvider };
 
 interface ProviderConfig {
   authorizeUrl: string;
@@ -20,18 +21,20 @@ interface ProviderConfig {
   scopes: string[];
 }
 
+// displayNameはOAuthプロバイダから取得せず generateGuestName() で生成する。
+// scopeはID取得に必要な最小限（Discord: identify, Google: openid）。
 const PROVIDER_CONFIGS: Record<OAuthProvider, ProviderConfig> = {
   discord: {
     authorizeUrl: "https://discord.com/oauth2/authorize",
     tokenUrl: "https://discord.com/api/oauth2/token",
     userInfoUrl: "https://discord.com/api/users/@me",
-    scopes: ["identify", "email"],
+    scopes: ["identify"],
   },
   google: {
     authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     userInfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
-    scopes: ["openid", "email", "profile"],
+    scopes: ["openid"],
   },
 };
 
@@ -98,9 +101,9 @@ export async function exchangeCode(
   return requireStr(data.value, "access_token");
 }
 
+/** プロバイダからはIDのみ取得。プロフィール情報は意図的に取得しない。 */
 interface OAuthUserInfo {
   providerId: string;
-  displayName: string;
 }
 
 function requireStr(data: Record<string, unknown>, ...keys: string[]): Result<string, InfraError> {
@@ -109,11 +112,6 @@ function requireStr(data: Record<string, unknown>, ...keys: string[]): Result<st
     if (typeof v === "string" && v) return ok(v);
   }
   return err(oauthErr(`required field missing: ${keys.join(" | ")}`));
-}
-
-function optionalStr(data: Record<string, unknown>, key: string, fallback: string): string {
-  const v = data[key];
-  return typeof v === "string" ? v : fallback;
 }
 
 export async function fetchUserInfo(
@@ -130,18 +128,7 @@ export async function fetchUserInfo(
     provider === "discord" ? requireStr(data.value, "id") : requireStr(data.value, "sub");
   if (providerId.isErr()) return err(providerId.error);
 
-  if (provider === "discord") {
-    return ok({
-      providerId: providerId.value,
-      displayName: sanitizeDisplayName(
-        optionalStr(data.value, "global_name", optionalStr(data.value, "username", "Unknown")),
-      ),
-    });
-  }
-  return ok({
-    providerId: providerId.value,
-    displayName: sanitizeDisplayName(optionalStr(data.value, "name", "Unknown")),
-  });
+  return ok({ providerId: providerId.value });
 }
 
 function makeProviderValues(
@@ -160,23 +147,19 @@ async function linkToExistingPlayer(
   userInfo: OAuthUserInfo,
 ): Promise<{ playerId: string; isNew: boolean } | null> {
   const now = new Date();
-  const current = await db
-    .select({ displayName: players.displayName })
+  const exists = await db
+    .select({ id: players.id })
     .from(players)
     .where(eq(players.id, existingPlayerId))
     .limit(1);
 
-  if (!current[0]) return null;
+  if (!exists[0]) return null;
 
-  const shouldUpdateName = current[0].displayName.startsWith(GUEST_NAME_PREFIX);
   await db.batch([
     db
       .insert(authProviders)
       .values(makeProviderValues(existingPlayerId, provider, userInfo.providerId, now)),
-    db
-      .update(players)
-      .set({ ...(shouldUpdateName ? { displayName: userInfo.displayName } : {}), updatedAt: now })
-      .where(eq(players.id, existingPlayerId)),
+    db.update(players).set({ updatedAt: now }).where(eq(players.id, existingPlayerId)),
   ]);
   return { playerId: existingPlayerId, isNew: false };
 }
@@ -211,7 +194,7 @@ export function findOrCreateByProvider(
     await db.batch([
       db.insert(players).values({
         id: playerId,
-        displayName: userInfo.displayName,
+        displayName: generateGuestName(),
         createdAt: now,
         updatedAt: now,
       }),
@@ -223,11 +206,17 @@ export function findOrCreateByProvider(
   }, dbErr);
 }
 
-export function getOAuthCredentials(env: Env, provider: OAuthProvider) {
-  if (provider === "discord") {
-    return { clientId: env.DISCORD_CLIENT_ID, clientSecret: env.DISCORD_CLIENT_SECRET };
+export function getOAuthCredentials(
+  env: Env,
+  provider: OAuthProvider,
+): Result<OAuthCredentials, InfraError> {
+  const clientId = provider === "discord" ? env.DISCORD_CLIENT_ID : env.GOOGLE_CLIENT_ID;
+  const clientSecret =
+    provider === "discord" ? env.DISCORD_CLIENT_SECRET : env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return err({ type: "AUTH_OAUTH_FAILED", cause: `${provider} credentials not configured` });
   }
-  return { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET };
+  return ok({ clientId, clientSecret });
 }
 
 export function getRedirectUri(env: Env, provider: OAuthProvider): string {
@@ -251,10 +240,13 @@ export async function handleOAuthCallback(
   const verifiedState = await verifyState(storedSigned, c.env.OAUTH_STATE_SECRET);
   if (!verifiedState || verifiedState !== state) return errorRedirect("invalid_state");
 
+  const creds = getOAuthCredentials(c.env, provider);
+  if (creds.isErr()) return errorRedirect("provider_not_configured");
+
   const tokenResult = await exchangeCode(
     provider,
     code,
-    getOAuthCredentials(c.env, provider),
+    creds.value,
     getRedirectUri(c.env, provider),
   );
   if (tokenResult.isErr()) {

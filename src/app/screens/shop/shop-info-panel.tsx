@@ -3,12 +3,13 @@ import { ResourceText } from "../../components/resource-text";
 import type { Selection, EventData } from "../../types";
 import { getEquipInfo } from "../../../shared/data/equips";
 import { effectiveAtk, effectiveHp } from "../../../shared/unit-stats";
+import { toLifeTier } from "../../../shared/types";
 import { ShopNarrative } from "./shop-narrative";
 import { activeEvent } from "../../state/game-store";
 
 interface ShopInfoPanelProps {
   sel: Selection | null;
-  currentSanity: number;
+  currentLife: number;
 }
 
 interface EffectBadge {
@@ -170,39 +171,39 @@ function SelectedItemInfo({ sel }: { sel: Selection }) {
 function InfoPanelContent({
   sel,
   event,
-  currentSanity,
+  currentLife,
 }: {
   sel: Selection | null;
   event: EventData | null;
-  currentSanity: number;
+  currentLife: number;
 }) {
   if (sel) return <SelectedItemInfo sel={sel} />;
   if (event) return <EventNarrative event={event} />;
   return (
-    <div aria-live={currentSanity <= 1 ? "assertive" : "polite"}>
-      <ShopNarrative currentSanity={currentSanity} />
+    <div aria-live={toLifeTier(currentLife) === "low" ? "assertive" : "polite"}>
+      <ShopNarrative currentLife={currentLife} />
     </div>
   );
 }
 
-function panelBorderClass(sel: Selection | null, currentSanity: number): string {
-  return !sel && currentSanity <= 1
+function panelBorderClass(sel: Selection | null, currentLife: number): string {
+  return !sel && toLifeTier(currentLife) === "low"
     ? "bg-red-950/20 border-red-900/50"
     : "bg-[#0a0a0a] border-zinc-800";
 }
 
-export function ShopInfoPanel({ sel, currentSanity }: ShopInfoPanelProps) {
+export function ShopInfoPanel({ sel, currentLife }: ShopInfoPanelProps) {
   const event = activeEvent.value;
 
   return (
     <section
       aria-label="情報パネル"
-      className={`relative mb-3 flex min-h-[85px] shrink-0 flex-col justify-center overflow-hidden rounded border p-2 transition-all md:min-h-[100px] md:p-3 ${panelBorderClass(sel, currentSanity)}`}
+      className={`relative mb-3 flex min-h-[85px] shrink-0 flex-col justify-center overflow-hidden rounded border p-2 transition-all md:min-h-[100px] md:p-3 ${panelBorderClass(sel, currentLife)}`}
     >
       {!sel && !event && (
         <Skull size={40} className="pointer-events-none absolute right-2 bottom-2 opacity-[0.03]" />
       )}
-      <InfoPanelContent sel={sel} event={event} currentSanity={currentSanity} />
+      <InfoPanelContent sel={sel} event={event} currentLife={currentLife} />
     </section>
   );
 }

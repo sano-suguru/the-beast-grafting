@@ -1,24 +1,10 @@
-vi.mock("../engine/audio", () => ({
-  initAudio: vi.fn(),
-  playSE: vi.fn(),
-}));
-
-vi.mock("../api/fetch", async (importOriginal) => {
-  const original = await importOriginal();
-  const { ok } = await import("../../shared/errors");
-  return {
-    ...(original as Record<string, unknown>),
-    ensureSession: vi.fn().mockResolvedValue(ok(undefined)),
-  };
-});
-
 import { startGame, resumeOrSelectOrigin, retireGame } from "./game-actions";
 import { tutorialDone } from "./tutorial";
 import {
   phase,
   origin,
   blood,
-  sanity,
+  life,
   trophy,
   round,
   board,
@@ -59,6 +45,7 @@ import {
   makeShopState,
   toBoardUnit,
   stubFetch,
+  stubSessionRecovery,
   httpError,
   toUrlString,
   type RouteHandler,
@@ -68,7 +55,7 @@ function defaultRun(overrides: Partial<CurrentRunState> = {}): CurrentRunState {
   return {
     id: "run-1",
     round: 1,
-    sanity: 5,
+    life: 5,
     trophy: 0,
     status: "active",
     originId: "thief",
@@ -128,7 +115,7 @@ beforeEach(() => {
   resetAllSignals();
   tutorialDone.value = false;
   vi.restoreAllMocks();
-
+  stubSessionRecovery();
   stubFetch(gameRoutes());
 });
 
@@ -149,9 +136,9 @@ describe("startGame", () => {
     expect(blood.value).toBe(10);
   });
 
-  it("sets sanity to 5", async () => {
+  it("sets life to 5", async () => {
     await startGame("thief");
-    expect(sanity.value).toBe(5);
+    expect(life.value).toBe(5);
   });
 
   it("resets trophy to 0", async () => {
@@ -259,13 +246,13 @@ describe("startGame", () => {
   it("resumes existing run when getCurrentRun returns active run", async () => {
     const spy = stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 3, sanity: 4, trophy: 2 }),
-        shopState: { round: 3, sanity: 4, trophy: 2 },
+        currentRun: defaultRun({ round: 3, life: 4, trophy: 2 }),
+        shopState: { round: 3, life: 4, trophy: 2 },
       }),
     );
     await startGame("thief");
     expect(round.value).toBe(3);
-    expect(sanity.value).toBe(4);
+    expect(life.value).toBe(4);
     expect(trophy.value).toBe(2);
     expect(fetchCallsTo(spy, "/api/run/start")).toHaveLength(0);
   });
@@ -279,8 +266,8 @@ describe("startGame", () => {
   it("auto-advances when pendingBattleId exists", async () => {
     const spy = stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
-        advanceRun: defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null }),
+        currentRun: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        advanceRun: defaultRun({ round: 3, life: 5, trophy: 2, pendingBattleId: null }),
         shopState: { round: 3, trophy: 2 },
       }),
     );
@@ -294,7 +281,7 @@ describe("startGame", () => {
   it("falls back to current run state when advance fails on pending battle", async () => {
     stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        currentRun: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
         advanceRun: 500,
         shopState: { round: 2 },
       }),
@@ -312,9 +299,9 @@ describe("startGame", () => {
         currentRunCalls++;
         if (currentRunCalls === 1)
           return {
-            run: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+            run: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
           };
-        return { run: defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null }) };
+        return { run: defaultRun({ round: 3, life: 5, trophy: 2, pendingBattleId: null }) };
       }
       if (url === "/api/run/advance") return httpError(409);
       if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 3, trophy: 2 }) };
@@ -334,7 +321,7 @@ describe("startGame", () => {
         currentRunCalls++;
         if (currentRunCalls === 1)
           return {
-            run: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+            run: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
           };
         return httpError(500);
       }
@@ -353,14 +340,14 @@ describe("resumeOrSelectOrigin", () => {
   it("goes to SHOP when active run exists", async () => {
     stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 3, sanity: 4, trophy: 2 }),
-        shopState: { round: 3, sanity: 4, trophy: 2 },
+        currentRun: defaultRun({ round: 3, life: 4, trophy: 2 }),
+        shopState: { round: 3, life: 4, trophy: 2 },
       }),
     );
     await resumeOrSelectOrigin();
     expect(phase.value).toBe("SHOP");
     expect(round.value).toBe(3);
-    expect(sanity.value).toBe(4);
+    expect(life.value).toBe(4);
     expect(trophy.value).toBe(2);
   });
 
@@ -394,8 +381,8 @@ describe("resumeOrSelectOrigin", () => {
   it("recovers pending battle before resuming", async () => {
     const spy = stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
-        advanceRun: defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null }),
+        currentRun: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        advanceRun: defaultRun({ round: 3, life: 5, trophy: 2, pendingBattleId: null }),
         shopState: { round: 3, trophy: 2 },
       }),
     );
@@ -409,7 +396,7 @@ describe("resumeOrSelectOrigin", () => {
   it("sets recoveryWarning when pending battle recovery fails", async () => {
     stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        currentRun: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
         advanceRun: 500,
         shopState: { round: 2 },
       }),
@@ -427,9 +414,9 @@ describe("resumeOrSelectOrigin", () => {
         currentRunCalls++;
         if (currentRunCalls === 1)
           return {
-            run: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+            run: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
           };
-        return { run: defaultRun({ round: 3, sanity: 5, trophy: 2, pendingBattleId: null }) };
+        return { run: defaultRun({ round: 3, life: 5, trophy: 2, pendingBattleId: null }) };
       }
       if (url === "/api/run/advance") return httpError(409);
       if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 3, trophy: 2 }) };
@@ -449,7 +436,7 @@ describe("resumeOrSelectOrigin", () => {
         currentRunCalls++;
         if (currentRunCalls === 1)
           return {
-            run: defaultRun({ round: 2, sanity: 5, trophy: 1, pendingBattleId: "battle-1" }),
+            run: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
           };
         return httpError(500);
       }
@@ -482,7 +469,7 @@ describe("retireGame", () => {
     currentRunId.value = "run-1";
     origin.value = "thief";
     round.value = 5;
-    sanity.value = 3;
+    life.value = 3;
     trophy.value = 4;
   });
 
@@ -519,7 +506,7 @@ describe("retireGame", () => {
     expect(currentRunId.value).toBeNull();
     expect(origin.value).toBeNull();
     expect(round.value).toBe(1);
-    expect(sanity.value).toBe(5);
+    expect(life.value).toBe(5);
     expect(trophy.value).toBe(0);
     expect(blood.value).toBe(10);
     expect(board.value).toEqual([null, null, null, null, null]);
@@ -636,10 +623,10 @@ describe("flashResourceError", () => {
   it("consecutive calls cancel previous timer", () => {
     flashResourceError("blood");
     vi.advanceTimersByTime(300);
-    flashResourceError("sanity");
-    expect(resourceError.value).toBe("sanity");
+    flashResourceError("life");
+    expect(resourceError.value).toBe("life");
     vi.advanceTimersByTime(300);
-    expect(resourceError.value).toBe("sanity");
+    expect(resourceError.value).toBe("life");
     vi.advanceTimersByTime(200);
     expect(resourceError.value).toBeNull();
   });

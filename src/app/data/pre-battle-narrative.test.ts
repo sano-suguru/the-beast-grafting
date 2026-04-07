@@ -1,7 +1,7 @@
-import { toSanityTier } from "../../shared/types";
+import { toLifeTier } from "../../shared/types";
 import { selectPreBattleNarrative } from "./pre-battle-narrative";
 
-describe("toSanityTier", () => {
+describe("toLifeTier", () => {
   it.each([
     [5, "high"],
     [4, "high"],
@@ -9,8 +9,8 @@ describe("toSanityTier", () => {
     [2, "mid"],
     [1, "low"],
     [0, "low"],
-  ] as const)("sanity %d → %s", (sanity, expected) => {
-    expect(toSanityTier(sanity)).toBe(expected);
+  ] as const)("life %d → %s", (life, expected) => {
+    expect(toLifeTier(life)).toBe(expected);
   });
 });
 
@@ -18,9 +18,9 @@ describe("selectPreBattleNarrative", () => {
   const FACTIONS = ["教団", "同業者"] as const;
 
   it("returns valid text for all tier × faction combinations", () => {
-    for (const sanity of [5, 2, 1]) {
+    for (const life of [5, 2, 1]) {
       for (const faction of FACTIONS) {
-        const result = selectPreBattleNarrative(sanity, faction, 1);
+        const result = selectPreBattleNarrative(life, faction, 1);
         expect(result.intro).toBeTruthy();
         expect(result.closing).toBeTruthy();
       }

@@ -1,6 +1,8 @@
 import type { ShopStateResponse } from "../../shared/api-types";
 import type { UnitInstance } from "../types";
 import { unitInstanceToBoardUnit } from "../../shared/board-unit";
+import { ok } from "../../shared/errors";
+import { initSession } from "../api/fetch";
 
 export function makeShopState(overrides: Partial<ShopStateResponse> = {}): ShopStateResponse {
   return {
@@ -15,7 +17,7 @@ export function makeShopState(overrides: Partial<ShopStateResponse> = {}): ShopS
     rewardSlots: [],
     canUndo: false,
     round: 1,
-    sanity: 5,
+    life: 5,
     trophy: 0,
     ...overrides,
   };
@@ -70,4 +72,9 @@ export function shopRoute(state: ShopStateResponse): RouteHandler {
     if (url === "/api/lore") return { lore: {} };
     return undefined;
   };
+}
+
+/** テスト用: ensureSession の invariant を通過させる */
+export function stubSessionRecovery() {
+  initSession(() => Promise.resolve(ok(undefined)));
 }

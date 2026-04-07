@@ -1,10 +1,4 @@
-vi.mock("../engine/audio", () => ({
-  initAudio: vi.fn(),
-  playSE: vi.fn(),
-}));
-
 import { handleCardClick } from "./card-actions";
-import { playSE } from "../engine/audio";
 import {
   blood,
   board,
@@ -47,13 +41,12 @@ describe("handleCardClick – board unit operations", () => {
 
     stubFetch(shopRoute(makeShopState({ board: [null, null, toBoardUnit(unit), null, null] })));
 
-    handleCardClick("BOARD_SLOT", 2, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await handleCardClick("BOARD_SLOT", 2, null);
 
     expect(board.value[0]).toBeNull();
     expect(board.value[2]!.id).toBe("hound");
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("buy");
+    expect(se).toBe("buy");
   });
 
   it("calls API to swap two board units", async () => {
@@ -70,8 +63,7 @@ describe("handleCardClick – board unit operations", () => {
       ),
     );
 
-    handleCardClick("BOARD_SLOT", 2, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await handleCardClick("BOARD_SLOT", 2, null);
 
     expect(board.value[0]!.uid).toBe("b");
     expect(board.value[2]!.uid).toBe("a");
@@ -88,13 +80,12 @@ describe("handleCardClick – board unit operations", () => {
       shopRoute(makeShopState({ board: [null, null, toBoardUnit(graftedUnit), null, null] })),
     );
 
-    handleCardClick("BOARD_SLOT", 2, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await handleCardClick("BOARD_SLOT", 2, null);
 
     expect(board.value[0]).toBeNull();
     expect(board.value[2]!.level).toBe(2);
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("graft");
+    expect(se).toBe("graft");
   });
 });
 
@@ -104,7 +95,7 @@ describe("handleCardClick – board slot bounds", () => {
     const unit = makeUnit();
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
-    handleCardClick("BOARD_SLOT", -1, null);
+    void handleCardClick("BOARD_SLOT", -1, null);
 
     expect(blood.value).toBe(10);
     expect(spy).not.toHaveBeenCalled();
@@ -115,7 +106,7 @@ describe("handleCardClick – board slot bounds", () => {
     const unit = makeUnit();
     selection.value = { type: "SHOP_UNIT", index: 0, item: unit };
 
-    handleCardClick("BOARD_SLOT", 5, null);
+    void handleCardClick("BOARD_SLOT", 5, null);
 
     expect(blood.value).toBe(10);
     expect(spy).not.toHaveBeenCalled();
@@ -141,8 +132,7 @@ describe("handleCardClick – onboarding transitions", () => {
       ),
     );
 
-    handleCardClick("BOARD_SLOT", 1, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await handleCardClick("BOARD_SLOT", 1, null);
 
     expect(onboardingStep.value).toBe("graft");
   });
@@ -166,8 +156,7 @@ describe("handleCardClick – onboarding transitions", () => {
       ),
     );
 
-    handleCardClick("BOARD_SLOT", 0, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(onboardingStep.value).toBe("roll");
   });
@@ -191,8 +180,7 @@ describe("handleCardClick – onboarding transitions", () => {
       ),
     );
 
-    handleCardClick("BOARD_SLOT", 0, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await handleCardClick("BOARD_SLOT", 0, null);
 
     expect(onboardingStep.value).toBe("roll");
   });
@@ -209,8 +197,7 @@ describe("handleCardClick – onboarding transitions", () => {
       shopRoute(makeShopState({ board: [null, null, toBoardUnit(graftedUnit), null, null] })),
     );
 
-    handleCardClick("BOARD_SLOT", 2, null);
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await handleCardClick("BOARD_SLOT", 2, null);
 
     expect(onboardingStep.value).toBe("roll");
   });

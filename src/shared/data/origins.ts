@@ -25,7 +25,7 @@ export const ORIGINS: Record<OriginId, OriginData> = {
   cultist: {
     id: "cultist",
     name: "深淵の邪教徒",
-    desc: "毎夜、{sanity}を1失い{blood}を3得る。",
+    desc: "毎夜、{life}を1失い{blood}を3得る。",
     lore: "両腕の切り傷は百を超えた頃から、数えるのをやめた。",
     icon: "Eye",
   },

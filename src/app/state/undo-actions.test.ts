@@ -1,13 +1,7 @@
-vi.mock("../engine/audio", () => ({
-  initAudio: vi.fn(),
-  playSE: vi.fn(),
-}));
-
 import { undoLastAction } from "./undo-actions";
-import { playSE } from "../engine/audio";
 import {
   blood,
-  sanity,
+  life,
   board,
   shopUnits,
   shopItems,
@@ -27,7 +21,7 @@ import { makeShopState, toBoardUnit, stubFetch, shopRoute } from "./test-helpers
 beforeEach(() => {
   phase.value = "SHOP";
   blood.value = 10;
-  sanity.value = 5;
+  life.value = 5;
   board.value = [makeUnit({ uid: "u1", baseAtk: 3 }), null, null, null, null];
   shopUnits.value = [];
   shopItems.value = [];
@@ -48,7 +42,7 @@ describe("undoLastAction", () => {
     const restoredShopUnit = makeUnit({ uid: "s1" });
     const state = makeShopState({
       blood: 10,
-      sanity: 5,
+      life: 5,
       board: [toBoardUnit(restoredUnit), null, null, null, null],
       shopUnits: [{ unit: toBoardUnit(restoredShopUnit), frozen: false, eventSourced: false }],
       freeRoll: false,
@@ -59,32 +53,29 @@ describe("undoLastAction", () => {
     stubFetch(shopRoute(state));
 
     blood.value = 0;
-    sanity.value = 0;
+    life.value = 0;
     board.value = [null, null, null, null, null];
 
-    undoLastAction();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    const se = await undoLastAction();
 
     expect(blood.value).toBe(10);
-    expect(sanity.value).toBe(5);
+    expect(life.value).toBe(5);
     expect(board.value[0]!.uid).toBe("u1");
     expect(shopUnits.value).toHaveLength(1);
     expect(selection.value).toBeNull();
-    expect(playSE).toHaveBeenCalledWith("select");
+    expect(se).toBe("select");
   });
 
   it("clears selection after undo", async () => {
     stubFetch(shopRoute(makeShopState({ canUndo: false })));
     selection.value = { type: "BOARD_UNIT", index: 0, item: makeUnit() };
-    undoLastAction();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await undoLastAction();
     expect(selection.value).toBeNull();
   });
 
   it("sets canUndo to false after undo (single undo, not stack)", async () => {
     stubFetch(shopRoute(makeShopState({ canUndo: false })));
-    undoLastAction();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
+    await undoLastAction();
     expect(canUndo.value).toBe(false);
   });
 
@@ -92,7 +83,7 @@ describe("undoLastAction", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     canUndo.value = false;
     blood.value = 7;
-    undoLastAction();
+    void undoLastAction();
     expect(blood.value).toBe(7);
     expect(spy).not.toHaveBeenCalled();
   });
@@ -100,31 +91,29 @@ describe("undoLastAction", () => {
   it("does nothing when shopLocked", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     shopLocked.value = true;
-    undoLastAction();
+    void undoLastAction();
     expect(spy).not.toHaveBeenCalled();
   });
 
   it("does nothing without runId", () => {
     const spy = stubFetch(shopRoute(makeShopState()));
     currentRunId.value = null;
-    undoLastAction();
+    void undoLastAction();
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("plays select sound effect on success", async () => {
+  it("returns select sound on success", async () => {
     stubFetch(shopRoute(makeShopState()));
-    undoLastAction();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(vi.mocked(playSE)).toHaveBeenCalledWith("select");
+    const se = await undoLastAction();
+    expect(se).toBe("select");
   });
 
-  it("plays error on API failure", async () => {
+  it("returns error sound on API failure", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "fail" }), { status: 500 })),
     );
-    undoLastAction();
-    await vi.waitFor(() => expect(shopLocked.value).toBe(false));
-    expect(playSE).toHaveBeenCalledWith("error");
+    const se = await undoLastAction();
+    expect(se).toBe("error");
   });
 });
