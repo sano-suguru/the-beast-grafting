@@ -25,7 +25,7 @@ const goToLore = () => {
 export function TitleScreen() {
   const db = loreDb.value || {};
   const totalMastered = Object.values(db).filter((l) => l?.mastered).length;
-  const totalUnits = Object.values(UNITS).filter((u) => u.tier > 0).length;
+  const totalUnits = Object.values(UNITS).length;
   const loading = gameLoading.value;
 
   return (

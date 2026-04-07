@@ -7,6 +7,7 @@ import { UNIT_COST, expPerLevel, MAX_UNIT_LEVEL, CUMULATIVE_EXP } from "../../sh
 import { effectiveAtk, effectiveHp } from "../../shared/unit-stats";
 import { StatBadge } from "./stat-badge";
 import { EquipIcon } from "./equip-icon";
+import type { Tier } from "../../shared/data/tiers";
 import type { UnitInstance, UnitSlotType, HighlightKind } from "../types";
 
 interface UnitCardProps {
@@ -112,7 +113,7 @@ function UnitCardBadges({
 }: {
   type: UnitSlotType;
   cost: number;
-  tier: number;
+  tier: Tier;
   cantAfford: boolean;
 }) {
   if (type !== "SHOP_UNIT") return null;

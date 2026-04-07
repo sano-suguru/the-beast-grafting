@@ -2,7 +2,8 @@ import type { EventData, EventId, ShopSlot, ShopItemSlot } from "../shared/types
 import type { Rng } from "./rng";
 import { EVENTS } from "../shared/data/events";
 import { ITEMS } from "../shared/data/items";
-import { createUnit, getUnitsByTier, getItemPool, pickRandom, getCurrentMaxTier } from "./helpers";
+import { createUnit, getUnitsByTier, getItemPool, pickRandom } from "./helpers";
+import { getCurrentMaxTier, nextTier } from "../shared/data/tiers";
 import { UNIT_COST, ROTTING_CARGO_CEILING_BONUS } from "./constants";
 
 export const EVENT_SCHEDULE: readonly number[] = [4, 8, 12, 16];
@@ -11,8 +12,8 @@ export function isEventRound(round: number): boolean {
   return EVENT_SCHEDULE.includes(round);
 }
 
-function getTierAboveCurrent(round: number): number {
-  return Math.min(6, getCurrentMaxTier(round) + 1);
+function getTierAboveCurrent(round: number) {
+  return nextTier(getCurrentMaxTier(round));
 }
 
 const EVENT_IDS = Object.keys(EVENTS) as EventId[];

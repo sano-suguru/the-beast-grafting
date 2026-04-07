@@ -6,6 +6,7 @@ import type { EquipType } from "../shared/types";
 import { ORIGINS } from "../shared/data/origins";
 import { UNIT_DEATH_HANDLERS } from "./battle-deaths-handlers";
 import { getUnitsByTier, getShopPool, getItemPool } from "./helpers";
+import { TIERS } from "../shared/data/tiers";
 import { INERT_UNIT_ID } from "./test-helpers";
 
 describe("UNITS data integrity", () => {
@@ -154,7 +155,7 @@ describe("Cross-reference integrity", () => {
   });
 
   it("getUnitsByTier returns valid UNITS IDs for each tier", () => {
-    for (let tier = 1; tier <= 6; tier++) {
+    for (const tier of TIERS) {
       const ids = getUnitsByTier(tier);
       expect(ids.length, `tier ${tier} should have units`).toBeGreaterThan(0);
       for (const id of ids) {

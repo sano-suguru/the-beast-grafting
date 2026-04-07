@@ -14,6 +14,7 @@ import { computeBattleStats } from "./compute-stats";
 import { GradientBackground } from "../../components/gradient-background";
 import { UnitStatsList } from "./unit-stats-list";
 import { RewardSummary } from "./reward-summary";
+import { TierUnlockBanner } from "./tier-unlock-banner";
 
 const RESULT_CONFIG = {
   WIN: {
@@ -71,6 +72,7 @@ export function BattleResultScreen() {
         <ResultHeader result={result} />
 
         {data && <RewardSummary trophyDelta={data.trophyDelta} lifeDelta={data.lifeDelta} />}
+        {data?.unlockedTier && <TierUnlockBanner tier={data.unlockedTier} />}
 
         <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
           <UnitStatsList label="あなたの傑作" units={stats.playerUnits} />

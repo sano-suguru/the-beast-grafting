@@ -1,4 +1,5 @@
 import type { BoardUnit } from "../../shared/board-unit";
+import type { Tier } from "../../shared/data/tiers";
 import { isEquipType } from "../../shared/equip-type";
 import { UNITS } from "../../shared/data/units";
 import { CHURCH_UNITS } from "../../shared/data/church-units";
@@ -12,7 +13,7 @@ const STAT_CEILING_BASE = 200;
 
 function lookupMasterData(
   id: string,
-): { name: string; baseAtk: number; baseHp: number; tier: number } | null {
+): { name: string; baseAtk: number; baseHp: number; tier: Tier } | null {
   if (Object.hasOwn(UNITS, id)) return UNITS[id as RegularUnitId];
   if (Object.hasOwn(CHURCH_UNITS, id)) return CHURCH_UNITS[id as ChurchUnitId];
   return null;

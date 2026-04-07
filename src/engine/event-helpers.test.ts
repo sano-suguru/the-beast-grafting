@@ -80,7 +80,7 @@ describe("buildEventShopUnits", () => {
       unitOffers: [
         {
           unitId: "rat" as const,
-          tier: 1,
+          tier: 1 as const,
           cost: 2,
           equipOverride: "infection" as const,
           atkBonus: 2,
@@ -130,7 +130,7 @@ describe("buildEventShopUnits", () => {
       unitOffers: [
         {
           unitId: "rat" as const,
-          tier: 3,
+          tier: 3 as const,
           cost: 2,
           equipOverride: "infection" as const,
           atkBonus: 0,

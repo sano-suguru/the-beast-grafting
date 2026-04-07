@@ -202,7 +202,7 @@ export function ShopInfoPanel({ sel, hover, currentLife }: ShopInfoPanelProps) {
   return (
     <section
       aria-label="情報パネル"
-      className={`relative mb-3 flex min-h-[85px] shrink-0 flex-col justify-center overflow-hidden rounded border p-2 transition-all md:min-h-[100px] md:p-3 ${panelBorderClass(sel, currentLife)}`}
+      className={`relative flex min-h-[120px] shrink-0 flex-col justify-center overflow-hidden rounded border p-2 transition-all md:min-h-[140px] md:p-3 ${panelBorderClass(sel, currentLife)}`}
     >
       {!sel && !event && (
         <Skull size={40} className="pointer-events-none absolute right-2 bottom-2 opacity-[0.03]" />

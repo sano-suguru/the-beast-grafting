@@ -1,5 +1,6 @@
 import type { EquipType } from "./equip-type";
 import type { EnemyFaction } from "./enemy-faction";
+import type { Tier } from "./data/tiers";
 import type {
   UnitInstance,
   UnitId,
@@ -20,7 +21,7 @@ export interface BoardUnit {
   baseHp: number;
   buffAtk: number;
   buffHp: number;
-  tier: number;
+  tier: Tier;
   level: number;
   exp: number;
   equip: EquipType | null;

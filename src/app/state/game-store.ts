@@ -1,4 +1,5 @@
 import { signal, computed, batch, type Signal } from "@preact/signals";
+import type { UnlockableTier } from "../../shared/data/tiers";
 import type {
   GamePhase,
   OriginId,
@@ -63,6 +64,7 @@ export const battleConcludeData = resettableSignal<{
   lifeDelta: number;
   trophyDelta: number;
   gameEnded: boolean;
+  unlockedTier: UnlockableTier | null;
 } | null>(() => null);
 
 export const currentRunId = resettableSignal<string | null>(() => null);

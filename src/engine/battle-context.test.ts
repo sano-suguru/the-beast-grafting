@@ -85,7 +85,7 @@ describe("createToken", () => {
     const token = createToken("test", 1, 1);
     expect(token.equip).toBeNull();
     expect(token.level).toBe(1);
-    expect(token.tier).toBe(0);
+    expect(token.tier).toBe(1);
     expect(token.exp).toBe(0);
     expect(token.isChurch).toBe(false);
   });

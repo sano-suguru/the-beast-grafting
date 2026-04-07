@@ -7,9 +7,11 @@ import type {
   RegularUnitId,
   ChurchUnitId,
   ItemId,
+  Tier,
 } from "../shared/types";
 import type { Rng } from "./rng";
 import { invariant } from "../shared/invariant";
+import { TIERS, getCurrentMaxTier } from "../shared/data/tiers";
 
 export const generateUid = (): string => Math.random().toString(36).substring(2, 11);
 
@@ -28,25 +30,12 @@ export const createUnit = (id: RegularUnitId | ChurchUnitId): UnitInstance => {
   };
 };
 
-export function getCurrentMaxTier(round: number): number {
-  if (round >= 11) return 6;
-  if (round >= 9) return 5;
-  if (round >= 7) return 4;
-  if (round >= 5) return 3;
-  if (round >= 3) return 2;
-  return 1;
-}
-
 export const getShopPool = (round: number): RegularUnitId[] => {
   const maxTier = getCurrentMaxTier(round);
-  const pool: RegularUnitId[] = [];
-  for (let t = 1; t <= maxTier; t++) {
-    pool.push(...getUnitsByTier(t));
-  }
-  return pool;
+  return TIERS.filter((t) => t <= maxTier).flatMap((t) => getUnitsByTier(t));
 };
 
-const UNITS_BY_TIER = new Map<number, RegularUnitId[]>();
+const UNITS_BY_TIER = new Map<Tier, RegularUnitId[]>();
 for (const id of Object.keys(UNITS) as RegularUnitId[]) {
   const tier = UNITS[id].tier;
   const list = UNITS_BY_TIER.get(tier);
@@ -54,7 +43,7 @@ for (const id of Object.keys(UNITS) as RegularUnitId[]) {
   else UNITS_BY_TIER.set(tier, [id]);
 }
 
-export const getUnitsByTier = (tier: number): readonly RegularUnitId[] =>
+export const getUnitsByTier = (tier: Tier): readonly RegularUnitId[] =>
   UNITS_BY_TIER.get(tier) ?? [];
 
 export const getItemPool = (): ItemId[] => [

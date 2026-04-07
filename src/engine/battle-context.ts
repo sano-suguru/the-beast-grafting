@@ -8,8 +8,10 @@ import type {
   LogSegment,
   RegularUnitId,
   ChurchUnitId,
+  Tier,
 } from "../shared/types";
 import type { Rng } from "./rng";
+import { TOKEN_TIER } from "../shared/data/tiers";
 import { generateUid } from "./helpers";
 import { MAX_OPS } from "./constants";
 
@@ -105,7 +107,7 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
     baseHp: hp,
     buffAtk: 0,
     buffHp: 0,
-    tier: 0,
+    tier: TOKEN_TIER,
     skillText: "",
     lore: "",
     exp: 0,
@@ -118,7 +120,7 @@ export function createSummonedUnit(
   unitData: {
     id: RegularUnitId | ChurchUnitId;
     name: string;
-    tier: number;
+    tier: Tier;
     skillText: string;
     lore: string;
   },

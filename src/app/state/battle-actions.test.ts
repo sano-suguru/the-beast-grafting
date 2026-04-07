@@ -427,7 +427,12 @@ describe("concludeBattle", () => {
 
 describe("proceedFromBattleResult", () => {
   it("transitions to RESULT and clears battleConcludeData when gameEnded", () => {
-    battleConcludeData.value = { lifeDelta: -1, trophyDelta: 0, gameEnded: true };
+    battleConcludeData.value = {
+      lifeDelta: -1,
+      trophyDelta: 0,
+      gameEnded: true,
+      unlockedTier: null,
+    };
     proceedFromBattleResult();
     expect(phase.value).toBe("RESULT");
     expect(battleConcludeData.value).toBeNull();
@@ -435,7 +440,12 @@ describe("proceedFromBattleResult", () => {
 
   it("transitions to SHOP and calls setupNight when game not ended", async () => {
     const spy = stubFetch(battleRoutes());
-    battleConcludeData.value = { lifeDelta: 0, trophyDelta: 1, gameEnded: false };
+    battleConcludeData.value = {
+      lifeDelta: 0,
+      trophyDelta: 1,
+      gameEnded: false,
+      unlockedTier: null,
+    };
     proceedFromBattleResult();
     expect(phase.value).toBe("SHOP");
     expect(battleConcludeData.value).toBeNull();
@@ -452,9 +462,67 @@ describe("proceedFromBattleResult", () => {
   it("does not call setupNight when no runId", () => {
     const spy = stubFetch(battleRoutes());
     currentRunId.value = null;
-    battleConcludeData.value = { lifeDelta: 0, trophyDelta: 1, gameEnded: false };
+    battleConcludeData.value = {
+      lifeDelta: 0,
+      trophyDelta: 1,
+      gameEnded: false,
+      unlockedTier: null,
+    };
     proceedFromBattleResult();
     expect(phase.value).toBe("SHOP");
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe("tier unlock detection", () => {
+  it("sets unlockedTier when round advances to tier boundary", async () => {
+    battleResult.value = "WIN";
+    round.value = 2;
+    lastBattleId.value = "b-1";
+    stubFetch(
+      battleRoutes({
+        runState: defaultRunState({ round: 3, trophy: 1 }),
+        shopState: makeShopState({ round: 3, trophy: 1 }),
+      }),
+    );
+    concludeBattle();
+    await vi.waitFor(() => expect(battleBusy.value).toBe(false));
+    expect(battleConcludeData.value?.unlockedTier).toBe(2);
+  });
+
+  it("sets unlockedTier null when tier does not change", async () => {
+    battleResult.value = "WIN";
+    round.value = 1;
+    lastBattleId.value = "b-1";
+    stubFetch(
+      battleRoutes({
+        runState: defaultRunState({ round: 2, trophy: 1 }),
+        shopState: makeShopState({ round: 2, trophy: 1 }),
+      }),
+    );
+    concludeBattle();
+    await vi.waitFor(() => expect(battleBusy.value).toBe(false));
+    expect(battleConcludeData.value?.unlockedTier).toBeNull();
+  });
+
+  it("sets unlockedTier null when game ended", async () => {
+    battleResult.value = "LOSE";
+    round.value = 2;
+    life.value = 1;
+    lastBattleId.value = "b-1";
+    stubFetch(battleRoutes({ runState: defaultRunState({ round: 3, life: 0, status: "lost" }) }));
+    concludeBattle();
+    await vi.waitFor(() => expect(battleBusy.value).toBe(false));
+    expect(battleConcludeData.value?.unlockedTier).toBeNull();
+  });
+
+  it("sets unlockedTier in local fallback path", async () => {
+    battleResult.value = "WIN";
+    round.value = 2;
+    trophy.value = 0;
+    lastBattleId.value = null;
+    concludeBattle();
+    await vi.waitFor(() => expect(battleBusy.value).toBe(false));
+    expect(battleConcludeData.value?.unlockedTier).toBe(2);
   });
 });

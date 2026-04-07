@@ -2,10 +2,10 @@ import type { ShopSlot, ShopItemSlot, EventData, OriginId } from "../../shared/t
 import { unitInstanceToBoardUnit } from "../../shared/board-unit";
 import { invariant } from "../../shared/invariant";
 import { ITEMS } from "../../shared/data/items";
+import { getCurrentMaxTier, nextTier } from "../../shared/data/tiers";
 import type { StatefulRng } from "../../engine/rng";
 import {
   createUnit,
-  getCurrentMaxTier,
   getShopPool,
   getItemPool,
   getUnitsByTier,
@@ -55,7 +55,7 @@ export function applyInquisitorUpgrade(
   const targetIdx = pickRandom(candidates, rng);
   const slot = units[targetIdx];
   if (!slot) return units;
-  const higherTier = getUnitsByTier(slot.unit.tier + 1);
+  const higherTier = getUnitsByTier(nextTier(slot.unit.tier));
   if (higherTier.length === 0) return units;
   const newId = pickRandom([...higherTier], rng);
   const next = [...units];
@@ -126,7 +126,7 @@ export function generateLevelUpRewards(
   rng: StatefulRng,
 ): ShopSlotJson[] {
   if (!leveledUp) return [];
-  const rewardTier = Math.min(6, getCurrentMaxTier(round) + 1);
+  const rewardTier = nextTier(getCurrentMaxTier(round));
   const candidates = getUnitsByTier(rewardTier);
   if (candidates.length === 0) return [];
   return Array.from({ length: LEVEL_UP_REWARD_COUNT }, () => ({

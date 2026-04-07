@@ -53,14 +53,16 @@ export function ShopScreen() {
       {showHelpOverlay.value && <HelpBackdrop />}
       <ShopHeader />
 
-      <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto p-2 pb-0 md:p-4">
+      <div className="relative flex min-h-0 flex-1 flex-col p-2 pb-0 md:p-4">
         <ShopInfoPanel sel={sel} hover={hoveredItem.value} currentLife={currentLife} />
-        <BoardSection board={currentBoard} />
-        <div className="mb-4 flex shrink-0 gap-2">
-          <SellButton isActive={sel?.type === "BOARD_UNIT" && !busy} />
-          <UndoButton disabled={busy} />
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pt-2 md:pt-3">
+          <BoardSection board={currentBoard} />
+          <div className="mb-4 flex shrink-0 gap-2">
+            <SellButton isActive={sel?.type === "BOARD_UNIT" && !busy} />
+            <UndoButton disabled={busy} />
+          </div>
+          <ShopSection />
         </div>
-        <ShopSection />
       </div>
 
       <ShopFooter currentOnboarding={currentOnboarding} />

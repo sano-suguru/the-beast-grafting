@@ -7,6 +7,7 @@ import { generateId } from "../auth/crypto";
 import runRoutes, { consumeAndAdvance } from "./routes";
 import { TEST_ENV } from "../auth/test-helpers";
 import { createTestPlayer } from "../test-helpers";
+import type { BoardUnit } from "../../shared/board-unit";
 import type { AuthEnv } from "../auth/types";
 
 interface RunResponse {
@@ -446,8 +447,8 @@ describe("POST /advance", () => {
     const startRes = await postStart(app, token);
     const { run } = (await startRes.json()) as RunResponse;
 
-    const ratUnit = {
-      id: "rat" as const,
+    const ratUnit: BoardUnit = {
+      id: "rat",
       name: "疫病ネズミ",
       baseAtk: 2,
       baseHp: 2,

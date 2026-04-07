@@ -1,7 +1,8 @@
 import type { EquipType } from "./equip-type";
 import type { OriginId } from "./origin-id";
 import type { EnemyFaction } from "./enemy-faction";
-export type { EquipType, OriginId, EnemyFaction };
+import type { Tier } from "./data/tiers";
+export type { EquipType, OriginId, EnemyFaction, Tier };
 
 export type RegularUnitId =
   | "rat"
@@ -53,7 +54,7 @@ export interface UnitData {
   name: string;
   baseAtk: number;
   baseHp: number;
-  tier: number;
+  tier: Tier;
   skillText: string;
   lore: string;
   secretLore?: string;
@@ -66,7 +67,7 @@ export interface UnitInstance {
   baseHp: number;
   buffAtk: number;
   buffHp: number;
-  tier: number;
+  tier: Tier;
   skillText: string;
   lore: string;
   secretLore?: string;
@@ -100,7 +101,7 @@ export type EventId = "vial" | "surplus" | "rotting_cargo" | "quiet_night" | "pa
 
 export interface EventUnitOffer {
   unitId: RegularUnitId | "random";
-  tier?: number;
+  tier?: Tier;
   cost: number;
   equipOverride?: EquipType;
   atkBonus: number;

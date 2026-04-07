@@ -187,9 +187,7 @@ export function LoreScreen() {
   useEffect(() => {
     void loadLore();
   }, []);
-  const sortedUnits = Object.values(UNITS)
-    .filter((u) => u.tier > 0)
-    .sort((a, b) => a.tier - b.tier);
+  const sortedUnits = Object.values(UNITS).sort((a, b) => a.tier - b.tier);
   const churchUnits = Object.values(CHURCH_UNITS).sort((a, b) => a.tier - b.tier);
   const db = loreDb.value;
   const handleClose = () => {

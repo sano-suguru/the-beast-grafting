@@ -60,6 +60,7 @@ export type SoundType =
   | "damage"
   | "defend"
   | "skill"
-  | "death";
+  | "death"
+  | "tier_unlock";
 
 export type SoundResult = Promise<SoundType | null>;

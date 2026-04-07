@@ -40,6 +40,7 @@ const SOUNDS: Record<string, SoundConfig> = {
   damage: { wave: "sawtooth", freqStart: 800, freqEnd: 100, duration: 0.1, gainStart: 0.15 },
   defend: { wave: "triangle", freqStart: 1200, freqEnd: 400, duration: 0.1, gainStart: 0.2 },
   death: { wave: "sawtooth", freqStart: 80, freqEnd: 10, duration: 0.3, gainStart: 0.3 },
+  tier_unlock: { wave: "triangle", freqStart: 150, freqEnd: 600, duration: 0.3, gainStart: 0.25 },
 };
 
 function createOscGain(ctx: AudioContext) {

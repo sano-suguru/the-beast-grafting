@@ -28,6 +28,7 @@ import {
 } from "./game-store";
 import { markTutorialDone } from "./tutorial";
 import { setupNight, applyShopState } from "./shop-actions";
+import { detectTierUnlock } from "../../shared/data/tiers";
 import { ok, err, safeAsync, fetchErr } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
 import { invariant } from "../../shared/invariant";
@@ -163,11 +164,13 @@ function applyLocalFallback(localResult: ServerBattleResult) {
     }
   }
 
+  const prevRound = round.value;
   batch(() => {
     trophy.value = Math.min(trophy.value + trophyDelta, 10);
     life.value = Math.max(life.value + lifeDelta, 0);
     if (!gameEnded) round.value = round.value + 1;
-    battleConcludeData.value = { lifeDelta, trophyDelta, gameEnded };
+    const unlockedTier = gameEnded ? null : detectTierUnlock(prevRound, round.value);
+    battleConcludeData.value = { lifeDelta, trophyDelta, gameEnded, unlockedTier };
     phase.value = "BATTLE_RESULT";
   });
 }
@@ -186,6 +189,7 @@ async function executeConclude() {
       const prevLife = life.value;
       const prevTrophy = trophy.value;
       const gameEnded = run.status === "won" || run.status === "lost";
+      const unlockedTier = gameEnded ? null : detectTierUnlock(round.value, run.round);
       batch(() => {
         life.value = run.life;
         trophy.value = run.trophy;
@@ -194,6 +198,7 @@ async function executeConclude() {
           lifeDelta: run.life - prevLife,
           trophyDelta: run.trophy - prevTrophy,
           gameEnded,
+          unlockedTier,
         };
         phase.value = "BATTLE_RESULT";
       });
