@@ -1,7 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "the-beast-grafting",
-  "legacy_env": false,
   "main": "./src/worker/index.ts",
   "compatibility_date": "2025-04-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -11,33 +10,18 @@
     "run_worker_first": ["/api/*"]
   },
   "vars": {
-    "ALLOWED_ORIGIN": "http://localhost:5173"
+    "ALLOWED_ORIGIN": "https://the-beast-grafting.snsgr.workers.dev"
   },
   "observability": { "enabled": true },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "beast-grafting-db",
-      "database_id": "local",
+      "database_id": "2dbfd443-a769-4222-8c8d-1640a4ad10fc",
       "migrations_dir": "./drizzle"
     }
   ],
-  "env": {
-    "production": {
-      "vars": {
-        "ALLOWED_ORIGIN": "https://the-beast-grafting.snsgr.workers.dev"
-      },
-      "triggers": {
-        "crons": ["0 3 * * *"]
-      },
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "beast-grafting-db",
-          "database_id": "2dbfd443-a769-4222-8c8d-1640a4ad10fc",
-          "migrations_dir": "./drizzle"
-        }
-      ]
-    }
+  "triggers": {
+    "crons": ["0 3 * * *"]
   }
 }
