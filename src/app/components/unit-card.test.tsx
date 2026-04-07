@@ -53,7 +53,7 @@ describe("UnitCard", () => {
     blood.value = 2;
     const unit = makeUnit();
     const { container } = render(<UnitCard unit={unit} type="SHOP_UNIT" index={0} />);
-    expect(container.innerHTML).toContain("red-900");
+    expect(container.innerHTML).toContain("blood-deep");
   });
 
   it("uses costOverride for affordability check", () => {

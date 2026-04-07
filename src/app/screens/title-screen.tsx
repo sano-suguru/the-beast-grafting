@@ -29,28 +29,34 @@ export function TitleScreen() {
   const loading = gameLoading.value;
 
   return (
-    <main className="relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-4 font-serif text-zinc-300">
+    <main className="bg-void text-parchment relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-4 font-serif">
       <GradientBackground />
       <IdentityBadge />
       {showAccountOverlay.value && <AccountOverlay />}
 
       <div className="relative z-10 flex flex-col items-center text-center">
         <div className="animate-icon-drift relative mb-8 h-24 w-24 md:h-32 md:w-32">
-          <Skull className="absolute inset-0 h-full w-full text-zinc-800" />
-          <Dna className="absolute inset-0 h-full w-full text-red-900/80" />
+          <Skull className="text-iron absolute inset-0 h-full w-full" />
+          <Dna className="text-blood-deep/80 absolute inset-0 h-full w-full" />
         </div>
 
-        <h1 className="mb-10 text-4xl font-black tracking-[0.2em] text-zinc-100 drop-shadow-lg md:text-5xl">
+        <h1
+          className="text-parchment-bright mb-10 text-4xl font-black tracking-[0.2em] md:text-5xl"
+          style={{
+            textShadow:
+              "0 0 30px color-mix(in srgb, var(--color-tarnished-gold) 30%, transparent), 0 2px 4px rgba(0,0,0,0.8)",
+          }}
+        >
           The Beast Grafter
         </h1>
 
-        <div className="mb-12 max-w-md space-y-4 px-4 text-center text-[10px] leading-relaxed text-zinc-500 italic md:text-sm">
+        <div className="text-parchment-muted mb-12 max-w-md space-y-4 px-4 text-center text-[10px] leading-relaxed italic md:text-sm">
           <p>鉄格子越しに、松明の明かりと冷たい雨の匂いがする。</p>
           <p>教会の猟犬どもが、この地下室を嗅ぎつけるのも時間の問題だ。</p>
           <p>解剖台は冷え切っている。</p>
           <p>生き延びるためには、盾となる「肉」が必要だ。</p>
           <p>倫理も、信仰も、とうに捨てたはずだろう。</p>
-          <p className="text-zinc-300">さあ、接ぎ木（グラフト）を始めろ。</p>
+          <p className="text-parchment">さあ、接ぎ木（グラフト）を始めろ。</p>
         </div>
 
         <TitleButtons loading={loading} mastered={totalMastered} total={totalUnits} />
@@ -75,10 +81,10 @@ function TitleButtons({
         type="button"
         onClick={enterGame}
         disabled={loading}
-        className={`group rounded-sm border border-red-900 px-6 py-3 font-bold tracking-widest shadow-[0_0_15px_rgba(127,29,29,0.3)] transition-all ${
+        className={`group border-blood-deep shadow-glow-blood-sm rounded-sm border px-6 py-3 font-bold tracking-widest transition-all ${
           loading
-            ? "cursor-wait bg-red-950/5 text-red-900"
-            : "cursor-pointer bg-red-950/20 text-red-500 hover:bg-red-900/40 hover:text-red-400"
+            ? "bg-blood-deep/5 text-blood-deep cursor-wait"
+            : "bg-blood-deep/20 text-blood-bright hover:bg-blood-bright/30 hover:text-blood-bright cursor-pointer"
         } ${showLoadingText.value ? "animate-pulse" : ""}`}
       >
         <span className="flex items-center justify-center gap-2">
@@ -91,7 +97,7 @@ function TitleButtons({
       <button
         type="button"
         onClick={goToLore}
-        className="flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-zinc-800 px-6 py-3 tracking-widest text-zinc-500 transition-all hover:bg-zinc-900/50 hover:text-zinc-300"
+        className="border-iron text-parchment-dim hover:bg-void-surface/50 hover:text-parchment flex cursor-pointer items-center justify-center gap-2 rounded-sm border px-6 py-3 tracking-widest transition-all"
       >
         <Book size={16} />
         <span>大解剖録を開く</span>

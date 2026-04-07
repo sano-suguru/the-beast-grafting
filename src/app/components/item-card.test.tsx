@@ -42,6 +42,6 @@ describe("ItemCard", () => {
   it("applies cant-afford style when blood < cost", () => {
     blood.value = 1;
     const { container } = render(<ItemCard item={ITEMS["iron_plate"]!} index={0} />);
-    expect(container.innerHTML).toContain("red-900");
+    expect(container.innerHTML).toContain("blood-deep");
   });
 });

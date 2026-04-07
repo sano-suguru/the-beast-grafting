@@ -17,14 +17,14 @@ interface StatBadgeProps {
 }
 
 const STAT_COLORS: Record<string, Record<string, string>> = {
-  atk: { default: "text-amber-500", muted: "text-amber-600/70" },
-  hp: { default: "text-rose-500", muted: "text-rose-600/70" },
+  atk: { default: "text-tarnished-gold", muted: "text-tarnished-gold-dim/70" },
+  hp: { default: "text-blood-bright", muted: "text-blood-dim/70" },
 };
 
 function getPersistColor(baseDiff: number | undefined): string {
   if (baseDiff == null) return "";
-  if (baseDiff > 0) return "text-emerald-400";
-  if (baseDiff < 0) return "text-red-400";
+  if (baseDiff > 0) return "text-tarnished-gold";
+  if (baseDiff < 0) return "text-blood-bright";
   return "";
 }
 

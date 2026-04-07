@@ -26,7 +26,7 @@ export function IdentityBadge() {
 
   if (loading) {
     return (
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-sm border border-zinc-800 bg-zinc-950/80 px-2 py-1 text-[10px] text-zinc-600">
+      <div className="border-iron bg-void/80 text-iron-light absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px]">
         <User size={12} />
         <span className="animate-pulse">…</span>
       </div>
@@ -43,7 +43,7 @@ export function IdentityBadge() {
       onClick={() => {
         showAccountOverlay.value = true;
       }}
-      className="absolute top-4 right-4 z-10 flex cursor-pointer items-center gap-1.5 rounded-sm border border-zinc-800 bg-zinc-950/80 px-2 py-1 text-[10px] text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+      className="border-iron bg-void/80 text-parchment-dim hover:border-iron-light hover:text-parchment absolute top-4 right-4 z-10 flex cursor-pointer items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] transition-colors"
     >
       <User size={12} />
       <span className="max-w-[80px] truncate">{label}</span>

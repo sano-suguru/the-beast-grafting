@@ -19,27 +19,27 @@ import { TierUnlockBanner } from "./tier-unlock-banner";
 const RESULT_CONFIG = {
   WIN: {
     icon: Trophy,
-    iconColor: "text-zinc-500",
+    iconColor: "text-tarnished-gold-dim",
     label: "勝利",
-    labelColor: "text-zinc-100",
-    gradient: "from-zinc-800/30 via-zinc-950 to-black",
-    glowColor: "rgba(113,113,122,0.1)",
+    labelColor: "text-parchment-bright",
+    gradient: "from-tarnished-gold-deep/30 via-void to-black",
+    glowColor: "color-mix(in srgb, var(--color-tarnished-gold) 8%, transparent)",
   },
   LOSE: {
     icon: Flame,
-    iconColor: "text-red-800",
+    iconColor: "text-blood-deep",
     label: "敗北",
-    labelColor: "text-red-700",
-    gradient: "from-red-950/40 via-zinc-950 to-black",
-    glowColor: "rgba(127,29,29,0.15)",
+    labelColor: "text-blood-bright",
+    gradient: "from-blood-deep/40 via-void to-black",
+    glowColor: "color-mix(in srgb, var(--color-blood-bright) 15%, transparent)",
   },
   DRAW: {
     icon: Scale,
-    iconColor: "text-zinc-600",
+    iconColor: "text-iron-light",
     label: "引き分け",
-    labelColor: "text-zinc-400",
-    gradient: "from-zinc-900/30 via-zinc-950 to-black",
-    glowColor: "rgba(113,113,122,0.08)",
+    labelColor: "text-parchment-dim",
+    gradient: "from-iron/30 via-void to-black",
+    glowColor: "color-mix(in srgb, var(--color-iron-light) 8%, transparent)",
   },
 } as const;
 
@@ -65,7 +65,7 @@ export function BattleResultScreen() {
   const cfg = RESULT_CONFIG[result];
 
   return (
-    <main className="animate-fade-in relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-4 font-serif text-zinc-300">
+    <main className="animate-fade-in bg-void text-parchment relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-4 font-serif">
       <GradientBackground gradient={cfg.gradient} glowColor={cfg.glowColor} />
 
       <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-6 md:max-w-lg">
@@ -89,7 +89,7 @@ export function BattleResultScreen() {
             playSE("select");
             proceedFromBattleResult();
           }}
-          className="mt-4 cursor-pointer rounded-sm border border-zinc-700 px-6 py-3 text-sm tracking-widest text-zinc-400 shadow-[0_0_15px_rgba(113,113,122,0.2)] transition-all hover:bg-zinc-900 hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
+          className="border-iron text-parchment-dim hover:bg-void-surface hover:text-parchment shadow-glow-iron-sm mt-4 cursor-pointer rounded-sm border px-6 py-3 text-sm tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-50"
           type="button"
         >
           {data?.gameEnded ? "終幕を見届ける" : "次の夜へ進む"}

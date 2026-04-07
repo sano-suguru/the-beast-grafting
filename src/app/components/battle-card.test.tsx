@@ -38,7 +38,7 @@ describe("BattleCard", () => {
   it("applies amber name color for church unit", () => {
     const unit = makeSnapshot({ isChurch: true });
     const { container } = render(<BattleCard unit={unit} side="e" />);
-    expect(container.innerHTML).toContain("text-amber-200");
+    expect(container.innerHTML).toContain("text-church");
   });
 
   it("shows hit flash on damage action", () => {

@@ -26,12 +26,12 @@ export function RewardSummary({
   return (
     <div className="flex items-center gap-6">
       <div className="flex items-center gap-1.5">
-        <Trophy size={14} className="text-amber-600" />
-        <DeltaText value={trophyDelta} color="text-amber-500" />
+        <Trophy size={14} className="text-tarnished-gold" />
+        <DeltaText value={trophyDelta} color="text-tarnished-gold" />
       </div>
       <div className="flex items-center gap-1.5">
-        <Heart size={14} className="text-rose-600" />
-        <DeltaText value={lifeDelta} color="text-rose-500" />
+        <Heart size={14} className="text-blood-bright" />
+        <DeltaText value={lifeDelta} color="text-blood-bright" />
       </div>
     </div>
   );

@@ -71,10 +71,10 @@ function EventNarrative({ event }: { event: EventData }) {
 
   return (
     <div className="animate-fade-in flex flex-col gap-1 text-center">
-      <span className="text-[10px] font-bold tracking-widest text-amber-700 uppercase md:text-xs">
+      <span className="text-tarnished-gold text-[10px] font-bold tracking-widest uppercase md:text-xs">
         {event.name}
       </span>
-      <p className="text-[10px] leading-relaxed text-zinc-400 italic md:text-xs">
+      <p className="text-parchment-muted text-[10px] leading-relaxed italic md:text-xs">
         {event.narrative}
       </p>
       {badges.length > 0 && (
@@ -84,8 +84,8 @@ function EventNarrative({ event }: { event: EventData }) {
               key={i}
               className={`rounded border px-1 py-0.5 text-[9px] font-bold md:text-[10px] ${
                 b.positive
-                  ? "border-emerald-900/50 text-emerald-600/80"
-                  : "border-red-900/50 text-red-500/70"
+                  ? "border-tarnished-gold-dim/50 text-tarnished-gold"
+                  : "border-blood-deep/50 text-blood-bright/70"
               }`}
             >
               <ResourceText text={b.label} />
@@ -98,7 +98,7 @@ function EventNarrative({ event }: { event: EventData }) {
 }
 
 function buffColor(buff: number): string {
-  return buff > 0 ? "text-emerald-500" : "text-red-400";
+  return buff > 0 ? "text-tarnished-gold" : "text-blood-bright/70";
 }
 
 function buffPrefix(buff: number): string {
@@ -109,7 +109,7 @@ function UnitStatDisplay({ sel }: { sel: Selection }) {
   if (sel.type === "SHOP_ITEM") return null;
   return (
     <div className="ml-auto flex items-center gap-2">
-      <span className="flex items-center gap-0.5 text-[11px] font-bold text-amber-500 md:text-xs">
+      <span className="text-tarnished-gold flex items-center gap-0.5 text-[11px] font-bold md:text-xs">
         <Swords size={12} />
         {effectiveAtk(sel.item)}
         {sel.item.buffAtk !== 0 && (
@@ -119,7 +119,7 @@ function UnitStatDisplay({ sel }: { sel: Selection }) {
           </span>
         )}
       </span>
-      <span className="flex items-center gap-0.5 text-[11px] font-bold text-rose-500 md:text-xs">
+      <span className="text-blood-bright flex items-center gap-0.5 text-[11px] font-bold md:text-xs">
         <Shield size={12} />
         {effectiveHp(sel.item)}
         {sel.item.buffHp !== 0 && (
@@ -140,29 +140,31 @@ function SelectedItemInfo({ sel }: { sel: Selection }) {
   return (
     <div className="animate-fade-in relative z-10">
       <Skull size={48} className="pointer-events-none absolute -right-1 -bottom-1 opacity-5" />
-      <div className="mb-1 flex items-center gap-1 border-b border-zinc-800/50 pb-1">
-        <BookOpen size={14} className="shrink-0 text-zinc-500" />
-        <span className="text-xs font-bold text-emerald-500 md:text-sm">{sel.item.name}</span>
+      <div className="border-iron/50 mb-1 flex items-center gap-1 border-b pb-1">
+        <BookOpen size={14} className="text-parchment-dim shrink-0" />
+        <span className="text-tarnished-gold text-xs font-bold md:text-sm">{sel.item.name}</span>
         {"tier" in sel.item && (
-          <span className="text-[9px] font-bold text-zinc-500 md:text-[10px]">
+          <span className="text-parchment-dim text-[9px] font-bold md:text-[10px]">
             Tier {sel.item.tier}
           </span>
         )}
         <UnitStatDisplay sel={sel} />
       </div>
-      <p className="pl-1 font-mono text-[10px] text-amber-500/80 md:text-xs">
+      <p className="text-tarnished-gold/80 pl-1 font-mono text-[10px] md:text-xs">
         <ResourceText text={sel.item.skillText} />
       </p>
-      <p className="mt-1 pl-1 text-[10px] leading-relaxed text-zinc-500 italic md:text-xs">
+      <p className="text-parchment-muted mt-1 pl-1 text-[10px] leading-relaxed italic md:text-xs">
         "{sel.item.lore}"
       </p>
       {equipInfo && (
-        <div className="mt-1.5 flex items-center gap-2 border-t border-zinc-800/50 pt-1.5">
-          <span className="rounded border border-amber-900/50 px-1 text-[9px] text-amber-700/80">
+        <div className="border-iron/50 mt-1.5 flex items-center gap-2 border-t pt-1.5">
+          <span className="border-tarnished-gold-dim/50 text-tarnished-gold-dim rounded border px-1 text-[9px]">
             付与中
           </span>
-          <span className="text-[10px] font-bold text-amber-600 md:text-xs">{equipInfo.name}</span>
-          <span className="text-[9px] text-zinc-500 md:text-[10px]">- {equipInfo.desc}</span>
+          <span className="text-tarnished-gold text-[10px] font-bold md:text-xs">
+            {equipInfo.name}
+          </span>
+          <span className="text-parchment-dim text-[9px] md:text-[10px]">- {equipInfo.desc}</span>
         </div>
       )}
     </div>
@@ -192,8 +194,8 @@ function InfoPanelContent({
 
 function panelBorderClass(sel: Selection | null, currentLife: number): string {
   return !sel && toLifeTier(currentLife) === "low"
-    ? "bg-red-950/20 border-red-900/50"
-    : "bg-[#0a0a0a] border-zinc-800";
+    ? "bg-blood-deep/20 border-blood-deep/50"
+    : "bg-void border-iron/50";
 }
 
 export function ShopInfoPanel({ sel, hover, currentLife }: ShopInfoPanelProps) {

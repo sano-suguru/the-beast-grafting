@@ -1,5 +1,115 @@
 @import "tailwindcss";
 
+@theme {
+  --color-parchment: #d4c4a0;
+  --color-parchment-dim: #8e7e5e;
+  --color-parchment-bright: #ede5d5;
+  --color-parchment-muted: #8a8478;
+  --color-blood-deep: #5c1a1a;
+  --color-blood-dim: #8a3030;
+  --color-blood-bright: #a33030;
+  --color-rot: #4a7a4a;
+  --color-rot-bright: #34d399;
+  --color-rot-acid: #84cc16;
+  --color-rot-dim: #2d4a2d;
+  --color-rot-deep: #0e1a0e;
+  --color-tarnished-gold: #b8963e;
+  --color-tarnished-gold-dim: #937b38;
+  --color-tarnished-gold-deep: #1a1508;
+  --color-iron: #3a3a3e;
+  --color-iron-light: #7a7a82;
+  --color-void: #08070b;
+  --color-void-surface: #0e0d12;
+  --color-corpse-wax: #93c5e8;
+  --color-hex: #a78bfa;
+  --color-hex-dim: #7c3aed;
+  --color-hex-deep: #1e1030;
+  --color-church: #fde68a;
+  --color-church-dim: #b45309;
+  --color-church-dark: #78350f;
+}
+
+/* ── Glow shadow utilities (color-mix derives from theme tokens) ── */
+
+@utility shadow-glow-blood {
+  box-shadow: 0 0 25px color-mix(in srgb, var(--color-blood-bright) 70%, transparent);
+}
+@utility shadow-glow-blood-sm {
+  box-shadow: 0 0 15px color-mix(in srgb, var(--color-blood-bright) 30%, transparent);
+}
+@utility shadow-glow-blood-pulse {
+  box-shadow: 0 0 15px color-mix(in srgb, var(--color-blood-bright) 50%, transparent);
+}
+@utility shadow-glow-rot {
+  box-shadow: 0 0 25px color-mix(in srgb, var(--color-rot) 70%, transparent);
+}
+@utility shadow-glow-gold {
+  box-shadow: 0 0 25px color-mix(in srgb, var(--color-tarnished-gold) 70%, transparent);
+}
+@utility shadow-glow-gold-sm {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-tarnished-gold) 40%, transparent);
+}
+@utility shadow-glow-gold-xs {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-tarnished-gold) 30%, transparent);
+}
+@utility shadow-glow-gold-pulse {
+  box-shadow: 0 0 15px color-mix(in srgb, var(--color-tarnished-gold) 30%, transparent);
+}
+@utility shadow-glow-iron {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-iron-light) 70%, transparent);
+}
+@utility shadow-glow-iron-sm {
+  box-shadow: 0 0 15px color-mix(in srgb, var(--color-iron-light) 20%, transparent);
+}
+@utility shadow-glow-parchment {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-parchment) 30%, transparent);
+}
+@utility shadow-glow-hex {
+  box-shadow: 0 0 30px color-mix(in srgb, var(--color-hex) 80%, transparent);
+}
+@utility shadow-hover-swap {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-rot) 30%, transparent);
+}
+@utility shadow-hover-highlight {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--color-rot) 50%, transparent);
+}
+@utility shadow-selected {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-tarnished-gold) 40%, transparent);
+}
+@utility shadow-frozen-inset {
+  box-shadow: inset 0 0 12px color-mix(in srgb, var(--color-tarnished-gold-dim) 40%, transparent);
+}
+@utility shadow-frozen-inset-sm {
+  box-shadow: inset 0 0 8px color-mix(in srgb, var(--color-tarnished-gold-dim) 30%, transparent);
+}
+@utility shadow-ambient-p {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-parchment) 2%, transparent);
+}
+@utility shadow-ambient-e {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-blood-bright) 2%, transparent);
+}
+@utility shadow-glow-gold-card {
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-tarnished-gold) 12%, transparent);
+}
+@utility shadow-glow-gold-xs-inset {
+  box-shadow: inset 0 0 10px color-mix(in srgb, var(--color-tarnished-gold) 10%, transparent);
+}
+@utility shadow-glow-gold-inset-lg {
+  box-shadow: inset 0 0 20px color-mix(in srgb, var(--color-tarnished-gold) 5%, transparent);
+}
+@utility shadow-glow-gold-tooltip {
+  box-shadow: 0 4px 15px color-mix(in srgb, var(--color-tarnished-gold) 20%, transparent);
+}
+@utility shadow-glow-gold-hover {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-tarnished-gold) 15%, transparent);
+}
+@utility shadow-inset-dark {
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+@utility drop-shadow-blood-crown {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-blood-bright) 50%, transparent));
+}
+
 @keyframes floatUp {
   0% {
     opacity: 0;
@@ -73,21 +183,21 @@
 @keyframes skillInvoke {
   0% {
     filter: brightness(1) saturate(1);
-    box-shadow: 0 0 25px rgba(245, 158, 11, 0.7);
+    box-shadow: 0 0 25px color-mix(in srgb, var(--color-tarnished-gold) 70%, transparent);
   }
   35% {
     filter: brightness(1.4) saturate(1.3);
     box-shadow:
-      0 0 40px rgba(245, 158, 11, 0.9),
-      0 0 12px rgba(217, 119, 6, 0.6) inset;
+      0 0 40px color-mix(in srgb, var(--color-tarnished-gold) 90%, transparent),
+      0 0 12px color-mix(in srgb, var(--color-tarnished-gold-dim) 60%, transparent) inset;
   }
   70% {
     filter: brightness(0.8) saturate(0.9);
-    box-shadow: 0 0 20px rgba(180, 83, 9, 0.5);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-tarnished-gold-dim) 50%, transparent);
   }
   100% {
     filter: brightness(1) saturate(1);
-    box-shadow: 0 0 25px rgba(245, 158, 11, 0.7);
+    box-shadow: 0 0 25px color-mix(in srgb, var(--color-tarnished-gold) 70%, transparent);
   }
 }
 .animate-skill {
@@ -100,7 +210,7 @@
     transform: scale(1);
   }
   30% {
-    color: #34d399;
+    color: var(--color-tarnished-gold);
     transform: scale(1.4);
   }
 }
@@ -114,7 +224,7 @@
     transform: scale(1);
   }
   30% {
-    color: #ef4444;
+    color: var(--color-blood-bright);
     transform: scale(1.4);
   }
 }
@@ -156,12 +266,12 @@
 @keyframes graftResonance {
   0%,
   100% {
-    box-shadow: 0 0 6px rgba(190, 70, 70, 0.1);
-    border-color: rgba(150, 30, 30, 0.4);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--color-blood-bright) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-blood-deep) 40%, transparent);
   }
   50% {
-    box-shadow: 0 0 18px rgba(190, 70, 70, 0.5);
-    border-color: rgba(220, 60, 60, 0.7);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--color-blood-bright) 50%, transparent);
+    border-color: color-mix(in srgb, var(--color-blood-bright) 70%, transparent);
   }
 }
 .animate-graft-resonance {
@@ -171,12 +281,12 @@
 @keyframes graftResonanceActive {
   0%,
   100% {
-    box-shadow: 0 0 6px rgba(16, 185, 129, 0.15);
-    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--color-tarnished-gold) 15%, transparent);
+    border-color: color-mix(in srgb, var(--color-tarnished-gold) 40%, transparent);
   }
   50% {
-    box-shadow: 0 0 18px rgba(16, 185, 129, 0.5);
-    border-color: rgba(16, 185, 129, 0.8);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--color-tarnished-gold) 50%, transparent);
+    border-color: color-mix(in srgb, var(--color-tarnished-gold) 80%, transparent);
   }
 }
 .animate-graft-resonance-active {
@@ -194,4 +304,12 @@
 }
 .animate-icon-drift {
   animation: iconDrift 6s ease-in-out infinite;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

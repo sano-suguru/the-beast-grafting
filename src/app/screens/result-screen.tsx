@@ -7,12 +7,12 @@ function WinContent() {
   return (
     <>
       <div className="animate-icon-drift mb-6 h-24 w-24 md:h-32 md:w-32">
-        <Trophy className="h-full w-full text-zinc-500" />
+        <Trophy className="text-tarnished-gold-dim h-full w-full" />
       </div>
-      <h1 className="mb-4 text-3xl font-bold tracking-[0.2em] text-zinc-100 md:text-4xl">
+      <h1 className="text-parchment-bright mb-4 text-3xl font-bold tracking-[0.2em] md:text-4xl">
         傑作の完成
       </h1>
-      <div className="max-w-md space-y-4 px-4 text-xs leading-relaxed text-zinc-400 italic md:text-sm">
+      <div className="text-parchment-muted max-w-md space-y-4 px-4 text-xs leading-relaxed italic md:text-sm">
         <p>最後の激突が終わった。</p>
         <p>
           死体の山の上に、あなたが接ぎ木し続けた「究極の傑作」が立っている。それはもはや元の生物の原型を留めておらず、ただ美しく、冒涜的だ。
@@ -29,12 +29,12 @@ function LossContent() {
   return (
     <>
       <div className="animate-icon-drift mb-6 h-24 w-24 md:h-32 md:w-32">
-        <Flame className="h-full w-full text-red-800" />
+        <Flame className="text-blood-deep h-full w-full" />
       </div>
-      <h1 className="mb-4 text-3xl font-bold tracking-[0.2em] text-red-700 md:text-4xl">
+      <h1 className="text-blood-bright mb-4 text-3xl font-bold tracking-[0.2em] md:text-4xl">
         異端認定
       </h1>
-      <div className="max-w-md space-y-4 px-4 text-xs leading-relaxed text-zinc-400 italic md:text-sm">
+      <div className="text-parchment-muted max-w-md space-y-4 px-4 text-xs leading-relaxed italic md:text-sm">
         {isChurch ? (
           <>
             <p>重い木の扉が破られる音がした。</p>
@@ -56,9 +56,7 @@ function LossContent() {
 }
 
 function ResultButton({ isWin }: { isWin: boolean }) {
-  const shadow = isWin
-    ? "shadow-[0_0_15px_rgba(113,113,122,0.2)]"
-    : "shadow-[0_0_15px_rgba(127,29,29,0.3)]";
+  const shadow = isWin ? "shadow-glow-gold-hover" : "shadow-glow-blood-sm";
   return (
     <button
       onClick={() => {
@@ -66,7 +64,7 @@ function ResultButton({ isWin }: { isWin: boolean }) {
         playSE("select");
         phase.value = "TITLE";
       }}
-      className={`mt-12 cursor-pointer rounded-sm border border-zinc-700 px-6 py-3 text-sm tracking-widest text-zinc-400 transition-all hover:bg-zinc-900 hover:text-zinc-300 ${shadow}`}
+      className={`border-iron text-parchment-dim hover:bg-void-surface hover:text-parchment mt-12 cursor-pointer rounded-sm border px-6 py-3 text-sm tracking-widest transition-all ${shadow}`}
       type="button"
     >
       別の遺体安置所を探す
@@ -78,10 +76,12 @@ export function ResultScreen() {
   const isWin = trophy.value >= 10;
 
   return (
-    <main className="animate-fade-in relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 p-4 text-center font-serif text-zinc-300">
+    <main className="animate-fade-in bg-void text-parchment relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-4 text-center font-serif">
       <GradientBackground
-        gradient={isWin ? "from-zinc-800/30 via-zinc-950 to-black" : undefined}
-        glowColor={isWin ? "rgba(113,113,122,0.1)" : undefined}
+        gradient={isWin ? "from-tarnished-gold-deep/30 via-void to-black" : undefined}
+        glowColor={
+          isWin ? "color-mix(in srgb, var(--color-tarnished-gold) 8%, transparent)" : undefined
+        }
       />
       <div className="relative z-10 flex flex-col items-center">
         {isWin ? <WinContent /> : <LossContent />}

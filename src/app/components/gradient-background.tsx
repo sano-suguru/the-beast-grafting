@@ -3,8 +3,8 @@ interface Props {
   glowColor?: string | undefined;
 }
 
-const DEFAULT_GRADIENT = "from-red-950/40 via-zinc-950 to-black";
-const DEFAULT_GLOW = "rgba(127,29,29,0.15)";
+const DEFAULT_GRADIENT = "from-blood-deep/30 via-void to-black";
+const DEFAULT_GLOW = "color-mix(in srgb, var(--color-tarnished-gold) 6%, transparent)";
 
 export function GradientBackground({ gradient, glowColor }: Props) {
   return (
@@ -17,6 +17,10 @@ export function GradientBackground({ gradient, glowColor }: Props) {
         style={{
           background: `radial-gradient(ellipse at center, ${glowColor ?? DEFAULT_GLOW} 0%, transparent 70%)`,
         }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{ boxShadow: "inset 0 0 150px 60px rgba(0,0,0,0.8)" }}
       />
     </>
   );

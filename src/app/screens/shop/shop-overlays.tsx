@@ -12,7 +12,9 @@ import { playSE } from "../../engine/audio";
 export function ShopBusyOverlay() {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
-      <p className="animate-pulse text-sm tracking-widest text-red-800">……暗闇の中で蠢いている……</p>
+      <p className="text-blood-deep animate-pulse text-sm tracking-widest">
+        ……暗闇の中で蠢いている……
+      </p>
     </div>
   );
 }
@@ -20,14 +22,14 @@ export function ShopBusyOverlay() {
 export function RetireConfirmOverlay() {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="mx-4 flex max-w-sm flex-col items-center gap-6 border border-zinc-800 bg-zinc-950 p-6">
-        <p className="text-center text-sm leading-relaxed text-zinc-300">
+      <div className="border-iron bg-void mx-4 flex max-w-sm flex-col items-center gap-6 border p-6">
+        <p className="text-parchment-bright text-center text-sm leading-relaxed">
           この地下室を捨てて逃げますか？
           <br />
-          <span className="text-xs text-zinc-500">進行状況は失われます。</span>
+          <span className="text-parchment-dim text-xs">進行状況は失われます。</span>
         </p>
         {shopActionError.value && (
-          <p className="text-center text-xs text-red-400">
+          <p className="text-blood-bright text-center text-xs">
             接続に失敗しました。再度お試しください。
           </p>
         )}
@@ -38,10 +40,10 @@ export function RetireConfirmOverlay() {
               showRetireConfirm.value = false;
             }}
             disabled={retiring.value}
-            className={`border border-zinc-700 px-4 py-2 text-xs tracking-widest transition-all ${
+            className={`border-iron border px-4 py-2 text-xs tracking-widest transition-all ${
               retiring.value
-                ? "cursor-wait text-zinc-700"
-                : "cursor-pointer text-zinc-400 hover:bg-zinc-900 active:scale-95"
+                ? "text-iron-light cursor-wait"
+                : "text-parchment-dim hover:bg-void-surface cursor-pointer active:scale-95"
             }`}
           >
             留まる
@@ -52,10 +54,10 @@ export function RetireConfirmOverlay() {
               void retireGame();
             }}
             disabled={retiring.value}
-            className={`border border-red-900 px-4 py-2 text-xs tracking-widest transition-all ${
+            className={`border-blood-deep border px-4 py-2 text-xs tracking-widest transition-all ${
               retiring.value
-                ? "animate-pulse cursor-wait bg-red-950/10 text-red-900"
-                : "cursor-pointer bg-red-950/30 text-red-500 hover:bg-red-950/50 active:scale-95"
+                ? "bg-blood-deep/10 text-blood-deep animate-pulse cursor-wait"
+                : "bg-blood-deep/30 text-blood-bright hover:bg-blood-deep/50 cursor-pointer active:scale-95"
             }`}
           >
             {retiring.value ? "……" : "逃げ出す"}
@@ -68,13 +70,13 @@ export function RetireConfirmOverlay() {
 
 export function ShopErrorBanner() {
   return (
-    <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-between bg-red-950/90 px-3 py-2 text-xs text-red-400">
+    <div className="bg-blood-deep/90 text-blood-bright absolute inset-x-0 top-0 z-50 flex items-center justify-between px-3 py-2 text-xs">
       <span>接続に失敗しました。再度お試しください。</span>
       <button
         onClick={() => {
           shopActionError.value = null;
         }}
-        className="ml-2 shrink-0 cursor-pointer text-red-600 hover:text-red-400"
+        className="text-blood-bright hover:text-parchment ml-2 shrink-0 cursor-pointer"
       >
         <X size={14} />
       </button>
@@ -93,13 +95,13 @@ export function RecoveryWarningBanner() {
   }, []);
 
   return (
-    <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-between bg-amber-950/90 px-3 py-2 text-xs text-amber-400">
+    <div className="text-tarnished-gold bg-tarnished-gold-deep/90 absolute inset-x-0 top-0 z-50 flex items-center justify-between px-3 py-2 text-xs">
       <span>{recoveryWarning.value}</span>
       <button
         onClick={() => {
           recoveryWarning.value = null;
         }}
-        className="ml-2 shrink-0 cursor-pointer text-amber-600 hover:text-amber-400"
+        className="text-tarnished-gold-dim hover:text-tarnished-gold ml-2 shrink-0 cursor-pointer"
       >
         <X size={14} />
       </button>

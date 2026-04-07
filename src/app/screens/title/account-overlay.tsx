@@ -21,11 +21,11 @@ function AuthErrorBanner() {
   const code = authError.value;
   if (!code) return null;
   return (
-    <div className="flex items-center justify-between border border-red-900/50 bg-red-950/30 p-2 text-xs text-red-400">
+    <div className="border-blood-deep/50 bg-blood-deep/30 text-blood-bright flex items-center justify-between border p-2 text-xs">
       <span>{authErrorMessage(code)}</span>
       <button
         type="button"
-        className="cursor-pointer text-red-600 hover:text-red-400"
+        className="text-blood-bright hover:text-parchment cursor-pointer"
         onClick={() => {
           authError.value = null;
         }}
@@ -50,7 +50,7 @@ function ProviderButton({
 
   if (linked) {
     return (
-      <div className="flex items-center gap-2 border border-zinc-800 px-3 py-2 text-xs text-zinc-400">
+      <div className="border-iron text-parchment-dim flex items-center gap-2 border px-3 py-2 text-xs">
         <Icon className="h-4 w-4" />
         <span>{label} 連携済み</span>
       </div>
@@ -63,7 +63,7 @@ function ProviderButton({
     <button
       type="button"
       onClick={() => loginWithProvider(provider)}
-      className="flex cursor-pointer items-center gap-2 border border-red-900/50 bg-red-950/20 px-3 py-2 text-xs text-red-400 transition-colors hover:bg-red-900/30 hover:text-red-300"
+      className="border-blood-deep/50 bg-blood-deep/20 text-blood-bright hover:bg-blood-deep/30 hover:text-parchment flex cursor-pointer items-center gap-2 border px-3 py-2 text-xs transition-colors"
     >
       <Icon className="h-4 w-4" />
       <span>
@@ -104,13 +104,13 @@ function NameEditForm({ name }: { name: string | null }) {
             editingName.value = false;
           }
         }}
-        className="w-full border border-zinc-700 bg-zinc-900 px-2 py-1 font-serif text-sm text-zinc-200 outline-none focus:border-zinc-500"
+        className="border-iron bg-void-surface text-parchment focus:border-iron-light w-full border px-2 py-1 font-serif text-sm outline-none"
       />
       <button
         type="button"
         onClick={() => void handleSave()}
         disabled={saving.value}
-        className="cursor-pointer p-1 text-zinc-500 hover:text-zinc-300"
+        className="text-parchment-dim hover:text-parchment cursor-pointer p-1"
       >
         <Check size={14} />
       </button>
@@ -119,7 +119,7 @@ function NameEditForm({ name }: { name: string | null }) {
         onClick={() => {
           editingName.value = false;
         }}
-        className="cursor-pointer p-1 text-zinc-600 hover:text-zinc-400"
+        className="text-iron-light hover:text-parchment-dim cursor-pointer p-1"
       >
         <X size={14} />
       </button>
@@ -130,19 +130,19 @@ function NameEditForm({ name }: { name: string | null }) {
 function DisplayNameSection({ name, isGuest }: { name: string | null; isGuest: boolean }) {
   return (
     <div>
-      <p className="text-[10px] tracking-widest text-zinc-600">表示名</p>
+      <p className="text-iron-light text-[10px] tracking-widest">表示名</p>
       {editingName.value ? (
         <NameEditForm name={name} />
       ) : (
         <div className="mt-1 flex items-center gap-2">
-          <p className="font-serif text-sm text-zinc-200">{name ?? "ゲスト"}</p>
+          <p className="text-parchment font-serif text-sm">{name ?? "ゲスト"}</p>
           {!isGuest && (
             <button
               type="button"
               onClick={() => {
                 editingName.value = true;
               }}
-              className="cursor-pointer text-zinc-600 hover:text-zinc-400"
+              className="text-iron-light hover:text-parchment-dim cursor-pointer"
             >
               <Pencil size={12} />
             </button>
@@ -158,7 +158,7 @@ function ProviderSection({ isGuest }: { isGuest: boolean }) {
 
   return (
     <div className="space-y-2">
-      <p className="text-[10px] tracking-widest text-zinc-600">
+      <p className="text-iron-light text-[10px] tracking-widest">
         {isGuest ? "ログイン" : "連携済みサービス"}
       </p>
       <div className="flex flex-col gap-2">
@@ -170,7 +170,7 @@ function ProviderSection({ isGuest }: { isGuest: boolean }) {
         <ProviderButton provider="google" linked={providers.includes("google")} isGuest={isGuest} />
       </div>
       {isGuest && (
-        <p className="text-[10px] leading-relaxed text-zinc-600">
+        <p className="text-iron-light text-[10px] leading-relaxed">
           ログインするとデータが保護され、別の端末からもアクセスできます。
         </p>
       )}
@@ -189,13 +189,13 @@ export function AccountOverlay() {
         if (e.target === e.currentTarget) showAccountOverlay.value = false;
       }}
     >
-      <div className="relative mx-4 flex w-full max-w-xs flex-col gap-4 border border-zinc-800 bg-zinc-950 p-5">
+      <div className="border-iron bg-void relative mx-4 flex w-full max-w-xs flex-col gap-4 border p-5">
         <button
           type="button"
           onClick={() => {
             showAccountOverlay.value = false;
           }}
-          className="absolute top-3 right-3 cursor-pointer text-zinc-600 hover:text-zinc-300"
+          className="text-iron-light hover:text-parchment absolute top-3 right-3 cursor-pointer"
         >
           <X size={16} />
         </button>
@@ -209,7 +209,7 @@ export function AccountOverlay() {
           <button
             type="button"
             onClick={() => void logoutAction()}
-            className="mt-2 flex cursor-pointer items-center justify-center gap-2 border border-zinc-800 px-3 py-2 text-xs text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+            className="border-iron text-parchment-dim hover:border-iron-light hover:text-parchment mt-2 flex cursor-pointer items-center justify-center gap-2 border px-3 py-2 text-xs transition-colors"
           >
             <LogOut size={14} />
             <span>ログアウト</span>

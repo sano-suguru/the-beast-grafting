@@ -22,31 +22,31 @@ interface BattleCardProps {
 const ACTION_STYLES: Record<string, { transform: string; anim: string }> = {
   damage: {
     transform: "scale-95 z-20",
-    anim: "bg-red-950/90 border-red-500 shadow-[0_0_25px_rgba(239,68,68,0.7)]",
+    anim: "bg-blood-deep/90 border-blood-bright shadow-glow-blood",
   },
   buff: {
     transform: "scale-105 z-20",
-    anim: "bg-emerald-950/90 border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.7)]",
+    anim: "bg-rot-deep/90 border-rot shadow-glow-rot",
   },
   heal: {
     transform: "scale-105 z-20",
-    anim: "bg-emerald-950/90 border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.7)]",
+    anim: "bg-rot-deep/90 border-rot shadow-glow-rot",
   },
   skill: {
     transform: "-translate-y-4 scale-105 z-30",
-    anim: "bg-amber-950/90 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.7)]",
+    anim: "bg-tarnished-gold-deep/90 border-tarnished-gold shadow-glow-gold",
   },
   defend: {
     transform: "scale-95 z-20",
-    anim: "bg-zinc-700 border-zinc-300 shadow-[0_0_20px_rgba(161,161,170,0.7)]",
+    anim: "bg-iron border-iron-light shadow-glow-iron",
   },
   summon: {
     transform: "scale-110 z-20",
-    anim: "bg-violet-950/90 border-violet-400 shadow-[0_0_30px_rgba(139,92,246,0.8)]",
+    anim: "bg-hex-deep/90 border-hex shadow-glow-hex",
   },
   death: {
     transform: "scale-90 z-0",
-    anim: "bg-zinc-950 border-red-900/60 shadow-[0_0_15px_rgba(220,38,38,0.4)]",
+    anim: "bg-void border-blood-deep/60 shadow-glow-blood-sm",
   },
 };
 
@@ -56,21 +56,23 @@ function getStyles(actionType: string | undefined, side: "p" | "e") {
       side === "p" ? "translate-x-4 md:translate-x-8" : "-translate-x-4 md:-translate-x-8";
     return {
       transform: `${dir} z-30 scale-105`,
-      anim: "bg-zinc-800 border-zinc-400 shadow-[0_0_20px_rgba(255,255,255,0.4)]",
+      anim: "bg-iron border-parchment-dim shadow-glow-parchment",
     };
   }
   if (actionType && ACTION_STYLES[actionType]) return ACTION_STYLES[actionType];
   const defaultAnim =
     side === "p"
-      ? "bg-zinc-900 border-zinc-700 shadow-[0_0_10px_rgba(255,255,255,0.02)]"
-      : "bg-zinc-900 border-red-900/50 shadow-[0_0_10px_rgba(220,38,38,0.02)]";
+      ? "bg-void-surface border-iron shadow-ambient-p"
+      : "bg-void-surface border-blood-deep/50 shadow-ambient-e";
   return { transform: "z-10", anim: defaultAnim };
 }
 
 const FLOAT_COLORS: Record<string, string> = {
-  damage: "text-red-500",
-  defend: "text-zinc-400",
-  summon: "text-violet-400",
+  damage: "text-blood-bright",
+  buff: "text-rot",
+  heal: "text-rot",
+  defend: "text-iron-light",
+  summon: "text-hex",
 };
 
 function FloatingText({
@@ -88,7 +90,7 @@ function FloatingText({
       className="animate-float-up pointer-events-none absolute -top-6 left-1/2 z-50 text-sm font-black whitespace-nowrap drop-shadow-md md:text-base"
       style={{ textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}
     >
-      <span className={FLOAT_COLORS[actionType || ""] || "text-emerald-400"}>{text}</span>
+      <span className={FLOAT_COLORS[actionType || ""] || "text-tarnished-gold"}>{text}</span>
     </div>
   );
 }
@@ -104,11 +106,11 @@ function getExtraAnim(actionType: string | undefined): string {
 }
 
 function getNameColor(side: string): string {
-  return side === "p" ? "text-zinc-300" : "text-red-300/80";
+  return side === "p" ? "text-parchment-bright" : "text-blood-bright";
 }
 
 function getSkullColor(side: string): string {
-  return side === "p" ? "text-zinc-600" : "text-red-900/60";
+  return side === "p" ? "text-iron-light" : "text-blood-deep/60";
 }
 
 function BattleCardStats({
@@ -130,7 +132,7 @@ function BattleCardStats({
 }) {
   const muted = side === "e";
   return (
-    <div className="relative z-10 flex items-center justify-between rounded bg-zinc-950 px-1">
+    <div className="border-iron/30 bg-void relative z-10 flex items-center justify-between rounded border-t px-1">
       <StatBadge
         icon={Swords}
         value={unit.atk}
@@ -165,8 +167,8 @@ function BattleCardBody({
   frameIdx?: number | undefined;
 }) {
   const actionType = actionObj?.type;
-  const nameColor = unit.isChurch ? "text-amber-200" : getNameColor(side);
-  const skullColor = unit.isChurch ? "text-amber-700/50" : getSkullColor(side);
+  const nameColor = unit.isChurch ? "text-church" : getNameColor(side);
+  const skullColor = unit.isChurch ? "text-church-dim/50" : getSkullColor(side);
   return (
     <>
       {actionType === "damage" && (
@@ -219,7 +221,7 @@ export function BattleCard({
       }}
       data-uid={unit.uid}
       aria-label={unit.name}
-      className={`relative flex aspect-[2/3] max-w-[72px] min-w-[50px] flex-1 flex-col rounded-md p-1 transition-all ease-out ${anim} ${transform} ${extraAnim}`}
+      className={`relative flex aspect-[2/3] max-w-[72px] min-w-[50px] flex-1 flex-col rounded-sm p-1 transition-all ease-out ${anim} ${transform} ${extraAnim}`}
     >
       <BattleCardBody unit={unit} side={side} actionObj={actionObj} frameIdx={frameIdx} />
       <BattleCardStats

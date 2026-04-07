@@ -27,15 +27,18 @@ function getUnitHighlight(
 
 function ShopUnitList() {
   return (
-    <div className="relative min-w-0 flex-1">
-      <ul role="list" className="flex min-w-0 flex-1 gap-1 md:gap-2">
+    <div className="scrollbar-hide relative min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto scroll-smooth py-3">
+      <ul role="list" className="flex gap-1 md:gap-2">
         {shopRewards.value.length > 0 && (
           <li
-            className="flex min-w-0 shrink-0 gap-1 rounded-md bg-emerald-950/20 p-1 ring-1 ring-emerald-800/40 md:gap-2"
+            className="bg-tarnished-gold-dim/10 ring-tarnished-gold-dim/40 flex shrink-0 snap-start gap-1 rounded-md p-1 ring-1 md:gap-2"
             aria-label="報酬"
           >
             {shopRewards.value.map((item, i) => (
-              <div key={`reward-${i}`} className="animate-summon flex min-w-0 flex-1">
+              <div
+                key={`reward-${i}`}
+                className="animate-summon flex w-[60px] shrink-0 md:w-[72px]"
+              >
                 <UnitCard
                   unit={item?.unit ?? null}
                   type="REWARD_UNIT"
@@ -49,7 +52,7 @@ function ShopUnitList() {
           </li>
         )}
         {shopUnits.value.map((item, i) => (
-          <li key={`shop-u-${i}`} className="flex min-w-0 flex-1">
+          <li key={`shop-u-${i}`} className="flex w-[60px] shrink-0 snap-start md:w-[72px]">
             <UnitCard
               unit={item?.unit ?? null}
               type="SHOP_UNIT"
@@ -63,6 +66,7 @@ function ShopUnitList() {
           </li>
         ))}
       </ul>
+      <div className="from-void pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l to-transparent" />
     </div>
   );
 }
@@ -96,24 +100,24 @@ export function ShopSection() {
         />
       )}
       <div className="relative z-10 mb-1 flex items-center gap-3 px-1 md:mb-2">
-        <span className="flex items-center gap-1 text-xs font-bold text-zinc-400 md:text-sm">
+        <span className="text-parchment-dim flex items-center gap-1 text-xs font-bold md:text-sm">
           {label}
           {!event && (
-            <span className="text-[10px] font-normal text-zinc-500">
+            <span className="text-iron-light text-[10px] font-normal">
               (素体・薬 一律 {UNIT_COST}
-              <Droplet size={10} className="inline text-red-800" />)
+              <Droplet size={10} className="text-blood-dim inline" />)
             </span>
           )}
         </span>
         {hasRewards && (
-          <span className="animate-summon text-[10px] font-bold tracking-wider text-emerald-500 md:text-xs">
+          <span className="animate-summon text-tarnished-gold text-[10px] font-bold tracking-wider md:text-xs">
             ▶ 1体選べ
           </span>
         )}
       </div>
       <div className="relative z-0 flex flex-1 items-start gap-2 md:gap-4">
         <ShopUnitList />
-        <div className="z-10 mx-0.5 h-24 w-px shrink-0 bg-zinc-800 md:mx-1" aria-hidden="true" />
+        <div className="bg-iron z-10 mx-0.5 h-24 w-px shrink-0 md:mx-1" aria-hidden="true" />
         <ShopItemList />
       </div>
     </section>

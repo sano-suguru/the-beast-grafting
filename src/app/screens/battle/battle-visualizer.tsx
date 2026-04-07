@@ -55,12 +55,12 @@ export function BattleVisualizer({ currentFrame, prevFrame, ff, frameIdx }: Batt
   return (
     <section
       aria-label="戦場"
-      className="relative flex h-56 min-w-0 shrink-0 flex-col overflow-hidden border-b border-zinc-900 bg-[#050505] p-2 md:h-64 md:p-4"
+      className="border-iron/30 bg-void relative flex h-56 min-w-0 shrink-0 flex-col overflow-hidden border-b p-2 md:h-64 md:p-4"
     >
       <GradientBackground />
-      <div className="relative z-10 mb-2 flex shrink-0 justify-between px-2 text-[10px] font-bold tracking-widest text-zinc-600 md:text-xs">
+      <div className="text-parchment-dim/60 relative z-10 mb-2 flex shrink-0 justify-between px-2 text-[10px] font-bold tracking-widest md:text-xs">
         <span>◀ 後衛</span>
-        <span className="text-red-900">{enemy.teamType}</span>
+        <span className="text-blood-dim">{enemy.teamType}</span>
         <span>後衛 ▶</span>
       </div>
       <div className="relative z-10 flex min-h-0 w-full min-w-0 flex-1 items-center justify-center gap-2 overflow-hidden px-1 md:gap-4">
@@ -74,7 +74,7 @@ export function BattleVisualizer({ currentFrame, prevFrame, ff, frameIdx }: Batt
           )}
         </div>
         <div className="z-0 flex h-full shrink-0 items-center" aria-hidden="true">
-          <Swords size={20} className="text-red-900 opacity-30" />
+          <Swords size={20} className="text-tarnished-gold opacity-20" />
         </div>
         <div role="group" aria-label="敵" className="z-10 flex min-w-0 flex-1 justify-start gap-1">
           {currentFrame.eBoard.map((u) =>

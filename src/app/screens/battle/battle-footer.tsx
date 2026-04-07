@@ -6,12 +6,12 @@ import { initAudio, playSE } from "../../engine/audio";
 export function BattleFooter({ isFinished }: { isFinished: boolean }) {
   if (!isFinished) {
     return (
-      <footer className="flex shrink-0 justify-center border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
+      <footer className="border-iron/50 bg-void-surface flex shrink-0 justify-center border-t p-2 md:p-3">
         <button
           onClick={() => {
             fastForward.value = true;
           }}
-          className="flex cursor-pointer items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-6 py-2 text-xs text-zinc-300 transition-colors hover:bg-zinc-700 active:scale-95"
+          className="border-iron bg-iron/60 hover:bg-iron text-parchment-bright flex cursor-pointer items-center gap-2 rounded border px-6 py-2 text-xs transition-colors active:scale-95"
         >
           <FastForward size={14} /> 早送り
         </button>
@@ -19,7 +19,7 @@ export function BattleFooter({ isFinished }: { isFinished: boolean }) {
     );
   }
   return (
-    <footer className="flex shrink-0 justify-center border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
+    <footer className="border-iron/50 bg-void-surface flex shrink-0 justify-center border-t p-2 md:p-3">
       <button
         disabled={battleBusy.value}
         onClick={() => {
@@ -27,7 +27,7 @@ export function BattleFooter({ isFinished }: { isFinished: boolean }) {
           playSE("select");
           concludeBattle();
         }}
-        className="flex cursor-pointer items-center gap-2 rounded border border-red-900 bg-red-950/30 px-6 py-2 text-xs font-bold tracking-widest text-red-500 transition-all hover:bg-red-950/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+        className="border-blood-deep bg-blood-deep/30 text-blood-bright hover:bg-blood-deep/50 flex cursor-pointer items-center gap-2 rounded border px-6 py-2 text-xs font-bold tracking-widest transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
       >
         死体を検分する <ArrowRight size={14} className="ml-1 inline" />
       </button>

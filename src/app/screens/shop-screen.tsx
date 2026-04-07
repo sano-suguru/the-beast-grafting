@@ -43,10 +43,10 @@ export function ShopScreen() {
 
   return (
     <main
-      className="relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x border-zinc-900 font-serif text-zinc-300 select-none"
+      className="border-iron/30 text-parchment relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x font-serif select-none"
       style={{
         background:
-          "radial-gradient(ellipse at 50% 0%, rgba(39,39,42,0.4) 0%, transparent 60%), #09090b",
+          "radial-gradient(ellipse at 50% 0%, rgba(20,18,25,0.6) 0%, transparent 60%), var(--color-void)",
       }}
     >
       {!showHelpOverlay.value && <OnboardingOverlays step={currentOnboarding} />}
@@ -126,14 +126,14 @@ function BoardSection({ board: b }: { board: (UnitInstance | null)[] }) {
         />
       )}
       <div className="mb-1 flex items-end justify-between px-1 md:mb-2">
-        <span className="text-xs font-bold text-zinc-400 md:text-sm">解剖台</span>
-        <span className="flex items-center gap-1 text-[10px] font-normal text-zinc-600">
-          後衛 <ChevronRight size={10} className="inline text-zinc-500" /> 前衛
+        <span className="text-parchment-dim text-xs font-bold md:text-sm">解剖台</span>
+        <span className="text-iron-light flex items-center gap-1 text-[10px] font-normal">
+          後衛 <ChevronRight size={10} className="text-parchment-dim inline" /> 前衛
         </span>
       </div>
       <ul
         role="list"
-        className="flex w-full justify-between gap-1 rounded border border-zinc-900 bg-zinc-900/20 p-1 md:gap-2 md:p-2"
+        className="border-iron/20 bg-void-surface/30 shadow-inset-dark flex w-full justify-between gap-1 rounded border p-1 md:gap-2 md:p-2"
       >
         {b.map((u, i) => (
           <li key={`board-${i}`} className="flex min-w-0 flex-1">
@@ -159,8 +159,8 @@ function SellButton({ isActive }: { isActive: boolean }) {
       disabled={!isActive}
       className={`flex h-10 flex-1 shrink-0 items-center justify-center rounded border transition-all md:h-12 ${
         isActive
-          ? "cursor-pointer border-red-800 bg-red-950/80 text-red-500 shadow-[0_0_15px_rgba(153,27,27,0.3)] active:scale-95"
-          : "cursor-not-allowed border-zinc-800/50 bg-zinc-900/30 text-zinc-700 opacity-50"
+          ? "border-blood-deep bg-blood-deep/80 text-blood-bright shadow-glow-blood-sm cursor-pointer active:scale-95"
+          : "border-iron/50 bg-void-surface/30 text-iron-light cursor-not-allowed opacity-50"
       }`}
     >
       <Trash2 size={16} className="mr-2" />
@@ -181,8 +181,8 @@ function UndoButton({ disabled }: { disabled: boolean }) {
       disabled={!enabled}
       className={`flex h-10 shrink-0 items-center justify-center rounded border px-3 transition-all md:h-12 md:px-4 ${
         enabled
-          ? "cursor-pointer border-zinc-600 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:scale-95"
-          : "cursor-not-allowed border-zinc-800/50 bg-zinc-900/30 text-zinc-700 opacity-50"
+          ? "border-iron bg-iron/60 hover:bg-iron text-parchment-bright cursor-pointer active:scale-95"
+          : "border-iron/50 bg-void-surface/30 text-iron-light cursor-not-allowed opacity-50"
       }`}
     >
       <Undo2 size={14} className="mr-1" />

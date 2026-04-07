@@ -16,11 +16,11 @@ describe("EquipIcon", () => {
 
   it("renders correct color class for iron", () => {
     const { container } = render(<EquipIcon equipId="iron" />);
-    expect(container.innerHTML).toContain("text-zinc-500");
+    expect(container.innerHTML).toContain("text-iron-light");
   });
 
   it("renders correct color class for acid", () => {
     const { container } = render(<EquipIcon equipId="acid" />);
-    expect(container.innerHTML).toContain("text-lime-500");
+    expect(container.innerHTML).toContain("text-rot-acid");
   });
 });

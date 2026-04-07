@@ -35,22 +35,20 @@ function getRollButtonClass(
 ): string {
   const canRoll = !rollLocked && (hasFreeRoll || currentBlood >= 1);
   const base = canRoll
-    ? "border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 active:scale-95"
-    : "border-zinc-900 bg-zinc-950 text-zinc-700 opacity-50 cursor-not-allowed";
+    ? "border-iron bg-iron/60 hover:bg-iron text-parchment-bright active:scale-95"
+    : "border-iron/30 bg-void text-iron-light opacity-50 cursor-not-allowed";
   const onboarding =
-    step === "roll"
-      ? "animate-pulse border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
-      : "";
+    step === "roll" ? "animate-pulse border-tarnished-gold shadow-glow-gold-pulse" : "";
   return `flex-1 flex items-center justify-center gap-1 border rounded py-2 text-[10px] md:text-xs font-bold transition-colors cursor-pointer ${base} ${onboarding}`;
 }
 
 function getBattleButtonClass(hasUnit: boolean, step: OnboardingStep): string {
   const base = !hasUnit
-    ? "border-zinc-900 bg-zinc-950 text-zinc-700 opacity-50 cursor-not-allowed"
-    : "border-red-900 bg-red-950/20 text-red-500 hover:bg-red-950/40 active:scale-95";
+    ? "border-iron/30 bg-void text-iron-light opacity-50 cursor-not-allowed"
+    : "border-blood-deep bg-blood-deep/20 text-blood-bright hover:bg-blood-deep/40 active:scale-95";
   const onboarding =
     step === "battle"
-      ? "animate-pulse border-red-500 text-red-100 shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+      ? "animate-pulse border-blood-bright text-parchment shadow-glow-blood-pulse"
       : "";
   return `flex items-center justify-center gap-1 border rounded py-2 text-[10px] md:text-xs font-bold tracking-widest transition-all cursor-pointer ${base} ${onboarding}`;
 }
@@ -95,7 +93,7 @@ function RollSection({
             playSEFrom(useCultistAbility());
           }}
           disabled={busy}
-          className="cursor-pointer rounded border border-red-900 bg-red-950/30 px-2 text-[10px] text-red-600 hover:bg-red-900/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+          className="border-blood-deep bg-blood-deep/30 text-blood-bright hover:bg-blood-deep/50 cursor-pointer rounded border px-2 text-[10px] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
           血の代償
         </button>
@@ -111,7 +109,7 @@ export function ShopFooter({ currentOnboarding }: { currentOnboarding: Onboardin
   const battleDisabled = isBattleDisabled(hasUnit, currentOnboarding) || busy;
 
   return (
-    <footer className="relative z-20 grid shrink-0 grid-cols-2 gap-2 border-t border-zinc-800 bg-zinc-900 p-2 md:p-3">
+    <footer className="border-iron/50 bg-void-surface relative z-20 grid shrink-0 grid-cols-2 gap-2 border-t p-2 md:p-3">
       <RollSection currentOnboarding={currentOnboarding} busy={busy} />
       <div className="relative flex">
         {showHelpOverlay.value && (

@@ -5,12 +5,12 @@ const KIND_STYLES: Record<
   Exclude<LogSegmentKind, "hp">,
   { className: string; wrap: [string, string] }
 > = {
-  unit: { className: "font-bold text-teal-400", wrap: ["[", "]"] },
+  unit: { className: "font-bold text-parchment-bright", wrap: ["[", "]"] },
   effect: {
-    className: "font-bold text-amber-400 bg-amber-900/30 rounded-sm px-0.5",
+    className: "font-bold text-tarnished-gold bg-tarnished-gold-dim/30 rounded-sm px-0.5",
     wrap: ["【", "】"],
   },
-  stat: { className: "font-mono text-[9px] text-slate-500", wrap: ["(", ")"] },
+  stat: { className: "font-mono text-[9px] text-parchment-dim", wrap: ["(", ")"] },
 };
 
 export function LogSegments({ segments }: { segments: LogSegment[] }) {
@@ -22,7 +22,7 @@ export function LogSegments({ segments }: { segments: LogSegment[] }) {
           return (
             <span
               key={i}
-              className="inline-flex items-baseline gap-px font-mono text-[9px] text-slate-500"
+              className="text-parchment-dim inline-flex items-baseline gap-px font-mono text-[9px]"
             >
               <Shield size={9} className="self-center" />
               {s.text}

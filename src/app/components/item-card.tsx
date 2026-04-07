@@ -13,30 +13,30 @@ interface ItemCardProps {
 type FilledItemCardProps = Omit<ItemCardProps, "item"> & { item: ItemData };
 
 function getBorderClass(isSelected: boolean, isFrozen: boolean, cantAfford: boolean): string {
-  if (isSelected) return "border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)] scale-105 z-10";
+  if (isSelected) return "border-tarnished-gold shadow-selected scale-105 z-10";
   if (isFrozen)
-    return "border-amber-700/50 ring-1 ring-amber-700/50 shadow-[inset_0_0_8px_rgba(180,83,9,0.3)]";
-  if (cantAfford) return "border-red-900/30";
-  return "border-zinc-700";
+    return "border-tarnished-gold-dim/50 ring-1 ring-tarnished-gold-dim/50 shadow-frozen-inset-sm";
+  if (cantAfford) return "border-blood-deep/30";
+  return "border-iron";
 }
 
 function getCardClass(border: string, cantAfford: boolean, isEquip: boolean): string {
   const hover = cantAfford ? "" : "hover:brightness-110";
-  const bg = isEquip ? "bg-amber-950/20 border-amber-900/50" : "bg-zinc-900";
-  return `w-12 md:w-16 shrink-0 aspect-[3/4] ${bg} border ${border} rounded-md relative flex flex-col cursor-pointer transition-[border-color,box-shadow,transform,filter] ${hover} select-none`;
+  const bg = isEquip ? "bg-tarnished-gold-deep border-tarnished-gold-dim/40" : "bg-void-surface";
+  return `w-12 md:w-16 shrink-0 aspect-[3/4] ${bg} border ${border} rounded-sm relative flex flex-col cursor-pointer transition-[border-color,box-shadow,transform,filter] ${hover} select-none`;
 }
 
 function getCostBadgeClass(cantAfford: boolean): string {
-  const style = cantAfford ? "opacity-40 grayscale" : "text-amber-400";
-  return `absolute -bottom-1 -left-1 bg-zinc-800 text-[8px] px-1 rounded border border-zinc-700 pointer-events-none ${style}`;
+  const style = cantAfford ? "opacity-40 grayscale" : "text-tarnished-gold";
+  return `absolute -bottom-1 -left-1 bg-void-surface text-[8px] px-1 rounded border border-iron pointer-events-none ${style}`;
 }
 
 function getItemNameColor(isPureBlood: boolean): string {
-  return isPureBlood ? "text-red-500" : "text-emerald-600/80";
+  return isPureBlood ? "text-blood-bright" : "text-tarnished-gold/80";
 }
 
 function getItemIconColor(isEquip: boolean): string {
-  return isEquip ? "text-amber-700" : "text-emerald-800";
+  return isEquip ? "text-tarnished-gold-dim" : "text-iron-light";
 }
 
 function FilledItemCard({ item, index, isFrozen }: FilledItemCardProps) {
@@ -87,9 +87,11 @@ function ItemCardBody({
         {item.name}
       </div>
       <div className="pointer-events-none flex flex-1 flex-col items-center justify-center gap-0.5">
-        <span className="text-[6px] tracking-wider text-zinc-500">{isEquip ? "装備" : "消費"}</span>
+        <span className="text-parchment-dim text-[6px] tracking-wider">
+          {isEquip ? "装備" : "消費"}
+        </span>
         {isPureBlood ? (
-          <Droplet size={16} className="text-red-800" />
+          <Droplet size={16} className="text-blood-dim" />
         ) : (
           <Activity size={16} className={getItemIconColor(isEquip)} />
         )}
@@ -101,7 +103,7 @@ function ItemCardBody({
 export function ItemCard({ item, index, isFrozen }: ItemCardProps) {
   if (!item) {
     return (
-      <div className="aspect-[3/4] w-12 shrink-0 rounded-md border border-dashed border-zinc-800 bg-zinc-900/50 md:w-16" />
+      <div className="border-iron/30 bg-void-surface/50 aspect-[3/4] w-12 shrink-0 rounded-sm border border-dashed md:w-16" />
     );
   }
   return <FilledItemCard item={item} index={index} isFrozen={isFrozen} />;
