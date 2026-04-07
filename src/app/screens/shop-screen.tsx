@@ -13,6 +13,7 @@ import {
   shopActionError,
   showRetireConfirm,
   recoveryWarning,
+  hoveredItem,
 } from "../state/game-store";
 import { executeSellUnit } from "../state/shop-actions";
 import { undoLastAction } from "../state/undo-actions";
@@ -53,7 +54,7 @@ export function ShopScreen() {
       <ShopHeader />
 
       <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto p-2 pb-0 md:p-4">
-        <ShopInfoPanel sel={sel} currentLife={currentLife} />
+        <ShopInfoPanel sel={sel} hover={hoveredItem.value} currentLife={currentLife} />
         <BoardSection board={currentBoard} />
         <div className="mb-4 flex shrink-0 gap-2">
           <SellButton isActive={sel?.type === "BOARD_UNIT" && !busy} />

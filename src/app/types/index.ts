@@ -37,6 +37,12 @@ export type Selection =
   | { type: "BOARD_UNIT"; index: number; item: UnitInstance }
   | { type: "REWARD_UNIT"; index: number; item: UnitInstance };
 
+export type CardSlotType = Selection["type"] | "BOARD_SLOT";
+
+export type UnitSelectionType = Exclude<Selection["type"], "SHOP_ITEM">;
+
+export type UnitSlotType = Exclude<CardSlotType, "SHOP_ITEM">;
+
 export type HighlightKind = "graft" | "swap" | "move" | "passive-graft" | false;
 
 export type OnboardingStep = "buy" | "graft" | "roll" | "battle" | null;

@@ -1,4 +1,13 @@
-import type { UnitInstance, ItemData, Selection, HighlightKind, SoundResult } from "../types";
+import type {
+  UnitInstance,
+  ItemData,
+  Selection,
+  CardSlotType,
+  UnitSlotType,
+  UnitSelectionType,
+  HighlightKind,
+  SoundResult,
+} from "../types";
 import type { ShopStateResponse } from "../../shared/api-types";
 import type { Result, InfraError } from "../../shared/errors";
 import { NO_SOUND, SE_SELECT, SE_ERROR } from "../sound-results";
@@ -7,6 +16,7 @@ import {
   board,
   shopUnits,
   selection,
+  hoveredItem,
   onboardingStep,
   shopLocked,
   currentRunId,
@@ -159,13 +169,34 @@ function trySelectShopCard(
   return NO_SOUND;
 }
 
+export function toSelectionType(type: UnitSlotType): UnitSelectionType;
+export function toSelectionType(type: CardSlotType): Selection["type"];
+export function toSelectionType(type: CardSlotType): Selection["type"] {
+  return type === "BOARD_SLOT" ? "BOARD_UNIT" : type;
+}
+
+export function clearHover() {
+  hoveredItem.value = null;
+}
+
+export function setHover(type: "SHOP_ITEM", index: number, item: ItemData): void;
+export function setHover(type: UnitSelectionType, index: number, item: UnitInstance): void;
+export function setHover(
+  type: Selection["type"],
+  index: number,
+  item: UnitInstance | ItemData,
+): void {
+  hoveredItem.value = { type, index, item } as Selection;
+}
+
 export function handleCardClick(
-  type: Selection["type"] | "BOARD_SLOT",
+  type: CardSlotType,
   index: number,
   item: UnitInstance | ItemData | null,
 ): SoundResult {
+  hoveredItem.value = null;
   const sel = selection.value;
-  if (sel && sel.type === type && sel.index === index) {
+  if (sel && sel.type === toSelectionType(type) && sel.index === index) {
     selection.value = null;
     return SE_SELECT;
   }
@@ -215,7 +246,7 @@ function canHighlightForBoardUnit(
 }
 
 export function checkHighlight(
-  targetType: string,
+  targetType: CardSlotType,
   index: number,
   unit: UnitInstance | null,
 ): HighlightKind {

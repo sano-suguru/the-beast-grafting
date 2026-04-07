@@ -9,6 +9,7 @@ import { activeEvent } from "../../state/game-store";
 
 interface ShopInfoPanelProps {
   sel: Selection | null;
+  hover: Selection | null;
   currentLife: number;
 }
 
@@ -170,14 +171,17 @@ function SelectedItemInfo({ sel }: { sel: Selection }) {
 
 function InfoPanelContent({
   sel,
+  hover,
   event,
   currentLife,
 }: {
   sel: Selection | null;
+  hover: Selection | null;
   event: EventData | null;
   currentLife: number;
 }) {
   if (sel) return <SelectedItemInfo sel={sel} />;
+  if (hover) return <SelectedItemInfo sel={hover} />;
   if (event) return <EventNarrative event={event} />;
   return (
     <div aria-live={toLifeTier(currentLife) === "low" ? "assertive" : "polite"}>
@@ -192,7 +196,7 @@ function panelBorderClass(sel: Selection | null, currentLife: number): string {
     : "bg-[#0a0a0a] border-zinc-800";
 }
 
-export function ShopInfoPanel({ sel, currentLife }: ShopInfoPanelProps) {
+export function ShopInfoPanel({ sel, hover, currentLife }: ShopInfoPanelProps) {
   const event = activeEvent.value;
 
   return (
@@ -203,7 +207,7 @@ export function ShopInfoPanel({ sel, currentLife }: ShopInfoPanelProps) {
       {!sel && !event && (
         <Skull size={40} className="pointer-events-none absolute right-2 bottom-2 opacity-[0.03]" />
       )}
-      <InfoPanelContent sel={sel} event={event} currentLife={currentLife} />
+      <InfoPanelContent sel={sel} hover={hover} event={event} currentLife={currentLife} />
     </section>
   );
 }

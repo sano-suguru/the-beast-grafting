@@ -69,8 +69,9 @@ describe("handleCardClick – selection / deselection", () => {
 
   it("deselects when clicking the same board unit", async () => {
     const unit = makeUnit();
+    board.value[2] = unit;
     selection.value = { type: "BOARD_UNIT", index: 2, item: unit };
-    await handleCardClick("BOARD_UNIT", 2, unit);
+    await handleCardClick("BOARD_SLOT", 2, unit);
     expect(selection.value).toBeNull();
   });
 

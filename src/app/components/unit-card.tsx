@@ -1,17 +1,17 @@
 import { Dna } from "lucide-preact";
 import type { ComponentChildren } from "preact";
 import { selection, blood } from "../state/game-store";
-import { handleCardClick } from "../state/card-actions";
+import { handleCardClick, clearHover, setHover, toSelectionType } from "../state/card-actions";
 import { initAudio, playSEFrom } from "../engine/audio";
 import { UNIT_COST, expPerLevel, MAX_UNIT_LEVEL, CUMULATIVE_EXP } from "../../shared/constants";
 import { effectiveAtk, effectiveHp } from "../../shared/unit-stats";
 import { StatBadge } from "./stat-badge";
 import { EquipIcon } from "./equip-icon";
-import type { UnitInstance, Selection, HighlightKind } from "../types";
+import type { UnitInstance, UnitSlotType, HighlightKind } from "../types";
 
 interface UnitCardProps {
   unit: UnitInstance | null;
-  type: Selection["type"] | "BOARD_SLOT";
+  type: UnitSlotType;
   index: number;
   isHighlight?: HighlightKind | undefined;
   costOverride?: number | undefined;
@@ -39,9 +39,21 @@ function getBorderClass(
 
 const DNA_COLORS: Record<number, string> = { 2: "text-emerald-700", 3: "text-purple-700" };
 
-function getCardClass(border: string, cantAfford: boolean): string {
-  const hover = cantAfford ? "" : "hover:brightness-110";
-  return `w-full aspect-[2/3] bg-zinc-900 border ${border} rounded-md relative flex flex-col cursor-pointer transition-all ${hover} select-none`;
+function getHoverEffect(cantAfford: boolean, isHighlight: HighlightKind | undefined): string {
+  if (cantAfford) return "";
+  if (isHighlight === "swap")
+    return "hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] hover:scale-[1.02]";
+  if (isHighlight) return "hover:shadow-[0_0_16px_rgba(16,185,129,0.5)] hover:scale-[1.02]";
+  return "hover:brightness-110";
+}
+
+function getCardClass(
+  border: string,
+  cantAfford: boolean,
+  isHighlight: HighlightKind | undefined,
+): string {
+  const hover = getHoverEffect(cantAfford, isHighlight);
+  return `w-full aspect-[2/3] bg-zinc-900 border ${border} rounded-md relative flex flex-col cursor-pointer transition-[color,background-color,border-color,box-shadow,transform] ${hover} select-none`;
 }
 
 function getNameClass(isChurch: boolean): string {
@@ -69,7 +81,7 @@ function EmptySlot({
   index,
   isHighlight,
 }: {
-  type: Selection["type"] | "BOARD_SLOT";
+  type: UnitSlotType;
   index: number;
   isHighlight?: HighlightKind | undefined;
 }) {
@@ -82,7 +94,8 @@ function EmptySlot({
         initAudio();
         playSEFrom(handleCardClick(isSlot ? "BOARD_SLOT" : type, index, null));
       }}
-      className={`group flex aspect-[2/3] w-full cursor-pointer items-center justify-center rounded-md border border-dashed bg-zinc-900/50 transition-colors ${isHighlight ? "border-emerald-700/50 bg-emerald-950/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)] hover:border-emerald-500" : "border-zinc-800"}`}
+      onMouseEnter={clearHover}
+      className={`group flex aspect-[2/3] w-full cursor-pointer items-center justify-center rounded-md border border-dashed bg-zinc-900/50 transition-[color,background-color,border-color,box-shadow,transform] ${isHighlight ? "border-emerald-700/50 bg-emerald-950/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)] hover:scale-[1.02] hover:border-emerald-500 hover:bg-emerald-950/30 hover:shadow-[0_0_16px_rgba(16,185,129,0.4)]" : "border-zinc-800"}`}
     >
       <span className="text-[8px] tracking-widest text-zinc-700 opacity-50 transition-opacity group-hover:opacity-100">
         空
@@ -97,7 +110,7 @@ function UnitCardBadges({
   tier,
   cantAfford,
 }: {
-  type: Selection["type"] | "BOARD_SLOT";
+  type: UnitSlotType;
   cost: number;
   tier: number;
   cantAfford: boolean;
@@ -137,7 +150,9 @@ function UnitCardContent({ unit }: { unit: UnitInstance }) {
   );
 }
 
-export function UnitCard({
+type FilledUnitCardProps = Omit<UnitCardProps, "unit"> & { unit: UnitInstance };
+
+function FilledCard({
   unit,
   type,
   index,
@@ -145,18 +160,10 @@ export function UnitCard({
   costOverride,
   isFrozen,
   children,
-}: UnitCardProps) {
-  if (!unit) {
-    return (
-      <div className="relative max-w-[72px] min-w-[50px] flex-1">
-        <EmptySlot type={type} index={index} isHighlight={isHighlight} />
-      </div>
-    );
-  }
-
+}: FilledUnitCardProps) {
   const sel = selection.value;
-  const isSlot = type === "BOARD_SLOT";
-  const isSelected = sel?.type === type && sel?.index === index;
+  const selectionType = toSelectionType(type);
+  const isSelected = sel?.type === selectionType && sel?.index === index;
   const cost = type === "SHOP_UNIT" ? (costOverride ?? UNIT_COST) : UNIT_COST;
   const cantAfford = type === "SHOP_UNIT" && blood.value < cost;
   const border = getBorderClass(isSelected, !!isFrozen, isHighlight, cantAfford);
@@ -168,9 +175,13 @@ export function UnitCard({
         aria-label={unit.name}
         onClick={() => {
           initAudio();
-          playSEFrom(handleCardClick(isSlot ? "BOARD_SLOT" : type, index, unit));
+          playSEFrom(handleCardClick(type, index, unit));
         }}
-        className={getCardClass(border, cantAfford)}
+        onMouseEnter={() => {
+          setHover(selectionType, index, unit);
+        }}
+        onMouseLeave={clearHover}
+        className={getCardClass(border, cantAfford, isHighlight)}
       >
         <UnitCardContent unit={unit} />
         {unit.equip && (
@@ -183,4 +194,15 @@ export function UnitCard({
       {children}
     </div>
   );
+}
+
+export function UnitCard(props: UnitCardProps) {
+  if (!props.unit) {
+    return (
+      <div className="relative max-w-[72px] min-w-[50px] flex-1">
+        <EmptySlot type={props.type} index={props.index} isHighlight={props.isHighlight} />
+      </div>
+    );
+  }
+  return <FilledCard {...props} unit={props.unit} />;
 }

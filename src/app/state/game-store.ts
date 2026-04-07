@@ -45,6 +45,7 @@ export const shopUnits = resettableSignal<(ShopSlot | null)[]>(() => []);
 export const shopItems = resettableSignal<(ShopItemSlot | null)[]>(() => []);
 export const shopRewards = resettableSignal<(ShopSlot | null)[]>(() => []);
 export const selection = resettableSignal<Selection | null>(() => null);
+export const hoveredItem = resettableSignal<Selection | null>(() => null);
 export const freeRoll = resettableSignal(() => false);
 export const cultistUsed = resettableSignal(() => false);
 export const onboardingStep = resettableSignal<OnboardingStep>(() => null);

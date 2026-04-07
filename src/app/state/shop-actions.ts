@@ -16,6 +16,7 @@ import {
   freeRoll,
   cultistUsed,
   selection,
+  hoveredItem,
   shopUnits,
   shopItems,
   shopRewards,
@@ -134,6 +135,7 @@ export function applyShopState(state: ShopStateResponse) {
     life.value = state.life;
     trophy.value = state.trophy;
     selection.value = null;
+    hoveredItem.value = null;
     currentEnemyTeam.value = null;
   });
 }
