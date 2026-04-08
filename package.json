@@ -25,7 +25,7 @@
     "db:migrate": "wrangler d1 migrations apply beast-grafting-db --local"
   },
   "dependencies": {
-    "@preact/signals": "^2.8.2",
+    "@preact/signals": "^2.9.0",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.12.9",
     "lucide-preact": "^1.0.0",
