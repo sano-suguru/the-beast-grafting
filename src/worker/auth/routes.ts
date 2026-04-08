@@ -28,7 +28,7 @@ auth.use("*", noCacheAuth);
 
 const loginLimit = rateLimit({ prefix: "login", max: 5, windowSec: 300 });
 const registerLimit = rateLimit({ prefix: "register", max: 3, windowSec: 600 });
-const guestLimit = rateLimit({ prefix: "guest", max: 10, windowSec: 60 });
+const guestLimit = rateLimit({ prefix: "guest", max: 30, windowSec: 60 });
 const oauthLimit = rateLimit({ prefix: "oauth", max: 10, windowSec: 300 });
 const nameLimit = rateLimit({ prefix: "name", max: 5, windowSec: 300 });
 

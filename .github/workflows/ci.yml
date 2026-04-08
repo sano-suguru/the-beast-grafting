@@ -37,5 +37,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:migrate # E2E tests need local D1 with migrations applied
+      - name: Create .dev.vars for local dev server
+        run: |
+          cat <<'EOF' > .dev.vars
+          ALLOWED_ORIGIN=http://localhost:5173
+          OAUTH_STATE_SECRET=ci-test-secret
+          EOF
       - run: pnpm exec playwright install chromium --with-deps
       - run: pnpm test:e2e

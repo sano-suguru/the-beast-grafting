@@ -41,7 +41,12 @@ test.describe("Battle Flow", () => {
     await expect(concludeButton).toBeVisible({ timeout: 30000 });
     await concludeButton.click();
 
-    // Should be back in shop (round 2) or result screen
+    // Battle result screen — win/loss/draw, then proceed to next round or game end
+    const nextButton = page.getByRole("button", { name: /次の夜へ進む|終幕を見届ける/ });
+    await expect(nextButton).toBeVisible({ timeout: 5000 });
+    await nextButton.click();
+
+    // Should be back in shop (round 2) or final result screen
     await expect(
       page
         .getByRole("region", { name: "解剖台" })

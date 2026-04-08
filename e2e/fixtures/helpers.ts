@@ -1,3 +1,4 @@
+import { expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 export async function startNewGame(page: Page, originName: string) {
@@ -23,9 +24,15 @@ export async function prepareForBattle(page: Page) {
   await shopUnits.getByRole("button", { name: "疫病ネズミ" }).first().click();
   await emptyBoardSlots.first().click();
 
+  // Wait for buy to complete — board should now contain the rat
+  await expect(board.getByRole("button", { name: "疫病ネズミ" })).toBeVisible();
+
   // Step 2 (graft): Click remaining shop rat → board rat
   await shopUnits.getByRole("button", { name: "疫病ネズミ" }).click();
   await board.getByRole("button", { name: "疫病ネズミ" }).click();
+
+  // Wait for graft to complete — onboarding should advance to "roll"
+  await expect(page.getByRole("button", { name: /墓暴き/ })).toBeEnabled();
 
   // Step 3 (roll): Click roll button
   await page.getByRole("button", { name: /墓暴き/ }).click();

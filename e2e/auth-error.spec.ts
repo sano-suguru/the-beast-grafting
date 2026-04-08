@@ -11,10 +11,22 @@ test.describe("Auth error flow", () => {
   });
 
   test("clicking Google login with unconfigured credentials shows error", async ({ page }) => {
+    // This test only works when Google OAuth credentials are NOT configured (CI)
+    // Locally, .dev.vars has real credentials, so the redirect goes to Google instead of error
+    const isCI =
+      "CI" in
+      (
+        ((globalThis as Record<string, unknown>)["process"] as Record<
+          string,
+          Record<string, string>
+        >) ?? { env: {} }
+      ).env;
+    test.skip(!isCI, "requires unconfigured Google OAuth (CI only)");
     await page.goto("/");
 
     // Wait for identity badge to appear (async session init)
-    const badge = page.getByRole("button", { name: /ゲスト/ });
+    // Guest names are "名もなき術師#XXXX" format
+    const badge = page.getByRole("button", { name: /術師/ });
     await expect(badge).toBeVisible({ timeout: 10_000 });
     await badge.click();
 

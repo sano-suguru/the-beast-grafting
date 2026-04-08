@@ -11,7 +11,7 @@ import type { AppEnv } from "./types";
 type RateLimitOpts = { prefix: string; max: number; windowSec: number };
 
 function getClientIp(c: Context): string {
-  return c.req.header("cf-connecting-ip") ?? "unknown";
+  return c.req.header("cf-connecting-ip") ?? c.req.header("x-forwarded-for") ?? "unknown";
 }
 
 function incrementCounter(db: DrizzleD1Database, key: string, windowSec: number) {
