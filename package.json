@@ -48,7 +48,7 @@
     "jsdom": "^29.0.1",
     "knip": "^6.0.3",
     "miniflare": "^4.20260405.0",
-    "oxlint-plugin-eslint": "^1.57.0",
+    "oxlint-plugin-eslint": "^1.59.0",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vite-plus": "^0.1.13",
