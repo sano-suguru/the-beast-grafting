@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { createTestDb } from "../auth/test-db";
+import { getTestDb, type TestDb } from "../auth/test-db";
 import { TEST_ENV } from "../auth/test-helpers";
 import { createTestPlayer } from "../test-helpers";
 import type { AuthEnv } from "../auth/types";
@@ -8,6 +8,7 @@ import type { LoreResponse } from "../../shared/api-types";
 import { markSeen, markMastered } from "./lore-service";
 import lore from "./routes";
 
+let testEnv: TestDb;
 let db: DrizzleD1Database;
 let app: Hono<AuthEnv>;
 
@@ -25,8 +26,13 @@ function getLoreRequest(token: string) {
   return app.request("/", { headers: { Cookie: `session=${token}` } }, TEST_ENV);
 }
 
-beforeEach(() => {
-  db = createTestDb();
+beforeAll(async () => {
+  testEnv = await getTestDb();
+  db = testEnv.db;
+});
+
+beforeEach(async () => {
+  await testEnv.clean();
   app = createLoreTestApp(() => db);
 });
 

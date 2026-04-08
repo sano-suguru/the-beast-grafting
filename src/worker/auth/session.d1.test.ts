@@ -1,4 +1,4 @@
-import { createTestDb } from "./test-db";
+import { getTestDb, type TestDb } from "./test-db";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import {
   createSession,
@@ -9,10 +9,16 @@ import {
 } from "./session";
 import { sessions } from "../../db/schema";
 
+let testEnv: TestDb;
 let db: DrizzleD1Database;
 
-beforeEach(() => {
-  db = createTestDb();
+beforeAll(async () => {
+  testEnv = await getTestDb();
+  db = testEnv.db;
+});
+
+beforeEach(async () => {
+  await testEnv.clean();
 });
 
 async function insertPlayer(testDb: DrizzleD1Database, id = "player-1") {

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { MiddlewareHandler } from "hono";
-import { createTestDb } from "./test-db";
+import { getTestDb, type TestDb } from "./test-db";
 import { createSession } from "./session";
 import { requireAuth, optionalAuth, csrfGuard } from "./middleware";
 import { sessions } from "../../db/schema";
@@ -9,6 +9,7 @@ import type { AppEnv, AuthEnv, OptionalAuthEnv } from "./types";
 import { TEST_ENV } from "./test-helpers";
 import { invariant } from "../../shared/invariant";
 
+let testEnv: TestDb;
 let testDb: DrizzleD1Database;
 
 function createMiddlewareTestApp(
@@ -39,8 +40,13 @@ async function createValidSession(playerId: string) {
   return result.value.token;
 }
 
-beforeEach(() => {
-  testDb = createTestDb();
+beforeAll(async () => {
+  testEnv = await getTestDb();
+  testDb = testEnv.db;
+});
+
+beforeEach(async () => {
+  await testEnv.clean();
 });
 
 describe("requireAuth", () => {

@@ -283,12 +283,12 @@ auth.get("/me", requireAuth, async (c) => {
   ]);
   if (playerResult.isErr() || providersResult.isErr())
     return c.json({ error: { type: "INTERNAL_ERROR" } }, 500);
-  if (!playerResult.value[0])
-    return c.json({ error: { type: "NOT_FOUND", entity: "player" } }, 404);
+  const player = playerResult.value[0];
+  invariant(player, "session FK guarantees player exists");
 
   return c.json({
-    playerId: playerResult.value[0].id,
-    displayName: playerResult.value[0].displayName,
+    playerId: player.id,
+    displayName: player.displayName,
     providers: providersResult.value.map((p) => p.provider),
   });
 });

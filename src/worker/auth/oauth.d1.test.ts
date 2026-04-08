@@ -1,5 +1,5 @@
 import { buildAuthorizeUrl, exchangeCode, fetchUserInfo, findOrCreateByProvider } from "./oauth";
-import { createTestDb } from "./test-db";
+import { getTestDb, type TestDb } from "./test-db";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { players } from "../../db/schema";
 
@@ -82,12 +82,16 @@ describe("fetchUserInfo", () => {
 });
 
 describe("findOrCreateByProvider", () => {
+  let testEnv: TestDb;
   let db: DrizzleD1Database;
 
-  beforeEach(() => {
-    db = createTestDb();
+  beforeAll(async () => {
+    testEnv = await getTestDb();
+    db = testEnv.db;
   });
-
+  beforeEach(async () => {
+    await testEnv.clean();
+  });
   const userInfo = { providerId: "ext-1" };
 
   it("creates new player when no existing account", async () => {

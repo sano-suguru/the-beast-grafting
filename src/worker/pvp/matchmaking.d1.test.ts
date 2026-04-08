@@ -1,10 +1,11 @@
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
-import { createTestDb } from "../auth/test-db";
+import { getTestDb, type TestDb } from "../auth/test-db";
 import { createTestPlayer, createTestRun, makeValidUnit } from "../test-helpers";
 import { boardSnapshots, runs } from "../../db/schema";
 import { findOpponent } from "./matchmaking";
 
+let testEnv: TestDb;
 let db: DrizzleD1Database;
 let playerId: string;
 
@@ -21,8 +22,13 @@ async function insertSnapshot(pid: string, runId: string, round: number) {
   });
 }
 
+beforeAll(async () => {
+  testEnv = await getTestDb();
+  db = testEnv.db;
+});
+
 beforeEach(async () => {
-  db = createTestDb();
+  await testEnv.clean();
   ({ playerId } = await createTestPlayer(db));
 });
 

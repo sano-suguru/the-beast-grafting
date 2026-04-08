@@ -1,11 +1,12 @@
 import { Hono } from "hono";
-import { createTestDb } from "./test-db";
+import { getTestDb, type TestDb } from "./test-db";
 import { rateLimit, cleanExpiredRateLimits } from "./rate-limit";
 import { rateLimits } from "../../db/schema";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import type { AppEnv } from "./types";
 import { TEST_ENV } from "./test-helpers";
 
+let testEnv: TestDb;
 let testDb: DrizzleD1Database;
 
 function createApp(opts: { max: number; windowSec: number }) {
@@ -22,8 +23,13 @@ function makeRequest(app: Hono<AppEnv>, ip = "1.2.3.4") {
   return app.request("/test", { headers: { "cf-connecting-ip": ip } }, TEST_ENV);
 }
 
-beforeEach(() => {
-  testDb = createTestDb();
+beforeAll(async () => {
+  testEnv = await getTestDb();
+  testDb = testEnv.db;
+});
+
+beforeEach(async () => {
+  await testEnv.clean();
 });
 
 describe("rateLimit", () => {

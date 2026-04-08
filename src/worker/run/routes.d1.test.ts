@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
-import { createTestDb } from "../auth/test-db";
+import { getTestDb, type TestDb } from "../auth/test-db";
 import { runs, battles, shopStates } from "../../db/schema";
 import { generateId } from "../auth/crypto";
 import runRoutes, { consumeAndAdvance } from "./routes";
@@ -21,6 +21,7 @@ interface RunResponse {
   };
 }
 
+let testEnv: TestDb;
 let testDb: DrizzleD1Database;
 
 function createRunTestApp(getDb: () => DrizzleD1Database): Hono<AuthEnv> {
@@ -105,8 +106,13 @@ function postRetire(app: Hono<AuthEnv>, token: string) {
 
 let app: Hono<AuthEnv>;
 
-beforeEach(() => {
-  testDb = createTestDb();
+beforeAll(async () => {
+  testEnv = await getTestDb();
+  testDb = testEnv.db;
+});
+
+beforeEach(async () => {
+  await testEnv.clean();
   app = createRunTestApp(() => testDb);
 });
 

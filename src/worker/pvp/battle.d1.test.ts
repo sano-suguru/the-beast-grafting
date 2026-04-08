@@ -1,13 +1,14 @@
 import { Hono } from "hono";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
-import { createTestDb } from "../auth/test-db";
+import { getTestDb, type TestDb } from "../auth/test-db";
 import { battles } from "../../db/schema";
 import pvp from "./routes";
 import { TEST_ENV } from "../auth/test-helpers";
 import { createTestPlayer, createTestRun, makeValidUnit } from "../test-helpers";
 import type { AuthEnv } from "../auth/types";
 
+let testEnv: TestDb;
 let testDb: DrizzleD1Database;
 
 function createBattleTestApp(getDb: () => DrizzleD1Database): Hono<AuthEnv> {
@@ -46,8 +47,13 @@ function postBattle(app: Hono<AuthEnv>, token: string, body: unknown) {
 
 let app: Hono<AuthEnv>;
 
-beforeEach(() => {
-  testDb = createTestDb();
+beforeAll(async () => {
+  testEnv = await getTestDb();
+  testDb = testEnv.db;
+});
+
+beforeEach(async () => {
+  await testEnv.clean();
   app = createBattleTestApp(() => testDb);
 });
 

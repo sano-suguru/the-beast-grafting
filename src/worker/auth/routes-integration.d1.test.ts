@@ -1,4 +1,4 @@
-import { createTestDb } from "./test-db";
+import { getTestDb, type TestDb } from "./test-db";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { sessions } from "../../db/schema";
 import auth from "./routes";
@@ -14,11 +14,17 @@ import {
 import type { AppEnv } from "./types";
 import { Hono } from "hono";
 
+let testEnv: TestDb;
 let testDb: DrizzleD1Database;
 let testApp: Hono<AppEnv>;
 
-beforeEach(() => {
-  testDb = createTestDb();
+beforeAll(async () => {
+  testEnv = await getTestDb();
+  testDb = testEnv.db;
+});
+
+beforeEach(async () => {
+  await testEnv.clean();
   testApp = createAuthTestApp(() => testDb, auth);
 });
 
