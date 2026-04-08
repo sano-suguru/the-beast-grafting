@@ -27,7 +27,7 @@
   "dependencies": {
     "@preact/signals": "^2.8.2",
     "drizzle-orm": "^0.45.1",
-    "hono": "^4.12.9",
+    "hono": "^4.12.12",
     "lucide-preact": "^1.0.0",
     "neverthrow": "^8.2.0",
     "preact": "^10.29.0"
