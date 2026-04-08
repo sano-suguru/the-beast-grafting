@@ -9,12 +9,11 @@ import {
 } from "./battle-context";
 import {
   FLY_SPAWN_CAP,
-  FLY_TOKEN,
   MAGGOT_TOKEN,
   DEATH_CURSE_TOKEN,
   FRAME_DELAY_DEATH_CHAIN,
-  EVANGELIST_PLAGUE_DAMAGE,
 } from "./constants";
+import { atLevel, BEELZEBUB, EVANGELIST } from "../shared/skill-params";
 import { applyZealotBuff } from "./battle-deaths-zealot";
 
 export function handleEquipDeath(
@@ -89,18 +88,14 @@ export function handleBeelzebubSpawns(
   const { spawns, totalSpawned } = collectBeelzebubSpawns(board, flyCount);
 
   for (const { beelzebub, count } of spawns) {
+    const ft = atLevel(BEELZEBUB.token, beelzebub.level);
     for (let m = 0; m < count; m++) {
-      const token = createToken("腐肉の蠅", FLY_TOKEN.atk, FLY_TOKEN.hp, beelzebub.isChurch);
+      const token = createToken("腐肉の蠅", ft.atk, ft.hp, beelzebub.isChurch);
       board.splice(deathIdx, 0, token);
       pushFrame(
         ctx,
         "skill",
-        [
-          prefix,
-          seg.u(beelzebub.name),
-          "の周りに蠅が湧く。",
-          seg.s(`${FLY_TOKEN.atk}/${FLY_TOKEN.hp} 蠅召喚`),
-        ],
+        [prefix, seg.u(beelzebub.name), "の周りに蠅が湧く。", seg.s(`${ft.atk}/${ft.hp} 蠅召喚`)],
         "skill",
         { [token.uid]: { type: "summon" } },
         FRAME_DELAY_DEATH_CHAIN,
@@ -127,8 +122,9 @@ export function handleEvangelistPlague(
       const alive = enemyBoard.filter((e) => e.hp > 0);
       if (alive.length === 0) return;
       const target = alive[Math.floor(ctx.rng.next() * alive.length)]!;
+      const dmg = atLevel(EVANGELIST.damage, u.level);
       const hpBefore = target.hp;
-      target.hp -= EVANGELIST_PLAGUE_DAMAGE;
+      target.hp -= dmg;
       pushFrame(
         ctx,
         "skill",
@@ -142,7 +138,7 @@ export function handleEvangelistPlague(
           seg.hp(`${hpBefore}→${Math.max(0, target.hp)}`),
         ],
         "skill",
-        skillDamageActions(u, target, EVANGELIST_PLAGUE_DAMAGE),
+        skillDamageActions(u, target, dmg),
         FRAME_DELAY_DEATH_CHAIN,
       );
     }

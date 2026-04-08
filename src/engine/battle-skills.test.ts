@@ -28,6 +28,46 @@ describe("runStartSkills – damage skills", () => {
     expect(target.hp).toBe(4);
   });
 
+  it("Lv2 bat hits 2 random targets", () => {
+    const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2, level: 2 });
+    const t1 = makeBattleUnit({ hp: 5 });
+    const t2 = makeBattleUnit({ hp: 5 });
+    const ctx = makeContext([bat], [t1, t2]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(t1.hp).toBe(4);
+    expect(t2.hp).toBe(4);
+  });
+
+  it("Lv3 bat hits 3 random targets", () => {
+    const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2, level: 3 });
+    const t1 = makeBattleUnit({ hp: 5 });
+    const t2 = makeBattleUnit({ hp: 5 });
+    const t3 = makeBattleUnit({ hp: 5 });
+    const ctx = makeContext([bat], [t1, t2, t3]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(t1.hp).toBe(4);
+    expect(t2.hp).toBe(4);
+    expect(t3.hp).toBe(4);
+  });
+
+  it("Lv3 bat with fewer targets does not exceed available", () => {
+    const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2, level: 3 });
+    const t1 = makeBattleUnit({ hp: 5 });
+    const ctx = makeContext([bat], [t1]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(t1.hp).toBe(4);
+  });
+
+  it("Lv2 inquisitor deals 2 damage to enemy front only", () => {
+    const inq = makeBattleUnit({ id: "inquisitor", name: "審問官", atk: 3, hp: 1, level: 2 });
+    const front = makeBattleUnit({ hp: 10 });
+    const back = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([inq], [front, back]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(front.hp).toBe(8);
+    expect(back.hp).toBe(10);
+  });
+
   it("shrieking_throat deals 8 damage to enemy back", () => {
     const throat = makeBattleUnit({ id: "shrieking_throat", name: "叫喚する喉袋", atk: 8, hp: 4 });
     const front = makeBattleUnit({ hp: 10 });

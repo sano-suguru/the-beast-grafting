@@ -31,6 +31,21 @@ describe("computeZealotBuff", () => {
     expect(result).toBe(0);
   });
 
+  it("Lv2 zealot gives buff of 2", () => {
+    const board = [makeBattleUnit({ id: "zealot", hp: 3, level: 2 })];
+    const result = computeZealotBuff(board, { requireAlive: true });
+    expect(result).toBe(2);
+  });
+
+  it("Lv2 zealot with multiplier gives buff × multiplier", () => {
+    const board = [makeBattleUnit({ id: "zealot", hp: 3, level: 2 })];
+    const result = computeZealotBuff(board, {
+      requireAlive: true,
+      getMultiplier: () => 2,
+    });
+    expect(result).toBe(4);
+  });
+
   it("skips dead zealots when requireAlive is true", () => {
     const board = [
       makeBattleUnit({ id: "zealot", hp: 0 }),

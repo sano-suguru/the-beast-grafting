@@ -2,12 +2,8 @@ import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix, seg } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
-import {
-  ACID_SPLASH_DAMAGE,
-  HUNDRED_ARMS_T1_DAMAGE,
-  HUNDRED_ARMS_DEFAULT_DAMAGE,
-  HUNDRED_ARMS_SAFETY,
-} from "./constants";
+import { HUNDRED_ARMS_SAFETY, ACID_SPLASH_DAMAGE } from "./constants";
+import { atLevel, HUNDRED_ARMS } from "../shared/skill-params";
 
 export function applyAcidSplash(
   attacker: BattleUnit,
@@ -60,7 +56,10 @@ export function processHundredArmsKnockout(
     while (defenderBoard.length > 0 && safety < HUNDRED_ARMS_SAFETY) {
       safety++;
       const target = mustGet(defenderBoard, 0, "hundred_arms target");
-      const dmg = target.tier === 1 ? HUNDRED_ARMS_T1_DAMAGE : HUNDRED_ARMS_DEFAULT_DAMAGE;
+      const dmg =
+        target.tier === 1
+          ? atLevel(HUNDRED_ARMS.damageT1, attacker.level)
+          : atLevel(HUNDRED_ARMS.damageDefault, attacker.level);
       const hpBefore = target.hp;
       target.hp -= dmg;
       pushFrame(

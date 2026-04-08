@@ -12,6 +12,7 @@ import type {
 import type { Rng } from "./rng";
 import { invariant } from "../shared/invariant";
 import { TIERS, getCurrentMaxTier } from "../shared/data/tiers";
+import { getSkillText } from "../shared/skill-text";
 
 export const generateUid = (): string => Math.random().toString(36).substring(2, 11);
 
@@ -27,6 +28,7 @@ export const createUnit = (id: RegularUnitId | ChurchUnitId): UnitInstance => {
     equip: null,
     uid: generateUid(),
     isChurch,
+    skillText: getSkillText(id, 1, data.skillText),
   };
 };
 

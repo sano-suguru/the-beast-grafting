@@ -1,34 +1,6 @@
 import { getMult, createToken, pushFrame } from "./battle-context";
-import type { BattleUnit } from "./battle-context";
-import { makeContext } from "./test-helpers";
+import { makeBattleUnit, makeContext, segmentsToPlainText } from "./test-helpers";
 import { MAX_OPS } from "./constants";
-import { segmentsToPlainText } from "./test-helpers";
-
-function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit {
-  return {
-    id: "rat",
-    name: "疫病ネズミ",
-    baseAtk: 2,
-    baseHp: 1,
-    buffAtk: 0,
-    buffHp: 0,
-    tier: 1,
-    skillText: "",
-    lore: "",
-    atk: 2,
-    hp: 1,
-    battleBaseAtk: 2,
-    battleBaseHp: 1,
-    level: 1,
-    exp: 0,
-    equip: null,
-    uid: "test-uid",
-    isChurch: false,
-    skillUses: 0,
-    equipUses: 0,
-    ...overrides,
-  };
-}
 
 describe("getMult", () => {
   it("returns 1 when brains is in front (unit is behind brains)", () => {

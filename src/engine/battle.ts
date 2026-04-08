@@ -14,12 +14,8 @@ import {
   applyEquipmentEffects,
 } from "./battle-skills";
 import { applyAcidSplash, processHundredArmsKnockout } from "./battle-skills-combat";
-import {
-  COMBAT_ROUND_LIMIT,
-  CHOLERA_INITIAL_USES,
-  EYE_INITIAL_USES,
-  NUMBNESS_INITIAL_USES,
-} from "./constants";
+import { COMBAT_ROUND_LIMIT, NUMBNESS_INITIAL_USES } from "./constants";
+import { atLevel, CHOLERA, EYE } from "../shared/skill-params";
 
 function initBattleUnit(u: UnitInstance): BattleUnit {
   const atk = effectiveAtk(u);
@@ -36,8 +32,8 @@ function initBattleUnit(u: UnitInstance): BattleUnit {
     skillUses: 0,
     equipUses: 0,
   };
-  if (bu.id === "cholera") bu.skillUses = CHOLERA_INITIAL_USES;
-  if (bu.id === "eye") bu.skillUses = EYE_INITIAL_USES;
+  if (bu.id === "cholera") bu.skillUses = atLevel(CHOLERA.uses, bu.level);
+  if (bu.id === "eye") bu.skillUses = atLevel(EYE.uses, bu.level);
   if (bu.equip === "numbness") bu.equipUses = NUMBNESS_INITIAL_USES;
   return bu;
 }

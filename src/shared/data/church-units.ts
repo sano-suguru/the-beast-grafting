@@ -34,7 +34,7 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 2,
     tier: 2,
-    skillText: "死亡: 味方全体を+0/+1",
+    skillText: "死亡: 味方全体に+0/+1",
     lore: "彼の祝福を受けた騎士は、腕を失っても微笑んでいた。",
   },
   templar: {

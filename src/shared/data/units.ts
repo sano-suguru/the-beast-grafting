@@ -173,7 +173,7 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 6,
     baseHp: 7,
     tier: 5,
-    skillText: "撃破: 先頭の敵に4ダメ(Tier1に倍)",
+    skillText: "撃破: 先頭の敵に4ダメ(Tier1に8ダメ)",
     lore: "無数の罪人の腕を縫い付けた多腕の怪物。一度殺戮を始めると、目の前の肉がすべて挽肉になるまで止まらない。",
     secretLore:
       "百の腕はついに聖堂の巨大な扉を粉砕し、中に逃げ込んだ信徒たちを一人残らず挽肉に変えた。",

@@ -1,15 +1,16 @@
 import { invariant } from "../shared/invariant";
+import { atLevel, ZEALOT } from "../shared/skill-params";
 
 /** Zealot バフ量を計算する共通ロジック */
-export function computeZealotBuff<T extends { id: string; hp: number }>(
+export function computeZealotBuff<T extends { id: string; level: number; hp: number }>(
   units: T[],
   opts: { requireAlive: true; getMultiplier?: (idx: number) => number },
 ): number;
-export function computeZealotBuff<T extends { id: string }>(
+export function computeZealotBuff<T extends { id: string; level: number }>(
   units: T[],
   opts: { requireAlive: false; getMultiplier?: (idx: number) => number },
 ): number;
-export function computeZealotBuff<T extends { id: string; hp?: number }>(
+export function computeZealotBuff<T extends { id: string; level: number; hp?: number }>(
   units: T[],
   opts: {
     requireAlive: boolean;
@@ -24,7 +25,8 @@ export function computeZealotBuff<T extends { id: string; hp?: number }>(
       invariant(typeof u.hp === "number", "hp required when requireAlive is true");
       if (u.hp <= 0) continue;
     }
-    total += opts.getMultiplier ? opts.getMultiplier(i) : 1;
+    const buff = atLevel(ZEALOT.summonBuff, u.level);
+    total += buff * (opts.getMultiplier ? opts.getMultiplier(i) : 1);
   }
   return total;
 }

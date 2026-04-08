@@ -2,8 +2,9 @@ import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { invariant } from "../shared/invariant";
-import { ALTAR_BUFF, ROT_RING_MAX_USES, MACHINE_BUFF } from "./constants";
 import { CUMULATIVE_EXP, MAX_UNIT_LEVEL } from "../shared/constants";
+import { atLevel, ALTAR, MACHINE, ROT_RING } from "../shared/skill-params";
+import { getSkillText } from "../shared/skill-text";
 import { computeZealotBuff } from "./buff-utils";
 
 interface GraftResult {
@@ -32,6 +33,7 @@ export const graftUnits = (base: UnitInstance, material: UnitInstance): GraftRes
       buffHp: 0,
       exp: newExp,
       level: newLevel,
+      skillText: getSkillText(base.id, newLevel, base.skillText),
     },
     leveledUp,
   };
@@ -42,14 +44,17 @@ function applyRotRingBuff(
   board: (UnitInstance | null)[],
   rotRingUses: number,
 ): { board: (UnitInstance | null)[]; rotRingUses: number } {
-  if (boughtUnit.tier !== 1 || rotRingUses >= ROT_RING_MAX_USES) {
-    return { board, rotRingUses };
-  }
+  if (boughtUnit.tier !== 1) return { board, rotRingUses };
+  let totalMaxUses = 0;
   let rotRingCount = 0;
   board.forEach((u) => {
-    if (u && u.id === "rot_ring") rotRingCount += 1;
+    if (u && u.id === "rot_ring") {
+      rotRingCount += 1;
+      totalMaxUses += atLevel(ROT_RING.uses, u.level);
+    }
   });
   if (rotRingCount === 0) return { board, rotRingUses };
+  if (rotRingUses >= totalMaxUses) return { board, rotRingUses };
   return {
     board: board.map((bu) =>
       bu
@@ -97,15 +102,19 @@ export const applySummonEffects = (
   const target = nextBoard[summonedUnitIndex];
   if (!target) return currentBoard;
 
-  let altarCount = 0;
+  let altarAtkBuff = 0;
+  let altarHpBuff = 0;
   nextBoard.forEach((u) => {
-    if (u && u.id === "altar") altarCount += 1;
+    if (!u || u.id !== "altar") return;
+    const ab = atLevel(ALTAR.buff, u.level);
+    altarAtkBuff += ab.atk;
+    altarHpBuff += ab.hp;
   });
-  if (altarCount > 0) {
+  if (altarAtkBuff > 0 || altarHpBuff > 0) {
     nextBoard[summonedUnitIndex] = {
       ...target,
-      buffAtk: target.buffAtk + ALTAR_BUFF.atk * altarCount,
-      buffHp: target.buffHp + ALTAR_BUFF.hp * altarCount,
+      buffAtk: target.buffAtk + altarAtkBuff,
+      buffHp: target.buffHp + altarHpBuff,
     };
     modified = true;
   }
@@ -140,10 +149,11 @@ export const applyEndOfTurnEffects = (
       modified = true;
       const front = nextBoard[frontIdx];
       if (!front) return;
+      const mb = atLevel(MACHINE.buff, u.level);
       nextBoard[frontIdx] = {
         ...front,
-        buffAtk: front.buffAtk + MACHINE_BUFF.atk,
-        buffHp: front.buffHp + MACHINE_BUFF.hp,
+        buffAtk: front.buffAtk + mb.atk,
+        buffHp: front.buffHp + mb.hp,
       };
     });
   }

@@ -171,7 +171,7 @@ describe("handleSquireDeath", () => {
 });
 
 describe("handlePriestDeath", () => {
-  it("heals all remaining allies +1 HP", () => {
+  it("buffs all remaining allies +0/+1 HP", () => {
     const a = makeBattleUnit({ hp: 3, uid: "a" });
     const b = makeBattleUnit({ hp: 2, uid: "b" });
     const c = makeBattleUnit({ hp: 1, uid: "c" });
@@ -190,15 +190,15 @@ describe("handlePriestDeath", () => {
     expect(ctx.frames).toHaveLength(0);
   });
 
-  it("generates frame with heal action for every ally", () => {
+  it("generates frame with buff action for every ally", () => {
     const a = makeBattleUnit({ hp: 3, uid: "a" });
     const b = makeBattleUnit({ hp: 2, uid: "b" });
     const ctx = makeContext([a, b]);
     const dead = makeBattleUnit({ id: "priest", name: "司祭" });
     callHandler("priest", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.frames).toHaveLength(1);
-    expect(ctx.frames[0]!.actions["a"]).toEqual({ type: "heal", value: "+1" });
-    expect(ctx.frames[0]!.actions["b"]).toEqual({ type: "heal", value: "+1" });
+    expect(ctx.frames[0]!.actions["a"]).toEqual({ type: "buff", value: "+0/+1" });
+    expect(ctx.frames[0]!.actions["b"]).toEqual({ type: "buff", value: "+0/+1" });
   });
 });
 

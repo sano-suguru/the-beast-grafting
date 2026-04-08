@@ -5,12 +5,18 @@ import { pushFrame, createToken, createSummonedUnit, enemyPrefix, seg } from "./
 import { UNITS } from "../shared/data/units";
 import { getUnitsByTier } from "./helpers";
 import { applyZealotBuff } from "./battle-deaths-zealot";
+import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import {
-  HOUND_TOKEN,
-  BEAST_SUMMON,
-  CHURCH_BEAST_TOKEN,
-  FRAME_DELAY_DEATH_CHAIN,
-} from "./constants";
+  atLevel,
+  RAT,
+  HOUND,
+  BEAST,
+  CHURCH_BEAST,
+  SQUIRE,
+  MARTYR,
+  PRIEST,
+  type Buff,
+} from "../shared/skill-params";
 
 type DeathContext = {
   dead: BattleUnit;
@@ -54,8 +60,9 @@ function spawnTokenOnDeath(
 function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
   if (board.length === 0) return;
   const target = mustGet(board, Math.floor(ctx.rng.next() * board.length), "rat death target");
-  target.atk += 1;
-  target.hp += 1;
+  const b = atLevel(RAT.deathBuff, dead.level);
+  target.atk += b.atk;
+  target.hp += b.hp;
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
@@ -66,28 +73,23 @@ function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
       "の汚染された血が",
       seg.u(target.name),
       "に変異を促す！ ",
-      seg.s("+1/+1"),
+      seg.s(`+${b.atk}/+${b.hp}`),
     ],
     "skill",
     {
-      [target.uid]: { type: "buff", value: "+1/+1" },
+      [target.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` },
     },
     FRAME_DELAY_DEATH_CHAIN,
   );
 }
 
 function handleHoundDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
-  spawnTokenOnDeath(
-    dead,
-    board,
-    idx,
-    isPlayer,
-    ctx,
-    "噛み付く頭部",
-    HOUND_TOKEN.atk,
-    HOUND_TOKEN.hp,
-    [seg.u(dead.name), "の首が牙を剥く！ ", seg.s(`${HOUND_TOKEN.atk}/${HOUND_TOKEN.hp} 召喚`)],
-  );
+  const t = atLevel(HOUND.token, dead.level);
+  spawnTokenOnDeath(dead, board, idx, isPlayer, ctx, "噛み付く頭部", t.atk, t.hp, [
+    seg.u(dead.name),
+    "の首が牙を剥く！ ",
+    seg.s(`${t.atk}/${t.hp} 召喚`),
+  ]);
 }
 
 function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
@@ -97,7 +99,8 @@ function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const chosenId = t3Pool[chosenIdx]!;
   const unitData = UNITS[chosenId];
   invariant(unitData, `UNITS[${chosenId}] must exist for tier-3 unit`);
-  const summoned = createSummonedUnit(unitData, BEAST_SUMMON.atk, BEAST_SUMMON.hp, dead.isChurch);
+  const t = atLevel(BEAST.summon, dead.level);
+  const summoned = createSummonedUnit(unitData, t.atk, t.hp, dead.isChurch);
   board.splice(idx, 0, summoned);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
@@ -109,7 +112,7 @@ function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
       "の腹から",
       seg.u(summoned.name),
       "が這い出した！ ",
-      seg.s(`${BEAST_SUMMON.atk}/${BEAST_SUMMON.hp} 召喚`),
+      seg.s(`${t.atk}/${t.hp} 召喚`),
     ],
     "skill",
     { [summoned.uid]: { type: "summon" } },
@@ -119,52 +122,68 @@ function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
 }
 
 function handleChurchBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
-  spawnTokenOnDeath(
-    dead,
-    board,
-    idx,
-    isPlayer,
+  const t = atLevel(CHURCH_BEAST.token, dead.level);
+  spawnTokenOnDeath(dead, board, idx, isPlayer, ctx, "祝福の幼子", t.atk, t.hp, [
+    seg.u(dead.name),
+    "の腹が裂け、",
+    seg.e("祝福"),
+    "が現れた！ ",
+    seg.s(`${t.atk}/${t.hp} 召喚`),
+  ]);
+}
+
+function buffSuccessor(
+  dead: BattleUnit,
+  target: BattleUnit,
+  b: Buff,
+  texts: { mid: string; tail: string },
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  target.atk += b.atk;
+  target.hp += b.hp;
+  pushFrame(
     ctx,
-    "祝福の幼子",
-    CHURCH_BEAST_TOKEN.atk,
-    CHURCH_BEAST_TOKEN.hp,
+    "skill",
     [
+      enemyPrefix(isPlayer),
       seg.u(dead.name),
-      "の腹が裂け、",
-      seg.e("祝福"),
-      "が現れた！ ",
-      seg.s(`${CHURCH_BEAST_TOKEN.atk}/${CHURCH_BEAST_TOKEN.hp} 召喚`),
+      texts.mid,
+      seg.u(target.name),
+      texts.tail,
+      seg.s(`+${b.atk}/+${b.hp}`),
     ],
+    "skill",
+    { [target.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
+    FRAME_DELAY_DEATH_CHAIN,
   );
 }
 
 function handleSquireDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
   if (!successor) return;
-  successor.atk += 1;
-  successor.hp += 1;
-  const prefix = enemyPrefix(isPlayer);
-  pushFrame(
-    ctx,
-    "skill",
-    [prefix, seg.u(dead.name), "の断末魔。", seg.u(successor.name), "が奮い立つ。", seg.s("+1/+1")],
-    "skill",
-    {
-      [successor.uid]: { type: "buff", value: "+1/+1" },
-    },
-    FRAME_DELAY_DEATH_CHAIN,
-  );
+  const b = atLevel(SQUIRE.deathBuff, dead.level);
+  buffSuccessor(dead, successor, b, { mid: "の断末魔。", tail: "が奮い立つ。" }, isPlayer, ctx);
 }
 
 function handlePriestDeath({ dead, board, isPlayer, ctx }: DeathContext) {
   if (board.length === 0) return;
-  board.forEach((u) => (u.hp += 1));
+  const b = atLevel(PRIEST.deathBuff, dead.level);
+  board.forEach((u) => {
+    u.atk += b.atk;
+    u.hp += b.hp;
+  });
   const actionMap: Record<string, BattleAction> = {};
-  board.forEach((u) => (actionMap[u.uid] = { type: "heal", value: "+1" }));
+  board.forEach((u) => (actionMap[u.uid] = { type: "buff", value: `+${b.atk}/+${b.hp}` }));
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(dead.name), "が崩れ落ちる。その唇がまだ動いている。味方全体", seg.s("+1")],
+    [
+      prefix,
+      seg.u(dead.name),
+      "が崩れ落ちる。その唇がまだ動いている。味方全体",
+      seg.s(`+${b.atk}/+${b.hp}`),
+    ],
     "skill",
     actionMap,
     FRAME_DELAY_DEATH_CHAIN,
@@ -195,22 +214,10 @@ function handleMaidenDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
 }
 
 function handleMartyrDeath({ dead, isPlayer, ctx, successor, successor2 }: DeathContext) {
-  const prefix = enemyPrefix(isPlayer);
-  const targets = [successor, successor2];
-  for (const target of targets) {
+  const b = atLevel(MARTYR.deathBuff, dead.level);
+  for (const target of [successor, successor2]) {
     if (!target) continue;
-    target.atk += 1;
-    target.hp += 1;
-    pushFrame(
-      ctx,
-      "skill",
-      [prefix, seg.u(dead.name), "が", seg.u(target.name), "へ手を伸ばす。", seg.s("+1/+1")],
-      "skill",
-      {
-        [target.uid]: { type: "buff", value: "+1/+1" },
-      },
-      FRAME_DELAY_DEATH_CHAIN,
-    );
+    buffSuccessor(dead, target, b, { mid: "が", tail: "へ手を伸ばす。" }, isPlayer, ctx);
   }
 }
 

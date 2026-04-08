@@ -7,7 +7,8 @@ import {
   handleBeelzebubSpawns,
   handleEvangelistPlague,
 } from "./battle-deaths-handlers";
-import { DEATH_CASCADE_LIMIT, ALTAR_BUFF, FRAME_DELAY_DEATH_CHAIN } from "./constants";
+import { DEATH_CASCADE_LIMIT, FRAME_DELAY_DEATH_CHAIN } from "./constants";
+import { atLevel, ALTAR } from "../shared/skill-params";
 
 function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
   const prefix = enemyPrefix(isPlayer);
@@ -16,8 +17,9 @@ function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleCont
     board.forEach((a, aIdx) => {
       if (a.id !== "altar") return;
       const mult = getMult(board, aIdx);
-      const atkBuff = ALTAR_BUFF.atk * mult;
-      const hpBuff = ALTAR_BUFF.hp * mult;
+      const ab = atLevel(ALTAR.buff, a.level);
+      const atkBuff = ab.atk * mult;
+      const hpBuff = ab.hp * mult;
       u.atk += atkBuff;
       u.hp += hpBuff;
       pushFrame(

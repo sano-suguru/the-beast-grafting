@@ -3,6 +3,7 @@ import type { Result, GameError } from "../../shared/errors";
 import type { UnitInstance, ShopSlot, OriginId } from "../../shared/types";
 import type { ShopSlotJson } from "../../db/shop-state-types";
 import { UNIT_COST } from "../../shared/constants";
+import { sellBloodGain } from "../../shared/skill-params";
 import { applyBuyEffects, applyChaliceEffect } from "../../engine/shop-effects";
 import type { ShopStateRow } from "./shop-state-row";
 import {
@@ -144,7 +145,7 @@ export function executeSell(
   const unit = instances[boardIndex];
   if (!unit) return err({ type: "INVALID_TARGET", reason: "slot_empty" });
 
-  const bloodGain = unit.id === "beggar" ? 2 : 1;
+  const bloodGain = sellBloodGain(unit.level, unit.id);
   const newBoard = [...instances];
   newBoard[boardIndex] = null;
 

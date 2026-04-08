@@ -3,6 +3,7 @@ import { ResourceText } from "../../components/resource-text";
 import type { Selection, EventData } from "../../types";
 import { getEquipInfo } from "../../../shared/data/equips";
 import { effectiveAtk, effectiveHp } from "../../../shared/unit-stats";
+import { sellBloodGain } from "../../../shared/skill-params";
 import { toLifeTier } from "../../../shared/types";
 import { ShopNarrative } from "./shop-narrative";
 import { activeEvent } from "../../state/game-store";
@@ -150,6 +151,11 @@ function SelectedItemInfo({ sel }: { sel: Selection }) {
         )}
         <UnitStatDisplay sel={sel} />
       </div>
+      {sel.type === "BOARD_UNIT" && (
+        <div className="text-blood-bright mb-1 text-[10px] font-bold md:text-xs">
+          <ResourceText text={`解体: {blood}×${sellBloodGain(sel.item.level, sel.item.id)}`} />
+        </div>
+      )}
       <p className="text-tarnished-gold/80 pl-1 font-mono text-[10px] md:text-xs">
         <ResourceText text={sel.item.skillText} />
       </p>

@@ -15,7 +15,9 @@ import {
   recoveryWarning,
   hoveredItem,
 } from "../state/game-store";
+
 import { executeSellUnit } from "../state/shop-actions";
+import { sellBloodGain } from "../../shared/skill-params";
 import { undoLastAction } from "../state/undo-actions";
 import { checkHighlight } from "../state/card-actions";
 import { UnitCard } from "../components/unit-card";
@@ -32,14 +34,27 @@ import {
 } from "./shop/shop-overlays";
 import { playSEFrom } from "../engine/audio";
 
+function ShopStatusOverlays() {
+  const busy = shopLocked.value;
+  const showBusy = useDelayedFlag(busy);
+  return (
+    <>
+      {showBusy.value && <ShopBusyOverlay />}
+      {showRetireConfirm.value && <RetireConfirmOverlay />}
+      {shopActionError.value && !showRetireConfirm.value && <ShopErrorBanner />}
+      {recoveryWarning.value && <RecoveryWarningBanner />}
+    </>
+  );
+}
+
 export function ShopScreen() {
   const sel = selection.value;
   const currentLife = life.value;
   const currentBoard = board.value;
   const currentOnboarding = onboardingStep.value;
   const busy = shopLocked.value;
-  const actionError = shopActionError.value;
-  const showBusyOverlay = useDelayedFlag(busy);
+  const canSell = sel?.type === "BOARD_UNIT" && !busy;
+  const sellGain = sel?.type === "BOARD_UNIT" ? sellBloodGain(sel.item.level, sel.item.id) : 0;
 
   return (
     <main
@@ -58,7 +73,7 @@ export function ShopScreen() {
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pt-2 md:pt-3">
           <BoardSection board={currentBoard} />
           <div className="mb-4 flex shrink-0 gap-2">
-            <SellButton isActive={sel?.type === "BOARD_UNIT" && !busy} />
+            <SellButton isActive={canSell} bloodGain={sellGain} />
             <UndoButton disabled={busy} />
           </div>
           <ShopSection />
@@ -66,10 +81,7 @@ export function ShopScreen() {
       </div>
 
       <ShopFooter currentOnboarding={currentOnboarding} />
-      {showBusyOverlay.value && <ShopBusyOverlay />}
-      {showRetireConfirm.value && <RetireConfirmOverlay />}
-      {actionError && !showRetireConfirm.value && <ShopErrorBanner />}
-      {recoveryWarning.value && <RecoveryWarningBanner />}
+      <ShopStatusOverlays />
     </main>
   );
 }
@@ -150,7 +162,7 @@ function BoardSection({ board: b }: { board: (UnitInstance | null)[] }) {
   );
 }
 
-function SellButton({ isActive }: { isActive: boolean }) {
+function SellButton({ isActive, bloodGain }: { isActive: boolean; bloodGain: number }) {
   return (
     <button
       onClick={() => {
@@ -165,7 +177,9 @@ function SellButton({ isActive }: { isActive: boolean }) {
     >
       <Trash2 size={16} className="mr-2" />
       <span className="text-[10px] font-bold tracking-widest md:text-xs">
-        <ResourceText text="選択した死体を解体する ({blood}還元)" />
+        <ResourceText
+          text={isActive ? `解体する ({blood}×${bloodGain} 還元)` : "選択した死体を解体する"}
+        />
       </span>
     </button>
   );

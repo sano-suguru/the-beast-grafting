@@ -1,6 +1,6 @@
 import { resolveDeaths } from "./battle-deaths";
 import { createSeededRng } from "./rng";
-import { EVANGELIST_PLAGUE_DAMAGE } from "./constants";
+import { atLevel, EVANGELIST } from "../shared/skill-params";
 import { makeBattleUnit, makeContext } from "./test-helpers";
 import type { BattleFrame } from "../shared/types";
 import { segmentsToPlainText } from "./test-helpers";
@@ -78,14 +78,14 @@ describe("resolveDeaths – buff and equip on death", () => {
     expect(next.hp).toBe(4);
   });
 
-  it("priest death heals all allies +1 HP", () => {
+  it("priest death buffs all allies +0/+1", () => {
     const priest = makeBattleUnit({ id: "priest", name: "司祭", hp: 0 });
-    const ally1 = makeBattleUnit({ hp: 3 });
-    const ally2 = makeBattleUnit({ hp: 2 });
+    const ally1 = makeBattleUnit({ hp: 4 });
+    const ally2 = makeBattleUnit({ hp: 3 });
     const ctx = makeContext([priest, ally1, ally2], []);
     resolveDeaths(ctx);
-    expect(ally1.hp).toBe(4);
-    expect(ally2.hp).toBe(3);
+    expect(ally1.hp).toBe(5);
+    expect(ally2.hp).toBe(4);
   });
 
   it("maiden death grants corpse_wax to next unit", () => {
@@ -380,7 +380,7 @@ describe("resolveDeaths – evangelist plague", () => {
     resolveDeaths(ctx);
     const plagueFrames = ctx.frames.filter((f) => logText(f).includes("祈りを捧げる"));
     expect(plagueFrames).toHaveLength(2);
-    expect(enemy.hp).toBe(20 - EVANGELIST_PLAGUE_DAMAGE * 2);
+    expect(enemy.hp).toBe(20 - atLevel(EVANGELIST.damage, 1) * 2);
   });
 
   it("does not fire when evangelist has hp <= 0 but is not yet spliced", () => {
@@ -401,7 +401,7 @@ describe("resolveDeaths – evangelist plague", () => {
     const ctx = makeContext([dying, evangelist], [deadEnemy, aliveEnemy], null, { next: () => 0 });
     resolveDeaths(ctx);
     expect(deadEnemy.hp).toBe(-2);
-    expect(aliveEnemy.hp).toBe(10 - EVANGELIST_PLAGUE_DAMAGE);
+    expect(aliveEnemy.hp).toBe(10 - atLevel(EVANGELIST.damage, 1));
   });
 });
 
@@ -409,12 +409,12 @@ describe("resolveDeaths – cross-board cascade", () => {
   it("evangelist plague kill triggers enemy death handler in next iteration", () => {
     const dying = makeBattleUnit({ id: "token", hp: 0 });
     const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
-    // squire の hp を EVANGELIST_PLAGUE_DAMAGE ぴったりにして plague で確殺
+    // squire の hp を evangelist Lv1 damage ぴったりにして plague で確殺
     const squire = makeBattleUnit({
       id: "squire",
       name: "従騎士",
       atk: 1,
-      hp: EVANGELIST_PLAGUE_DAMAGE,
+      hp: atLevel(EVANGELIST.damage, 1),
       isChurch: true,
     });
     const bystander = makeBattleUnit({ id: "token", name: "傍観者", atk: 2, hp: 5 });

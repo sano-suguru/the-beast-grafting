@@ -150,6 +150,45 @@ describe("applyBuyEffects – rot_ring", () => {
     const { board: result } = applyBuyEffects(makeUnit({ tier: 3 }), board);
     expect(effectiveAtk(result[0]!)).toBe(6);
   });
+
+  it("Lv2 rot_ring allows up to 5 uses", () => {
+    const board: (UnitInstance | null)[] = [
+      makeUnit({ id: "rot_ring", baseAtk: 6, baseHp: 8, level: 2 }),
+      null,
+      null,
+      null,
+      null,
+    ];
+    // Lv2 uses = 5; 4回使用済みでもまだ発動する
+    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 4);
+    expect(rotRingUses).toBe(5);
+  });
+
+  it("Lv2 rot_ring stops at 5 uses", () => {
+    const board: (UnitInstance | null)[] = [
+      makeUnit({ id: "rot_ring", baseAtk: 6, baseHp: 8, level: 2 }),
+      null,
+      null,
+      null,
+      null,
+    ];
+    // Lv2 uses = 5; 5回使用済みなら発動しない
+    const { board: result } = applyBuyEffects(makeUnit({ tier: 1 }), board, 5);
+    expect(effectiveAtk(result[0]!)).toBe(6);
+  });
+
+  it("mixed Lv1+Lv2 rot_rings sum totalMaxUses", () => {
+    const board: (UnitInstance | null)[] = [
+      makeUnit({ id: "rot_ring", baseAtk: 6, baseHp: 8, level: 1 }),
+      makeUnit({ id: "rot_ring", baseAtk: 6, baseHp: 8, level: 2 }),
+      null,
+      null,
+      null,
+    ];
+    // Lv1(4) + Lv2(5) = totalMaxUses 9; 8回使用済みでもまだ発動
+    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 8);
+    expect(rotRingUses).toBe(9);
+  });
 });
 
 describe("applyBuyEffects – chalice and fallback", () => {

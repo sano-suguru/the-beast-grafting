@@ -9,21 +9,10 @@ export const HUNDRED_ARMS_SAFETY = 10;
 /** SAP準拠: 攻撃前スキルは前衛の直後（support位置）のみ発動 */
 export const SUPPORT_IDX = 1;
 
-export const HOUND_TOKEN = { atk: 1, hp: 1 } as const;
-export const BEAST_SUMMON = { atk: 2, hp: 2 } as const;
-export const CHURCH_BEAST_TOKEN = { atk: 2, hp: 2 } as const;
-export const FLY_TOKEN = { atk: 4, hp: 4 } as const;
+// ── 装備効果（レベル非依存） ──
+export const ACID_SPLASH_DAMAGE = 5;
 export const MAGGOT_TOKEN = { atk: 1, hp: 1 } as const;
 export const DEATH_CURSE_TOKEN = { atk: 1, hp: 1 } as const;
-
-export const BAT_DAMAGE = 1;
-export const BANSHEE_DAMAGE = 8;
-export const EVANGELIST_PLAGUE_DAMAGE = 3;
-export const PARASITE_BUFF = { atk: 2, hp: 2 } as const;
-export const EYE_DAMAGE = 5;
-export const EYE_INITIAL_USES = 5;
-export const CHOLERA_INITIAL_USES = 1;
-export const ACID_SPLASH_DAMAGE = 5;
 export const BERSERK_BONUS = 3;
 export const INFECTION_EXTRA_DAMAGE = 3;
 export const NUMBNESS_REDUCTION = 7;
@@ -31,12 +20,6 @@ export const NUMBNESS_INITIAL_USES = 2;
 export const CORPSE_WAX_REDUCTION = 20;
 export const IRON_REDUCTION = 2;
 export const MIN_EQUIPMENT_DAMAGE = 2;
-export const ALTAR_BUFF = { atk: 3, hp: 1 } as const;
-export const HUNDRED_ARMS_T1_DAMAGE = 8;
-export const HUNDRED_ARMS_DEFAULT_DAMAGE = 4;
-export const REVENANT_MAX_TARGETS = 3;
-export const ROT_RING_MAX_USES = 4;
-export const MACHINE_BUFF = { atk: 2, hp: 2 } as const;
 export const ROTTING_CARGO_CEILING_BONUS = { atk: 2, hp: 2 } as const;
 
 export const FRAME_DELAY_DEATH_CHAIN = 300;

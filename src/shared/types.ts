@@ -172,7 +172,7 @@ export type IconType =
   | "skull";
 
 export interface BattleAction {
-  type: "clash" | "damage" | "buff" | "heal" | "skill" | "defend" | "summon" | "death";
+  type: "clash" | "damage" | "buff" | "skill" | "defend" | "summon" | "death";
   value?: string;
   /** ダメージを与えたユニットのuid */
   source?: string;
