@@ -1,116 +1,63 @@
-import type { BattleAction, LogSegment, UnitId } from "../shared/types";
+import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg, skillDamageActions } from "./battle-context";
-import { resolveDeaths } from "./battle-deaths";
+import { pushFrame, getMult, enemyPrefix, seg } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { SUPPORT_IDX } from "./constants";
+import type { SkillContext, BeforeAttackArgs } from "./battle-skills-util";
 import {
-  atLevel,
-  BAT,
-  INQUISITOR,
-  BANSHEE,
-  REVENANT,
-  PARASITE,
-  EYE,
-  TEMPLAR,
-} from "../shared/skill-params";
+  applyBatSkill,
+  applyInquisitorSkill,
+  applyBansheeSkill,
+  applyRevenantSkill,
+  applyCatacombRatSkill,
+  applyPlagueBellSkill,
+  applyPaladinSkill,
+  applyHolyFireSkill,
+} from "./battle-skills-start";
+import {
+  applyParasiteBuff,
+  applyEyeGaze,
+  applyFamineDebuff,
+  applyRelicSwordBuff,
+} from "./battle-skills-before-attack";
 
-type SkillContext = {
-  u: BattleUnit;
-  targetArr: BattleUnit[];
-  isPlayer: boolean;
-  ctx: BattleContext;
-};
+// ── 開戦スキルレジストリ ──
 
 type StartSkillHandler = (context: SkillContext) => void;
 
-function applySkillDamage(
-  u: BattleUnit,
-  target: BattleUnit,
-  dmg: number,
-  segments: LogSegment[],
+const START_SKILL_HANDLERS = {
+  bat: applyBatSkill,
+  inquisitor: applyInquisitorSkill,
+  shrieking_throat: applyBansheeSkill,
+  revenant: applyRevenantSkill,
+  catacomb_rat: applyCatacombRatSkill,
+  plague_bell: applyPlagueBellSkill,
+  paladin: applyPaladinSkill,
+  holy_fire: applyHolyFireSkill,
+} satisfies Partial<Record<UnitId, StartSkillHandler>>;
+
+type StartSkillUnitId = keyof typeof START_SKILL_HANDLERS;
+
+function getStartSkillHandler(id: UnitId): StartSkillHandler | undefined {
+  return Object.hasOwn(START_SKILL_HANDLERS, id)
+    ? START_SKILL_HANDLERS[id as StartSkillUnitId]
+    : undefined;
+}
+
+export function runStartSkills(
+  boardArr: BattleUnit[],
+  targetArr: BattleUnit[],
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  target.hp -= dmg;
-  const prefix = enemyPrefix(isPlayer);
-  pushFrame(ctx, "skill", [prefix, ...segments], "skill", {
-    [u.uid]: { type: "skill" },
-    [target.uid]: { type: "damage", value: `-${dmg}`, source: u.uid },
+  boardArr.forEach((u) => {
+    const handler = getStartSkillHandler(u.id);
+    if (!handler) return;
+    handler({ u, targetArr, isPlayer, ctx });
   });
-  resolveDeaths(ctx);
 }
 
-function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
-  if (targetArr.length === 0) return;
-  const dmg = atLevel(BAT.damage, u.level);
-  const targetCount = Math.min(atLevel(BAT.targets, u.level), targetArr.length);
-  const chosen: BattleUnit[] = [];
-  const pool = [...targetArr];
-  for (let i = 0; i < targetCount && pool.length > 0; i++) {
-    const idx = Math.floor(ctx.rng.next() * pool.length);
-    chosen.push(pool.splice(idx, 1)[0]!);
-  }
-  for (const target of chosen) {
-    const hpBefore = target.hp;
-    applySkillDamage(
-      u,
-      target,
-      dmg,
-      [
-        seg.u(u.name),
-        "が喰らいつく！ ",
-        seg.u(target.name),
-        "に ",
-        seg.hp(`${hpBefore}→${Math.max(0, hpBefore - dmg)}`),
-      ],
-      isPlayer,
-      ctx,
-    );
-  }
-}
-
-function applyInquisitorSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
-  if (targetArr.length === 0) return;
-  const target = mustGet(targetArr, 0, "inquisitor target");
-  const dmg = atLevel(INQUISITOR.damage, u.level);
-  const hpBefore = target.hp;
-  applySkillDamage(
-    u,
-    target,
-    dmg,
-    [
-      seg.u(u.name),
-      "が裁きを下す！ ",
-      seg.u(target.name),
-      "に ",
-      seg.hp(`${hpBefore}→${Math.max(0, hpBefore - dmg)}`),
-    ],
-    isPlayer,
-    ctx,
-  );
-}
-
-function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
-  const back = targetArr[targetArr.length - 1];
-  if (!back) return;
-  const dmg = atLevel(BANSHEE.damage, u.level);
-  const hpBefore = back.hp;
-  applySkillDamage(
-    u,
-    back,
-    dmg,
-    [
-      seg.u(u.name),
-      "が叫ぶ！ 最後尾の",
-      seg.u(back.name),
-      "に ",
-      seg.hp(`${hpBefore}→${Math.max(0, hpBefore - dmg)}`),
-    ],
-    isPlayer,
-    ctx,
-  );
-}
+// ── Cholera (board iteration + スキル実装を同居) ──
 
 function applyCholeraSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   if (targetArr.length === 0) return;
@@ -144,62 +91,6 @@ function applyCholeraSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   );
 }
 
-function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
-  if (ctx.lastBattleResult !== "LOSE") return;
-  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
-  const prefix = enemyPrefix(isPlayer);
-  const maxTargets = atLevel(REVENANT.targets, u.level);
-  const buffAmount = atLevel(REVENANT.buff, u.level);
-  const actions: Record<string, BattleAction> = {
-    [u.uid]: { type: "skill" },
-  };
-  let buffed = 0;
-  for (const ally of allyBoard) {
-    if (buffed >= maxTargets) break;
-    if (ally.uid === u.uid) continue;
-    ally.atk += buffAmount;
-    actions[ally.uid] = { type: "buff", value: `+${buffAmount}/+0` };
-    buffed++;
-  }
-  if (buffed > 0) {
-    pushFrame(
-      ctx,
-      "skill",
-      [prefix, seg.u(u.name), `の眼が血走る。前方${buffed}体の攻撃力+${buffAmount}。`],
-      "skill",
-      actions,
-    );
-  }
-}
-
-const START_SKILL_HANDLERS = {
-  bat: applyBatSkill,
-  inquisitor: applyInquisitorSkill,
-  shrieking_throat: applyBansheeSkill,
-  revenant: applyRevenantSkill,
-} satisfies Partial<Record<UnitId, StartSkillHandler>>;
-
-type StartSkillUnitId = keyof typeof START_SKILL_HANDLERS;
-
-function getStartSkillHandler(id: UnitId): StartSkillHandler | undefined {
-  return Object.hasOwn(START_SKILL_HANDLERS, id)
-    ? START_SKILL_HANDLERS[id as StartSkillUnitId]
-    : undefined;
-}
-
-export function runStartSkills(
-  boardArr: BattleUnit[],
-  targetArr: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  boardArr.forEach((u) => {
-    const handler = getStartSkillHandler(u.id);
-    if (!handler) return;
-    handler({ u, targetArr, isPlayer, ctx });
-  });
-}
-
 export function applyCholeraBeforeAttack(
   board: BattleUnit[],
   targetArr: BattleUnit[],
@@ -215,41 +106,26 @@ export function applyCholeraBeforeAttack(
   }
 }
 
-function applyParasiteBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {
-  const b = atLevel(PARASITE.buff, u.level);
-  u.atk += b.atk;
-  u.hp += b.hp;
-  pushFrame(
-    ctx,
-    "skill",
-    [prefix, seg.u(u.name), "が前衛の闘争に興奮する！ ", seg.s(`+${b.atk}/+${b.hp}`)],
-    "skill",
-    { [u.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
-  );
-}
+// ── 攻撃前スキルレジストリ ──
 
-function applyEyeGaze(u: BattleUnit, enemyBoard: BattleUnit[], prefix: string, ctx: BattleContext) {
-  if (enemyBoard.length === 0 || u.skillUses <= 0) return;
-  const target = mustGet(enemyBoard, Math.floor(ctx.rng.next() * enemyBoard.length), "eye target");
-  const dmg = atLevel(EYE.damage, u.level);
-  const hpBefore = target.hp;
-  target.hp -= dmg;
-  pushFrame(
-    ctx,
-    "skill",
-    [
-      prefix,
-      seg.u(u.name),
-      "が",
-      seg.u(target.name),
-      "を睨みつける！ ",
-      seg.hp(`${hpBefore}→${Math.max(0, target.hp)}`),
-    ],
-    "skill",
-    skillDamageActions(u, target, dmg),
-  );
-  u.skillUses = u.skillUses - 1;
-  resolveDeaths(ctx);
+type BeforeAttackHandler = (args: BeforeAttackArgs) => void;
+
+const BEFORE_ATTACK_HANDLERS = {
+  parasite: ({ u, prefix, ctx }: BeforeAttackArgs) => applyParasiteBuff(u, prefix, ctx),
+  eye: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>
+    applyEyeGaze(u, enemyBoard, prefix, ctx),
+  famine_corpse: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>
+    applyFamineDebuff(u, enemyBoard, prefix, ctx),
+  relic_sword: ({ u, board, prefix, ctx }: BeforeAttackArgs) =>
+    applyRelicSwordBuff(u, board, prefix, ctx),
+} satisfies Partial<Record<UnitId, BeforeAttackHandler>>;
+
+type BeforeAttackUnitId = keyof typeof BEFORE_ATTACK_HANDLERS;
+
+function getBeforeAttackHandler(id: UnitId): BeforeAttackHandler | undefined {
+  return Object.hasOwn(BEFORE_ATTACK_HANDLERS, id)
+    ? BEFORE_ATTACK_HANDLERS[id as BeforeAttackUnitId]
+    : undefined;
 }
 
 export function applyBeforeAttackSkills(
@@ -260,42 +136,16 @@ export function applyBeforeAttackSkills(
 ) {
   if (board.length <= 1) return;
   const u = mustGet(board, SUPPORT_IDX, "before-attack board[SUPPORT_IDX]");
+  const handler = getBeforeAttackHandler(u.id);
+  if (!handler) return;
   const prefix = enemyPrefix(isPlayer);
   const mult = getMult(board, SUPPORT_IDX);
 
   for (let m = 0; m < mult; m++) {
-    if (u.id === "parasite") applyParasiteBuff(u, prefix, ctx);
-    if (u.id === "eye") applyEyeGaze(u, enemyBoard, prefix, ctx);
+    handler({ u, board, enemyBoard, prefix, ctx });
   }
 }
 
-export function applyOnHitSkills(
-  defender: BattleUnit,
-  board: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  if (defender.hp <= 0) return;
-  const idx = board.indexOf(defender);
-  if (idx === -1) return;
-  const prefix = enemyPrefix(isPlayer);
-  const mult = getMult(board, idx);
-
-  for (let m = 0; m < mult; m++) {
-    if (defender.id === "templar") {
-      const b = atLevel(TEMPLAR.atkBuff, defender.level);
-      defender.atk += b;
-      pushFrame(
-        ctx,
-        "skill",
-        [prefix, seg.u(defender.name), "が傷を受け、嗤う。", seg.s(`+${b}/+0`)],
-        "skill",
-        {
-          [defender.uid]: { type: "buff", value: `+${b}/+0` },
-        },
-      );
-    }
-  }
-}
+export { applyOnHitSkills } from "./battle-skills-on-hit";
 
 export { applyEquipmentEffects } from "./battle-equip";

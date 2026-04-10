@@ -1,6 +1,5 @@
 import { resolveDeaths } from "./battle-deaths";
 import { createSeededRng } from "./rng";
-import { atLevel, EVANGELIST } from "../shared/skill-params";
 import { makeBattleUnit, makeContext } from "./test-helpers";
 import type { BattleFrame } from "../shared/types";
 import { segmentsToPlainText } from "./test-helpers";
@@ -313,23 +312,25 @@ describe("resolveDeaths – fair tiebreaker", () => {
 });
 
 describe("resolveDeaths – evangelist plague", () => {
-  it("deals 3 damage to a random enemy when ally dies", () => {
+  it("infects a random enemy when ally dies", () => {
     const dying = makeBattleUnit({ hp: 0 });
     const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
     resolveDeaths(ctx);
-    expect(enemy.hp).toBe(7);
+    expect(enemy.equip).toBe("infection");
   });
 
-  it("brains behind evangelist doubles plague damage", () => {
+  it("brains behind evangelist infects twice (two different enemies)", () => {
     const dying = makeBattleUnit({ hp: 0 });
     const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
-    const enemy = makeBattleUnit({ hp: 20 });
-    const ctx = makeContext([dying, evangelist, brains], [enemy], null, { next: () => 0 });
+    const enemy1 = makeBattleUnit({ hp: 20 });
+    const enemy2 = makeBattleUnit({ hp: 20 });
+    const ctx = makeContext([dying, evangelist, brains], [enemy1, enemy2], null, { next: () => 0 });
     resolveDeaths(ctx);
-    expect(enemy.hp).toBe(14);
+    expect(enemy1.equip).toBe("infection");
+    expect(enemy2.equip).toBe("infection");
   });
 
   it("does not trigger when evangelist itself dies", () => {
@@ -346,7 +347,7 @@ describe("resolveDeaths – evangelist plague", () => {
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([token, evangelist], [enemy], null, { next: () => 0 });
     resolveDeaths(ctx);
-    expect(enemy.hp).toBe(7);
+    expect(enemy.equip).toBe("infection");
   });
 
   it("does nothing when enemy board is empty", () => {
@@ -358,29 +359,30 @@ describe("resolveDeaths – evangelist plague", () => {
     expect(plagueFrames).toHaveLength(0);
   });
 
-  it("cross-board plague does not let dead enemy evangelist fire", () => {
+  it("cross-board: dead enemy evangelist does not fire", () => {
     const dying = makeBattleUnit({ hp: 0 });
     const pEvangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
     const bystander = makeBattleUnit({ hp: 20 });
-    const eEvangelist = makeBattleUnit({ id: "evangelist", name: "敵伝道師", atk: 3, hp: 2 });
+    const eEvangelist = makeBattleUnit({ id: "evangelist", name: "敵伝道師", atk: 3, hp: 0 });
     const ctx = makeContext([dying, pEvangelist, bystander], [eEvangelist], null, {
       next: () => 0,
     });
     resolveDeaths(ctx);
-    expect(eEvangelist.hp).toBeLessThanOrEqual(0);
-    expect(bystander.hp).toBe(20);
+    // player側のevangelistは敵を感染させるが、dead enemy evangelistは発動しない
+    expect(bystander.equip).not.toBe("infection");
   });
 
-  it("fires once per ally death when multiple allies die simultaneously", () => {
+  it("does not re-infect already-infected enemy when only one target exists", () => {
+    // 2体死亡 → 2回発動するが、感染候補が1体のみ → 2回目はスキップ
     const dead1 = makeBattleUnit({ id: "token", hp: 0, atk: 5 });
     const dead2 = makeBattleUnit({ id: "token", hp: 0, atk: 2 });
     const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 1, hp: 10 });
     const enemy = makeBattleUnit({ hp: 20 });
     const ctx = makeContext([dead1, dead2, evangelist], [enemy], null, { next: () => 0 });
     resolveDeaths(ctx);
-    const plagueFrames = ctx.frames.filter((f) => logText(f).includes("祈りを捧げる"));
-    expect(plagueFrames).toHaveLength(2);
-    expect(enemy.hp).toBe(20 - atLevel(EVANGELIST.damage, 1) * 2);
+    expect(enemy.equip).toBe("infection");
+    const infectFrames = ctx.frames.filter((f) => logText(f).includes("纏わりつく"));
+    expect(infectFrames).toHaveLength(1);
   });
 
   it("does not fire when evangelist has hp <= 0 but is not yet spliced", () => {
@@ -393,36 +395,40 @@ describe("resolveDeaths – evangelist plague", () => {
     expect(enemy.hp).toBe(10);
   });
 
-  it("skips enemies with hp <= 0 when selecting plague target", () => {
+  it("destroys existing equip when infecting and logs it", () => {
+    const dying = makeBattleUnit({ hp: 0 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
+    const enemy = makeBattleUnit({ hp: 10, equip: "iron" });
+    const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
+    resolveDeaths(ctx);
+    expect(enemy.equip).toBe("infection");
+    const destroyFrame = ctx.frames.find((f) => logText(f).includes("装備が疫病に蝕まれた"));
+    expect(destroyFrame).toBeDefined();
+  });
+
+  it("skips enemies with hp <= 0 when selecting infection target", () => {
     const dying = makeBattleUnit({ id: "token", hp: 0 });
     const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
     const deadEnemy = makeBattleUnit({ id: "token", hp: -2 });
     const aliveEnemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([dying, evangelist], [deadEnemy, aliveEnemy], null, { next: () => 0 });
     resolveDeaths(ctx);
-    expect(deadEnemy.hp).toBe(-2);
-    expect(aliveEnemy.hp).toBe(10 - atLevel(EVANGELIST.damage, 1));
+    expect(deadEnemy.equip).not.toBe("infection");
+    expect(aliveEnemy.equip).toBe("infection");
   });
 });
 
 describe("resolveDeaths – cross-board cascade", () => {
-  it("evangelist plague kill triggers enemy death handler in next iteration", () => {
-    const dying = makeBattleUnit({ id: "token", hp: 0 });
-    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 3, hp: 5 });
-    // squire の hp を evangelist Lv1 damage ぴったりにして plague で確殺
-    const squire = makeBattleUnit({
-      id: "squire",
-      name: "従騎士",
-      atk: 1,
-      hp: atLevel(EVANGELIST.damage, 1),
-      isChurch: true,
-    });
-    const bystander = makeBattleUnit({ id: "token", name: "傍観者", atk: 2, hp: 5 });
-    const ctx = makeContext([dying, evangelist], [squire, bystander], null, { next: () => 0 });
+  it("evangelist skips already-infected enemies", () => {
+    const dead1 = makeBattleUnit({ id: "token", hp: 0, atk: 5 });
+    const dead2 = makeBattleUnit({ id: "token", hp: 0, atk: 2 });
+    const evangelist = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 1, hp: 10 });
+    const enemy1 = makeBattleUnit({ hp: 10 });
+    const enemy2 = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([dead1, dead2, evangelist], [enemy1, enemy2], null, { next: () => 0 });
     resolveDeaths(ctx);
-    // squire が plague で死亡 → 次イテレーションで squire の死亡ハンドラ発火 → bystander +1/+1
-    expect(ctx.eBoard).not.toContainEqual(expect.objectContaining({ name: "従騎士" }));
-    expect(bystander.atk).toBe(3);
-    expect(bystander.hp).toBe(6);
+    // 2体死亡 → 2回発動 → enemy1とenemy2がそれぞれ感染（同一敵を重複感染しない）
+    expect(enemy1.equip).toBe("infection");
+    expect(enemy2.equip).toBe("infection");
   });
 });

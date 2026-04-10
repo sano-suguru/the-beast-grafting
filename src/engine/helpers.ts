@@ -76,7 +76,7 @@ const generateTeamName = (faction: EnemyFaction, rng: Rng): string => {
   return `[${faction}] ${adj}${noun}`;
 };
 
-const generateCultTeam = (round: number): UnitInstance[] => {
+const generateCultTeam = (round: number, rng: Rng): UnitInstance[] => {
   if (round === 1) return [createUnit("squire"), createUnit("church_hound")];
   if (round <= 3)
     return [createUnit("priest"), createUnit("inquisitor"), createUnit("church_hound")];
@@ -88,16 +88,42 @@ const generateCultTeam = (round: number): UnitInstance[] => {
       createUnit("church_beast"),
       createUnit("church_hound"),
     ];
-  return [
-    createUnit("templar"),
-    createUnit("templar"),
-    createUnit("priest"),
-    createUnit("church_beast"),
-    createUnit("church_beast"),
-  ];
+  if (round <= 8)
+    return [
+      createUnit("paladin"),
+      createUnit("flagellant"),
+      createUnit("templar"),
+      createUnit("priest"),
+      createUnit("church_beast"),
+    ];
+  if (round <= 10)
+    return [
+      createUnit("cathedral"),
+      createUnit("relic_sword"),
+      createUnit("paladin"),
+      createUnit("flagellant"),
+      createUnit("templar"),
+    ];
+  if (round <= 12)
+    return [
+      createUnit("holy_fire"),
+      createUnit("seraph"),
+      createUnit("cathedral"),
+      createUnit("relic_sword"),
+      createUnit("paladin"),
+    ];
+  return pickRandom(CULT_TEMPLATES_LATE, rng).map(createUnit);
 };
 
-const generateGrafterTeam = (round: number): UnitInstance[] => {
+const CULT_TEMPLATES_LATE: ChurchUnitId[][] = [
+  ["archangel", "risen_pope", "holy_fire", "seraph", "cathedral"],
+  ["archangel", "holy_fire", "seraph", "relic_sword", "paladin"],
+  ["risen_pope", "risen_pope", "holy_fire", "cathedral", "seraph"],
+  ["cathedral", "seraph", "flagellant", "archangel", "paladin"],
+  ["risen_pope", "relic_sword", "flagellant", "holy_fire", "paladin"],
+];
+
+const generateGrafterTeam = (round: number, rng: Rng): UnitInstance[] => {
   if (round <= 2) return [createUnit("bat"), createUnit("rat"), createUnit("hound")];
   if (round <= 4)
     return [createUnit("martyr"), createUnit("beast"), createUnit("hound"), createUnit("bat")];
@@ -117,21 +143,29 @@ const generateGrafterTeam = (round: number): UnitInstance[] => {
       createUnit("maiden"),
       createUnit("hound"),
     ];
-  return [
-    createUnit("shrieking_throat"),
-    createUnit("hundred_arms"),
-    createUnit("eye"),
-    createUnit("parasite"),
-    createUnit("maiden"),
-  ];
+  if (round <= 12)
+    return [
+      createUnit("shrieking_throat"),
+      createUnit("hundred_arms"),
+      createUnit("eye"),
+      createUnit("parasite"),
+      createUnit("maiden"),
+    ];
+  return pickRandom(GRAFTER_TEMPLATES_LATE, rng).map(createUnit);
 };
+
+const GRAFTER_TEMPLATES_LATE: RegularUnitId[][] = [
+  ["organ_grinder", "shrieking_throat", "hundred_arms", "eye", "grinning_skull"],
+  ["beelzebub", "eye", "hundred_arms", "parasite", "grinning_skull"],
+  ["howling_giant", "organ_grinder", "flayed_saint", "eye", "parasite"],
+];
 
 export const generateEnemyTeam = (round: number, rng: Rng): EnemyTeam => {
   const isCult = rng.next() > round * 0.1;
   const type = isCult ? "教団" : "同業者";
   const teamName = generateTeamName(type, rng);
 
-  let units = isCult ? generateCultTeam(round) : generateGrafterTeam(round);
+  let units = isCult ? generateCultTeam(round, rng) : generateGrafterTeam(round, rng);
 
   // Make end-game enemies stronger randomly
   if (round >= 5) {

@@ -23,22 +23,47 @@ import {
   ZEALOT,
   HUNDRED_ARMS,
   ROT_RING,
+  CATACOMB_RAT,
+  PLAGUE_BELL,
+  PALADIN,
+  HOLY_FIRE,
+  FAMINE_CORPSE,
+  RELIC_SWORD,
+  LEECH,
+  STITCHED_TWIN,
+  FLAYED_SAINT,
+  FLAGELLANT,
+  HOWLING_GIANT,
+  ORGAN_GRINDER,
+  RISEN_POPE,
+  HANGED_MAN,
+  SERAPH,
+  CROW,
+  SIN_EATER,
+  CATHEDRAL,
+  CHARNEL_PIT,
+  GRINNING_SKULL,
+  ARCHANGEL,
+  BLOOD_FONT,
+  CORPSE_GARDEN,
+  BONE_TREE,
+  GRAVE_WORM,
+  MARKET_VULTURE,
+  ASH_FUNGUS,
 } from "./skill-params";
+
+const houndDeathText = (lv: number) => {
+  const b = atLevel(HOUND.token, lv);
+  return `死亡: ${b.atk}/${b.hp}頭部を召喚`;
+};
 
 const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
   rat: (lv) => {
     const b = atLevel(RAT.deathBuff, lv);
     return `死亡: 味方1体に+${b.atk}/+${b.hp}`;
   },
-  hound: (lv) => {
-    const b = atLevel(HOUND.token, lv);
-    return `死亡: ${b.atk}/${b.hp}頭部を召喚`;
-  },
-  // hound と同一の死亡スキル（同ハンドラ・同パラメータ）
-  church_hound: (lv) => {
-    const b = atLevel(HOUND.token, lv);
-    return `死亡: ${b.atk}/${b.hp}頭部を召喚`;
-  },
+  hound: houndDeathText,
+  church_hound: houndDeathText,
   bat: (lv) => {
     const n = atLevel(BAT.targets, lv);
     const d = atLevel(BAT.damage, lv);
@@ -70,7 +95,7 @@ const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
   },
   revenant: (lv) =>
     `開戦: 前夜敗北なら前方${atLevel(REVENANT.targets, lv)}体の攻撃+${atLevel(REVENANT.buff, lv)}`,
-  evangelist: (lv) => `味方死亡: ランダムな敵に${atLevel(EVANGELIST.damage, lv)}ダメージ`,
+  evangelist: (lv) => `味方死亡: ランダムな敵${atLevel(EVANGELIST.targets, lv)}体を感染させる`,
   altar: (lv) => {
     const b = atLevel(ALTAR.buff, lv);
     return `味方配置/召喚: その味方に+${b.atk}/+${b.hp}`;
@@ -94,10 +119,75 @@ const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
   eye: (lv) =>
     `直前の味方が攻撃: ランダム敵に${atLevel(EYE.damage, lv)}ダメ(${atLevel(EYE.uses, lv)}回/戦)`,
   rot_ring: (lv) => `Tier1購入: 味方全体に+1/+1(${atLevel(ROT_RING.uses, lv)}回/夜)`,
+  grave_worm: (lv) => {
+    const b = atLevel(GRAVE_WORM.sellBuff, lv);
+    return `解体: ランダムな味方1体に+${b.atk}/+${b.hp}`;
+  },
+  leech: (lv) => `被弾: 自身のHP+${atLevel(LEECH.hpBuff, lv)}`,
+  crow: (lv) => {
+    const b = atLevel(CROW.buff, lv);
+    return `味方死亡: 自身に+${b.atk}/+${b.hp}`;
+  },
+  catacomb_rat: (lv) => `開戦: ランダムな敵にTier×${atLevel(CATACOMB_RAT.tierMult, lv)}ダメージ`,
+  stitched_twin: (lv) =>
+    `被弾: 自身の攻撃+${atLevel(STITCHED_TWIN.atkBuff, lv)}、後方味方にも同ダメージ`,
+  market_vulture: (lv) => {
+    const b = atLevel(MARKET_VULTURE.shopBuff, lv);
+    return `味方解体: 闇市場の全素体に+${b.atk}/+${b.hp}`;
+  },
+  flayed_saint: (lv) => `被弾: ランダムな敵に${atLevel(FLAYED_SAINT.damage, lv)}ダメージ`,
+  charnel_pit: (lv) => {
+    const b = atLevel(CHARNEL_PIT.token, lv);
+    return `味方${CHARNEL_PIT.threshold}体死亡ごと: ${b.atk}/${b.hp}を召喚`;
+  },
+  famine_corpse: (lv) => `直前の味方が攻撃: 敵前衛の攻撃-${atLevel(FAMINE_CORPSE.atkDebuff, lv)}`,
+  sin_eater: (lv) =>
+    `味方死亡: 死んだ味方の攻撃を吸収(1回上限${atLevel(SIN_EATER.atkCap, lv)}, ${atLevel(SIN_EATER.uses, lv)}回)`,
+  blood_font: (lv) => `出陣時: 最もHPが低い味方に+0/+${atLevel(BLOOD_FONT.hpBuff, lv)}`,
+  ash_fungus: (lv) => `味方解体: スタッツの${atLevel(ASH_FUNGUS.percent, lv)}%をランダム味方にバフ`,
+  plague_bell: (lv) => `開戦: 敵全体に${atLevel(PLAGUE_BELL.damage, lv)}ダメージ`,
+  hanged_man: (lv) => `死亡: 最終スタッツを前方の味方${atLevel(HANGED_MAN.targets, lv)}体に分配`,
+  organ_grinder: (lv) => `撃破: 敵全体に${atLevel(ORGAN_GRINDER.damage, lv)}ダメージ`,
+  grinning_skull: (lv) => {
+    const b = atLevel(GRINNING_SKULL.buff, lv);
+    return `味方${GRINNING_SKULL.threshold}体死亡ごと: 味方全体に+${b.atk}/+${b.hp}`;
+  },
+  corpse_garden: (lv) => {
+    const b = atLevel(CORPSE_GARDEN.buff, lv);
+    return `出陣時: 空きに+${b.atk}/+${b.hp}のTier1を召喚`;
+  },
+  bone_tree: (lv) => {
+    const b = atLevel(BONE_TREE.buff, lv);
+    return `購入: Tier数×味方全体に+${b.atk}/+${b.hp}`;
+  },
+  howling_giant: (lv) => `被弾: 味方全体の攻撃+${atLevel(HOWLING_GIANT.atkBuff, lv)}`,
+  paladin: (lv) => `開戦: 味方全体のHP+${atLevel(PALADIN.hpBuff, lv)}`,
+  flagellant: (lv) => {
+    const b = atLevel(FLAGELLANT.buff, lv);
+    return `被弾: 後方味方に+${b.atk}/+${b.hp}`;
+  },
+  cathedral: (lv) => {
+    const b = atLevel(CATHEDRAL.token, lv);
+    return `味方死亡: ${b.atk}/${b.hp}信徒を召喚(最大${atLevel(CATHEDRAL.uses, lv)}回/戦)`;
+  },
+  relic_sword: (lv) => `直前の味方が攻撃: 前衛の攻撃+${atLevel(RELIC_SWORD.atkBuff, lv)}`,
+  seraph: (lv) => {
+    const b = atLevel(SERAPH.deathBuff, lv);
+    return `死亡: 味方全体に+${b.atk}/+${b.hp}`;
+  },
+  holy_fire: (lv) => `開戦: 最もHPの高い敵に${atLevel(HOLY_FIRE.damage, lv)}ダメージ`,
+  archangel: (lv) => {
+    const b = atLevel(ARCHANGEL.buff, lv);
+    return `味方${ARCHANGEL.threshold}体死亡ごと: 自身に+${b.atk}/+${b.hp}`;
+  },
+  risen_pope: (lv) => {
+    const b = atLevel(RISEN_POPE.buff, lv);
+    return `撃破: 味方全体に+${b.atk}/+${b.hp}`;
+  },
 };
 
 /** テンプレートが登録されているユニットID一覧 */
-export const TEMPLATED_UNIT_IDS: ReadonlySet<string> = new Set(Object.keys(TEMPLATES));
+export const TEMPLATED_UNIT_IDS: ReadonlySet<UnitId> = new Set(Object.keys(TEMPLATES) as UnitId[]);
 
 export function getSkillText(id: UnitId, level: number, fallback: string): string {
   const tmpl = TEMPLATES[id];

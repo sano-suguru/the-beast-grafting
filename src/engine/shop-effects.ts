@@ -1,11 +1,44 @@
 import { ITEMS } from "../shared/data/items";
-import type { UnitInstance, ShopItemSlot } from "../shared/types";
+import type { UnitId, UnitInstance, ShopItemSlot } from "../shared/types";
+import type { Rng } from "./rng";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { invariant } from "../shared/invariant";
 import { CUMULATIVE_EXP, MAX_UNIT_LEVEL } from "../shared/constants";
-import { atLevel, ALTAR, MACHINE, ROT_RING } from "../shared/skill-params";
+import {
+  atLevel,
+  ALTAR,
+  MACHINE,
+  ROT_RING,
+  BONE_TREE,
+  GRAVE_WORM,
+  MARKET_VULTURE,
+  ASH_FUNGUS,
+  type Buff,
+  type Scaled,
+} from "../shared/skill-params";
 import { getSkillText } from "../shared/skill-text";
 import { computeZealotBuff } from "./buff-utils";
+
+function getActiveIndices(board: (UnitInstance | null)[]): number[] {
+  return board.map((u, i) => (u ? i : null)).filter((i): i is number => i !== null);
+}
+
+function sumBuffByUnitId(
+  board: (UnitInstance | null)[],
+  unitId: UnitId,
+  param: Scaled<Buff>,
+  multiplier = 1,
+): { atk: number; hp: number } {
+  let atk = 0;
+  let hp = 0;
+  for (const u of board) {
+    if (!u || u.id !== unitId) continue;
+    const b = atLevel(param, u.level);
+    atk += b.atk * multiplier;
+    hp += b.hp * multiplier;
+  }
+  return { atk, hp };
+}
 
 interface GraftResult {
   unit: UnitInstance;
@@ -135,28 +168,94 @@ export const applySummonEffects = (
   return modified ? nextBoard : currentBoard;
 };
 
+function applyMachineFrontlineBuff(board: (UnitInstance | null)[]): boolean {
+  const frontIdx = board.findIndex((u) => u !== null);
+  if (frontIdx === -1) return false;
+  let modified = false;
+  for (const u of board) {
+    if (!u || u.id !== "machine") continue;
+    modified = true;
+    const front = board[frontIdx];
+    if (!front) continue;
+    const mb = atLevel(MACHINE.buff, u.level);
+    board[frontIdx] = {
+      ...front,
+      buffAtk: front.buffAtk + mb.atk,
+      buffHp: front.buffHp + mb.hp,
+    };
+  }
+  return modified;
+}
+
 export const applyEndOfTurnEffects = (
   currentBoard: (UnitInstance | null)[],
 ): (UnitInstance | null)[] => {
   const nextBoard = [...currentBoard];
-  let modified = false;
-
-  // SAP: Monkey相当
-  const frontIdx = nextBoard.findIndex((u) => u !== null);
-  if (frontIdx !== -1) {
-    nextBoard.forEach((u) => {
-      if (!u || u.id !== "machine") return;
-      modified = true;
-      const front = nextBoard[frontIdx];
-      if (!front) return;
-      const mb = atLevel(MACHINE.buff, u.level);
-      nextBoard[frontIdx] = {
-        ...front,
-        buffAtk: front.buffAtk + mb.atk,
-        buffHp: front.buffHp + mb.hp,
-      };
-    });
-  }
-
+  const modified = applyMachineFrontlineBuff(nextBoard);
   return modified ? nextBoard : currentBoard;
+};
+
+interface SellResult {
+  board: (UnitInstance | null)[];
+  shopBuff?: { atk: number; hp: number } | undefined;
+}
+
+export function buffRandomUnit(
+  board: (UnitInstance | null)[],
+  atkBuff: number,
+  hpBuff: number,
+  rng: Rng,
+): void {
+  const active = getActiveIndices(board);
+  if (active.length === 0) return;
+  const idx = active[Math.floor(rng.next() * active.length)]!;
+  const target = board[idx]!;
+  board[idx] = { ...target, buffAtk: target.buffAtk + atkBuff, buffHp: target.buffHp + hpBuff };
+}
+
+function applyGraveWormSell(soldUnit: UnitInstance, nextBoard: (UnitInstance | null)[], rng: Rng) {
+  if (soldUnit.id !== "grave_worm") return;
+  const b = atLevel(GRAVE_WORM.sellBuff, soldUnit.level);
+  buffRandomUnit(nextBoard, b.atk, b.hp, rng);
+}
+
+function collectMarketVultureShopBuff(
+  board: (UnitInstance | null)[],
+): { atk: number; hp: number } | undefined {
+  const { atk, hp } = sumBuffByUnitId(board, "market_vulture", MARKET_VULTURE.shopBuff);
+  return atk > 0 || hp > 0 ? { atk, hp } : undefined;
+}
+
+function applyAshFungusSell(soldUnit: UnitInstance, nextBoard: (UnitInstance | null)[], rng: Rng) {
+  const totalStats = effectiveAtk(soldUnit) + effectiveHp(soldUnit);
+  for (const u of nextBoard) {
+    if (!u || u.id !== "ash_fungus") continue;
+    const buff = Math.floor(totalStats * (atLevel(ASH_FUNGUS.percent, u.level) / 100));
+    if (buff <= 0) continue;
+    const half = Math.floor(buff / 2);
+    buffRandomUnit(nextBoard, buff - half, half, rng);
+  }
+}
+
+export const applySellEffects = (
+  soldUnit: UnitInstance,
+  currentBoard: (UnitInstance | null)[],
+  rng: Rng,
+): SellResult => {
+  const nextBoard = [...currentBoard];
+  applyGraveWormSell(soldUnit, nextBoard, rng);
+  const shopBuff = collectMarketVultureShopBuff(nextBoard);
+  applyAshFungusSell(soldUnit, nextBoard, rng);
+  return { board: nextBoard, shopBuff };
+};
+
+export const applyBoneTreeBuyEffects = (
+  boughtUnit: UnitInstance,
+  currentBoard: (UnitInstance | null)[],
+): (UnitInstance | null)[] => {
+  const { atk, hp } = sumBuffByUnitId(currentBoard, "bone_tree", BONE_TREE.buff, boughtUnit.tier);
+  if (atk === 0 && hp === 0) return currentBoard;
+  return currentBoard.map((u) =>
+    u ? { ...u, buffAtk: u.buffAtk + atk, buffHp: u.buffHp + hp } : null,
+  );
 };

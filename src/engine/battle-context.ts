@@ -18,9 +18,11 @@ import { MAX_OPS } from "./constants";
 export interface BattleUnit extends UnitInstance {
   atk: number;
   hp: number;
+  preDeathHp: number;
   battleBaseAtk: number;
   battleBaseHp: number;
   altarBuffed?: boolean;
+  avengeDeathCount: number;
   equipUses: number;
   skillUses: number;
 }
@@ -85,10 +87,41 @@ export function skillDamageActions(
   };
 }
 
+export function aoeDamageActions(
+  attacker: BattleUnit,
+  targets: readonly BattleUnit[],
+  damage: number,
+): Record<string, BattleAction> {
+  const actions: Record<string, BattleAction> = { [attacker.uid]: { type: "skill" } };
+  for (const t of targets)
+    actions[t.uid] = { type: "damage", value: `-${damage}`, source: attacker.uid };
+  return actions;
+}
+
+export function aoeBuffActions(
+  source: BattleUnit,
+  targets: readonly BattleUnit[],
+  value: string,
+): Record<string, BattleAction> {
+  const actions: Record<string, BattleAction> = { [source.uid]: { type: "skill" } };
+  for (const t of targets) actions[t.uid] = { type: "buff", value };
+  return actions;
+}
+
 export const enemyPrefix = (isPlayer: boolean): string => (isPlayer ? "" : "敵の");
 
 export function getMult(boardArr: BattleUnit[], idx: number): number {
   return boardArr[idx + 1]?.id === "brains" ? 2 : 1;
+}
+
+export function getPuppeteerDeathMult(boardArr: BattleUnit[], deathIdx: number): number {
+  const prev = boardArr[deathIdx - 1];
+  return prev?.id === "puppeteer" && prev.hp > 0 ? 2 : 1;
+}
+
+export function takeDamage(unit: BattleUnit, amount: number): void {
+  if (unit.hp > 0) unit.preDeathHp = unit.hp;
+  unit.hp -= amount;
 }
 
 export function createToken(name: string, atk: number, hp: number, isChurch = false): BattleUnit {
@@ -96,6 +129,7 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
     name,
     atk,
     hp,
+    preDeathHp: hp,
     id: "token",
     uid: generateUid(),
     equip: null,
@@ -111,6 +145,7 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
     skillText: "",
     lore: "",
     exp: 0,
+    avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
   };
@@ -132,6 +167,7 @@ export function createSummonedUnit(
     ...unitData,
     atk,
     hp,
+    preDeathHp: hp,
     battleBaseAtk: atk,
     battleBaseHp: hp,
     baseAtk: atk,
@@ -143,6 +179,7 @@ export function createSummonedUnit(
     level: 1,
     isChurch,
     exp: 0,
+    avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
   };

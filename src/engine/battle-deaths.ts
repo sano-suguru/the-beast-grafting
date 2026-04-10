@@ -1,47 +1,61 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg } from "./battle-context";
+import { pushFrame, getMult, getPuppeteerDeathMult, enemyPrefix, seg } from "./battle-context";
 import { invariant } from "../shared/invariant";
 import {
   getDeathHandler,
   handleEquipDeath,
-  handleBeelzebubSpawns,
-  handleEvangelistPlague,
+  SPAWN_ALLY_REACTIONS,
+  PERSISTENT_ALLY_REACTIONS,
+  type AllyReactionCtx,
 } from "./battle-deaths-handlers";
+import { processAvenge, incrementAvengeCounters } from "./battle-avenge";
 import { DEATH_CASCADE_LIMIT, FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { atLevel, ALTAR } from "../shared/skill-params";
 
+function buffTokenFromAltar(
+  token: BattleUnit,
+  altar: BattleUnit,
+  altarIdx: number,
+  board: BattleUnit[],
+  prefix: string,
+  ctx: BattleContext,
+) {
+  const mult = getMult(board, altarIdx);
+  const ab = atLevel(ALTAR.buff, altar.level);
+  const atkBuff = ab.atk * mult;
+  const hpBuff = ab.hp * mult;
+  token.atk += atkBuff;
+  token.hp += hpBuff;
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      prefix,
+      seg.u(altar.name),
+      "から瘴気が溢れる。",
+      seg.u(token.name),
+      `の肉が膨れ上がる！ +${atkBuff}/+${hpBuff} → `,
+      seg.s(`${token.atk}/${token.hp}`),
+    ],
+    "skill",
+    {
+      [token.uid]: { type: "buff", value: `+${atkBuff}/+${hpBuff}` },
+    },
+    FRAME_DELAY_DEATH_CHAIN,
+  );
+}
+
 function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
   const prefix = enemyPrefix(isPlayer);
-  board.forEach((u) => {
-    if (u.id !== "token" || u.altarBuffed) return;
-    board.forEach((a, aIdx) => {
-      if (a.id !== "altar") return;
-      const mult = getMult(board, aIdx);
-      const ab = atLevel(ALTAR.buff, a.level);
-      const atkBuff = ab.atk * mult;
-      const hpBuff = ab.hp * mult;
-      u.atk += atkBuff;
-      u.hp += hpBuff;
-      pushFrame(
-        ctx,
-        "skill",
-        [
-          prefix,
-          seg.u(a.name),
-          "から瘴気が溢れる。",
-          seg.u(u.name),
-          `の肉が膨れ上がる！ +${atkBuff}/+${hpBuff} → `,
-          seg.s(`${u.atk}/${u.hp}`),
-        ],
-        "skill",
-        {
-          [u.uid]: { type: "buff", value: `+${atkBuff}/+${hpBuff}` },
-        },
-        FRAME_DELAY_DEATH_CHAIN,
-      );
-    });
-    u.altarBuffed = true;
-  });
+  for (const token of board) {
+    if (token.id !== "token" || token.altarBuffed) continue;
+    for (let aIdx = 0; aIdx < board.length; aIdx++) {
+      const altar = board[aIdx]!;
+      if (altar.id !== "altar") continue;
+      buffTokenFromAltar(token, altar, aIdx, board, prefix, ctx);
+    }
+    token.altarBuffed = true;
+  }
 }
 
 function selectDeadUnit(
@@ -70,26 +84,58 @@ function getSuccessor(board: BattleUnit[], idx: number): BattleUnit | null {
   return idx < board.length ? (board[idx] ?? null) : null;
 }
 
+function executeOwnDeathSkills(
+  dead: BattleUnit,
+  board: BattleUnit[],
+  insertIdx: number,
+  unitMult: number,
+  equipMult: number,
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  const handler = getDeathHandler(dead.id);
+  for (let m = 0; m < unitMult; m++) {
+    const successor = getSuccessor(board, insertIdx);
+    const successor2 = getSuccessor(board, insertIdx + 1);
+    if (handler) handler({ dead, board, idx: insertIdx, isPlayer, ctx, successor, successor2 });
+  }
+  for (let m = 0; m < equipMult; m++) {
+    handleEquipDeath(dead, board, insertIdx, isPlayer, ctx);
+  }
+}
+
+function executeAllyReactions(
+  dead: BattleUnit,
+  board: BattleUnit[],
+  deathIdx: number,
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
+  const r: AllyReactionCtx = { dead, board, enemyBoard, deathIdx, isPlayer, ctx };
+  if (dead.id !== "token") {
+    for (const react of SPAWN_ALLY_REACTIONS) react(r);
+  }
+  for (const react of PERSISTENT_ALLY_REACTIONS) react(r);
+}
+
 function executeDeathEffects(
   dead: BattleUnit,
   board: BattleUnit[],
   insertIdx: number,
   mult: number,
+  deathMult: number,
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  const successor = getSuccessor(board, insertIdx);
-  const successor2 = getSuccessor(board, insertIdx + 1);
-  const handler = getDeathHandler(dead.id);
-  for (let m = 0; m < mult; m++) {
-    if (handler) handler({ dead, board, idx: insertIdx, isPlayer, ctx, successor, successor2 });
-    handleEquipDeath(dead, board, insertIdx, isPlayer, ctx);
-  }
-  if (dead.id !== "token") {
-    handleBeelzebubSpawns(board, isPlayer, ctx, insertIdx);
-  }
-  const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
-  handleEvangelistPlague(board, enemyBoard, isPlayer, ctx);
+  executeOwnDeathSkills(dead, board, insertIdx, mult * deathMult, mult, isPlayer, ctx);
+  executeAllyReactions(dead, board, insertIdx, isPlayer, ctx);
+}
+
+function incrementAndProcessAvenge(isPlayer: boolean, ctx: BattleContext): void {
+  const board = isPlayer ? ctx.pBoard : ctx.eBoard;
+  incrementAvengeCounters(board);
+  processAvenge(board, isPlayer, ctx);
 }
 
 function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext): boolean {
@@ -100,6 +146,7 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   const dead = board[bestIdx];
   invariant(dead, "dead unit must exist at bestIdx");
   const mult = getMult(board, bestIdx);
+  const deathMult = getPuppeteerDeathMult(board, bestIdx);
 
   const prefix = enemyPrefix(isPlayer);
   pushFrame(ctx, "death", [prefix, seg.u(dead.name), " は無残に引き裂かれた。"], "death", {
@@ -107,7 +154,10 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   });
 
   board.splice(bestIdx, 1);
-  executeDeathEffects(dead, board, bestIdx, mult, isPlayer, ctx);
+  executeDeathEffects(dead, board, bestIdx, mult, deathMult, isPlayer, ctx);
+
+  incrementAndProcessAvenge(isPlayer, ctx);
+
   return true;
 }
 

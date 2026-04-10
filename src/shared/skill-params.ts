@@ -1,5 +1,4 @@
 import type { MAX_UNIT_LEVEL } from "./constants";
-import type { UnitId } from "./types";
 import { invariant } from "./invariant";
 
 type Tuple<T, N extends number, R extends T[] = []> = R["length"] extends N
@@ -7,7 +6,7 @@ type Tuple<T, N extends number, R extends T[] = []> = R["length"] extends N
   : Tuple<T, N, [T, ...R]>;
 
 /** MAX_UNIT_LEVEL 要素のタプル。要素数は MAX_UNIT_LEVEL から自動導出 */
-type Scaled<T> = Tuple<T, typeof MAX_UNIT_LEVEL>;
+export type Scaled<T> = Tuple<T, typeof MAX_UNIT_LEVEL>;
 
 export function atLevel<T>(values: Scaled<T>, level: number): T {
   invariant(level >= 1 && level <= values.length, `atLevel: level ${level} out of range`);
@@ -21,7 +20,7 @@ type SB = Scaled<Buff>;
 // ── 開戦スキル ──
 
 export const BAT = {
-  damage: [1, 1, 1] as SN,
+  damage: [1, 1, 1] as SN, // targets がスケールするためダメージは固定
   targets: [1, 2, 3] as SN,
 };
 
@@ -36,6 +35,22 @@ export const BANSHEE = {
 export const REVENANT = {
   targets: [3, 4, 5] as SN,
   buff: [1, 2, 3] as SN,
+};
+
+export const CATACOMB_RAT = {
+  tierMult: [1, 2, 3] as SN,
+};
+
+export const PLAGUE_BELL = {
+  damage: [2, 4, 6] as SN,
+};
+
+export const PALADIN = {
+  hpBuff: [1, 2, 3] as SN,
+};
+
+export const HOLY_FIRE = {
+  damage: [10, 15, 20] as SN,
 };
 
 // ── 攻撃前スキル ──
@@ -57,116 +72,121 @@ export const EYE = {
   uses: [5, 7, 9] as SN,
 };
 
+export const FAMINE_CORPSE = {
+  atkDebuff: [2, 3, 4] as SN,
+};
+
+export const RELIC_SWORD = {
+  atkBuff: [2, 4, 6] as SN,
+};
+
 // ── 被弾スキル ──
 
 export const TEMPLAR = {
   atkBuff: [1, 2, 3] as SN,
 };
 
-// ── 戦闘スキル ──
+export const LEECH = {
+  hpBuff: [1, 2, 3] as SN,
+};
+
+export const STITCHED_TWIN = {
+  atkBuff: [2, 3, 4] as SN,
+};
+
+export const FLAYED_SAINT = {
+  damage: [2, 4, 6] as SN,
+};
+
+export const FLAGELLANT = {
+  buff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 1 },
+    { atk: 2, hp: 2 },
+  ] as SB,
+};
+
+export const HOWLING_GIANT = {
+  atkBuff: [1, 2, 3] as SN,
+};
+
+// ── 戦闘スキル（撃破） ──
 
 export const HUNDRED_ARMS = {
   damageT1: [8, 16, 24] as SN,
   damageDefault: [4, 8, 12] as SN,
 };
 
+export const ORGAN_GRINDER = {
+  damage: [2, 4, 6] as SN,
+};
+
+export const RISEN_POPE = {
+  buff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+  ] as SB,
+};
+
 // ── 死亡スキル ──
+export {
+  RAT,
+  SQUIRE,
+  MARTYR,
+  PRIEST,
+  HOUND,
+  BEAST,
+  CHURCH_BEAST,
+  HANGED_MAN,
+  SERAPH,
+  EVANGELIST,
+  CROW,
+  SIN_EATER,
+  CATHEDRAL,
+  BEELZEBUB,
+} from "./skill-params-death";
 
-export const RAT = {
-  deathBuff: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-  ] as SB,
-};
+// ── Avengeスキル ──
 
-export const SQUIRE = {
-  deathBuff: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-  ] as SB,
-};
-
-export const MARTYR = {
-  deathBuff: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-  ] as SB,
-};
-
-export const PRIEST = {
-  deathBuff: [
-    { atk: 0, hp: 1 },
-    { atk: 0, hp: 2 },
-    { atk: 0, hp: 3 },
-  ] as SB,
-};
-
-export const HOUND = {
+export const CHARNEL_PIT = {
+  threshold: 2,
   token: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
     { atk: 3, hp: 3 },
+    { atk: 5, hp: 5 },
+    { atk: 7, hp: 7 },
   ] as SB,
 };
 
-export const BEAST = {
-  summon: [
-    { atk: 2, hp: 2 },
+export const GRINNING_SKULL = {
+  threshold: 3,
+  buff: [
+    { atk: 3, hp: 3 },
+    { atk: 5, hp: 5 },
+    { atk: 7, hp: 7 },
+  ] as SB,
+};
+
+export const ARCHANGEL = {
+  threshold: 2,
+  buff: [
     { atk: 4, hp: 4 },
     { atk: 6, hp: 6 },
-  ] as SB,
-};
-
-export const CHURCH_BEAST = {
-  token: [
-    { atk: 2, hp: 2 },
-    { atk: 4, hp: 4 },
-    { atk: 6, hp: 6 },
-  ] as SB,
-};
-
-export const EVANGELIST = {
-  damage: [3, 6, 9] as SN,
-};
-
-export const BEELZEBUB = {
-  token: [
-    { atk: 4, hp: 4 },
     { atk: 8, hp: 8 },
-    { atk: 12, hp: 12 },
   ] as SB,
 };
 
 // ── ショップスキル ──
-
-export const ALTAR = {
-  buff: [
-    { atk: 3, hp: 1 },
-    { atk: 6, hp: 2 },
-    { atk: 9, hp: 3 },
-  ] as SB,
-};
-
-export const MACHINE = {
-  buff: [
-    { atk: 2, hp: 2 },
-    { atk: 4, hp: 4 },
-    { atk: 6, hp: 6 },
-  ] as SB,
-};
-
-export const ZEALOT = {
-  summonBuff: [1, 2, 3] as SN,
-};
-
-export const ROT_RING = {
-  uses: [4, 5, 6] as SN,
-};
-
-/** 売却時の血液獲得量（レベル + beggarボーナス） */
-export function sellBloodGain(level: number, id: UnitId): number {
-  return level + (id === "beggar" ? 1 : 0);
-}
+export {
+  ALTAR,
+  MACHINE,
+  ZEALOT,
+  ROT_RING,
+  BLOOD_FONT,
+  CORPSE_GARDEN,
+  BONE_TREE,
+  GRAVE_WORM,
+  MARKET_VULTURE,
+  ASH_FUNGUS,
+  sellBloodGain,
+} from "./skill-params-shop";

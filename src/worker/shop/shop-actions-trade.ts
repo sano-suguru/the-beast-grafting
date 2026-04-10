@@ -4,7 +4,13 @@ import type { UnitInstance, ShopSlot, OriginId } from "../../shared/types";
 import type { ShopSlotJson } from "../../db/shop-state-types";
 import { UNIT_COST } from "../../shared/constants";
 import { sellBloodGain } from "../../shared/skill-params";
-import { applyBuyEffects, applyChaliceEffect } from "../../engine/shop-effects";
+import {
+  applyBuyEffects,
+  applyChaliceEffect,
+  applySellEffects,
+  applyBoneTreeBuyEffects,
+  buffRandomUnit,
+} from "../../engine/shop-effects";
 import type { ShopStateRow } from "./shop-state-row";
 import {
   slotFromJson,
@@ -118,13 +124,14 @@ function finalizeBuy(
   const { board: newBoard, leveledUp } = placeResult.value;
 
   const buyResult = applyBuyEffects(unit, newBoard, state.rotRingUses);
+  const throneBoard = applyBoneTreeBuyEffects(unit, buyResult.board);
   const { rng, saveRng } = withRng(state);
   const rewards = generateLevelUpRewards(leveledUp, state.round, rng);
 
   return ok({
     ...state,
     blood: state.blood - cost,
-    board: instancesToBoard(buyResult.board),
+    board: instancesToBoard(throneBoard),
     ...(opts.shopUnits ? { shopUnits: opts.shopUnits } : {}),
     shopItems: buyResult.chaliceTriggered
       ? itemSlotsToJson(applyChaliceEffect(itemSlotsFromJson(state.shopItems)))
@@ -134,6 +141,26 @@ function finalizeBuy(
     undoSnapshot: captureUndo(state),
     ...saveRng(),
   });
+}
+
+function applyShopBuff(
+  shopSlots: ShopStateRow["shopUnits"],
+  buff: { atk: number; hp: number },
+): ShopStateRow["shopUnits"] {
+  return slotsToJson(
+    slotsFromJson(shopSlots).map((s) =>
+      s
+        ? {
+            ...s,
+            unit: {
+              ...s.unit,
+              buffAtk: s.unit.buffAtk + buff.atk,
+              buffHp: s.unit.buffHp + buff.hp,
+            },
+          }
+        : null,
+    ),
+  );
 }
 
 export function executeSell(
@@ -146,29 +173,23 @@ export function executeSell(
   if (!unit) return err({ type: "INVALID_TARGET", reason: "slot_empty" });
 
   const bloodGain = sellBloodGain(unit.level, unit.id);
-  const newBoard = [...instances];
+  let newBoard: (UnitInstance | null)[] = [...instances];
   newBoard[boardIndex] = null;
 
+  const { rng, saveRng } = withRng(state);
+  const sellResult = applySellEffects(unit, newBoard, rng);
+  newBoard = sellResult.board;
+  const shopUnits = sellResult.shopBuff
+    ? applyShopBuff(state.shopUnits, sellResult.shopBuff)
+    : state.shopUnits;
+
   if (originId === "surgeon") {
-    const { rng, saveRng } = withRng(state);
-    const active = newBoard.map((u, i) => (u ? i : null)).filter((i): i is number => i !== null);
-    if (active.length > 0) {
-      const targetIdx = active[Math.floor(rng.next() * active.length)];
-      if (targetIdx !== undefined) {
-        const target = newBoard[targetIdx];
-        if (target) {
-          newBoard[targetIdx] = {
-            ...target,
-            buffAtk: target.buffAtk + 1,
-            buffHp: target.buffHp + 1,
-          };
-        }
-      }
-    }
+    buffRandomUnit(newBoard, 1, 1, rng);
     return ok({
       ...state,
       blood: state.blood + bloodGain,
       board: instancesToBoard(newBoard),
+      shopUnits,
       undoSnapshot: captureUndo(state),
       ...saveRng(),
     });
@@ -178,6 +199,8 @@ export function executeSell(
     ...state,
     blood: state.blood + bloodGain,
     board: instancesToBoard(newBoard),
+    shopUnits,
     undoSnapshot: captureUndo(state),
+    ...saveRng(),
   });
 }

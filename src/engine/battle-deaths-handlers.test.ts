@@ -1,4 +1,5 @@
-import { getDeathHandler, handleEquipDeath, handleBeelzebubSpawns } from "./battle-deaths-handlers";
+import { getDeathHandler, handleEquipDeath } from "./battle-deaths-handlers";
+import { handleBeelzebubSpawns } from "./battle-deaths-effects-reactions";
 import type { DeathHandlerUnitId } from "./battle-deaths-handlers";
 import { makeBattleUnit, makeContext } from "./test-helpers";
 import type { BattleUnit } from "./battle-context";

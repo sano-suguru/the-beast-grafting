@@ -3,10 +3,14 @@ import {
   applyBuyEffects,
   applyChaliceEffect,
   applySummonEffects,
+  applySellEffects,
+  applyBoneTreeBuyEffects,
 } from "./shop-effects";
 import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
+import { createSeededRng } from "./rng";
+import { atLevel, BONE_TREE, MARKET_VULTURE } from "../shared/skill-params";
 
 function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
   return {
@@ -317,5 +321,89 @@ describe("applySummonEffects – combined and edge cases", () => {
     const board: (UnitInstance | null)[] = [makeUnit({ id: "altar" }), null, null, null, null];
     const result = applySummonEffects(1, board);
     expect(result).toBe(board);
+  });
+});
+
+describe("applySellEffects – determinism", () => {
+  it("grave_worm sell buff is deterministic with seeded rng", () => {
+    const worm = makeUnit({ id: "grave_worm", uid: "worm-1" });
+    const ally = makeUnit({ uid: "ally-1" });
+    const board: (UnitInstance | null)[] = [null, ally, null];
+
+    const rng1 = createSeededRng(99);
+    const result1 = applySellEffects(worm, board, rng1);
+
+    const rng2 = createSeededRng(99);
+    const result2 = applySellEffects(worm, board, rng2);
+
+    const buffed1 = result1.board.find((u) => u?.uid === "ally-1");
+    const buffed2 = result2.board.find((u) => u?.uid === "ally-1");
+    expect(buffed1!.buffAtk).toBe(buffed2!.buffAtk);
+    expect(buffed1!.buffHp).toBe(buffed2!.buffHp);
+    expect(buffed1!.buffAtk).toBeGreaterThan(0);
+  });
+
+  it("ash_fungus sell buff is deterministic with seeded rng", () => {
+    const sold = makeUnit({ uid: "sold-1", baseAtk: 10, baseHp: 10 });
+    const taxer = makeUnit({ id: "ash_fungus", uid: "tax-1" });
+    const ally = makeUnit({ uid: "ally-1" });
+    const board: (UnitInstance | null)[] = [taxer, ally, null];
+
+    const rng1 = createSeededRng(42);
+    const result1 = applySellEffects(sold, board, rng1);
+
+    const rng2 = createSeededRng(42);
+    const result2 = applySellEffects(sold, board, rng2);
+
+    const sum1 = result1.board.reduce((s, u) => s + (u?.buffAtk ?? 0) + (u?.buffHp ?? 0), 0);
+    const sum2 = result2.board.reduce((s, u) => s + (u?.buffAtk ?? 0) + (u?.buffHp ?? 0), 0);
+    expect(sum1).toBe(sum2);
+    expect(sum1).toBeGreaterThan(0);
+  });
+});
+
+describe("applyBoneTreeBuyEffects – bone_tree", () => {
+  it("buffs all allies by tier multiplier", () => {
+    const throne = makeUnit({ id: "bone_tree", uid: "throne-1" });
+    const ally = makeUnit({ uid: "ally-1" });
+    const bought = makeUnit({ uid: "bought-1", tier: 3 });
+    const board: (UnitInstance | null)[] = [throne, ally, null];
+    const result = applyBoneTreeBuyEffects(bought, board);
+    const b = atLevel(BONE_TREE.buff, 1);
+    const throneResult = result.find((u) => u?.uid === "throne-1");
+    const allyResult = result.find((u) => u?.uid === "ally-1");
+    expect(throneResult!.buffAtk).toBe(b.atk * 3);
+    expect(throneResult!.buffHp).toBe(b.hp * 3);
+    expect(allyResult!.buffAtk).toBe(b.atk * 3);
+    expect(allyResult!.buffHp).toBe(b.hp * 3);
+  });
+
+  it("returns original board when no throne on board", () => {
+    const ally = makeUnit({ uid: "ally-1" });
+    const bought = makeUnit({ uid: "bought-1", tier: 2 });
+    const board: (UnitInstance | null)[] = [ally, null];
+    const result = applyBoneTreeBuyEffects(bought, board);
+    expect(result).toBe(board);
+  });
+});
+
+describe("applySellEffects – market_vulture shopBuff", () => {
+  it("returns shopBuff when market_vulture is on board", () => {
+    const merchant = makeUnit({ id: "market_vulture", uid: "bm-1" });
+    const board: (UnitInstance | null)[] = [merchant, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const rng = createSeededRng(1);
+    const result = applySellEffects(sold, board, rng);
+    const b = atLevel(MARKET_VULTURE.shopBuff, 1);
+    expect(result.shopBuff).toEqual({ atk: b.atk, hp: b.hp });
+  });
+
+  it("returns no shopBuff when no market_vulture", () => {
+    const ally = makeUnit({ uid: "ally-1" });
+    const board: (UnitInstance | null)[] = [ally, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const rng = createSeededRng(1);
+    const result = applySellEffects(sold, board, rng);
+    expect(result.shopBuff).toBeUndefined();
   });
 });

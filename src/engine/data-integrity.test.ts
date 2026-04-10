@@ -12,8 +12,8 @@ import { INERT_UNIT_ID } from "./test-helpers";
 describe("UNITS data integrity", () => {
   const entries = Object.entries(UNITS);
 
-  it("contains exactly 21 units", () => {
-    expect(entries).toHaveLength(21);
+  it("contains exactly 41 units", () => {
+    expect(entries).toHaveLength(41);
   });
 
   it("every unit's id matches its record key", () => {
@@ -22,9 +22,9 @@ describe("UNITS data integrity", () => {
     }
   });
 
-  it("every unit has positive baseAtk and baseHp", () => {
+  it("every unit has non-negative baseAtk and positive baseHp", () => {
     for (const [key, data] of entries) {
-      expect(data.baseAtk, `${key}.baseAtk`).toBeGreaterThan(0);
+      expect(data.baseAtk, `${key}.baseAtk`).toBeGreaterThanOrEqual(0);
       expect(data.baseHp, `${key}.baseHp`).toBeGreaterThan(0);
     }
   });
@@ -44,10 +44,10 @@ describe("UNITS data integrity", () => {
     }
   });
 
-  it("tier distribution is 5/3/3/3/3/4 (tier 1-6, total 21)", () => {
+  it("tier distribution is 8/6/6/6/5/10 (tier 1-6, total 41)", () => {
     const counts: Record<number, number> = {};
     for (const [, data] of entries) counts[data.tier] = (counts[data.tier] ?? 0) + 1;
-    expect(counts).toEqual({ 1: 5, 2: 3, 3: 3, 4: 3, 5: 3, 6: 4 });
+    expect(counts).toEqual({ 1: 8, 2: 6, 3: 6, 4: 6, 5: 5, 6: 10 });
   });
 
   it("no duplicate names across units", () => {
@@ -59,14 +59,14 @@ describe("UNITS data integrity", () => {
 describe("CHURCH_UNITS data integrity", () => {
   const entries = Object.entries(CHURCH_UNITS);
 
-  it("contains exactly 6 units", () => {
-    expect(entries).toHaveLength(6);
+  it("contains exactly 14 units", () => {
+    expect(entries).toHaveLength(14);
   });
 
-  it("every church unit has tier 1 or 2", () => {
+  it("every church unit has tier in range 1-6", () => {
     for (const [key, data] of entries) {
       expect(data.tier, `${key}.tier`).toBeGreaterThanOrEqual(1);
-      expect(data.tier, `${key}.tier`).toBeLessThanOrEqual(2);
+      expect(data.tier, `${key}.tier`).toBeLessThanOrEqual(6);
     }
   });
 

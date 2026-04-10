@@ -50,6 +50,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - Result型のエラーブランチを無視しない。`.match()` で両方処理するか、データバグなら `invariant(result.isOk(), msg)` を使う。
   - UI層（`screens/`）では `console.warn` + graceful degradation は許容。エンジン層（`engine/`）では黙って飲み込まない。
   - 外部入力（localStorage, Worker message, API response）のフォールバックは正当。
+- **レジストリファイルの分割規約**: ハンドラレジストリファイル（`battle-skills.ts`, `battle-deaths-handlers.ts`等）が200行を超えたら、ハンドラ実装を `*-{category}.ts` に抽出する。レジストリオブジェクトとディスパッチャ関数は元ファイルに残す。
+
+### Narrative Text
+
+- **説明するな示せ**: lore・バトルログ・ナラティブ全般で、読者に概念を説明するのではなく像を見せる。
+
+### Battle Frame Actions
+
+- **AoEバフ/ダメージのフレームactionには影響を受けた全ユニットを含める**。`aoeBuffActions` / `aoeDamageActions` (`battle-context.ts`) を使うこと。発動元のみ `{ type: "skill" }` で済ませない。
 
 ### Comments
 

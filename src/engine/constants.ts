@@ -22,6 +22,8 @@ export const IRON_REDUCTION = 2;
 export const MIN_EQUIPMENT_DAMAGE = 2;
 export const ROTTING_CARGO_CEILING_BONUS = { atk: 2, hp: 2 } as const;
 
+export const MAX_BOARD_SIZE = 5;
+
 export const FRAME_DELAY_DEATH_CHAIN = 300;
 
 export const SHOP_SIZES = [

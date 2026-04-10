@@ -1,8 +1,8 @@
-import type { UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../shared/types";
+import type { UnitId, UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../shared/types";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { generateUid } from "./helpers";
 import type { BattleContext, BattleUnit } from "./battle-context";
-import { pushFrame, seg } from "./battle-context";
+import { pushFrame, takeDamage, seg } from "./battle-context";
 import type { Rng } from "./rng";
 import { createSeededRng } from "./rng";
 import { resolveDeaths } from "./battle-deaths";
@@ -13,9 +13,31 @@ import {
   applyOnHitSkills,
   applyEquipmentEffects,
 } from "./battle-skills";
-import { applyAcidSplash, processHundredArmsKnockout } from "./battle-skills-combat";
+import { applyAcidSplash, processKnockoutEffects } from "./battle-skills-combat";
 import { COMBAT_ROUND_LIMIT, NUMBNESS_INITIAL_USES } from "./constants";
-import { atLevel, CHOLERA, EYE } from "../shared/skill-params";
+import { atLevel, CHOLERA, EYE, CATHEDRAL, SIN_EATER } from "../shared/skill-params";
+import { runDeploySkills } from "./battle-skills-init";
+
+const INIT_OVERRIDES = {
+  cholera: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(CHOLERA.uses, bu.level);
+  },
+  eye: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(EYE.uses, bu.level);
+  },
+  cathedral: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(CATHEDRAL.uses, bu.level);
+  },
+  sin_eater: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(SIN_EATER.uses, bu.level);
+  },
+} satisfies Partial<Record<UnitId, (bu: BattleUnit) => void>>;
+
+type InitOverrideUnitId = keyof typeof INIT_OVERRIDES;
+
+function getInitOverride(id: UnitId): ((bu: BattleUnit) => void) | undefined {
+  return Object.hasOwn(INIT_OVERRIDES, id) ? INIT_OVERRIDES[id as InitOverrideUnitId] : undefined;
+}
 
 function initBattleUnit(u: UnitInstance): BattleUnit {
   const atk = effectiveAtk(u);
@@ -24,16 +46,17 @@ function initBattleUnit(u: UnitInstance): BattleUnit {
     ...u,
     atk,
     hp,
+    preDeathHp: hp,
     battleBaseAtk: atk,
     battleBaseHp: hp,
     buffAtk: 0,
     buffHp: 0,
     uid: generateUid(),
+    avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
   };
-  if (bu.id === "cholera") bu.skillUses = atLevel(CHOLERA.uses, bu.level);
-  if (bu.id === "eye") bu.skillUses = atLevel(EYE.uses, bu.level);
+  getInitOverride(bu.id)?.(bu);
   if (bu.equip === "numbness") bu.equipUses = NUMBNESS_INITIAL_USES;
   return bu;
 }
@@ -61,17 +84,11 @@ function initContext(
   };
 }
 
-function runCombatRound(ctx: BattleContext) {
-  applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
-  applyCholeraBeforeAttack(ctx.eBoard, ctx.pBoard, false, ctx);
-
-  applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-  applyBeforeAttackSkills(ctx.eBoard, ctx.pBoard, false, ctx);
-
-  const p = ctx.pBoard[0];
-  const e = ctx.eBoard[0];
-  if (!p || !e) return;
-
+function resolveClash(
+  p: BattleUnit,
+  e: BattleUnit,
+  ctx: BattleContext,
+): { pKilledE: boolean; eKilledP: boolean } {
   pushFrame(ctx, "clash", [seg.u(p.name), " と 敵の", seg.u(e.name), " が喰らい合う！"], "clash", {
     [p.uid]: { type: "clash" },
     [e.uid]: { type: "clash" },
@@ -80,8 +97,8 @@ function runCombatRound(ctx: BattleContext) {
   const { pDmg, eDmg, pAction, eAction } = applyEquipmentEffects(p, e, ctx);
   const pHpBefore = p.hp;
   const eHpBefore = e.hp;
-  p.hp -= pDmg;
-  e.hp -= eDmg;
+  takeDamage(p, pDmg);
+  takeDamage(e, eDmg);
 
   pushFrame(
     ctx,
@@ -105,18 +122,32 @@ function runCombatRound(ctx: BattleContext) {
 
   applyOnHitSkills(p, ctx.pBoard, true, ctx);
   applyOnHitSkills(e, ctx.eBoard, false, ctx);
+  // on-hitキルを酸散布前に確定させ、死亡ユニットが酸の対象にならないようにする
+  resolveDeaths(ctx);
 
   applyAcidSplash(p, ctx.eBoard, true, ctx);
   applyAcidSplash(e, ctx.pBoard, false, ctx);
 
-  const pKilledE = e.hp <= 0;
-  const eKilledP = p.hp <= 0;
+  return { pKilledE: e.hp <= 0, eKilledP: p.hp <= 0 };
+}
+
+function runCombatRound(ctx: BattleContext) {
+  applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
+  applyCholeraBeforeAttack(ctx.eBoard, ctx.pBoard, false, ctx);
+
+  applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+  applyBeforeAttackSkills(ctx.eBoard, ctx.pBoard, false, ctx);
+
+  const p = ctx.pBoard[0];
+  const e = ctx.eBoard[0];
+  if (!p || !e) return;
+
+  const { pKilledE, eKilledP } = resolveClash(p, e, ctx);
 
   resolveDeaths(ctx);
 
-  // Hundred-Arms knockout: triggers after deaths are resolved
-  if (pKilledE) processHundredArmsKnockout(p, ctx.eBoard, ctx.pBoard, true, ctx);
-  if (eKilledP) processHundredArmsKnockout(e, ctx.pBoard, ctx.eBoard, false, ctx);
+  if (pKilledE) processKnockoutEffects(p, ctx.eBoard, ctx.pBoard, true, ctx);
+  if (eKilledP) processKnockoutEffects(e, ctx.pBoard, ctx.eBoard, false, ctx);
 }
 
 function determineResult(ctx: BattleContext, timedOut: boolean): BattleResult {
@@ -152,6 +183,9 @@ export function runBattle(
     [seg.e(`第${round}夜`), ` 狂宴が幕を開けた。敵は ${enemyTeam.teamName} だ。`],
     "info",
   );
+
+  runDeploySkills(ctx.pBoard, true, ctx);
+  runDeploySkills(ctx.eBoard, false, ctx);
 
   runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
   runStartSkills(ctx.eBoard, ctx.pBoard, false, ctx);

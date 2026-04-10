@@ -20,8 +20,8 @@ describe("getSkillText Lv1 consistency", () => {
 describe("template coverage", () => {
   for (const id of TEMPLATED_UNIT_IDS) {
     it(`${id}: Lv2 text differs from Lv1`, () => {
-      const lv1 = getSkillText(id as UnitId, 1, "");
-      const lv2 = getSkillText(id as UnitId, 2, "");
+      const lv1 = getSkillText(id, 1, "");
+      const lv2 = getSkillText(id, 2, "");
       expect(lv2).not.toBe(lv1);
     });
   }
