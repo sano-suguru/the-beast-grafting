@@ -629,18 +629,57 @@ describe("runStartSkills – catacomb_rat", () => {
   });
 });
 
-// ── plague_bell (start skill: AoE damage) ──
+// ── plague_bell (before-attack: AoE damage with limited uses) ──
 
-describe("runStartSkills – plague_bell", () => {
-  it("deals damage to all enemies", () => {
-    const bell = makeBattleUnit({ id: "plague_bell", name: "疫病の鐘", atk: 3, hp: 7 });
+describe("applyBeforeAttackSkills – plague_bell", () => {
+  it("deals AoE damage to all enemies from SUPPORT_IDX", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const bell = makeBattleUnit({
+      id: "plague_bell",
+      name: "疫病の鐘撞き",
+      atk: 3,
+      hp: 7,
+      skillUses: 3,
+    });
     const e1 = makeBattleUnit({ hp: 10 });
     const e2 = makeBattleUnit({ hp: 8 });
-    const ctx = makeContext([bell], [e1, e2]);
-    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const ctx = makeContext([front, bell], [e1, e2]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     const dmg = atLevel(PLAGUE_BELL.damage, 1);
     expect(e1.hp).toBe(10 - dmg);
     expect(e2.hp).toBe(8 - dmg);
+    expect(bell.skillUses).toBe(2);
+  });
+
+  it("does not trigger when skillUses is 0", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const bell = makeBattleUnit({
+      id: "plague_bell",
+      name: "疫病の鐘撞き",
+      atk: 3,
+      hp: 7,
+      skillUses: 0,
+    });
+    const e1 = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([front, bell], [e1]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(e1.hp).toBe(10);
+  });
+
+  it("does not trigger when not at SUPPORT_IDX", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const middle = makeBattleUnit({ atk: 2, hp: 2 });
+    const bell = makeBattleUnit({
+      id: "plague_bell",
+      name: "疫病の鐘撞き",
+      atk: 3,
+      hp: 7,
+      skillUses: 3,
+    });
+    const e1 = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([front, middle, bell], [e1]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(e1.hp).toBe(10);
   });
 });
 

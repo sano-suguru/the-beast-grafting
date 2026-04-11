@@ -38,13 +38,14 @@ export const UNITS_HIGH_TIER = {
   },
   plague_bell: {
     id: "plague_bell",
-    name: "疫病の鐘",
+    name: "疫病の鐘撞き",
     baseAtk: 3,
     baseHp: 7,
     tier: 5,
-    skillText: "開戦: 敵全体に2ダメージ",
-    lore: "封鎖街区を告げた鐘。打ち手はとうに死んだのに、夜ごと鳴る。朝の井戸水が黒い。",
-    secretLore: "鐘が最後に鳴った朝、街の全住民が同じ姿勢で事切れていた。",
+    skillText: "直前の味方が攻撃: 敵全体に1ダメージ(3回/戦)",
+    lore: "封鎖街区の鐘撞きだった男。疫病で死んだ後も、背中に癒着した鐘ごと立ち上がり、弔鐘を鳴らし続けている。",
+    secretLore:
+      "鐘撞きが最後に倒れた朝、その腕は鐘縄を離さなかった。鐘は今も、毎夜鳴り続けている。",
   },
   hanged_man: {
     id: "hanged_man",

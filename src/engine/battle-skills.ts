@@ -10,7 +10,6 @@ import {
   applyBansheeSkill,
   applyRevenantSkill,
   applyCatacombRatSkill,
-  applyPlagueBellSkill,
   applyPaladinSkill,
   applyHolyFireSkill,
 } from "./battle-skills-start";
@@ -19,6 +18,7 @@ import {
   applyEyeGaze,
   applyFamineDebuff,
   applyRelicSwordBuff,
+  applyPlagueBellToll,
 } from "./battle-skills-before-attack";
 
 // ── 開戦スキルレジストリ ──
@@ -31,7 +31,6 @@ const START_SKILL_HANDLERS = {
   shrieking_throat: applyBansheeSkill,
   revenant: applyRevenantSkill,
   catacomb_rat: applyCatacombRatSkill,
-  plague_bell: applyPlagueBellSkill,
   paladin: applyPaladinSkill,
   holy_fire: applyHolyFireSkill,
 } satisfies Partial<Record<UnitId, StartSkillHandler>>;
@@ -118,6 +117,8 @@ const BEFORE_ATTACK_HANDLERS = {
     applyFamineDebuff(u, enemyBoard, prefix, ctx),
   relic_sword: ({ u, board, prefix, ctx }: BeforeAttackArgs) =>
     applyRelicSwordBuff(u, board, prefix, ctx),
+  plague_bell: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>
+    applyPlagueBellToll(u, enemyBoard, prefix, ctx),
 } satisfies Partial<Record<UnitId, BeforeAttackHandler>>;
 
 type BeforeAttackUnitId = keyof typeof BEFORE_ATTACK_HANDLERS;

@@ -1,14 +1,6 @@
 import type { BattleAction } from "../shared/types";
 import type { BattleUnit } from "./battle-context";
-import {
-  pushFrame,
-  takeDamage,
-  enemyPrefix,
-  seg,
-  aoeDamageActions,
-  aoeBuffActions,
-} from "./battle-context";
-import { resolveDeaths } from "./battle-deaths";
+import { pushFrame, enemyPrefix, seg, aoeBuffActions } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { applySkillDamage, type SkillContext } from "./battle-skills-util";
 import {
@@ -18,7 +10,6 @@ import {
   BANSHEE,
   REVENANT,
   CATACOMB_RAT,
-  PLAGUE_BELL,
   PALADIN,
   HOLY_FIRE,
 } from "../shared/skill-params";
@@ -142,25 +133,6 @@ export function applyCatacombRatSkill({ u, targetArr, isPlayer, ctx }: SkillCont
     isPlayer,
     ctx,
   );
-}
-
-export function applyPlagueBellSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
-  const dmg = atLevel(PLAGUE_BELL.damage, u.level);
-  const prefix = enemyPrefix(isPlayer);
-  const hit: BattleUnit[] = [];
-  for (const target of targetArr) {
-    if (target.hp <= 0) continue;
-    takeDamage(target, dmg);
-    hit.push(target);
-  }
-  pushFrame(
-    ctx,
-    "skill",
-    [prefix, seg.u(u.name), `が鳴り響く！ 敵全体に${dmg}ダメージ`],
-    "skill",
-    aoeDamageActions(u, hit, dmg),
-  );
-  resolveDeaths(ctx);
 }
 
 export function applyPaladinSkill({ u, isPlayer, ctx }: SkillContext) {

@@ -145,7 +145,8 @@ const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
     `味方死亡: 死んだ味方の攻撃を吸収(1回上限${atLevel(SIN_EATER.atkCap, lv)}, ${atLevel(SIN_EATER.uses, lv)}回)`,
   blood_font: (lv) => `出陣時: 最もHPが低い味方に+0/+${atLevel(BLOOD_FONT.hpBuff, lv)}`,
   ash_fungus: (lv) => `味方解体: スタッツの${atLevel(ASH_FUNGUS.percent, lv)}%をランダム味方にバフ`,
-  plague_bell: (lv) => `開戦: 敵全体に${atLevel(PLAGUE_BELL.damage, lv)}ダメージ`,
+  plague_bell: (lv) =>
+    `直前の味方が攻撃: 敵全体に${atLevel(PLAGUE_BELL.damage, lv)}ダメージ(${atLevel(PLAGUE_BELL.uses, lv)}回/戦)`,
   hanged_man: (lv) => `死亡: 最終スタッツを前方の味方${atLevel(HANGED_MAN.targets, lv)}体に分配`,
   organ_grinder: (lv) => `撃破: 敵全体に${atLevel(ORGAN_GRINDER.damage, lv)}ダメージ`,
   grinning_skull: (lv) => {

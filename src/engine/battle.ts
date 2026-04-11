@@ -15,7 +15,7 @@ import {
 } from "./battle-skills";
 import { applyAcidSplash, processKnockoutEffects } from "./battle-skills-combat";
 import { COMBAT_ROUND_LIMIT, NUMBNESS_INITIAL_USES } from "./constants";
-import { atLevel, CHOLERA, EYE, CATHEDRAL, SIN_EATER } from "../shared/skill-params";
+import { atLevel, CHOLERA, EYE, CATHEDRAL, SIN_EATER, PLAGUE_BELL } from "../shared/skill-params";
 import { runDeploySkills } from "./battle-skills-init";
 
 const INIT_OVERRIDES = {
@@ -30,6 +30,9 @@ const INIT_OVERRIDES = {
   },
   sin_eater: (bu: BattleUnit) => {
     bu.skillUses = atLevel(SIN_EATER.uses, bu.level);
+  },
+  plague_bell: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(PLAGUE_BELL.uses, bu.level);
   },
 } satisfies Partial<Record<UnitId, (bu: BattleUnit) => void>>;
 

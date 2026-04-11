@@ -41,10 +41,6 @@ export const CATACOMB_RAT = {
   tierMult: [1, 2, 3] as SN,
 };
 
-export const PLAGUE_BELL = {
-  damage: [2, 4, 6] as SN,
-};
-
 export const PALADIN = {
   hpBuff: [1, 2, 3] as SN,
 };
@@ -78,6 +74,11 @@ export const FAMINE_CORPSE = {
 
 export const RELIC_SWORD = {
   atkBuff: [2, 4, 6] as SN,
+};
+
+export const PLAGUE_BELL = {
+  damage: [1, 1, 1] as SN, // AoE + uses がスケールするためダメージは固定
+  uses: [3, 5, 7] as SN,
 };
 
 // ── 被弾スキル ──

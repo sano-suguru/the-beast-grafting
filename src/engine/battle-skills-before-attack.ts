@@ -1,8 +1,15 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, takeDamage, seg, skillDamageActions } from "./battle-context";
+import { pushFrame, takeDamage, seg, skillDamageActions, aoeDamageActions } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
-import { atLevel, PARASITE, EYE, FAMINE_CORPSE, RELIC_SWORD } from "../shared/skill-params";
+import {
+  atLevel,
+  PARASITE,
+  EYE,
+  FAMINE_CORPSE,
+  RELIC_SWORD,
+  PLAGUE_BELL,
+} from "../shared/skill-params";
 
 export function applyParasiteBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {
   const b = atLevel(PARASITE.buff, u.level);
@@ -94,4 +101,29 @@ export function applyRelicSwordBuff(
     "skill",
     { [u.uid]: { type: "skill" }, [ally.uid]: { type: "buff", value: `+${atkGain}/+0` } },
   );
+}
+
+export function applyPlagueBellToll(
+  u: BattleUnit,
+  enemyBoard: BattleUnit[],
+  prefix: string,
+  ctx: BattleContext,
+) {
+  if (enemyBoard.length === 0 || u.skillUses <= 0) return;
+  const dmg = atLevel(PLAGUE_BELL.damage, u.level);
+  const hit: BattleUnit[] = [];
+  for (const target of enemyBoard) {
+    if (target.hp <= 0) continue;
+    takeDamage(target, dmg);
+    hit.push(target);
+  }
+  pushFrame(
+    ctx,
+    "skill",
+    [prefix, seg.u(u.name), `が弔鐘を鳴らす！ 敵全体に${dmg}ダメージ`],
+    "skill",
+    aoeDamageActions(u, hit, dmg),
+  );
+  u.skillUses -= 1;
+  resolveDeaths(ctx);
 }
