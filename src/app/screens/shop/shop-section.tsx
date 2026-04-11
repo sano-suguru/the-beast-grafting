@@ -31,9 +31,12 @@ function ShopUnitList() {
       <ul role="list" className="flex gap-1 md:gap-2">
         {shopRewards.value.length > 0 && (
           <li
-            className="bg-tarnished-gold-dim/10 ring-tarnished-gold-dim/40 flex shrink-0 snap-start gap-1 rounded-md p-1 ring-1 md:gap-2"
+            className="bg-tarnished-gold-dim/10 ring-tarnished-gold-dim/40 flex shrink-0 snap-start items-end gap-1 rounded-md p-1 ring-1 md:gap-2"
             aria-label="報酬"
           >
+            <span className="animate-summon text-tarnished-gold text-body-xs font-bold tracking-wider [writing-mode:vertical-rl]">
+              1体選べ
+            </span>
             {shopRewards.value.map((item, i) => (
               <div
                 key={`reward-${i}`}
@@ -89,8 +92,6 @@ function ShopItemList() {
 export function ShopSection() {
   const event = activeEvent.value;
   const label = event ? event.name : "闇市場";
-  const hasRewards = shopRewards.value.length > 0;
-
   return (
     <section aria-label={label} className="relative z-0 flex min-h-0 flex-1 flex-col pb-4">
       {showHelpOverlay.value && (
@@ -109,11 +110,6 @@ export function ShopSection() {
             </span>
           )}
         </span>
-        {hasRewards && (
-          <span className="animate-summon text-tarnished-gold text-body-xs font-bold tracking-wider md:text-xs">
-            ▶ 1体選べ
-          </span>
-        )}
       </div>
       <div className="relative z-0 flex flex-1 items-start gap-2 md:gap-4">
         <ShopUnitList />
