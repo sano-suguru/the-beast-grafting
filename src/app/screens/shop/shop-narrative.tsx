@@ -5,7 +5,7 @@ export function ShopNarrative({ currentLife }: { currentLife: number }) {
   const tier = toLifeTier(currentLife);
   if (tier === "high") {
     return (
-      <div className="text-parchment-muted flex flex-col items-center gap-1 text-center text-[10px] md:text-xs">
+      <div className="text-parchment-muted text-body-xs flex flex-col items-center gap-1 text-center md:text-xs">
         <Info size={16} className="text-iron-light mb-1" />
         <span>
           闇市場の素体や薬品を<strong className="text-parchment-bright">タップして選択</strong>
@@ -19,7 +19,7 @@ export function ShopNarrative({ currentLife }: { currentLife: number }) {
   }
   if (tier === "mid") {
     return (
-      <div className="animate-fade-in text-tarnished-gold/80 flex flex-col items-center gap-1 text-center text-[10px] md:text-xs">
+      <div className="animate-fade-in text-gold-muted text-body-xs flex flex-col items-center gap-1 text-center md:text-xs">
         <AlertTriangle size={16} className="text-tarnished-gold-dim mb-1" />
         <span>教団の足音が近づいている……。</span>
         <span>急いで肉を繋ぎ合わせ、キメラを完成させろ。</span>
@@ -27,7 +27,7 @@ export function ShopNarrative({ currentLife }: { currentLife: number }) {
     );
   }
   return (
-    <div className="text-blood-bright flex animate-pulse flex-col items-center gap-1 text-center text-[10px] font-bold md:text-xs">
+    <div className="text-blood-bright text-body-xs flex animate-pulse flex-col items-center gap-1 text-center font-bold md:text-xs">
       <Skull size={16} className="text-blood-bright mb-1" />
       <span>もう時間がない！！ 奴らが来る！！</span>
       <span>早く……早く完成させろ！！！</span>

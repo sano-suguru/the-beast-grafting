@@ -12,7 +12,7 @@ import type { EquipType } from "../types";
 
 const EQUIP_ICONS: Record<EquipType, { Icon: typeof ShieldAlert; className: string }> = {
   iron: { Icon: ShieldAlert, className: "text-iron-light" },
-  corpse_wax: { Icon: Hexagon, className: "text-corpse-wax/80" },
+  corpse_wax: { Icon: Hexagon, className: "text-corpse-wax" },
   berserk: { Icon: Flame, className: "text-blood-dim" },
   infection: { Icon: Biohazard, className: "text-rot-bright" },
   maggot_nest: { Icon: Bug, className: "text-church-dim" },

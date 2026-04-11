@@ -58,7 +58,7 @@ function getCardClass(
 
 function getNameClass(isChurch: boolean): string {
   const color = isChurch ? "text-church" : "text-parchment-bright";
-  return `text-[8px] md:text-[10px] text-center font-bold leading-tight h-6 md:h-8 overflow-hidden mt-0.5 md:mt-1 pointer-events-none break-words line-clamp-2 ${color}`;
+  return `text-card-sm md:text-card-md text-center font-bold leading-tight h-6 md:h-8 overflow-hidden mt-0.5 md:mt-1 pointer-events-none break-words line-clamp-2 ${color}`;
 }
 
 function ExpBar({ level, exp }: { level: number; exp: number }) {
@@ -97,7 +97,7 @@ function EmptySlot({
       onMouseEnter={clearHover}
       className={`group bg-void-surface/50 flex aspect-[2/3] w-full cursor-pointer items-center justify-center rounded-sm border border-dashed transition-[color,background-color,border-color,box-shadow,transform] ${isHighlight ? "border-tarnished-gold-dim/50 bg-tarnished-gold-dim/10 hover:border-tarnished-gold hover:bg-tarnished-gold-dim/20 hover:shadow-glow-gold-sm shadow-glow-gold-xs-inset hover:scale-[1.02]" : "border-iron/30"}`}
     >
-      <span className="text-iron-light text-[8px] tracking-widest opacity-50 transition-opacity group-hover:opacity-100">
+      <span className="text-iron-light text-card-sm tracking-widest opacity-50 transition-opacity group-hover:opacity-100">
         空
       </span>
     </button>
@@ -119,11 +119,11 @@ function UnitCardBadges({
   return (
     <>
       {cost !== UNIT_COST && (
-        <div className="border-iron bg-void-surface text-parchment pointer-events-none absolute -top-1 -left-1 flex items-center gap-px rounded border px-1 text-[8px] font-bold">
+        <div className="border-iron bg-void-surface text-parchment text-card-sm pointer-events-none absolute -top-1 -left-1 flex items-center gap-px rounded border px-1 font-bold">
           {cost}
         </div>
       )}
-      <div className="border-iron bg-void-surface text-parchment-dim pointer-events-none absolute -right-1 -bottom-2.5 rounded border px-1 text-[7px] font-bold md:text-[8px]">
+      <div className="border-iron bg-void-surface text-parchment-dim text-card-sm md:text-card-md pointer-events-none absolute -right-1 -bottom-2.5 rounded border px-1 font-bold">
         T{tier}
       </div>
       {cantAfford && (
@@ -143,7 +143,7 @@ function UnitCardContent({ unit }: { unit: UnitInstance }) {
       <ExpBar level={unit.level} exp={unit.exp} />
       <div className="border-iron/30 bg-void pointer-events-none flex items-center justify-between rounded border-t px-1">
         <StatBadge value={effectiveAtk(unit)} statType="atk" />
-        <span className="text-iron-light text-[8px] md:text-[9px]">Lv{unit.level}</span>
+        <span className="text-iron-light md:text-card-md text-card-sm">Lv{unit.level}</span>
         <StatBadge value={effectiveHp(unit)} statType="hp" />
       </div>
     </div>

@@ -17,8 +17,8 @@ interface StatBadgeProps {
 }
 
 const STAT_COLORS: Record<string, Record<string, string>> = {
-  atk: { default: "text-tarnished-gold", muted: "text-tarnished-gold-dim/70" },
-  hp: { default: "text-blood-bright", muted: "text-blood-dim/70" },
+  atk: { default: "text-tarnished-gold", muted: "text-gold-stat-muted" },
+  hp: { default: "text-blood-bright", muted: "text-blood-muted" },
 };
 
 function getPersistColor(baseDiff: number | undefined): string {
@@ -64,7 +64,7 @@ export function StatBadge({
   return (
     <div className={`flex items-center font-bold ${Icon ? "gap-0.5" : ""}`}>
       {Icon != null && <Icon size={12} className={color} aria-hidden="true" />}
-      <span key={spanKey} className={`text-[11px] md:text-xs ${color} ${flashClass}`}>
+      <span key={spanKey} className={`text-body-xs md:text-xs ${color} ${flashClass}`}>
         {value}
       </span>
     </div>

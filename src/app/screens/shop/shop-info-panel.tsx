@@ -72,10 +72,10 @@ function EventNarrative({ event }: { event: EventData }) {
 
   return (
     <div className="animate-fade-in flex flex-col gap-1 text-center">
-      <span className="text-tarnished-gold text-[10px] font-bold tracking-widest uppercase md:text-xs">
+      <span className="text-tarnished-gold text-body-xs font-bold tracking-widest uppercase md:text-xs">
         {event.name}
       </span>
-      <p className="text-parchment-muted text-[10px] leading-relaxed italic md:text-xs">
+      <p className="text-parchment-muted text-body-xs font-serif leading-relaxed italic md:text-xs">
         {event.narrative}
       </p>
       {badges.length > 0 && (
@@ -83,10 +83,10 @@ function EventNarrative({ event }: { event: EventData }) {
           {badges.map((b, i) => (
             <span
               key={i}
-              className={`rounded border px-1 py-0.5 text-[9px] font-bold md:text-[10px] ${
+              className={`md:text-body-xs text-card-md rounded border px-1 py-0.5 font-bold ${
                 b.positive
                   ? "border-tarnished-gold-dim/50 text-tarnished-gold"
-                  : "border-blood-deep/50 text-blood-bright/70"
+                  : "border-blood-deep/50 text-blood-muted"
               }`}
             >
               <ResourceText text={b.label} />
@@ -99,7 +99,7 @@ function EventNarrative({ event }: { event: EventData }) {
 }
 
 function buffColor(buff: number): string {
-  return buff > 0 ? "text-tarnished-gold" : "text-blood-bright/70";
+  return buff > 0 ? "text-tarnished-gold" : "text-blood-muted";
 }
 
 function buffPrefix(buff: number): string {
@@ -110,7 +110,7 @@ function UnitStatDisplay({ sel }: { sel: Selection }) {
   if (sel.type === "SHOP_ITEM") return null;
   return (
     <div className="ml-auto flex items-center gap-2">
-      <span className="text-tarnished-gold flex items-center gap-0.5 text-[11px] font-bold md:text-xs">
+      <span className="text-tarnished-gold text-body-sm flex items-center gap-0.5 font-bold md:text-xs">
         <Swords size={12} />
         {effectiveAtk(sel.item)}
         {sel.item.buffAtk !== 0 && (
@@ -120,7 +120,7 @@ function UnitStatDisplay({ sel }: { sel: Selection }) {
           </span>
         )}
       </span>
-      <span className="text-blood-bright flex items-center gap-0.5 text-[11px] font-bold md:text-xs">
+      <span className="text-blood-bright text-body-sm flex items-center gap-0.5 font-bold md:text-xs">
         <Shield size={12} />
         {effectiveHp(sel.item)}
         {sel.item.buffHp !== 0 && (
@@ -145,32 +145,34 @@ function SelectedItemInfo({ sel }: { sel: Selection }) {
         <BookOpen size={14} className="text-parchment-dim shrink-0" />
         <span className="text-tarnished-gold text-xs font-bold md:text-sm">{sel.item.name}</span>
         {"tier" in sel.item && (
-          <span className="text-parchment-dim text-[9px] font-bold md:text-[10px]">
+          <span className="text-parchment-dim md:text-body-xs text-card-md font-bold">
             Tier {sel.item.tier}
           </span>
         )}
         <UnitStatDisplay sel={sel} />
       </div>
       {sel.type === "BOARD_UNIT" && (
-        <div className="text-blood-bright mb-1 text-[10px] font-bold md:text-xs">
+        <div className="text-blood-bright text-body-xs mb-1 font-bold md:text-xs">
           <ResourceText text={`解体: {blood}×${sellBloodGain(sel.item.level, sel.item.id)}`} />
         </div>
       )}
-      <p className="text-tarnished-gold/80 pl-1 font-mono text-[10px] md:text-xs">
+      <p className="text-gold-muted text-body-xs pl-1 font-mono md:text-xs">
         <ResourceText text={sel.item.skillText} />
       </p>
-      <p className="text-parchment-muted mt-1 pl-1 text-[10px] leading-relaxed italic md:text-xs">
+      <p className="text-parchment-muted text-body-xs mt-1 pl-1 font-serif leading-relaxed italic md:text-xs">
         "{sel.item.lore}"
       </p>
       {equipInfo && (
         <div className="border-iron/50 mt-1.5 flex items-center gap-2 border-t pt-1.5">
-          <span className="border-tarnished-gold-dim/50 text-tarnished-gold-dim rounded border px-1 text-[9px]">
+          <span className="border-tarnished-gold-dim/50 text-tarnished-gold-dim text-card-md rounded border px-1">
             付与中
           </span>
-          <span className="text-tarnished-gold text-[10px] font-bold md:text-xs">
+          <span className="text-tarnished-gold text-body-xs font-bold md:text-xs">
             {equipInfo.name}
           </span>
-          <span className="text-parchment-dim text-[9px] md:text-[10px]">- {equipInfo.desc}</span>
+          <span className="text-parchment-dim md:text-body-xs text-card-md">
+            - {equipInfo.desc}
+          </span>
         </div>
       )}
     </div>

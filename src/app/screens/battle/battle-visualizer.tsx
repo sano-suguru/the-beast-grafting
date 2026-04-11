@@ -58,9 +58,9 @@ export function BattleVisualizer({ currentFrame, prevFrame, ff, frameIdx }: Batt
       className="border-iron/30 bg-void relative flex h-56 min-w-0 shrink-0 flex-col overflow-hidden border-b p-2 md:h-64 md:p-4"
     >
       <GradientBackground />
-      <div className="text-parchment-dim/60 relative z-10 mb-2 flex shrink-0 justify-between px-2 text-[10px] font-bold tracking-widest md:text-xs">
+      <div className="text-parchment-ghost text-body-xs relative z-10 mb-2 flex shrink-0 justify-between px-2 font-bold tracking-widest md:text-xs">
         <span>◀ 後衛</span>
-        <span className="text-blood-dim">{enemy.teamType}</span>
+        <span className="text-blood-muted">{enemy.teamType}</span>
         <span>後衛 ▶</span>
       </div>
       <div className="relative z-10 flex min-h-0 w-full min-w-0 flex-1 items-center justify-center gap-2 overflow-hidden px-1 md:gap-4">

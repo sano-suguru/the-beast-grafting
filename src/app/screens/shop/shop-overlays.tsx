@@ -12,7 +12,7 @@ import { playSE } from "../../engine/audio";
 export function ShopBusyOverlay() {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
-      <p className="text-blood-deep animate-pulse text-sm tracking-widest">
+      <p className="text-blood-deep animate-pulse text-sm tracking-wider">
         ……暗闇の中で蠢いている……
       </p>
     </div>

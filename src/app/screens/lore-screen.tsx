@@ -15,14 +15,14 @@ function ChurchUnseenCard({ id }: { id: string }) {
     <article
       key={id}
       aria-label="未記録の教団兵"
-      className="border-church-dark/30 bg-church-dark/10 flex gap-3 border p-3 opacity-40 grayscale"
+      className="border-church-dark/30 bg-church-dark/10 flex gap-3 border p-3 opacity-60 grayscale"
     >
       <div className="bg-void border-church-dark/30 flex aspect-[2/3] w-12 shrink-0 items-center justify-center rounded border md:w-16">
-        <Shield size={20} className="text-church-dark/50" />
+        <Shield size={20} className="text-church-muted" />
       </div>
       <div className="flex flex-1 flex-col justify-center">
-        <div className="text-church-dim/60 mb-1 text-sm font-bold">未記録の教団兵</div>
-        <div className="text-church-dark/60 text-[10px]">教団との戦闘で遭遇すると記録される。</div>
+        <div className="text-church-muted mb-1 text-sm font-bold">未記録の教団兵</div>
+        <div className="text-church-muted text-body-xs">教団との戦闘で遭遇すると記録される。</div>
       </div>
     </article>
   );
@@ -35,25 +35,25 @@ function ChurchLoreUnitCard({ unit }: { unit: UnitData }) {
       className="border-church-dark/40 bg-church-dark/10 relative flex gap-3 border p-3"
     >
       <div className="bg-void border-church-dark/40 relative flex aspect-[2/3] w-14 shrink-0 flex-col rounded border p-1 md:w-16">
-        <div className="text-church mt-0.5 line-clamp-2 h-6 overflow-hidden text-center text-[8px] leading-tight font-bold break-words md:h-8 md:text-[9px]">
+        <div className="text-church md:text-card-md text-card-sm mt-0.5 line-clamp-2 h-6 overflow-hidden text-center leading-tight font-bold break-words md:h-8">
           {unit.name}
         </div>
         <div className="flex flex-1 items-center justify-center">
-          <Shield size={16} className="text-church-dim/50" />
+          <Shield size={16} className="text-church-muted" />
         </div>
         <div className="flex items-center justify-between rounded bg-black px-1">
-          <StatBadge icon={Swords} value={unit.baseAtk} className="text-church-dim/70" />
-          <StatBadge icon={Shield} value={unit.baseHp} className="text-church-dim/70" />
+          <StatBadge icon={Swords} value={unit.baseAtk} className="text-church-muted" />
+          <StatBadge icon={Shield} value={unit.baseHp} className="text-church-muted" />
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="text-church mb-1.5 text-sm font-bold">
-          {unit.name} <span className="text-church-dim/50 ml-1 text-[10px]">Tier {unit.tier}</span>
+          {unit.name} <span className="text-church-muted text-body-xs ml-1">Tier {unit.tier}</span>
         </div>
-        <div className="text-church-dim/80 mb-2 text-[9px] font-bold md:text-[10px]">
+        <div className="text-church-muted md:text-body-xs text-card-md mb-2 font-mono font-bold">
           <ResourceText text={unit.skillText} />
         </div>
-        <div className="text-church/60 mb-2 text-[10px] leading-relaxed md:text-xs">
+        <div className="text-church-lore text-body-xs mb-2 font-serif leading-relaxed md:text-xs">
           {unit.lore}
         </div>
       </div>
@@ -66,14 +66,14 @@ function UnseenCard({ id }: { id: string }) {
     <article
       key={id}
       aria-label="未発見の素体"
-      className="border-iron/50 bg-void-surface/30 flex gap-3 border p-3 opacity-40 grayscale"
+      className="border-iron/50 bg-void-surface/30 flex gap-3 border p-3 opacity-60 grayscale"
     >
       <div className="border-iron bg-void flex aspect-[2/3] w-12 shrink-0 items-center justify-center rounded border md:w-16">
         <Skull size={20} className="text-iron" />
       </div>
       <div className="flex flex-1 flex-col justify-center">
         <div className="text-iron-light mb-1 text-sm font-bold">未発見の素体</div>
-        <div className="text-iron-light text-[10px]">
+        <div className="text-iron-light text-body-xs">
           闇市場で発見するか、
           <br />
           解剖台に並べることで記録される。
@@ -99,7 +99,7 @@ function LoreUnitCard({ unit, entry }: { unit: UnitData; entry: LoreEntry }) {
         </div>
       )}
       <div className="border-iron bg-void relative flex aspect-[2/3] w-14 shrink-0 flex-col rounded border p-1 md:w-16">
-        <div className="text-parchment-bright mt-0.5 line-clamp-2 h-6 overflow-hidden text-center text-[8px] leading-tight font-bold break-words md:h-8 md:text-[9px]">
+        <div className="text-parchment-bright md:text-card-md text-card-sm mt-0.5 line-clamp-2 h-6 overflow-hidden text-center leading-tight font-bold break-words md:h-8">
           {unit.name}
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -112,20 +112,20 @@ function LoreUnitCard({ unit, entry }: { unit: UnitData; entry: LoreEntry }) {
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="text-parchment-bright mb-1.5 text-sm font-bold">
-          {unit.name} <span className="text-parchment-dim ml-1 text-[10px]">Tier {unit.tier}</span>
+          {unit.name} <span className="text-parchment-dim text-body-xs ml-1">Tier {unit.tier}</span>
         </div>
-        <div className="text-tarnished-gold/80 mb-2 text-[9px] font-bold md:text-[10px]">
+        <div className="text-gold-muted md:text-body-xs text-card-md mb-2 font-mono font-bold">
           <ResourceText text={unit.skillText} />
         </div>
-        <div className="text-parchment-muted mb-2 text-[10px] leading-relaxed md:text-xs">
+        <div className="text-parchment-muted text-body-xs mb-2 font-serif leading-relaxed md:text-xs">
           {unit.lore}
         </div>
         {isMastered ? (
-          <div className="animate-fade-in border-tarnished-gold/30 text-tarnished-gold/90 mt-auto border-t pt-2 text-[10px] leading-relaxed font-bold md:text-xs">
+          <div className="animate-fade-in border-tarnished-gold/30 text-gold-muted text-body-xs mt-auto border-t pt-2 font-serif leading-relaxed font-bold md:text-xs">
             {unit.secretLore ?? "???"}
           </div>
         ) : (
-          <div className="border-iron text-iron-light mt-auto border-t pt-2 text-[9px] italic">
+          <div className="border-iron text-iron-light text-card-md mt-auto border-t pt-2 italic">
             ※この素体をLv3にして10勝を達成すると、隠された記述が解放される。
           </div>
         )}
@@ -169,10 +169,10 @@ function UnitLoreList({ units, db }: { units: UnitData[]; db: Record<string, Lor
 function ChurchLoreList({ units, db }: { units: UnitData[]; db: Record<string, LoreEntry> }) {
   return (
     <div className="border-church-dark/30 mt-8 border-t pt-6">
-      <h2 className="text-church-dim/80 mb-2 flex items-center gap-2 text-sm font-bold tracking-wider">
+      <h2 className="text-church-muted mb-2 flex items-center gap-2 text-sm font-bold tracking-wider">
         <Shield size={16} /> 教団兵の記録
       </h2>
-      <p className="text-church-dim/60 mb-4 text-center text-[10px] md:text-xs">
+      <p className="text-church-muted text-body-xs mb-4 text-center md:text-xs">
         戦場で遭遇した教団の兵士たち。敵を知ることは、生き延びる術である。
       </p>
       <LoreGrid
@@ -199,7 +199,7 @@ export function LoreScreen() {
   };
 
   return (
-    <main className="border-iron/30 bg-void text-parchment relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x font-serif">
+    <main className="border-iron/30 bg-void text-parchment font-body relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x">
       <header className="border-iron/50 bg-void-surface flex shrink-0 items-center justify-between border-b p-3 md:p-4">
         <h1 className="text-parchment-bright flex items-center gap-2 text-lg font-bold tracking-wider md:text-xl">
           <BookOpen className="text-tarnished-gold-dim" /> 大解剖録
@@ -212,7 +212,7 @@ export function LoreScreen() {
         </button>
       </header>
       <div className="flex-1 space-y-6 overflow-y-auto p-4">
-        <p className="text-parchment-muted mb-6 text-center text-xs leading-relaxed md:text-sm">
+        <p className="text-parchment-muted mb-6 text-center font-serif text-xs leading-relaxed md:text-sm">
           歴代の接合術師たちが書き連ねた狂気の図鑑。
           <br />
           究極の形(Lv3)で狂宴を生き延びた時、真の恐ろしさが記述される。

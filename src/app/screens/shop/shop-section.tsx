@@ -103,14 +103,14 @@ export function ShopSection() {
         <span className="text-parchment-dim flex items-center gap-1 text-xs font-bold md:text-sm">
           {label}
           {!event && (
-            <span className="text-iron-light text-[10px] font-normal">
+            <span className="text-iron-light text-body-xs font-normal">
               (素体・薬 一律 {UNIT_COST}
               <Droplet size={10} className="text-blood-dim inline" />)
             </span>
           )}
         </span>
         {hasRewards && (
-          <span className="animate-summon text-tarnished-gold text-[10px] font-bold tracking-wider md:text-xs">
+          <span className="animate-summon text-tarnished-gold text-body-xs font-bold tracking-wider md:text-xs">
             ▶ 1体選べ
           </span>
         )}

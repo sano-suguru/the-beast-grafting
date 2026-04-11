@@ -104,7 +104,7 @@ function NameEditForm({ name }: { name: string | null }) {
             editingName.value = false;
           }
         }}
-        className="border-iron bg-void-surface text-parchment focus:border-iron-light w-full border px-2 py-1 font-serif text-sm outline-none"
+        className="border-iron bg-void-surface text-parchment focus:border-iron-light font-body w-full border px-2 py-1 text-sm outline-none"
       />
       <button
         type="button"
@@ -130,12 +130,12 @@ function NameEditForm({ name }: { name: string | null }) {
 function DisplayNameSection({ name, isGuest }: { name: string | null; isGuest: boolean }) {
   return (
     <div>
-      <p className="text-iron-light text-[10px] tracking-widest">表示名</p>
+      <p className="text-iron-light text-body-xs tracking-widest">表示名</p>
       {editingName.value ? (
         <NameEditForm name={name} />
       ) : (
         <div className="mt-1 flex items-center gap-2">
-          <p className="text-parchment font-serif text-sm">{name ?? "ゲスト"}</p>
+          <p className="text-parchment font-body text-sm">{name ?? "ゲスト"}</p>
           {!isGuest && (
             <button
               type="button"
@@ -158,7 +158,7 @@ function ProviderSection({ isGuest }: { isGuest: boolean }) {
 
   return (
     <div className="space-y-2">
-      <p className="text-iron-light text-[10px] tracking-widest">
+      <p className="text-iron-light text-body-xs tracking-widest">
         {isGuest ? "ログイン" : "連携済みサービス"}
       </p>
       <div className="flex flex-col gap-2">
@@ -170,7 +170,7 @@ function ProviderSection({ isGuest }: { isGuest: boolean }) {
         <ProviderButton provider="google" linked={providers.includes("google")} isGuest={isGuest} />
       </div>
       {isGuest && (
-        <p className="text-iron-light text-[10px] leading-relaxed">
+        <p className="text-iron-light text-body-xs leading-relaxed">
           ログインするとデータが保護され、別の端末からもアクセスできます。
         </p>
       )}

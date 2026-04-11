@@ -10,7 +10,7 @@ const KIND_STYLES: Record<
     className: "font-bold text-tarnished-gold bg-tarnished-gold-dim/30 rounded-sm px-0.5",
     wrap: ["【", "】"],
   },
-  stat: { className: "font-mono text-[9px] text-parchment-dim", wrap: ["(", ")"] },
+  stat: { className: "font-mono text-card-md text-parchment-dim", wrap: ["(", ")"] },
 };
 
 export function LogSegments({ segments }: { segments: LogSegment[] }) {
@@ -22,7 +22,7 @@ export function LogSegments({ segments }: { segments: LogSegment[] }) {
           return (
             <span
               key={i}
-              className="text-parchment-dim inline-flex items-baseline gap-px font-mono text-[9px]"
+              className="text-parchment-dim text-card-md inline-flex items-baseline gap-px font-mono"
             >
               <Shield size={9} className="self-center" />
               {s.text}

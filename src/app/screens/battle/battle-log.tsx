@@ -36,7 +36,7 @@ export function BattleLog({ frames, frameIdx }: BattleLogProps) {
       aria-label="戦闘ログ"
       ref={logContainerRef}
       onScroll={handleLogScroll}
-      className="bg-void min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto scroll-smooth p-3 pb-8 font-mono text-[10px] leading-relaxed md:p-4 md:text-[11px]"
+      className="bg-void text-body-xs md:text-body-sm min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto scroll-smooth p-3 pb-8 font-mono leading-relaxed md:p-4"
     >
       {frames.slice(0, frameIdx + 1).map((frame) => (
         <div

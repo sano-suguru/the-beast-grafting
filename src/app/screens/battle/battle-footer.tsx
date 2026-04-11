@@ -27,7 +27,7 @@ export function BattleFooter({ isFinished }: { isFinished: boolean }) {
           playSE("select");
           concludeBattle();
         }}
-        className="border-blood-deep bg-blood-deep/30 text-blood-bright hover:bg-blood-deep/50 flex cursor-pointer items-center gap-2 rounded border px-6 py-2 text-xs font-bold tracking-widest transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+        className="border-blood-deep bg-blood-deep/30 text-blood-bright hover:bg-blood-deep/50 disabled:text-disabled-fg disabled:border-iron/30 flex cursor-pointer items-center gap-2 rounded border px-6 py-2 text-xs font-bold tracking-widest transition-all active:scale-95 disabled:cursor-not-allowed"
       >
         死体を検分する <ArrowRight size={14} className="ml-1 inline" />
       </button>

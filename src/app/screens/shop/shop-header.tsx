@@ -29,7 +29,7 @@ function LifeDisplay({ currentLife, isAlert }: { currentLife: number; isAlert: b
       className={`flex flex-col items-center ${pulse ? "animate-pulse" : ""} ${isAlert ? "border-blood-bright rounded border p-0.5" : ""}`}
     >
       <Heart size={14} className={`mb-0.5 ${pulse ? "text-blood-bright" : "text-parchment-dim"}`} />
-      <span className={`text-[10px] font-bold md:text-xs ${pulse ? "text-blood-bright" : ""}`}>
+      <span className={`text-body-xs font-bold md:text-xs ${pulse ? "text-blood-bright" : ""}`}>
         {currentLife}
       </span>
     </div>
@@ -42,13 +42,13 @@ function ResourceBar({ resErr }: { resErr: "blood" | "life" | null }) {
       <LifeDisplay currentLife={life.value} isAlert={resErr === "life"} />
       <div className="flex flex-col items-center">
         <Trophy size={14} className="text-tarnished-gold-dim mb-0.5" />
-        <span className="text-[10px] font-bold md:text-xs">{trophy.value}</span>
+        <span className="text-body-xs font-bold md:text-xs">{trophy.value}</span>
       </div>
       <div
         className={`flex flex-col items-center ${resErr === "blood" ? "border-blood-bright animate-pulse rounded border p-0.5" : ""}`}
       >
         <Droplet size={14} className="text-blood-bright mb-0.5" />
-        <span className="text-blood-bright text-[10px] font-bold md:text-xs">{blood.value}</span>
+        <span className="text-blood-bright text-body-xs font-bold md:text-xs">{blood.value}</span>
       </div>
     </div>
   );
@@ -65,7 +65,7 @@ export function ShopHeader() {
           <span className="text-parchment-bright text-base font-bold tracking-wider md:text-lg">
             第{round.value}夜
           </span>
-          <span className="text-parchment-dim text-[9px] md:text-[10px]">
+          <span className="text-parchment-dim md:text-body-xs text-card-md">
             {origin.value ? ORIGINS[origin.value]?.name : ""}
           </span>
         </div>
@@ -86,9 +86,9 @@ export function ShopHeader() {
             showRetireConfirm.value = true;
           }}
           disabled={locked}
-          className={`flex items-center gap-1 rounded border px-2 py-1 text-[10px] tracking-wider transition-colors md:text-xs ${
+          className={`text-body-xs flex items-center gap-1 rounded border px-2 py-1 tracking-wider transition-colors md:text-xs ${
             locked
-              ? "border-iron/50 text-iron-light cursor-not-allowed"
+              ? "border-iron/30 text-disabled-fg cursor-not-allowed"
               : "border-iron text-parchment-dim hover:border-blood-deep hover:text-blood-bright cursor-pointer"
           }`}
         >

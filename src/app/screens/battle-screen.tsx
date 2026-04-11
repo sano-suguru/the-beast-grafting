@@ -43,7 +43,7 @@ export function BattleScreen() {
   }, [frameIdx, frames, ff]);
 
   return (
-    <main className="border-iron/30 bg-void text-parchment relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x font-serif">
+    <main className="border-iron/30 bg-void text-parchment font-body relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x">
       <BattleVisualizer
         currentFrame={currentFrame}
         prevFrame={frameIdx > 0 ? frames[frameIdx - 1] : undefined}

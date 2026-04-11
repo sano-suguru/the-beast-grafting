@@ -110,7 +110,7 @@ function getNameColor(side: string): string {
 }
 
 function getSkullColor(side: string): string {
-  return side === "p" ? "text-iron-light" : "text-blood-deep/60";
+  return side === "p" ? "text-iron-light" : "text-blood-muted";
 }
 
 function BattleCardStats({
@@ -168,7 +168,7 @@ function BattleCardBody({
 }) {
   const actionType = actionObj?.type;
   const nameColor = unit.isChurch ? "text-church" : getNameColor(side);
-  const skullColor = unit.isChurch ? "text-church-dim/50" : getSkullColor(side);
+  const skullColor = unit.isChurch ? "text-church-muted" : getSkullColor(side);
   return (
     <>
       {actionType === "damage" && (
@@ -181,7 +181,7 @@ function BattleCardBody({
         <FloatingText text={actionObj.value} actionType={actionType} frameIdx={frameIdx} />
       )}
       <div
-        className={`mt-0.5 line-clamp-2 h-6 overflow-hidden text-center text-[8px] leading-tight font-bold break-words md:mt-1 md:h-8 md:text-[10px] ${nameColor}`}
+        className={`md:text-card-md text-card-sm mt-0.5 line-clamp-2 h-6 overflow-hidden text-center leading-tight font-bold break-words md:mt-1 md:h-8 ${nameColor}`}
       >
         {unit.name}
       </div>

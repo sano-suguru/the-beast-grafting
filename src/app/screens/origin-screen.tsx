@@ -34,7 +34,7 @@ function OriginCard({
           playSE("clash");
           void startGame(org.id);
         }}
-        className="group border-iron bg-void-surface/80 hover:border-tarnished-gold-dim hover:bg-void-surface hover:shadow-glow-gold-hover relative h-full w-full cursor-pointer overflow-hidden rounded-sm border p-5 text-center transition-all disabled:cursor-not-allowed disabled:opacity-50"
+        className="group border-iron bg-void-surface/80 hover:border-tarnished-gold-dim hover:bg-void-surface hover:shadow-glow-gold-hover disabled:text-disabled-fg disabled:border-iron/30 relative h-full w-full cursor-pointer overflow-hidden rounded-sm border p-5 text-center transition-all disabled:cursor-not-allowed"
       >
         <div className="absolute -right-4 -bottom-4 opacity-5 transition-opacity group-hover:opacity-10">
           {Icon && <Icon className="h-40 w-40" />}
@@ -46,8 +46,8 @@ function OriginCard({
           <span className="text-parchment-bright mb-2 block text-lg font-bold tracking-wider group-hover:text-white">
             {org.name}
           </span>
-          <p className="text-parchment-muted mb-4 flex-1 text-xs italic">"{org.lore}"</p>
-          <div className="border-iron bg-void/80 text-blood-bright w-full border-t px-1 py-2 text-center font-mono text-[10px] sm:text-xs">
+          <p className="text-parchment-muted mb-4 flex-1 font-serif text-xs italic">"{org.lore}"</p>
+          <div className="border-iron bg-void/80 text-blood-bright text-body-xs w-full border-t px-1 py-2 text-center font-mono sm:text-xs">
             <ResourceText text={org.desc} />
           </div>
         </div>
@@ -60,7 +60,7 @@ export function OriginScreen() {
   const loading = gameLoading.value;
   const error = startGameError.value;
   return (
-    <main className="bg-void text-parchment relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-y-auto p-4 font-serif">
+    <main className="bg-void text-parchment font-body relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-y-auto p-4">
       <GradientBackground
         gradient="from-blood-deep/30 via-void to-black"
         glowColor="color-mix(in srgb, var(--color-tarnished-gold) 6%, transparent)"
@@ -82,7 +82,7 @@ export function OriginScreen() {
             <OriginCard key={org.id} org={org} loading={loading} />
           ))}
         </ul>
-        <p className="text-parchment-dim/60 mt-4 text-xs tracking-widest">
+        <p className="text-parchment-ghost mt-4 text-xs tracking-widest">
           ―― 死者の肉を継ぎ、獣と成れ。
         </p>
       </div>

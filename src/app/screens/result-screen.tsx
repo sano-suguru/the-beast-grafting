@@ -12,7 +12,7 @@ function WinContent() {
       <h1 className="text-parchment-bright mb-4 text-3xl font-bold tracking-[0.2em] md:text-4xl">
         傑作の完成
       </h1>
-      <div className="text-parchment-muted max-w-md space-y-4 px-4 text-xs leading-relaxed italic md:text-sm">
+      <div className="text-parchment-muted max-w-md space-y-4 px-4 font-serif text-xs leading-relaxed italic md:text-sm">
         <p>最後の激突が終わった。</p>
         <p>
           死体の山の上に、あなたが接ぎ木し続けた「究極の傑作」が立っている。それはもはや元の生物の原型を留めておらず、ただ美しく、冒涜的だ。
@@ -34,7 +34,7 @@ function LossContent() {
       <h1 className="text-blood-bright mb-4 text-3xl font-bold tracking-[0.2em] md:text-4xl">
         異端認定
       </h1>
-      <div className="text-parchment-muted max-w-md space-y-4 px-4 text-xs leading-relaxed italic md:text-sm">
+      <div className="text-parchment-muted max-w-md space-y-4 px-4 font-serif text-xs leading-relaxed italic md:text-sm">
         {isChurch ? (
           <>
             <p>重い木の扉が破られる音がした。</p>
@@ -76,7 +76,7 @@ export function ResultScreen() {
   const isWin = trophy.value >= 10;
 
   return (
-    <main className="animate-fade-in bg-void text-parchment relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-4 text-center font-serif">
+    <main className="animate-fade-in bg-void text-parchment font-body relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-4 text-center">
       <GradientBackground
         gradient={isWin ? "from-tarnished-gold-deep/30 via-void to-black" : undefined}
         glowColor={

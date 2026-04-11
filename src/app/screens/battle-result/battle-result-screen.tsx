@@ -65,7 +65,7 @@ export function BattleResultScreen() {
   const cfg = RESULT_CONFIG[result];
 
   return (
-    <main className="animate-fade-in bg-void text-parchment relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-4 font-serif">
+    <main className="animate-fade-in bg-void text-parchment font-body relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-4">
       <GradientBackground gradient={cfg.gradient} glowColor={cfg.glowColor} />
 
       <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-6 md:max-w-lg">
@@ -89,7 +89,7 @@ export function BattleResultScreen() {
             playSE("select");
             proceedFromBattleResult();
           }}
-          className="border-iron text-parchment-dim hover:bg-void-surface hover:text-parchment shadow-glow-iron-sm mt-4 cursor-pointer rounded-sm border px-6 py-3 text-sm tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-50"
+          className="border-iron text-parchment-dim hover:bg-void-surface hover:text-parchment shadow-glow-iron-sm disabled:text-disabled-fg disabled:border-iron/30 mt-4 cursor-pointer rounded-sm border px-6 py-3 text-sm tracking-widest transition-all disabled:cursor-not-allowed"
           type="button"
         >
           {data?.gameEnded ? "終幕を見届ける" : "次の夜へ進む"}

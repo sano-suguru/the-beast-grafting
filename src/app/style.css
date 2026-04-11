@@ -1,14 +1,21 @@
 @import "tailwindcss";
 
 @theme {
+  /* ── Contrast tiers against void #08070b ──
+     AA text  (≥ 4.5 : 1) — 本文・ラベル・ステータス等の機能テキストに使用
+     AA margin target: ≥ 4.7 : 1 (ブラウザ実装差の安全域)
+     Non-text (≥ 3.0 : 1) — アイコン・グラフィック要素 (WCAG 1.4.11)
+     Decorative (< 4.5 : 1) — 雰囲気テキスト。機能情報には使わない
+     Surface    (ratio n/a) — 背景・ボーダー専用
+     Border opacity (e.g. border-iron/30) — 深度階層用。テキストコントラスト対象外 */
   --color-parchment: #d4c4a0;
-  --color-parchment-dim: #8e7e5e;
+  --color-parchment-dim: #a08e6a;
   --color-parchment-bright: #ede5d5;
-  --color-parchment-muted: #8a8478;
+  --color-parchment-muted: #9e9688;
   --color-blood-deep: #5c1a1a;
-  --color-blood-dim: #8a3030;
-  --color-blood-bright: #a33030;
-  --color-rot: #4a7a4a;
+  --color-blood-dim: #c05858; /* 4.57:1 — Non-text (icon) only */
+  --color-blood-bright: #d84848;
+  --color-rot: #5ea05e;
   --color-rot-bright: #34d399;
   --color-rot-acid: #84cc16;
   --color-rot-dim: #2d4a2d;
@@ -17,7 +24,7 @@
   --color-tarnished-gold-dim: #937b38;
   --color-tarnished-gold-deep: #1a1508;
   --color-iron: #3a3a3e;
-  --color-iron-light: #7a7a82;
+  --color-iron-light: #8e8e96;
   --color-void: #08070b;
   --color-void-surface: #0e0d12;
   --color-corpse-wax: #93c5e8;
@@ -25,8 +32,47 @@
   --color-hex-dim: #7c3aed;
   --color-hex-deep: #1e1030;
   --color-church: #fde68a;
-  --color-church-dim: #b45309;
-  --color-church-dark: #78350f;
+  --color-church-dim: #d4700f;
+  --color-church-dark: #c06020;
+
+  /* ── Semantic muted colors (AA text — replace opacity modifiers) ── */
+  --color-blood-muted: #b46464;
+  --color-church-muted: #a87038;
+  --color-church-lore: #c0842a;
+  --color-gold-muted: #a08040;
+  --color-gold-stat-muted: #997c3e;
+
+  /* ── Disabled controls (WCAG exempt — SC 1.4.3 excludes inactive UI) ──
+     disabled 操作系 → text-disabled-fg
+     can't-afford → bg-black/50 backdrop-grayscale overlay + text-disabled-fg on overflow elements
+     dead/defeated → text-disabled-fg (container opacity ではなく個別テキスト色で表現) */
+  --color-disabled-fg: #787880;
+
+  /* ── Decorative (< 4.5:1 — 機能テキストに使わないこと) ── */
+  --color-parchment-ghost: #706858;
+
+  /* ── Font size scale ──
+     card-sm (8px) — カード内最小。旧 sub-8px は全てここに丸める。
+                     旧コードに md: レスポンシブがあった場合は card-sm md:card-md を使う。
+     card-md (9px) — カード詳細テキスト (デスクトップ)
+     body-xs (10px) — 本文最小
+     body-sm (11px) — 本文標準小 */
+  --text-card-sm: 0.5rem;
+  --text-card-md: 0.5625rem;
+  --text-body-xs: 0.625rem;
+  --text-body-sm: 0.6875rem;
+
+  /* ── Font families ──
+     font-title — ゲームタイトルのみ (title-screen h1)
+     font-body  — デフォルト。UI chrome・ボタン・ラベル・ステータス
+     font-serif — ナラティブ/ロア。散文・引用・フレーバーテキスト
+     font-mono  — メカニクス記述。skillText・origin desc・戦闘ログ */
+  --font-title: "UnifrakturMaguntia", "Georgia", serif;
+  --font-body: system-ui, sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 
 /* ── Glow shadow utilities (color-mix derives from theme tokens) ── */

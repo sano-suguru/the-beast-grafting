@@ -27,12 +27,12 @@ function getCardClass(border: string, cantAfford: boolean, isEquip: boolean): st
 }
 
 function getCostBadgeClass(cantAfford: boolean): string {
-  const style = cantAfford ? "opacity-40 grayscale" : "text-tarnished-gold";
-  return `absolute -bottom-1 -left-1 bg-void-surface text-[8px] px-1 rounded border border-iron pointer-events-none ${style}`;
+  const style = cantAfford ? "text-disabled-fg grayscale" : "text-tarnished-gold";
+  return `absolute -bottom-1 -left-1 bg-void-surface text-card-sm px-1 rounded border border-iron pointer-events-none ${style}`;
 }
 
 function getItemNameColor(isPureBlood: boolean): string {
-  return isPureBlood ? "text-blood-bright" : "text-tarnished-gold/80";
+  return isPureBlood ? "text-blood-bright" : "text-gold-muted";
 }
 
 function getItemIconColor(isEquip: boolean): string {
@@ -82,12 +82,12 @@ function ItemCardBody({
   return (
     <div className="flex flex-1 flex-col p-1">
       <div
-        className={`pointer-events-none line-clamp-2 text-center text-[7px] leading-tight font-bold break-words md:text-[9px] ${getItemNameColor(isPureBlood)}`}
+        className={`md:text-card-md text-card-sm pointer-events-none line-clamp-2 text-center leading-tight font-bold break-words ${getItemNameColor(isPureBlood)}`}
       >
         {item.name}
       </div>
       <div className="pointer-events-none flex flex-1 flex-col items-center justify-center gap-0.5">
-        <span className="text-parchment-dim text-[6px] tracking-wider">
+        <span className="text-parchment-dim text-card-sm md:text-card-md tracking-wider">
           {isEquip ? "装備" : "消費"}
         </span>
         {isPureBlood ? (

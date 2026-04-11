@@ -29,7 +29,7 @@ export function TitleScreen() {
   const loading = gameLoading.value;
 
   return (
-    <main className="bg-void text-parchment relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-4 font-serif">
+    <main className="bg-void text-parchment font-body relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-4">
       <GradientBackground />
       <IdentityBadge />
       {showAccountOverlay.value && <AccountOverlay />}
@@ -41,16 +41,16 @@ export function TitleScreen() {
         </div>
 
         <h1
-          className="text-parchment-bright mb-10 text-4xl font-black tracking-[0.2em] md:text-5xl"
+          className="text-parchment-bright font-title mb-10 text-4xl font-bold tracking-wide md:text-5xl"
           style={{
             textShadow:
-              "0 0 30px color-mix(in srgb, var(--color-tarnished-gold) 30%, transparent), 0 2px 4px rgba(0,0,0,0.8)",
+              "0 0 40px color-mix(in srgb, var(--color-tarnished-gold) 40%, transparent), 0 0 80px color-mix(in srgb, var(--color-blood-bright) 15%, transparent), 0 2px 4px rgba(0,0,0,0.9)",
           }}
         >
           The Beast Grafter
         </h1>
 
-        <div className="text-parchment-muted mb-12 max-w-md space-y-4 px-4 text-center text-[10px] leading-relaxed italic md:text-sm">
+        <div className="text-parchment-muted text-body-xs mb-12 max-w-md space-y-4 px-4 text-center font-serif leading-relaxed italic md:text-sm">
           <p>鉄格子越しに、松明の明かりと冷たい雨の匂いがする。</p>
           <p>教会の猟犬どもが、この地下室を嗅ぎつけるのも時間の問題だ。</p>
           <p>解剖台は冷え切っている。</p>
@@ -101,7 +101,7 @@ function TitleButtons({
       >
         <Book size={16} />
         <span>大解剖録を開く</span>
-        <span className="text-[10px]">
+        <span className="text-body-xs">
           ({mastered}/{total})
         </span>
       </button>

@@ -36,21 +36,21 @@ function getRollButtonClass(
   const canRoll = !rollLocked && (hasFreeRoll || currentBlood >= 1);
   const base = canRoll
     ? "border-iron bg-iron/60 hover:bg-iron text-parchment-bright active:scale-95"
-    : "border-iron/30 bg-void text-iron-light opacity-50 cursor-not-allowed";
+    : "border-iron/30 bg-void text-disabled-fg cursor-not-allowed";
   const onboarding =
     step === "roll" ? "animate-pulse border-tarnished-gold shadow-glow-gold-pulse" : "";
-  return `flex-1 flex items-center justify-center gap-1 border rounded py-2 text-[10px] md:text-xs font-bold transition-colors cursor-pointer ${base} ${onboarding}`;
+  return `flex-1 flex items-center justify-center gap-1 border rounded py-2 text-body-xs md:text-xs font-bold transition-colors cursor-pointer ${base} ${onboarding}`;
 }
 
 function getBattleButtonClass(hasUnit: boolean, step: OnboardingStep): string {
   const base = !hasUnit
-    ? "border-iron/30 bg-void text-iron-light opacity-50 cursor-not-allowed"
+    ? "border-iron/30 bg-void text-disabled-fg cursor-not-allowed"
     : "border-blood-deep bg-blood-deep/20 text-blood-bright hover:bg-blood-deep/40 active:scale-95";
   const onboarding =
     step === "battle"
       ? "animate-pulse border-blood-bright text-parchment shadow-glow-blood-pulse"
       : "";
-  return `flex items-center justify-center gap-1 border rounded py-2 text-[10px] md:text-xs font-bold tracking-widest transition-all cursor-pointer ${base} ${onboarding}`;
+  return `flex items-center justify-center gap-1 border rounded py-2 text-body-xs md:text-xs font-bold tracking-widest transition-all cursor-pointer ${base} ${onboarding}`;
 }
 
 function RollSection({
@@ -93,7 +93,7 @@ function RollSection({
             playSEFrom(useCultistAbility());
           }}
           disabled={busy}
-          className="border-blood-deep bg-blood-deep/30 text-blood-bright hover:bg-blood-deep/50 cursor-pointer rounded border px-2 text-[10px] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+          className="border-blood-deep bg-blood-deep/30 text-blood-bright hover:bg-blood-deep/50 disabled:text-disabled-fg disabled:border-iron/30 text-body-xs cursor-pointer rounded border px-2 active:scale-95 disabled:cursor-not-allowed"
         >
           血の代償
         </button>

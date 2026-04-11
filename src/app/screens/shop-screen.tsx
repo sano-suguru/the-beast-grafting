@@ -58,7 +58,7 @@ export function ShopScreen() {
 
   return (
     <main
-      className="border-iron/30 text-parchment relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x font-serif select-none"
+      className="border-iron/30 text-parchment font-body relative mx-auto flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden border-x select-none"
       style={{
         background:
           "radial-gradient(ellipse at 50% 0%, rgba(20,18,25,0.6) 0%, transparent 60%), var(--color-void)",
@@ -139,7 +139,7 @@ function BoardSection({ board: b }: { board: (UnitInstance | null)[] }) {
       )}
       <div className="mb-1 flex items-end justify-between px-1 md:mb-2">
         <span className="text-parchment-dim text-xs font-bold md:text-sm">解剖台</span>
-        <span className="text-iron-light flex items-center gap-1 text-[10px] font-normal">
+        <span className="text-iron-light text-body-xs flex items-center gap-1 font-normal">
           後衛 <ChevronRight size={10} className="text-parchment-dim inline" /> 前衛
         </span>
       </div>
@@ -172,11 +172,11 @@ function SellButton({ isActive, bloodGain }: { isActive: boolean; bloodGain: num
       className={`flex h-10 flex-1 shrink-0 items-center justify-center rounded border transition-all md:h-12 ${
         isActive
           ? "border-blood-deep bg-blood-deep/80 text-blood-bright shadow-glow-blood-sm cursor-pointer active:scale-95"
-          : "border-iron/50 bg-void-surface/30 text-iron-light cursor-not-allowed opacity-50"
+          : "border-iron/30 bg-void-surface/30 text-disabled-fg cursor-not-allowed"
       }`}
     >
       <Trash2 size={16} className="mr-2" />
-      <span className="text-[10px] font-bold tracking-widest md:text-xs">
+      <span className="text-body-xs font-bold tracking-widest md:text-xs">
         <ResourceText
           text={isActive ? `解体する ({blood}×${bloodGain} 還元)` : "選択した死体を解体する"}
         />
@@ -196,11 +196,11 @@ function UndoButton({ disabled }: { disabled: boolean }) {
       className={`flex h-10 shrink-0 items-center justify-center rounded border px-3 transition-all md:h-12 md:px-4 ${
         enabled
           ? "border-iron bg-iron/60 hover:bg-iron text-parchment-bright cursor-pointer active:scale-95"
-          : "border-iron/50 bg-void-surface/30 text-iron-light cursor-not-allowed opacity-50"
+          : "border-iron/30 bg-void-surface/30 text-disabled-fg cursor-not-allowed"
       }`}
     >
       <Undo2 size={14} className="mr-1" />
-      <span className="text-[10px] font-bold md:text-xs">元に戻す</span>
+      <span className="text-body-xs font-bold md:text-xs">元に戻す</span>
     </button>
   );
 }

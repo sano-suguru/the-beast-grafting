@@ -10,7 +10,7 @@ import { GradientBackground } from "../components/gradient-background";
 
 const TIER_CLASS = {
   high: "text-parchment-muted",
-  mid: "text-tarnished-gold/80",
+  mid: "text-gold-muted",
   low: "animate-pulse font-bold text-blood-bright",
 } as const;
 
@@ -34,7 +34,7 @@ function PreBattleLoading({ showText }: { showText: boolean }) {
   return (
     <main className="bg-void text-parchment-dim relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden">
       <GradientBackground />
-      {showText && <p className="relative z-10 animate-pulse tracking-widest">……準備中……</p>}
+      {showText && <p className="relative z-10 animate-pulse tracking-wider">……準備中……</p>}
     </main>
   );
 }
@@ -68,10 +68,10 @@ export function PreBattleScreen() {
   const tier = toLifeTier(life.value);
 
   return (
-    <main className="animate-fade-in bg-void text-parchment relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-6 text-center font-serif">
+    <main className="animate-fade-in bg-void text-parchment font-body relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden p-6 text-center">
       <GradientBackground />
       <div
-        className={`relative z-10 max-w-md space-y-6 text-xs leading-loose tracking-wide md:text-base ${TIER_CLASS[tier]}`}
+        className={`relative z-10 max-w-md space-y-6 font-serif text-xs leading-loose tracking-wide md:text-base ${TIER_CLASS[tier]}`}
       >
         <p>{narrative.intro}</p>
         <p className="border-blood-deep/30 text-blood-bright mt-4 border-y py-4 font-bold">
