@@ -1,10 +1,10 @@
-import { Dna } from "lucide-preact";
 import type { ComponentChildren } from "preact";
 import { selection, blood } from "../state/game-store";
 import { handleCardClick, clearHover, setHover, toSelectionType } from "../state/card-actions";
 import { initAudio, playSEFrom } from "../engine/audio";
 import { UNIT_COST, expPerLevel, MAX_UNIT_LEVEL, CUMULATIVE_EXP } from "../../shared/constants";
 import { effectiveAtk, effectiveHp } from "../../shared/unit-stats";
+import { getUnitIcon } from "../data/unit-icons";
 import { StatBadge } from "./stat-badge";
 import { EquipIcon } from "./equip-icon";
 import type { Tier } from "../../shared/data/tiers";
@@ -38,7 +38,7 @@ function getBorderClass(
   return "border-iron";
 }
 
-const DNA_COLORS: Record<number, string> = { 2: "text-tarnished-gold-dim", 3: "text-hex-dim" };
+const LEVEL_COLORS: Record<number, string> = { 2: "text-tarnished-gold-dim", 3: "text-hex-dim" };
 
 function getHoverEffect(cantAfford: boolean, isHighlight: HighlightKind | undefined): string {
   if (cantAfford) return "";
@@ -134,11 +134,12 @@ function UnitCardBadges({
 }
 
 function UnitCardContent({ unit }: { unit: UnitInstance }) {
+  const Icon = getUnitIcon(unit.id);
   return (
     <div className="flex flex-1 flex-col p-1 md:p-1.5">
       <div className={getNameClass(unit.isChurch)}>{unit.name}</div>
       <div className="pointer-events-none flex flex-1 items-center justify-center">
-        <Dna size={18} className={DNA_COLORS[unit.level] || "text-iron-light"} />
+        <Icon className={`size-4.5 md:size-7 ${LEVEL_COLORS[unit.level] || "text-iron-light"}`} />
       </div>
       <ExpBar level={unit.level} exp={unit.exp} />
       <div className="border-iron/30 bg-void pointer-events-none flex items-center justify-between rounded border-t px-1">

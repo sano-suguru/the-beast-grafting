@@ -1,4 +1,5 @@
-import { Skull, Swords, Shield } from "lucide-preact";
+import { Swords, Shield } from "lucide-preact";
+import { getUnitIcon } from "../data/unit-icons";
 import { StatBadge } from "./stat-badge";
 import { EquipIcon } from "./equip-icon";
 import type { BattleUnitSnapshot, BattleAction } from "../types";
@@ -109,7 +110,7 @@ function getNameColor(side: string): string {
   return side === "p" ? "text-parchment-bright" : "text-blood-bright";
 }
 
-function getSkullColor(side: string): string {
+function getIconColor(side: string): string {
   return side === "p" ? "text-iron-light" : "text-blood-muted";
 }
 
@@ -168,7 +169,8 @@ function BattleCardBody({
 }) {
   const actionType = actionObj?.type;
   const nameColor = unit.isChurch ? "text-church" : getNameColor(side);
-  const skullColor = unit.isChurch ? "text-church-muted" : getSkullColor(side);
+  const iconColor = unit.isChurch ? "text-church-muted" : getIconColor(side);
+  const Icon = getUnitIcon(unit.id);
   return (
     <>
       {actionType === "damage" && (
@@ -191,7 +193,7 @@ function BattleCardBody({
             <EquipIcon equipId={unit.equip} />
           </div>
         )}
-        <Skull size={18} className={skullColor} />
+        <Icon className={`size-4.5 md:size-7 ${iconColor}`} />
       </div>
     </>
   );
