@@ -57,6 +57,53 @@ export const UNITS_HIGH_TIER = {
     lore: "絞首台から落ちた遺体の口が、まだ動いている。刑吏は、何を言ったか思い出せない。",
     secretLore: "その言葉を夢で聞いた者は、翌朝から死を恐れなくなった。",
   },
+  // Tier 5 追加
+  necrotic_finger: {
+    id: "necrotic_finger",
+    name: "壊死した指",
+    baseAtk: 1,
+    baseHp: 1,
+    tier: 5,
+    skillText: "常時: 攻撃で対象を即死させる",
+    lore: "黒ずんだ一本の指。触れたものを腐らせる。指自体は、少し突けば崩れる。",
+  },
+  insatiable_maw: {
+    id: "insatiable_maw",
+    name: "飽くなき咢",
+    baseAtk: 4,
+    baseHp: 4,
+    tier: 5,
+    skillText: "味方死亡: 自身に+2/+2",
+    lore: "深淵の底で餓え続けた何かの、最後に残った器官。死の匂いを嗅ぐと脈動し、際限なく肥大化する。",
+  },
+  wailing_cursechild: {
+    id: "wailing_cursechild",
+    name: "啼き喚く呪い児",
+    baseAtk: 3,
+    baseHp: 7,
+    tier: 5,
+    skillText: "味方3体死亡ごと: 味方全体に+2/+2",
+    lore: "泣き声が大きくなるたびに、まだ動いている者の肉が震え始める。泣き止ませる方法は、まだ見つかっていない。",
+  },
+  amniotic_armor: {
+    id: "amniotic_armor",
+    name: "羊膜の鎧",
+    baseAtk: 2,
+    baseHp: 8,
+    tier: 5,
+    skillText: "被弾: 自身に【屍蝋】を装備(1回/戦)",
+    lore: "上位者の子を包んでいた羊膜。打たれると硬化し、一撃だけ身を守る。生まれなかった何かの、残り香。",
+  },
+  mimicking_flesh: {
+    id: "mimicking_flesh",
+    name: "模倣する粘肉",
+    baseAtk: 4,
+    baseHp: 3,
+    tier: 5,
+    skillText: "開戦: 前の味方のスキルをコピー(戦闘中のみ)",
+    lore: "銀色の肉塊。隣の素体の動きを完璧に模倣し、戦いが終わると粘液に戻る。模倣は本物を超えられない。だが、二つあれば十分だ。",
+  },
+
   // Tier 6
   brains: {
     id: "brains",

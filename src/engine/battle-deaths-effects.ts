@@ -9,6 +9,10 @@ import {
   handleCathedralSpawns,
   handleEvangelistPlague,
 } from "./battle-deaths-effects-reactions";
+import {
+  handleCrawlingCordBuff,
+  handleInsatiableMawBuff,
+} from "./battle-deaths-effects-ally-reactions";
 
 export function handleEquipDeath(
   dead: BattleUnit,
@@ -68,4 +72,6 @@ export const PERSISTENT_ALLY_REACTIONS: AllyReaction[] = [
   (r) => handleEvangelistPlague(r.board, r.enemyBoard, r.isPlayer, r.ctx),
   (r) => handleCrowBuffs(r.board, r.isPlayer, r.ctx),
   (r) => handleSinEaterAbsorb(r.board, r.dead.atk, r.isPlayer, r.ctx),
+  (r) => handleCrawlingCordBuff(r.board, r.isPlayer, r.ctx),
+  (r) => handleInsatiableMawBuff(r.board, r.isPlayer, r.ctx),
 ];

@@ -83,6 +83,14 @@ export const PLAGUE_BELL = {
 
 // ── 被弾スキル ──
 
+export const TUMOR_GUARDIAN = {
+  buff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+  ] as SB,
+};
+
 export const TEMPLAR = {
   atkBuff: [1, 2, 3] as SN,
 };
@@ -111,7 +119,19 @@ export const HOWLING_GIANT = {
   atkBuff: [1, 2, 3] as SN,
 };
 
+export const AMNIOTIC_ARMOR = {
+  uses: [1, 2, 3] as SN,
+};
+
 // ── 戦闘スキル（撃破） ──
+
+export const DEAD_HAND = {
+  hpHeal: [1, 2, 3] as SN,
+};
+
+export const DEVOURING_WOUND = {
+  hpHeal: [2, 3, 4] as SN,
+};
 
 export const HUNDRED_ARMS = {
   damageT1: [8, 16, 24] as SN,
@@ -146,6 +166,8 @@ export {
   SIN_EATER,
   CATHEDRAL,
   BEELZEBUB,
+  OMEN_WOMB,
+  STELLAR_COCOON,
 } from "./skill-params-death";
 
 // ── Avengeスキル ──
@@ -177,6 +199,58 @@ export const ARCHANGEL = {
   ] as SB,
 };
 
+export const GROANING_COFFIN = {
+  threshold: 2,
+  damage: [3, 5, 7] as SN,
+};
+
+export const WAILING_CURSECHILD = {
+  threshold: 3,
+  buff: [
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+    { atk: 4, hp: 4 },
+  ] as SB,
+};
+
+// ── 味方召喚時 ──
+
+export const FLESH_GRANULATION = {
+  buff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+  ] as SB,
+};
+
+// ── ターン終了 ──
+
+export const CORRODING_MOLD = {
+  buff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+  ] as SB,
+};
+
+// ── 味方死亡リアクション ──
+
+export const CRAWLING_CORD = {
+  buff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+  ] as SB,
+};
+
+export const INSATIABLE_MAW = {
+  buff: [
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+    { atk: 4, hp: 4 },
+  ] as SB,
+};
+
 // ── ショップスキル ──
 export {
   ALTAR,
@@ -189,5 +263,8 @@ export {
   GRAVE_WORM,
   MARKET_VULTURE,
   ASH_FUNGUS,
+  GHOUL_INFANT,
+  TAINTED_PLACENTA,
+  CORPSE_BROKER,
   sellBloodGain,
 } from "./skill-params-shop";

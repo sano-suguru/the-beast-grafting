@@ -4,14 +4,12 @@ import type { Tier } from "./data/tiers";
 import type {
   UnitInstance,
   UnitId,
-  RegularUnitId,
-  ChurchUnitId,
+  DataUnitId,
   EnemyTeam,
   OpponentStats,
   OpponentStatsKnown,
 } from "./types";
-import { UNITS } from "./data/units";
-import { CHURCH_UNITS } from "./data/church-units";
+import { lookupUnitData } from "./data/unit-lookup";
 import { invariant } from "./invariant";
 
 export interface BoardUnit {
@@ -65,7 +63,7 @@ export function unitInstanceToBoardUnit(u: UnitInstance): BoardUnit {
 }
 
 export function boardUnitToUnitInstance(bu: BoardUnit): UnitInstance {
-  const master = bu.isChurch ? CHURCH_UNITS[bu.id as ChurchUnitId] : UNITS[bu.id as RegularUnitId];
+  const master = lookupUnitData(bu.id as DataUnitId);
   invariant(master, `unknown unit id "${bu.id}" (isChurch=${bu.isChurch})`);
   const inst: UnitInstance = {
     id: bu.id as UnitId,

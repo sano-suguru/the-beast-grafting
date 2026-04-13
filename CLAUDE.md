@@ -60,6 +60,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **AoEバフ/ダメージのフレームactionには影響を受けた全ユニットを含める**。`aoeBuffActions` / `aoeDamageActions` (`battle-context.ts`) を使うこと。発動元のみ `{ type: "skill" }` で済ませない。
 
+### Battle Log Segments
+
+- pushFrameの`segments`配列では、統計値（バフ・ダメージ表記）に`seg.s()`、HP遷移（X→Y）に`seg.hp()`、ユニット名に`seg.u()`、装備・効果名に`seg.e()`を使う。プレーンstringに数値を埋め込まない。
+
 ### Comments
 
 - **コードで語れないことだけコメントする**: WHATコメント（コードの動作説明）は書かない。まず関数名・定数名・型で意図を表現し、それでも伝わらない設計由来（例: SAP準拠の理由）のみWHYコメントを書く。

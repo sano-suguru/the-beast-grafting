@@ -68,6 +68,26 @@ export const ASH_FUNGUS = {
   percent: [25, 33, 50] as SN,
 };
 
+export const GHOUL_INFANT = {
+  atkBuff: [1, 2, 3] as SN,
+};
+
+export const TAINTED_PLACENTA = {
+  shopBuff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+  ] as SB,
+};
+
+export const CORPSE_BROKER = {
+  sellBuff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+  ] as SB,
+};
+
 /** 売却時の血液獲得量（レベル + beggarボーナス） */
 export function sellBloodGain(level: number, id: UnitId): number {
   return level + (id === "beggar" ? 1 : 0);

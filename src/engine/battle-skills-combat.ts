@@ -12,7 +12,14 @@ import {
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
 import { HUNDRED_ARMS_SAFETY, ACID_SPLASH_DAMAGE } from "./constants";
-import { atLevel, HUNDRED_ARMS, ORGAN_GRINDER, RISEN_POPE } from "../shared/skill-params";
+import {
+  atLevel,
+  DEAD_HAND,
+  DEVOURING_WOUND,
+  HUNDRED_ARMS,
+  ORGAN_GRINDER,
+  RISEN_POPE,
+} from "../shared/skill-params";
 
 export function applyAcidSplash(
   attacker: BattleUnit,
@@ -58,6 +65,9 @@ type KnockoutContext = {
 type KnockoutHandler = (k: KnockoutContext) => void;
 
 const KNOCKOUT_HANDLERS = {
+  dead_hand: (k) => processDeadHandKnockout(k.attacker, k.attackerBoard, k.isPlayer, k.ctx),
+  devouring_wound: (k) =>
+    processDevouringWoundKnockout(k.attacker, k.attackerBoard, k.isPlayer, k.ctx),
   hundred_arms: (k) =>
     processHundredArmsKnockout(k.attacker, k.defenderBoard, k.attackerBoard, k.isPlayer, k.ctx),
   organ_grinder: (k) =>
@@ -88,6 +98,50 @@ function getKnockoutMult(unit: BattleUnit, id: UnitId, board: BattleUnit[]): num
   return idx === -1 ? 0 : getMult(board, idx);
 }
 
+function processDeadHandKnockout(
+  attacker: BattleUnit,
+  attackerBoard: BattleUnit[],
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  const mult = getKnockoutMult(attacker, "dead_hand", attackerBoard);
+  if (mult === 0) return;
+  const prefix = enemyPrefix(isPlayer);
+  for (let m = 0; m < mult; m++) {
+    const heal = atLevel(DEAD_HAND.hpHeal, attacker.level);
+    attacker.hp += heal;
+    pushFrame(
+      ctx,
+      "skill",
+      [prefix, seg.u(attacker.name), "が死肉を掴む。少し膨れる。", seg.s(`+0/+${heal}`)],
+      "skill",
+      { [attacker.uid]: { type: "buff", value: `+0/+${heal}` } },
+    );
+  }
+}
+
+function processDevouringWoundKnockout(
+  attacker: BattleUnit,
+  attackerBoard: BattleUnit[],
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  const mult = getKnockoutMult(attacker, "devouring_wound", attackerBoard);
+  if (mult === 0) return;
+  const prefix = enemyPrefix(isPlayer);
+  for (let m = 0; m < mult; m++) {
+    const heal = atLevel(DEVOURING_WOUND.hpHeal, attacker.level);
+    attacker.hp += heal;
+    pushFrame(
+      ctx,
+      "skill",
+      [prefix, seg.u(attacker.name), "が塞がり、また開く。", seg.s(`+0/+${heal}`)],
+      "skill",
+      { [attacker.uid]: { type: "buff", value: `+0/+${heal}` } },
+    );
+  }
+}
+
 function processOrganGrinderKnockout(
   attacker: BattleUnit,
   defenderBoard: BattleUnit[],
@@ -109,7 +163,7 @@ function processOrganGrinderKnockout(
     pushFrame(
       ctx,
       "skill",
-      [prefix, seg.u(attacker.name), `が肉を挽く！ 敵全体に${dmg}ダメージ`],
+      [prefix, seg.u(attacker.name), "が肉を挽く！ 敵全体に", seg.s(`${dmg}ダメージ`)],
       "skill",
       aoeDamageActions(attacker, hit, dmg),
     );
@@ -141,7 +195,8 @@ function processRisenPopeKnockout(
       [
         prefix,
         seg.u(attacker.name),
-        `が血塗れの槌を掲げる。味方の目に狂気の光が灯る。+${b.atk}/+${b.hp}`,
+        "が血塗れの槌を掲げる。味方の目に狂気の光が灯る。",
+        seg.s(`+${b.atk}/+${b.hp}`),
       ],
       "skill",
       aoeBuffActions(attacker, buffed, `+${b.atk}/+${b.hp}`),

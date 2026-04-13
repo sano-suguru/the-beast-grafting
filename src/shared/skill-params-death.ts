@@ -104,3 +104,19 @@ export const BEELZEBUB = {
     { atk: 12, hp: 12 },
   ] as SB,
 };
+
+export const OMEN_WOMB = {
+  token: [
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+    { atk: 4, hp: 4 },
+  ] as SB,
+};
+
+export const STELLAR_COCOON = {
+  token: [
+    { atk: 5, hp: 5 },
+    { atk: 7, hp: 7 },
+    { atk: 10, hp: 10 },
+  ] as SB,
+};

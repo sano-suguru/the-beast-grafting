@@ -13,6 +13,7 @@ import {
 interface DefenseResult {
   dmg: number;
   action: BattleAction["type"];
+  waxBlocked?: true;
 }
 
 function applyBerserkBonus(unit: BattleUnit, ctx: BattleContext, isPlayer: boolean): number {
@@ -89,7 +90,7 @@ function applyCorpseWaxDefense(
     "defend",
     { [unit.uid]: { type: "defend", value: `${CORPSE_WAX_REDUCTION}軽減` } },
   );
-  return { dmg: reduced, action: "defend" };
+  return { dmg: reduced, action: "defend", waxBlocked: true };
 }
 
 function applyNumbnessDefense(
@@ -133,14 +134,30 @@ function applyDefensiveEquip(
   return { dmg: baseDmg, action: "damage" };
 }
 
+interface EquipmentResult {
+  pDmg: number;
+  eDmg: number;
+  pAction: BattleAction["type"];
+  eAction: BattleAction["type"];
+  pWaxBlocked: boolean;
+  eWaxBlocked: boolean;
+}
+
 export function applyEquipmentEffects(
   p: BattleUnit,
   e: BattleUnit,
   ctx: BattleContext,
-): { pDmg: number; eDmg: number; pAction: BattleAction["type"]; eAction: BattleAction["type"] } {
+): EquipmentResult {
   const pBonus = applyBerserkBonus(p, ctx, true);
   const eBonus = applyBerserkBonus(e, ctx, false);
   const pDef = applyDefensiveEquip(p, e.atk + eBonus, ctx, true);
   const eDef = applyDefensiveEquip(e, p.atk + pBonus, ctx, false);
-  return { pDmg: pDef.dmg, eDmg: eDef.dmg, pAction: pDef.action, eAction: eDef.action };
+  return {
+    pDmg: pDef.dmg,
+    eDmg: eDef.dmg,
+    pAction: pDef.action,
+    eAction: eDef.action,
+    pWaxBlocked: pDef.waxBlocked === true,
+    eWaxBlocked: eDef.waxBlocked === true,
+  };
 }

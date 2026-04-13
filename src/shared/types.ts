@@ -45,7 +45,26 @@ export type RegularUnitId =
   | "puppeteer"
   | "corpse_garden"
   | "bone_tree"
-  | "howling_giant";
+  | "howling_giant"
+  | "ghoul_infant"
+  | "dead_hand"
+  | "devouring_wound"
+  | "crawling_cord"
+  | "tainted_placenta"
+  | "graft_scion"
+  | "flesh_granulation"
+  | "corroding_mold"
+  | "omen_womb"
+  | "corpse_broker"
+  | "devouring_graft"
+  | "tumor_guardian"
+  | "groaning_coffin"
+  | "stellar_cocoon"
+  | "necrotic_finger"
+  | "insatiable_maw"
+  | "wailing_cursechild"
+  | "amniotic_armor"
+  | "mimicking_flesh";
 
 export type ChurchUnitId =
   | "squire"
@@ -64,7 +83,8 @@ export type ChurchUnitId =
   | "risen_pope";
 
 export type TokenId = "token";
-export type UnitId = RegularUnitId | ChurchUnitId | TokenId;
+export type DataUnitId = RegularUnitId | ChurchUnitId;
+export type UnitId = DataUnitId | TokenId;
 
 export type ItemId =
   | "preservative"
@@ -78,7 +98,7 @@ export type ItemId =
   | "pure_blood";
 
 export interface UnitData {
-  id: RegularUnitId | ChurchUnitId;
+  id: DataUnitId;
   name: string;
   baseAtk: number;
   baseHp: number;

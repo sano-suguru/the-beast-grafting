@@ -1,4 +1,4 @@
-import type { BattleAction } from "../shared/types";
+import type { BattleAction, UnitId } from "../shared/types";
 import type { BattleUnit } from "./battle-context";
 import { pushFrame, enemyPrefix, seg, aoeBuffActions } from "./battle-context";
 import { mustGet } from "../shared/invariant";
@@ -13,6 +13,7 @@ import {
   PALADIN,
   HOLY_FIRE,
 } from "../shared/skill-params";
+import { getInitOverride } from "./battle-init-overrides";
 
 export function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   if (targetArr.length === 0) return;
@@ -106,7 +107,12 @@ export function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
     pushFrame(
       ctx,
       "skill",
-      [prefix, seg.u(u.name), `の眼が血走る。前方${buffed}体の攻撃力+${buffAmount}。`],
+      [
+        prefix,
+        seg.u(u.name),
+        `の眼が血走る。前方${buffed}体の肉が脈打つ。`,
+        seg.s(`+${buffAmount}/+0`),
+      ],
       "skill",
       actions,
     );
@@ -148,7 +154,7 @@ export function applyPaladinSkill({ u, isPlayer, ctx }: SkillContext) {
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), `が手を掲げる。淡い光が味方の傷を塞いでいく。HP+${hpBuff}`],
+    [prefix, seg.u(u.name), "が手を掲げる。淡い光が味方の傷を塞いでいく。", seg.s(`+0/+${hpBuff}`)],
     "skill",
     aoeBuffActions(u, buffed, `+0/+${hpBuff}`),
   );
@@ -180,4 +186,66 @@ export function applyHolyFireSkill({ u, targetArr, isPlayer, ctx }: SkillContext
     isPlayer,
     ctx,
   );
+}
+
+export function applyDevouringGraftSkill({ u, isPlayer, ctx }: SkillContext) {
+  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
+  const idx = allyBoard.indexOf(u);
+  if (idx <= 0) return;
+  const pred = allyBoard[idx - 1]!;
+  ctx.absorbedUnits.set(u.uid, {
+    id: pred.id,
+    name: pred.name,
+    tier: pred.tier,
+    atk: pred.atk,
+    hp: pred.hp,
+    isChurch: pred.isChurch,
+    equip: pred.equip,
+  });
+  u.atk += pred.atk;
+  u.hp += pred.hp;
+  allyBoard.splice(idx - 1, 1);
+  const prefix = enemyPrefix(isPlayer);
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      prefix,
+      seg.u(u.name),
+      "が",
+      seg.u(pred.name),
+      "を丸呑みにした！ ",
+      seg.s(`+${pred.atk}/+${pred.hp}`),
+    ],
+    "skill",
+    { [u.uid]: { type: "buff", value: `+${pred.atk}/+${pred.hp}` } },
+  );
+}
+
+export function applyMimickingFleshSkill(
+  ctx_: SkillContext,
+  getStartHandler: (id: UnitId) => ((c: SkillContext) => void) | undefined,
+) {
+  const { u, targetArr, isPlayer, ctx } = ctx_;
+  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
+  const idx = allyBoard.indexOf(u);
+  if (idx <= 0) return;
+  const pred = allyBoard[idx - 1]!;
+  // TokenIdはDataUnitIdに属さず、UNITS/CHURCH_UNITSにスキル定義が存在しないためコピー不可
+  if (pred.id === "token") return;
+  const prevName = u.name;
+  u.id = pred.id;
+  u.name = pred.name;
+  const initOv = getInitOverride(u.id);
+  if (initOv) initOv(u);
+  const prefix = enemyPrefix(isPlayer);
+  pushFrame(
+    ctx,
+    "skill",
+    [prefix, seg.u(prevName), "が震え、", seg.u(pred.name), "の形に変わる。"],
+    "skill",
+    { [u.uid]: { type: "skill" } },
+  );
+  const handler = getStartHandler(u.id);
+  if (handler) handler({ u, targetArr, isPlayer, ctx });
 }

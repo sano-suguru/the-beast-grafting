@@ -98,7 +98,7 @@ export function handleSinEaterAbsorb(
       pushFrame(
         ctx,
         "skill",
-        [enemyPrefix(isPlayer), seg.u(u.name), `が屍に群がり、殻が膨れる。攻撃+${gain}`],
+        [enemyPrefix(isPlayer), seg.u(u.name), "が屍に群がり、殻が膨れる。", seg.s(`+${gain}/+0`)],
         "skill",
         { [u.uid]: { type: "buff", value: `+${gain}/+0` } },
         FRAME_DELAY_DEATH_CHAIN,
@@ -129,7 +129,12 @@ export function handleCathedralSpawns(
         t.atk,
         t.hp,
         u.isChurch,
-        [enemyPrefix(isPlayer), seg.u(u.name), `の扉が軋み、中から信徒が這い出す。${stat}召喚`],
+        [
+          enemyPrefix(isPlayer),
+          seg.u(u.name),
+          "の扉が軋み、中から信徒が這い出す。",
+          seg.s(`${stat} 召喚`),
+        ],
         isPlayer,
         ctx,
         FRAME_DELAY_DEATH_CHAIN,

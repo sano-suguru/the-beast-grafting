@@ -71,7 +71,8 @@ export function applyFamineDebuff(
       seg.u(u.name),
       "が",
       seg.u(front.name),
-      `に群がる。肉が痩せ細っていく。攻撃-${debuff}`,
+      "に群がる。肉が痩せ細っていく。",
+      seg.s(`-${debuff}/+0`),
     ],
     "skill",
     { [u.uid]: { type: "skill" }, [front.uid]: { type: "defend", value: `-${debuff}/+0` } },
@@ -96,7 +97,8 @@ export function applyRelicSwordBuff(
       seg.u(u.name),
       "が白く脈打つ。",
       seg.u(ally.name),
-      `の握る指が柄と同じ色に染まる。攻撃+${atkGain}`,
+      "の握る指が柄と同じ色に染まる。",
+      seg.s(`+${atkGain}/+0`),
     ],
     "skill",
     { [u.uid]: { type: "skill" }, [ally.uid]: { type: "buff", value: `+${atkGain}/+0` } },
@@ -120,7 +122,7 @@ export function applyPlagueBellToll(
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), `が弔鐘を鳴らす！ 敵全体に${dmg}ダメージ`],
+    [prefix, seg.u(u.name), "が弔鐘を鳴らす！ 敵全体に", seg.s(`${dmg}ダメージ`)],
     "skill",
     aoeDamageActions(u, hit, dmg),
   );

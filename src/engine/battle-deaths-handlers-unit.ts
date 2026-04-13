@@ -88,6 +88,7 @@ export function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathConte
     atk: t.atk,
     hp: t.hp,
     isChurch: dead.isChurch,
+    level: dead.level,
     segments: [
       enemyPrefix(isPlayer),
       seg.u(dead.name),
@@ -190,14 +191,7 @@ export function handleMaidenDeath({ dead, isPlayer, ctx, successor }: DeathConte
   pushFrame(
     ctx,
     "skill",
-    [
-      prefix,
-      seg.u(dead.name),
-      "の残骸が",
-      seg.u(successor.name),
-      "を覆う！ ",
-      seg.s("屍蝋の盾付与"),
-    ],
+    [prefix, seg.u(dead.name), "の残骸が", seg.u(successor.name), "を覆う！ ", seg.e("屍蝋の盾")],
     "skill",
     {
       [successor.uid]: { type: "defend", value: "盾" },

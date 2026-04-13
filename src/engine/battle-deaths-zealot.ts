@@ -25,7 +25,14 @@ export function applyZealotBuff(
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(zealotName), "が呪詛を唱える！ ", seg.u(token.name), `の攻撃+${buffAmount}`],
+    [
+      prefix,
+      seg.u(zealotName),
+      "が呪詛を唱える！ ",
+      seg.u(token.name),
+      "の肉が漲る。",
+      seg.s(`+${buffAmount}/+0`),
+    ],
     "skill",
     { [tokenUid]: { type: "buff", value: `+${buffAmount}/+0` } },
     FRAME_DELAY_DEATH_CHAIN,

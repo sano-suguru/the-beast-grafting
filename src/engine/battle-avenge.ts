@@ -1,7 +1,23 @@
 import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, enemyPrefix, seg, aoeBuffActions } from "./battle-context";
-import { atLevel, CHARNEL_PIT, GRINNING_SKULL, ARCHANGEL } from "../shared/skill-params";
+import type { Scaled, Buff } from "../shared/skill-params";
+import {
+  pushFrame,
+  takeDamage,
+  enemyPrefix,
+  seg,
+  skillDamageActions,
+  aoeBuffActions,
+} from "./battle-context";
+import { mustGet } from "../shared/invariant";
+import {
+  atLevel,
+  CHARNEL_PIT,
+  GRINNING_SKULL,
+  ARCHANGEL,
+  GROANING_COFFIN,
+  WAILING_CURSECHILD,
+} from "../shared/skill-params";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { spawnTokenAndNotify } from "./battle-spawn";
 
@@ -43,9 +59,13 @@ function handleCharnelPit({ u, board, idx, isPlayer, ctx }: AvengeCtx) {
   spawnAvengeToken(u, board, idx, "肉塊", t.atk, t.hp, "から肉塊が溢れ出す！ ", isPlayer, ctx);
 }
 
-function handleGrinningSkull({ u, board, isPlayer, ctx }: AvengeCtx) {
+function avengeAoeBuff(
+  { u, board, isPlayer, ctx }: AvengeCtx,
+  params: { buff: Scaled<Buff> },
+  logText: string,
+) {
   const prefix = enemyPrefix(isPlayer);
-  const b = atLevel(GRINNING_SKULL.buff, u.level);
+  const b = atLevel(params.buff, u.level);
   const buffed: BattleUnit[] = [];
   for (const ally of board) {
     if (ally.hp <= 0) continue;
@@ -56,11 +76,15 @@ function handleGrinningSkull({ u, board, isPlayer, ctx }: AvengeCtx) {
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), "が開く…味方全体に", seg.s(`+${b.atk}/+${b.hp}`)],
+    [prefix, seg.u(u.name), logText, seg.s(`+${b.atk}/+${b.hp}`)],
     "skill",
     aoeBuffActions(u, buffed, `+${b.atk}/+${b.hp}`),
     FRAME_DELAY_DEATH_CHAIN,
   );
+}
+
+function handleGrinningSkull(c: AvengeCtx) {
+  avengeAoeBuff(c, GRINNING_SKULL, "が開く…味方全体に");
 }
 
 function handleArchangel({ u, isPlayer, ctx }: AvengeCtx) {
@@ -71,11 +95,47 @@ function handleArchangel({ u, isPlayer, ctx }: AvengeCtx) {
   pushFrame(
     ctx,
     "skill",
-    [enemyPrefix(isPlayer), seg.u(u.name), `の光輪が軋む。翼の一枚が赤く染まる。+${stat}`],
+    [
+      enemyPrefix(isPlayer),
+      seg.u(u.name),
+      "の光輪が軋む。翼の一枚が赤く染まる。",
+      seg.s(`+${stat}`),
+    ],
     "skill",
     { [u.uid]: { type: "buff", value: `+${stat}` } },
     FRAME_DELAY_DEATH_CHAIN,
   );
+}
+
+function handleGroaningCoffin({ u, isPlayer, ctx }: AvengeCtx) {
+  const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
+  const alive = enemyBoard.filter((e) => e.hp > 0);
+  if (alive.length === 0) return;
+  const idx = Math.floor(ctx.rng.next() * alive.length);
+  const target = mustGet(alive, idx, "coffin target");
+  const dmg = atLevel(GROANING_COFFIN.damage, u.level);
+  const before = target.hp;
+  takeDamage(target, dmg);
+  const prefix = enemyPrefix(isPlayer);
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      prefix,
+      seg.u(u.name),
+      "の蓋が軋み、隙間から何かが漏れ出る。",
+      seg.u(target.name),
+      " ",
+      seg.hp(`${before}→${Math.max(0, target.hp)}`),
+    ],
+    "skill",
+    skillDamageActions(u, target, dmg),
+    FRAME_DELAY_DEATH_CHAIN,
+  );
+}
+
+function handleWailingCursechild(c: AvengeCtx) {
+  avengeAoeBuff(c, WAILING_CURSECHILD, "が泣き叫ぶ。味方全体に");
 }
 
 interface AvengeSpec {
@@ -88,6 +148,12 @@ const AVENGE_SPECS: AvengeSpec[] = [
   { id: "charnel_pit", threshold: CHARNEL_PIT.threshold, apply: handleCharnelPit },
   { id: "grinning_skull", threshold: GRINNING_SKULL.threshold, apply: handleGrinningSkull },
   { id: "archangel", threshold: ARCHANGEL.threshold, apply: handleArchangel },
+  { id: "groaning_coffin", threshold: GROANING_COFFIN.threshold, apply: handleGroaningCoffin },
+  {
+    id: "wailing_cursechild",
+    threshold: WAILING_CURSECHILD.threshold,
+    apply: handleWailingCursechild,
+  },
 ];
 
 const AVENGE_IDS: ReadonlySet<UnitId> = new Set(AVENGE_SPECS.map((s) => s.id));

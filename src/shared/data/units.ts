@@ -1,4 +1,5 @@
 import type { RegularUnitId, UnitData } from "../types";
+import { UNITS_ADDED } from "./units-added";
 import { UNITS_HIGH_TIER } from "./units-high-tier";
 
 export const UNITS: Record<RegularUnitId, UnitData> = {
@@ -276,6 +277,8 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     lore: "死体から生える灰色の茸。菌糸がいつの間にか、隣の素体にまで伸びている。",
     secretLore: "茸を食べた乞食は翌朝には消え、寝ていた場所に灰色の胞子だけが残った。",
   },
+  // Tier 1-4 追加ユニットは units-added.ts に定義
+  ...UNITS_ADDED,
   // Tier 5-6 は units-high-tier.ts に定義
   ...UNITS_HIGH_TIER,
 };

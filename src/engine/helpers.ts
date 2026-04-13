@@ -1,9 +1,10 @@
 import { UNITS } from "../shared/data/units";
-import { CHURCH_UNITS } from "../shared/data/church-units";
+import { lookupUnitData, isChurchUnit } from "../shared/data/unit-lookup";
 import type {
   UnitInstance,
   EnemyTeam,
   EnemyFaction,
+  DataUnitId,
   RegularUnitId,
   ChurchUnitId,
   ItemId,
@@ -16,9 +17,10 @@ import { getSkillText } from "../shared/skill-text";
 
 export const generateUid = (): string => Math.random().toString(36).substring(2, 11);
 
-export const createUnit = (id: RegularUnitId | ChurchUnitId): UnitInstance => {
-  const isChurch = Object.hasOwn(CHURCH_UNITS, id);
-  const data = isChurch ? CHURCH_UNITS[id as ChurchUnitId] : UNITS[id as RegularUnitId];
+export const createUnit = (id: DataUnitId): UnitInstance => {
+  const data = lookupUnitData(id);
+  invariant(data, `unknown unit id: ${id}`);
+  const isChurch = isChurchUnit(id);
   return {
     ...data,
     buffAtk: 0,

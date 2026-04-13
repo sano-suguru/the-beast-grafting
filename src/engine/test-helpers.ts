@@ -71,6 +71,7 @@ export function makeContext(
     lastBattleResult,
     opCount: 0,
     opLimitExceeded: false,
+    absorbedUnits: new Map(),
   };
 }
 

@@ -12,6 +12,12 @@ import {
   handleHangedManDeath,
   handleSeraphDeath,
 } from "./battle-deaths-handlers-unit";
+import {
+  handleGraftScionDeath,
+  handleOmenWombDeath,
+  handleStellarCocoonDeath,
+  handleDevouringGraftDeath,
+} from "./battle-deaths-handlers-spawn";
 
 export const UNIT_DEATH_HANDLERS = {
   rat: handleRatDeath,
@@ -25,6 +31,10 @@ export const UNIT_DEATH_HANDLERS = {
   maiden: handleMaidenDeath,
   hanged_man: handleHangedManDeath,
   seraph: handleSeraphDeath,
+  graft_scion: handleGraftScionDeath,
+  omen_womb: handleOmenWombDeath,
+  stellar_cocoon: handleStellarCocoonDeath,
+  devouring_graft: handleDevouringGraftDeath,
 } satisfies Partial<Record<UnitId, DeathHandler>>;
 
 export type DeathHandlerUnitId = keyof typeof UNIT_DEATH_HANDLERS;

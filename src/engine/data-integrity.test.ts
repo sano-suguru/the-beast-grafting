@@ -12,8 +12,8 @@ import { INERT_UNIT_ID } from "./test-helpers";
 describe("UNITS data integrity", () => {
   const entries = Object.entries(UNITS);
 
-  it("contains exactly 41 units", () => {
-    expect(entries).toHaveLength(41);
+  it("contains exactly 60 units", () => {
+    expect(entries).toHaveLength(60);
   });
 
   it("every unit's id matches its record key", () => {
@@ -44,10 +44,10 @@ describe("UNITS data integrity", () => {
     }
   });
 
-  it("tier distribution is 8/6/6/6/5/10 (tier 1-6, total 41)", () => {
+  it("tier distribution is 10/10/10/10/10/10 (tier 1-6, total 60)", () => {
     const counts: Record<number, number> = {};
     for (const [, data] of entries) counts[data.tier] = (counts[data.tier] ?? 0) + 1;
-    expect(counts).toEqual({ 1: 8, 2: 6, 3: 6, 4: 6, 5: 5, 6: 10 });
+    expect(counts).toEqual({ 1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 10 });
   });
 
   it("no duplicate names across units", () => {

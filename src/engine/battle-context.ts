@@ -1,13 +1,14 @@
 import type {
   UnitInstance,
+  EquipType,
   BattleFrame,
   BattleResult,
   BattleAction,
   LogType,
   IconType,
   LogSegment,
-  RegularUnitId,
-  ChurchUnitId,
+  UnitId,
+  DataUnitId,
   Tier,
 } from "../shared/types";
 import type { Rng } from "./rng";
@@ -27,6 +28,16 @@ export interface BattleUnit extends UnitInstance {
   skillUses: number;
 }
 
+export interface AbsorbedData {
+  id: UnitId;
+  name: string;
+  tier: Tier;
+  atk: number;
+  hp: number;
+  isChurch: boolean;
+  equip: EquipType | null;
+}
+
 export interface BattleContext {
   rng: Rng;
   pBoard: BattleUnit[];
@@ -38,6 +49,7 @@ export interface BattleContext {
   lastBattleResult: BattleResult;
   opCount: number;
   opLimitExceeded: boolean;
+  absorbedUnits: Map<string, AbsorbedData>;
 }
 
 /** BattleUnit fields are all primitives — shallow copy is safe.
@@ -153,7 +165,7 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
 
 export function createSummonedUnit(
   unitData: {
-    id: RegularUnitId | ChurchUnitId;
+    id: DataUnitId;
     name: string;
     tier: Tier;
     skillText: string;
@@ -162,6 +174,7 @@ export function createSummonedUnit(
   atk: number,
   hp: number,
   isChurch = false,
+  level = 1,
 ): BattleUnit {
   return {
     ...unitData,
@@ -176,7 +189,7 @@ export function createSummonedUnit(
     buffHp: 0,
     uid: generateUid(),
     equip: null,
-    level: 1,
+    level,
     isChurch,
     exp: 0,
     avengeDeathCount: 0,

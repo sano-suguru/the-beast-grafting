@@ -13,6 +13,9 @@ import {
   GRAVE_WORM,
   MARKET_VULTURE,
   ASH_FUNGUS,
+  GHOUL_INFANT,
+  TAINTED_PLACENTA,
+  CORPSE_BROKER,
   type Buff,
   type Scaled,
 } from "../shared/skill-params";
@@ -102,18 +105,41 @@ function applyRotRingBuff(
   };
 }
 
+interface BuyResult {
+  board: (UnitInstance | null)[];
+  chaliceTriggered: boolean;
+  rotRingUses: number;
+  shopBuff?: Buff | undefined;
+}
+
 export const applyBuyEffects = (
   boughtUnit: UnitInstance,
   currentBoard: (UnitInstance | null)[],
-  rotRingUses = 0,
-): { board: (UnitInstance | null)[]; chaliceTriggered: boolean; rotRingUses: number } => {
+  rotRingUses: number,
+  rng: Rng,
+): BuyResult => {
   const rotRing = applyRotRingBuff(boughtUnit, currentBoard, rotRingUses);
+  const board = rotRing.board;
+  applyGhoulInfantBuyBuff(board, rng);
+  const shopBuff =
+    boughtUnit.id === "tainted_placenta"
+      ? atLevel(TAINTED_PLACENTA.shopBuff, boughtUnit.level)
+      : undefined;
   return {
-    board: rotRing.board,
+    board,
     chaliceTriggered: boughtUnit.id === "chalice",
     rotRingUses: rotRing.rotRingUses,
+    shopBuff,
   };
 };
+
+function applyGhoulInfantBuyBuff(board: (UnitInstance | null)[], rng: Rng): void {
+  for (let i = 0; i < board.length; i++) {
+    const u = board[i];
+    if (!u || u.id !== "ghoul_infant") continue;
+    buffRandomUnit(board, atLevel(GHOUL_INFANT.atkBuff, u.level), 0, rng, i);
+  }
+}
 
 export const applyChaliceEffect = (shopItems: (ShopItemSlot | null)[]): (ShopItemSlot | null)[] => {
   const pureBlood = ITEMS["pure_blood"];
@@ -205,8 +231,9 @@ export function buffRandomUnit(
   atkBuff: number,
   hpBuff: number,
   rng: Rng,
+  excludeIdx?: number,
 ): void {
-  const active = getActiveIndices(board);
+  const active = getActiveIndices(board).filter((i) => i !== excludeIdx);
   if (active.length === 0) return;
   const idx = active[Math.floor(rng.next() * active.length)]!;
   const target = board[idx]!;
@@ -237,6 +264,15 @@ function applyAshFungusSell(soldUnit: UnitInstance, nextBoard: (UnitInstance | n
   }
 }
 
+function applyCorpseBrokerSell(nextBoard: (UnitInstance | null)[]): void {
+  for (let i = 0; i < nextBoard.length; i++) {
+    const u = nextBoard[i];
+    if (!u || u.id !== "corpse_broker") continue;
+    const b = atLevel(CORPSE_BROKER.sellBuff, u.level);
+    nextBoard[i] = { ...u, buffAtk: u.buffAtk + b.atk, buffHp: u.buffHp + b.hp };
+  }
+}
+
 export const applySellEffects = (
   soldUnit: UnitInstance,
   currentBoard: (UnitInstance | null)[],
@@ -246,6 +282,7 @@ export const applySellEffects = (
   applyGraveWormSell(soldUnit, nextBoard, rng);
   const shopBuff = collectMarketVultureShopBuff(nextBoard);
   applyAshFungusSell(soldUnit, nextBoard, rng);
+  applyCorpseBrokerSell(nextBoard);
   return { board: nextBoard, shopBuff };
 };
 

@@ -3,6 +3,16 @@ import preact from "@preact/preset-vite";
 import tailwindcss from "@tailwindcss/vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 
+const RESTRICTED_SYNTAX_BASE = [
+  { selector: "ThrowStatement", message: "Use neverthrow Result instead of throw" },
+  { selector: "TryStatement", message: "Use neverthrow fromThrowable instead of try/catch" },
+] as const;
+
+const RESTRICTED_SYNTAX_FULL = [
+  ...RESTRICTED_SYNTAX_BASE,
+  { selector: "ImportExpression", message: "Use static import instead of dynamic import()" },
+] as const;
+
 export default defineConfig({
   staged: {
     "*": "vp check --fix",
@@ -19,11 +29,7 @@ export default defineConfig({
   lint: {
     jsPlugins: ["oxlint-plugin-eslint"],
     rules: {
-      "eslint-js/no-restricted-syntax": [
-        "error",
-        { selector: "ThrowStatement", message: "Use neverthrow Result instead of throw" },
-        { selector: "TryStatement", message: "Use neverthrow fromThrowable instead of try/catch" },
-      ],
+      "eslint-js/no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX_FULL],
       "typescript/no-explicit-any": "error",
       "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
       "max-lines-per-function": ["error", { max: 50, skipBlankLines: true, skipComments: true }],
@@ -60,8 +66,18 @@ export default defineConfig({
     },
     overrides: [
       {
-        files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
-        rules: { "max-lines": "off", "max-lines-per-function": "off" },
+        files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/test-setup.ts"],
+        rules: {
+          "max-lines": "off",
+          "max-lines-per-function": "off",
+          "eslint-js/no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX_FULL],
+        },
+      },
+      {
+        files: ["**/*.d1.test.ts", "**/test-setup.ts"],
+        rules: {
+          "eslint-js/no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX_BASE],
+        },
       },
     ],
     options: { denyWarnings: true, typeAware: true, typeCheck: true },

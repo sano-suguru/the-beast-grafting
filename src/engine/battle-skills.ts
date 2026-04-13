@@ -12,6 +12,8 @@ import {
   applyCatacombRatSkill,
   applyPaladinSkill,
   applyHolyFireSkill,
+  applyDevouringGraftSkill,
+  applyMimickingFleshSkill,
 } from "./battle-skills-start";
 import {
   applyParasiteBuff,
@@ -33,6 +35,7 @@ const START_SKILL_HANDLERS = {
   catacomb_rat: applyCatacombRatSkill,
   paladin: applyPaladinSkill,
   holy_fire: applyHolyFireSkill,
+  devouring_graft: applyDevouringGraftSkill,
 } satisfies Partial<Record<UnitId, StartSkillHandler>>;
 
 type StartSkillUnitId = keyof typeof START_SKILL_HANDLERS;
@@ -49,11 +52,17 @@ export function runStartSkills(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  boardArr.forEach((u) => {
+  const snapshot = [...boardArr];
+  for (const u of snapshot) {
+    if (!boardArr.includes(u)) continue;
+    if (u.id === "mimicking_flesh") {
+      applyMimickingFleshSkill({ u, targetArr, isPlayer, ctx }, getStartSkillHandler);
+      continue;
+    }
     const handler = getStartSkillHandler(u.id);
-    if (!handler) return;
+    if (!handler) continue;
     handler({ u, targetArr, isPlayer, ctx });
-  });
+  }
 }
 
 // ── Cholera (board iteration + スキル実装を同居) ──

@@ -17,6 +17,3 @@ if [[ "$file" =~ \.(ts|tsx|js|jsx)$ ]]; then
     exit 2
   fi
 fi
-
-# Stop hook用マーカー
-touch .claude/.edited

@@ -42,16 +42,10 @@ describe("createUnit", () => {
 describe("getShopPool", () => {
   it("returns Tier 1 units for round 1-2", () => {
     const pool = getShopPool(1);
-    expect(pool).toEqual([
-      "rat",
-      "beggar",
-      "hound",
-      "bat",
-      "zealot",
-      "grave_worm",
-      "leech",
-      "crow",
-    ]);
+    expect(pool).toContain("rat");
+    expect(pool).toContain("ghoul_infant");
+    expect(pool).toContain("dead_hand");
+    expect(pool).toHaveLength(10);
   });
 
   it("adds Tier 2 units at round 3", () => {
@@ -88,7 +82,7 @@ describe("getShopPool", () => {
     expect(pool).toContain("eye");
     expect(pool).toContain("beelzebub");
     expect(pool).toContain("rot_ring");
-    expect(pool).toHaveLength(8 + 6 + 6 + 6 + 5 + 10);
+    expect(pool).toHaveLength(10 + 10 + 10 + 10 + 10 + 10);
   });
 
   it("is deterministic for the same round", () => {

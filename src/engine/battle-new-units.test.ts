@@ -1,12 +1,27 @@
+import type { BattleUnit, BattleContext } from "./battle-context";
+import type { UnitId } from "../shared/types";
 import { processAvenge, incrementAvengeCounters } from "./battle-avenge";
 import { resolveDeaths } from "./battle-deaths";
 import { handleBeelzebubSpawns } from "./battle-deaths-effects-reactions";
+import {
+  handleCrawlingCordBuff,
+  handleInsatiableMawBuff,
+} from "./battle-deaths-effects-ally-reactions";
+import { getDeathHandler } from "./battle-deaths-handlers";
 import { applyOnHitSkills } from "./battle-skills-on-hit";
 import { processKnockoutEffects } from "./battle-skills-combat";
 import { spawnTokenAndNotify } from "./battle-spawn";
-import { makeBattleUnit, makeContext } from "./test-helpers";
+import {
+  makeBattleUnit,
+  makeContext,
+  makeEnemyTeam,
+  segmentsToPlainText,
+  INERT_UNIT_ID,
+} from "./test-helpers";
 import { runStartSkills, applyBeforeAttackSkills } from "./battle-skills";
 import { runDeploySkills } from "./battle-skills-init";
+import { runBattle } from "./battle";
+import { invariant } from "../shared/invariant";
 import { MAX_BOARD_SIZE } from "./constants";
 import {
   atLevel,
@@ -34,6 +49,17 @@ import {
   LEECH,
   GRINNING_SKULL,
   ARCHANGEL,
+  DEAD_HAND,
+  DEVOURING_WOUND,
+  TUMOR_GUARDIAN,
+  GROANING_COFFIN,
+  WAILING_CURSECHILD,
+  CRAWLING_CORD,
+  INSATIABLE_MAW,
+  OMEN_WOMB,
+  STELLAR_COCOON,
+  FLESH_GRANULATION,
+  CHOLERA,
 } from "../shared/skill-params";
 
 describe("processAvenge – charnel_pit (independent counters)", () => {
@@ -974,5 +1000,649 @@ describe("processAvenge snapshot – spawn does not skip later avenge units", ()
     expect(board.filter((u) => u.name === "肉塊")).toHaveLength(1);
     const b = atLevel(GRINNING_SKULL.buff, 1);
     expect(skull.atk).toBe(2 + b.atk);
+  });
+});
+
+// ── 撃破スキル: dead_hand, devouring_wound ──
+
+describe("processKnockoutEffects – dead_hand", () => {
+  it("heals self on knockout", () => {
+    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 3 });
+    const board = [unit];
+    const enemy = makeBattleUnit({ hp: 0 });
+    const ctx = makeContext(board, [enemy]);
+    processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
+    const heal = atLevel(DEAD_HAND.hpHeal, 1);
+    expect(unit.hp).toBe(3 + heal);
+    expect(ctx.frames).toHaveLength(1);
+  });
+
+  it("does nothing when dead", () => {
+    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 0 });
+    const board = [unit];
+    const ctx = makeContext(board, []);
+    processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
+    expect(unit.hp).toBe(0);
+    expect(ctx.frames).toHaveLength(0);
+  });
+});
+
+describe("processKnockoutEffects – devouring_wound", () => {
+  it("heals self on knockout", () => {
+    const unit = makeBattleUnit({ id: "devouring_wound", name: "喰らう傷口", atk: 3, hp: 4 });
+    const board = [unit];
+    const enemy = makeBattleUnit({ hp: 0 });
+    const ctx = makeContext(board, [enemy]);
+    processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
+    const heal = atLevel(DEVOURING_WOUND.hpHeal, 1);
+    expect(unit.hp).toBe(4 + heal);
+    expect(ctx.frames).toHaveLength(1);
+  });
+});
+
+// ── 被弾スキル: tumor_guardian, amniotic_armor ──
+
+describe("applyOnHitSkills – tumor_guardian", () => {
+  it("buffs unit behind on hit", () => {
+    const guardian = makeBattleUnit({ id: "tumor_guardian", name: "瘤の守り手", atk: 2, hp: 6 });
+    const behind = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 3 });
+    const board = [guardian, behind];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(guardian, board, true, ctx);
+    const b = atLevel(TUMOR_GUARDIAN.buff, 1);
+    expect(behind.atk).toBe(3 + b.atk);
+    expect(behind.hp).toBe(3 + b.hp);
+  });
+
+  it("does nothing when no unit behind", () => {
+    const guardian = makeBattleUnit({ id: "tumor_guardian", name: "瘤の守り手", atk: 2, hp: 6 });
+    const board = [guardian];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(guardian, board, true, ctx);
+    expect(ctx.frames).toHaveLength(0);
+  });
+});
+
+describe("applyOnHitSkills – amniotic_armor", () => {
+  it("grants corpse_wax on first hit with skillUses", () => {
+    const armor = makeBattleUnit({
+      id: "amniotic_armor",
+      name: "羊膜の鎧",
+      atk: 2,
+      hp: 8,
+      skillUses: 1,
+    });
+    const board = [armor];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(armor, board, true, ctx);
+    expect(armor.equip).toBe("corpse_wax");
+    expect(armor.skillUses).toBe(0);
+    expect(ctx.frames).toHaveLength(1);
+  });
+
+  it("does not trigger when skillUses exhausted", () => {
+    const armor = makeBattleUnit({
+      id: "amniotic_armor",
+      name: "羊膜の鎧",
+      atk: 2,
+      hp: 8,
+      skillUses: 0,
+    });
+    const board = [armor];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(armor, board, true, ctx);
+    expect(armor.equip).toBeNull();
+    expect(ctx.frames).toHaveLength(0);
+  });
+
+  it("does not trigger when already equipped", () => {
+    const armor = makeBattleUnit({
+      id: "amniotic_armor",
+      name: "羊膜の鎧",
+      atk: 2,
+      hp: 8,
+      skillUses: 1,
+      equip: "iron",
+    });
+    const board = [armor];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(armor, board, true, ctx);
+    expect(armor.equip).toBe("iron");
+    expect(armor.skillUses).toBe(1);
+  });
+});
+
+// ── 死亡スキル: graft_scion, omen_womb, stellar_cocoon ──
+
+function callDeathHandler(
+  id: string,
+  dead: BattleUnit,
+  board: BattleUnit[],
+  idx: number,
+  isPlayer: boolean,
+  ctx: BattleContext,
+  successor: BattleUnit | null = null,
+) {
+  const handler = getDeathHandler(id as UnitId);
+  invariant(handler, `no death handler for "${id}"`);
+  handler({ dead, board, idx, isPlayer, ctx, successor, successor2: null });
+}
+
+describe("handleGraftScionDeath", () => {
+  it("transfers dead ATK to successor", () => {
+    const successor = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 5 });
+    const board = [successor];
+    const dead = makeBattleUnit({ id: "graft_scion", name: "接ぎ穂の残骸", atk: 4, hp: 0 });
+    const ctx = makeContext(board, []);
+    callDeathHandler("graft_scion", dead, board, 0, true, ctx, successor);
+    expect(successor.atk).toBe(3 + 4);
+    expect(ctx.frames).toHaveLength(1);
+  });
+
+  it("does nothing without successor", () => {
+    const board: BattleUnit[] = [];
+    const dead = makeBattleUnit({ id: "graft_scion", name: "接ぎ穂の残骸", atk: 4, hp: 0 });
+    const ctx = makeContext(board, []);
+    callDeathHandler("graft_scion", dead, board, 0, true, ctx, null);
+    expect(ctx.frames).toHaveLength(0);
+  });
+});
+
+describe("handleOmenWombDeath", () => {
+  it("spawns 2 tokens with correct stats", () => {
+    const board: BattleUnit[] = [];
+    const dead = makeBattleUnit({ id: "omen_womb", name: "忌み腹の屍", atk: 2, hp: 0 });
+    const ctx = makeContext(board, []);
+    callDeathHandler("omen_womb", dead, board, 0, true, ctx);
+    const t = atLevel(OMEN_WOMB.token, 1);
+    const tokens = board.filter((u) => u.name === "忌み子");
+    expect(tokens).toHaveLength(2);
+    expect(tokens[0]!.atk).toBe(t.atk);
+    expect(tokens[0]!.hp).toBe(t.hp);
+  });
+});
+
+describe("handleStellarCocoonDeath", () => {
+  it("spawns 1 token with correct stats", () => {
+    const board: BattleUnit[] = [];
+    const dead = makeBattleUnit({ id: "stellar_cocoon", name: "星辰の繭", atk: 4, hp: 0 });
+    const ctx = makeContext(board, []);
+    callDeathHandler("stellar_cocoon", dead, board, 0, true, ctx);
+    const t = atLevel(STELLAR_COCOON.token, 1);
+    const tokens = board.filter((u) => u.name === "星の落とし子");
+    expect(tokens).toHaveLength(1);
+    expect(tokens[0]!.atk).toBe(t.atk);
+    expect(tokens[0]!.hp).toBe(t.hp);
+  });
+});
+
+// ── Avengeスキル: groaning_coffin, wailing_cursechild ──
+
+describe("processAvenge – groaning_coffin", () => {
+  it("deals damage to random enemy when threshold reached", () => {
+    const coffin = makeBattleUnit({
+      id: "groaning_coffin",
+      name: "唸る棺",
+      atk: 2,
+      hp: 5,
+      avengeDeathCount: 2,
+    });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, hp: 10 });
+    const board = [coffin];
+    const ctx = makeContext(board, [enemy]);
+    processAvenge(board, true, ctx);
+    const dmg = atLevel(GROANING_COFFIN.damage, 1);
+    expect(enemy.hp).toBe(10 - dmg);
+    expect(coffin.avengeDeathCount).toBe(0);
+    expect(ctx.frames).toHaveLength(1);
+  });
+
+  it("does not trigger below threshold", () => {
+    const coffin = makeBattleUnit({
+      id: "groaning_coffin",
+      name: "唸る棺",
+      atk: 2,
+      hp: 5,
+      avengeDeathCount: 1,
+    });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, hp: 10 });
+    const board = [coffin];
+    const ctx = makeContext(board, [enemy]);
+    processAvenge(board, true, ctx);
+    expect(enemy.hp).toBe(10);
+    expect(ctx.frames).toHaveLength(0);
+  });
+});
+
+describe("processAvenge – wailing_cursechild", () => {
+  it("buffs all allies when threshold reached", () => {
+    const child = makeBattleUnit({
+      id: "wailing_cursechild",
+      name: "啼き喚く呪い児",
+      atk: 3,
+      hp: 7,
+      avengeDeathCount: 3,
+    });
+    const ally = makeBattleUnit({ id: INERT_UNIT_ID, atk: 2, hp: 3 });
+    const board = [child, ally];
+    const ctx = makeContext(board, []);
+    processAvenge(board, true, ctx);
+    const b = atLevel(WAILING_CURSECHILD.buff, 1);
+    expect(child.atk).toBe(3 + b.atk);
+    expect(child.hp).toBe(7 + b.hp);
+    expect(ally.atk).toBe(2 + b.atk);
+    expect(ally.hp).toBe(3 + b.hp);
+    expect(child.avengeDeathCount).toBe(0);
+  });
+});
+
+// ── 味方死亡リアクション: crawling_cord, insatiable_maw ──
+
+describe("handleCrawlingCordBuff", () => {
+  it("buffs a random living ally on ally death", () => {
+    const cord = makeBattleUnit({ id: "crawling_cord", name: "這い回る臍帯", atk: 2, hp: 3 });
+    const ally = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 4 });
+    const board = [cord, ally];
+    const ctx = makeContext(board, []);
+    handleCrawlingCordBuff(board, true, ctx);
+    const b = atLevel(CRAWLING_CORD.buff, 1);
+    expect(ally.atk).toBe(3 + b.atk);
+    expect(ally.hp).toBe(4 + b.hp);
+    expect(ctx.frames).toHaveLength(1);
+  });
+
+  it("does nothing when no other living allies", () => {
+    const cord = makeBattleUnit({ id: "crawling_cord", name: "這い回る臍帯", atk: 2, hp: 3 });
+    const board = [cord];
+    const ctx = makeContext(board, []);
+    handleCrawlingCordBuff(board, true, ctx);
+    expect(ctx.frames).toHaveLength(0);
+  });
+});
+
+describe("handleInsatiableMawBuff", () => {
+  it("buffs self on ally death", () => {
+    const maw = makeBattleUnit({ id: "insatiable_maw", name: "飽くなき咢", atk: 4, hp: 4 });
+    const board = [maw];
+    const ctx = makeContext(board, []);
+    handleInsatiableMawBuff(board, true, ctx);
+    const b = atLevel(INSATIABLE_MAW.buff, 1);
+    expect(maw.atk).toBe(4 + b.atk);
+    expect(maw.hp).toBe(4 + b.hp);
+    expect(ctx.frames).toHaveLength(1);
+  });
+});
+
+// ── flesh_granulation: 味方召喚時に自身バフ ──
+
+describe("flesh_granulation – on ally summon", () => {
+  it("buffs self when a token is spawned", () => {
+    const fg = makeBattleUnit({ id: "flesh_granulation", name: "増殖する肉芽", atk: 2, hp: 3 });
+    const board = [fg];
+    const ctx = makeContext(board, []);
+    spawnTokenAndNotify(board, 1, "肉塊", 1, 1, false, ["召喚"], true, ctx);
+    const b = atLevel(FLESH_GRANULATION.buff, 1);
+    expect(fg.atk).toBe(2 + b.atk);
+    expect(fg.hp).toBe(3 + b.hp);
+  });
+
+  it("does not buff when dead", () => {
+    const fg = makeBattleUnit({ id: "flesh_granulation", name: "増殖する肉芽", atk: 2, hp: 0 });
+    const board = [fg];
+    const ctx = makeContext(board, []);
+    spawnTokenAndNotify(board, 1, "肉塊", 1, 1, false, ["召喚"], true, ctx);
+    expect(fg.atk).toBe(2);
+  });
+});
+
+// ── corroding_mold: ターン終了時に前方バフ ──
+
+describe("corroding_mold – end of round (integration)", () => {
+  it("buffs unit in front after a battle round", () => {
+    const front = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 200 });
+    const mold = makeBattleUnit({ id: "corroding_mold", name: "侵蝕する黴", atk: 2, hp: 200 });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 200 });
+    const ctx = makeContext([front, mold], [enemy]);
+    runBattle(ctx, makeEnemyTeam([]), 1);
+    const moldFrames = ctx.frames.filter(
+      (f) =>
+        f.log.type === "skill" &&
+        f.log.segments.some((s) => typeof s !== "string" && s.text === "侵蝕する黴"),
+    );
+    expect(moldFrames.length).toBeGreaterThan(0);
+  });
+});
+
+// ── devouring_graft: 開戦スキル+死亡スキル ──
+
+describe("devouring_graft – start skill", () => {
+  it("absorbs predecessor and gains stats", () => {
+    const pred = makeBattleUnit({ id: "rat", name: "疫病ネズミ", atk: 5, hp: 3 });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const board = [pred, graft];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    expect(graft.atk).toBe(3 + 5);
+    expect(graft.hp).toBe(6 + 3);
+    expect(board).toHaveLength(1);
+    expect(board[0]).toBe(graft);
+    expect(ctx.absorbedUnits.has(graft.uid)).toBe(true);
+  });
+
+  it("absorbs token stats and stores absorbed data", () => {
+    const token = makeBattleUnit({ id: INERT_UNIT_ID, name: "肉塊", atk: 2, hp: 2 });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const board = [token, graft];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    expect(graft.atk).toBe(3 + 2);
+    expect(graft.hp).toBe(6 + 2);
+    expect(board).toHaveLength(1);
+    expect(ctx.absorbedUnits.has(graft.uid)).toBe(true);
+  });
+
+  it("does nothing at position 0", () => {
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const board = [graft];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    expect(graft.atk).toBe(3);
+    expect(board).toHaveLength(1);
+    expect(ctx.absorbedUnits.size).toBe(0);
+  });
+});
+
+describe("devouring_graft – death re-summon", () => {
+  it("re-spawns absorbed unit on death", () => {
+    const pred = makeBattleUnit({ id: "rat", name: "疫病ネズミ", atk: 5, hp: 3 });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const pBoard = [pred, graft];
+    const ctx = makeContext(pBoard, []);
+    runStartSkills(ctx.pBoard, [], true, ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.atk).toBe(3 + 5);
+    // Kill graft
+    ctx.pBoard[0]!.hp = 0;
+    resolveDeaths(ctx);
+    // Absorbed unit should be re-spawned
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.name).toBe("疫病ネズミ");
+    expect(ctx.pBoard[0]!.atk).toBe(5);
+    expect(ctx.pBoard[0]!.hp).toBe(3);
+  });
+
+  it("re-spawns absorbed church unit on death", () => {
+    const pred = makeBattleUnit({
+      id: "squire",
+      name: "見習い従騎士",
+      atk: 2,
+      hp: 3,
+      isChurch: true,
+    });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const pBoard = [pred, graft];
+    const ctx = makeContext(pBoard, []);
+    runStartSkills(ctx.pBoard, [], true, ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.atk).toBe(3 + 2);
+    ctx.pBoard[0]!.hp = 0;
+    resolveDeaths(ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.name).toBe("見習い従騎士");
+    expect(ctx.pBoard[0]!.atk).toBe(2);
+    expect(ctx.pBoard[0]!.hp).toBe(3);
+  });
+
+  it("re-spawns absorbed token on death", () => {
+    const token = makeBattleUnit({ id: INERT_UNIT_ID, name: "肉塊", atk: 4, hp: 3 });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const pBoard = [token, graft];
+    const ctx = makeContext(pBoard, []);
+    runStartSkills(ctx.pBoard, [], true, ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.atk).toBe(3 + 4);
+    ctx.pBoard[0]!.hp = 0;
+    resolveDeaths(ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.id).toBe("token");
+    expect(ctx.pBoard[0]!.name).toBe("肉塊");
+    expect(ctx.pBoard[0]!.atk).toBe(4);
+    expect(ctx.pBoard[0]!.hp).toBe(3);
+  });
+
+  it("does nothing if no absorbed data", () => {
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 0 });
+    const board: BattleUnit[] = [];
+    const ctx = makeContext(board, []);
+    const handler = getDeathHandler("devouring_graft" as UnitId);
+    invariant(handler, "handler must exist");
+    handler({ dead: graft, board, idx: 0, isPlayer: true, ctx, successor: null, successor2: null });
+    expect(board).toHaveLength(0);
+    expect(ctx.frames).toHaveLength(0);
+  });
+
+  it("preserves absorbed unit equipment on re-summon", () => {
+    const pred = makeBattleUnit({ id: "rat", name: "疫病ネズミ", atk: 5, hp: 3, equip: "iron" });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const pBoard = [pred, graft];
+    const ctx = makeContext(pBoard, []);
+    runStartSkills(ctx.pBoard, [], true, ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    ctx.pBoard[0]!.hp = 0;
+    resolveDeaths(ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.name).toBe("疫病ネズミ");
+    expect(ctx.pBoard[0]!.equip).toBe("iron");
+  });
+
+  it("re-summons with null equip when absorbed had no equipment", () => {
+    const pred = makeBattleUnit({ id: "rat", name: "疫病ネズミ", atk: 5, hp: 3 });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const pBoard = [pred, graft];
+    const ctx = makeContext(pBoard, []);
+    runStartSkills(ctx.pBoard, [], true, ctx);
+    ctx.pBoard[0]!.hp = 0;
+    resolveDeaths(ctx);
+    expect(ctx.pBoard[0]!.equip).toBeNull();
+  });
+});
+
+// ── necrotic_finger: 即死攻撃 ──
+
+describe("necrotic_finger – instant kill (integration)", () => {
+  it("kills enemy regardless of HP in battle", () => {
+    const finger = makeBattleUnit({
+      id: "necrotic_finger",
+      name: "壊死した指",
+      atk: 1,
+      hp: 1,
+    });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 100 });
+    const ctx = makeContext([finger], [enemy]);
+    runBattle(ctx, makeEnemyTeam([]), 1);
+    // ダメージフレームは実ダメージのみ (ATK 1 → 100→99)
+    const damageFrames = ctx.frames.filter((f) => f.log.type === "damage");
+    expect(damageFrames.length).toBeGreaterThan(0);
+    expect(damageFrames[0]!.eBoard[0]?.hp).toBe(99);
+    // 即死は独立したスキルフレームに分離
+    const necroFrames = ctx.frames.filter(
+      (f) => f.log.type === "skill" && segmentsToPlainText(f.log.segments).includes("朽ちる"),
+    );
+    expect(necroFrames.length).toBeGreaterThan(0);
+    expect(necroFrames[0]!.eBoard[0]?.hp).toBe(0);
+  });
+
+  it("corpse_wax blocks necrotic_finger instant kill", () => {
+    const finger = makeBattleUnit({
+      id: "necrotic_finger",
+      name: "壊死した指",
+      atk: 1,
+      hp: 1,
+    });
+    const tank = makeBattleUnit({ id: INERT_UNIT_ID, atk: 5, hp: 20, equip: "corpse_wax" });
+    const ctx = makeContext([finger], [tank]);
+    runBattle(ctx, makeEnemyTeam([]), 1);
+    expect(ctx.pBoard).toHaveLength(0);
+    expect(ctx.eBoard).toHaveLength(1);
+    expect(ctx.eBoard[0]!.hp).toBeGreaterThan(0);
+  });
+});
+
+// ── mimicking_flesh: スキルコピー ──
+
+describe("mimicking_flesh – skill copy", () => {
+  it("copies predecessor id and fires start skill", () => {
+    const bat = makeBattleUnit({ id: "bat", name: "死蝙蝠", atk: 2, hp: 1 });
+    const mimic = makeBattleUnit({ id: "mimicking_flesh", name: "模倣する粘肉", atk: 4, hp: 3 });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 10 });
+    const board = [bat, mimic];
+    const ctx = makeContext(board, [enemy]);
+    runStartSkills(board, [enemy], true, ctx);
+    expect(mimic.id).toBe("bat");
+    expect(mimic.name).toBe("死蝙蝠");
+    expect(enemy.hp).toBeLessThan(10);
+  });
+
+  it("does nothing without predecessor", () => {
+    const mimic = makeBattleUnit({ id: "mimicking_flesh", name: "模倣する粘肉", atk: 4, hp: 3 });
+    const board = [mimic];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    expect(mimic.id).toBe("mimicking_flesh");
+  });
+});
+
+// ── mimicking_flesh + devouring_graft: スキル間相互作用 ──
+
+describe("mimicking_flesh + devouring_graft – interaction edge cases", () => {
+  it("chain absorption: mimic copies graft after graft absorbs predecessor", () => {
+    const rat = makeBattleUnit({ id: "rat", name: "疫病ネズミ", atk: 2, hp: 1 });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const mimic = makeBattleUnit({ id: "mimicking_flesh", name: "模倣する粘肉", atk: 4, hp: 3 });
+    const board = [rat, graft, mimic];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    // graft absorbs rat, then mimic copies graft and absorbs graft
+    expect(board).toHaveLength(1);
+    expect(board[0]).toBe(mimic);
+    expect(mimic.id).toBe("devouring_graft");
+    expect(mimic.atk).toBe(4 + (3 + 2));
+    expect(mimic.hp).toBe(3 + (6 + 1));
+    expect(ctx.absorbedUnits.has(mimic.uid)).toBe(true);
+    const absorbed = ctx.absorbedUnits.get(mimic.uid)!;
+    expect(absorbed.id).toBe("devouring_graft");
+  });
+
+  it("mimic copies cholera and gets initOverride applied", () => {
+    const cholera = makeBattleUnit({ id: "cholera", name: "コレラ", atk: 3, hp: 3 });
+    const mimic = makeBattleUnit({ id: "mimicking_flesh", name: "模倣する粘肉", atk: 4, hp: 3 });
+    const board = [cholera, mimic];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    expect(mimic.id).toBe("cholera");
+    expect(mimic.skillUses).toBe(atLevel(CHOLERA.uses, mimic.level));
+  });
+
+  it("graft absorbs mimic; re-spawns mimicking_flesh on death", () => {
+    const mimic = makeBattleUnit({ id: "mimicking_flesh", name: "模倣する粘肉", atk: 4, hp: 3 });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const board = [mimic, graft];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    // mimic at pos 0 does nothing; graft absorbs mimic
+    expect(board).toHaveLength(1);
+    expect(board[0]).toBe(graft);
+    expect(graft.atk).toBe(3 + 4);
+    expect(graft.hp).toBe(6 + 3);
+    const absorbed = ctx.absorbedUnits.get(graft.uid)!;
+    expect(absorbed.id).toBe("mimicking_flesh");
+    // Kill graft → re-spawns mimicking_flesh
+    graft.hp = 0;
+    resolveDeaths(ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.name).toBe("模倣する粘肉");
+    expect(ctx.pBoard[0]!.atk).toBe(4);
+    expect(ctx.pBoard[0]!.hp).toBe(3);
+  });
+
+  it("multiple grafts chain: B absorbs A after A absorbs rat", () => {
+    const rat = makeBattleUnit({ id: "rat", name: "疫病ネズミ", atk: 2, hp: 1 });
+    const graftA = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const graftB = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 5, hp: 4 });
+    const board = [rat, graftA, graftB];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    // A absorbs rat → board = [A, B] → B absorbs A
+    expect(board).toHaveLength(1);
+    expect(board[0]).toBe(graftB);
+    expect(graftB.atk).toBe(5 + (3 + 2));
+    expect(graftB.hp).toBe(4 + (6 + 1));
+    // B stored A's data; A stored rat's data (orphaned but harmless)
+    const absorbedByB = ctx.absorbedUnits.get(graftB.uid)!;
+    expect(absorbedByB.id).toBe("devouring_graft");
+    expect(absorbedByB.atk).toBe(3 + 2);
+    // Kill B → A is re-spawned with A's buffed stats
+    graftB.hp = 0;
+    resolveDeaths(ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.name).toBe("貪る接合体");
+    expect(ctx.pBoard[0]!.atk).toBe(3 + 2);
+    expect(ctx.pBoard[0]!.hp).toBe(6 + 1);
+  });
+});
+
+// ── devouring_graft: 再召喚レベルはgraft自身のレベルに依存（SAP Whale準拠） ──
+
+describe("devouring_graft – resummon inherits graft level", () => {
+  it("Lv2 graft re-spawns absorbed unit at level 2", () => {
+    const pred = makeBattleUnit({ id: "rat", name: "疫病ネズミ", atk: 5, hp: 3 });
+    const graft = makeBattleUnit({
+      id: "devouring_graft",
+      name: "貪る接合体",
+      atk: 3,
+      hp: 6,
+      level: 2,
+    });
+    const pBoard = [pred, graft];
+    const ctx = makeContext(pBoard, []);
+    runStartSkills(ctx.pBoard, [], true, ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    ctx.pBoard[0]!.hp = 0;
+    resolveDeaths(ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    expect(ctx.pBoard[0]!.level).toBe(2);
+  });
+
+  it("Lv2 graft re-spawns cholera with correct skillUses", () => {
+    const cholera = makeBattleUnit({ id: "cholera", name: "コレラ", atk: 3, hp: 3 });
+    const graft = makeBattleUnit({
+      id: "devouring_graft",
+      name: "貪る接合体",
+      atk: 3,
+      hp: 6,
+      level: 2,
+    });
+    const pBoard = [cholera, graft];
+    const ctx = makeContext(pBoard, []);
+    runStartSkills(ctx.pBoard, [], true, ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    ctx.pBoard[0]!.hp = 0;
+    resolveDeaths(ctx);
+    expect(ctx.pBoard).toHaveLength(1);
+    const spawned = ctx.pBoard[0]!;
+    expect(spawned.id).toBe("cholera");
+    expect(spawned.level).toBe(2);
+    expect(spawned.skillUses).toBe(atLevel(CHOLERA.uses, 2));
+  });
+
+  it("Lv1 graft re-spawns at level 1 (default)", () => {
+    const pred = makeBattleUnit({ id: "rat", name: "疫病ネズミ", atk: 5, hp: 3 });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const pBoard = [pred, graft];
+    const ctx = makeContext(pBoard, []);
+    runStartSkills(ctx.pBoard, [], true, ctx);
+    ctx.pBoard[0]!.hp = 0;
+    resolveDeaths(ctx);
+    expect(ctx.pBoard[0]!.level).toBe(1);
   });
 });

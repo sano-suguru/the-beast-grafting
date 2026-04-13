@@ -55,6 +55,25 @@ import {
   Crown,
   BookOpen,
   Dna,
+  Baby,
+  Grab,
+  Scissors,
+  Ribbon,
+  Flower,
+  Leaf,
+  Microscope,
+  Hexagon,
+  Spade,
+  Syringe,
+  Box,
+  Target,
+  Fingerprint,
+  Moon,
+  Hand,
+  Bomb,
+  Scale,
+  Bandage,
+  Scan,
 } from "lucide-preact";
 import type { UnitId } from "../../shared/types";
 
@@ -121,6 +140,30 @@ const UNIT_ICONS: Record<UnitId, typeof Rat> = {
   holy_fire: FlameKindling,
   archangel: Crown,
   risen_pope: BookOpen,
+  // Regular — 追加 Tier 1
+  ghoul_infant: Baby,
+  dead_hand: Grab,
+  // Regular — 追加 Tier 2
+  devouring_wound: Scissors,
+  crawling_cord: Ribbon,
+  tainted_placenta: Flower,
+  graft_scion: Leaf,
+  // Regular — 追加 Tier 3
+  flesh_granulation: Microscope,
+  corroding_mold: Hexagon,
+  omen_womb: Spade,
+  corpse_broker: Syringe,
+  // Regular — 追加 Tier 4
+  devouring_graft: Box,
+  tumor_guardian: Target,
+  groaning_coffin: Fingerprint,
+  stellar_cocoon: Moon,
+  // Regular — 追加 Tier 5
+  necrotic_finger: Hand,
+  insatiable_maw: Bomb,
+  wailing_cursechild: Scale,
+  amniotic_armor: Bandage,
+  mimicking_flesh: Scan,
   // Token
   token: Dna,
 };

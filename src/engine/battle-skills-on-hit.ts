@@ -10,6 +10,7 @@ import {
   FLAYED_SAINT,
   FLAGELLANT,
   HOWLING_GIANT,
+  TUMOR_GUARDIAN,
 } from "../shared/skill-params";
 
 type HitCtx = {
@@ -30,6 +31,8 @@ const HIT_HANDLERS = {
   flayed_saint: applyFlayedSaintHit,
   flagellant: applyFlagellantHit,
   howling_giant: applyHowlingGiantHit,
+  tumor_guardian: applyTumorGuardianHit,
+  amniotic_armor: applyAmnioticArmorHit,
 } satisfies Partial<Record<UnitId, HitHandler>>;
 
 type HitHandlerUnitId = keyof typeof HIT_HANDLERS;
@@ -97,7 +100,14 @@ function applyStitchedTwinHit({ defender: u, board, idx, prefix, ctx }: HitCtx) 
     pushFrame(
       ctx,
       "skill",
-      [prefix, seg.u(u.name), "がのたうち、", seg.u(behind.name), `に噛みつく。${dmg}ダメージ`],
+      [
+        prefix,
+        seg.u(u.name),
+        "がのたうち、",
+        seg.u(behind.name),
+        "に噛みつく。",
+        seg.s(`${dmg}ダメージ`),
+      ],
       "skill",
       {
         [behind.uid]: { type: "damage", value: `-${dmg}` },
@@ -122,7 +132,7 @@ function applyFlayedSaintHit({ defender: u, isPlayer, prefix, ctx }: HitCtx) {
       seg.u(u.name),
       "の肉片が弾け飛ぶ。",
       seg.u(target.name),
-      ` ${hpBefore}→${Math.max(0, target.hp)}`,
+      seg.hp(`${hpBefore}→${Math.max(0, target.hp)}`),
     ],
     "skill",
     {
@@ -146,7 +156,8 @@ function applyFlagellantHit({ defender: u, board, idx, prefix, ctx }: HitCtx) {
       seg.u(u.name),
       "の背が裂ける。血飛沫を浴びた",
       seg.u(behind.name),
-      `が昂ぶる。+${b.atk}/+${b.hp}`,
+      "が昂ぶる。",
+      seg.s(`+${b.atk}/+${b.hp}`),
     ],
     "skill",
     {
@@ -166,8 +177,44 @@ function applyHowlingGiantHit({ defender: u, board, prefix, ctx }: HitCtx) {
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), `が吼える。味方の腕が震え、拳が白む。攻撃+${b}`],
+    [prefix, seg.u(u.name), "が吼える。味方の腕が震え、拳が白む。", seg.s(`+${b}/+0`)],
     "skill",
     aoeBuffActions(u, buffed, `+${b}/+0`),
+  );
+}
+
+function applyTumorGuardianHit({ defender: u, board, idx, prefix, ctx }: HitCtx) {
+  const behind = board[idx + 1];
+  if (!behind || behind.hp <= 0) return;
+  const b = atLevel(TUMOR_GUARDIAN.buff, u.level);
+  behind.atk += b.atk;
+  behind.hp += b.hp;
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      prefix,
+      seg.u(u.name),
+      "の瘤が脈打つ。",
+      seg.u(behind.name),
+      "が変質する。",
+      seg.s(`+${b.atk}/+${b.hp}`),
+    ],
+    "skill",
+    { [behind.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
+  );
+}
+
+function applyAmnioticArmorHit({ defender: u, prefix, ctx }: HitCtx) {
+  if (u.skillUses <= 0) return;
+  if (u.equip !== null) return;
+  u.skillUses -= 1;
+  u.equip = "corpse_wax";
+  pushFrame(
+    ctx,
+    "skill",
+    [prefix, seg.u(u.name), "の膜が硬化し、", seg.e("屍蝋"), "が纏う。"],
+    "skill",
+    { [u.uid]: { type: "buff", value: "屍蝋" } },
   );
 }

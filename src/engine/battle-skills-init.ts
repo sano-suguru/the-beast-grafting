@@ -29,7 +29,8 @@ function applyBloodFontBuffs(board: BattleUnit[], isPlayer: boolean, ctx: Battle
         seg.u(u.name),
         "の血が凝り、",
         seg.u(target.name),
-        `の傷口を塗り固める。HP+${hpBuff}`,
+        "の傷口を塗り固める。",
+        seg.s(`+0/+${hpBuff}`),
       ],
       "skill",
       {

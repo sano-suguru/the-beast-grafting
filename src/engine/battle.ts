@@ -1,8 +1,15 @@
-import type { UnitId, UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../shared/types";
+import type { UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../shared/types";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { generateUid } from "./helpers";
 import type { BattleContext, BattleUnit } from "./battle-context";
-import { pushFrame, takeDamage, seg } from "./battle-context";
+import {
+  pushFrame,
+  takeDamage,
+  skillDamageActions,
+  getMult,
+  enemyPrefix,
+  seg,
+} from "./battle-context";
 import type { Rng } from "./rng";
 import { createSeededRng } from "./rng";
 import { resolveDeaths } from "./battle-deaths";
@@ -15,32 +22,9 @@ import {
 } from "./battle-skills";
 import { applyAcidSplash, processKnockoutEffects } from "./battle-skills-combat";
 import { COMBAT_ROUND_LIMIT, NUMBNESS_INITIAL_USES } from "./constants";
-import { atLevel, CHOLERA, EYE, CATHEDRAL, SIN_EATER, PLAGUE_BELL } from "../shared/skill-params";
+import { atLevel, CORRODING_MOLD } from "../shared/skill-params";
 import { runDeploySkills } from "./battle-skills-init";
-
-const INIT_OVERRIDES = {
-  cholera: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(CHOLERA.uses, bu.level);
-  },
-  eye: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(EYE.uses, bu.level);
-  },
-  cathedral: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(CATHEDRAL.uses, bu.level);
-  },
-  sin_eater: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(SIN_EATER.uses, bu.level);
-  },
-  plague_bell: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(PLAGUE_BELL.uses, bu.level);
-  },
-} satisfies Partial<Record<UnitId, (bu: BattleUnit) => void>>;
-
-type InitOverrideUnitId = keyof typeof INIT_OVERRIDES;
-
-function getInitOverride(id: UnitId): ((bu: BattleUnit) => void) | undefined {
-  return Object.hasOwn(INIT_OVERRIDES, id) ? INIT_OVERRIDES[id as InitOverrideUnitId] : undefined;
-}
+import { getInitOverride } from "./battle-init-overrides";
 
 function initBattleUnit(u: UnitInstance): BattleUnit {
   const atk = effectiveAtk(u);
@@ -84,7 +68,35 @@ function initContext(
     lastBattleResult,
     opCount: 0,
     opLimitExceeded: false,
+    absorbedUnits: new Map(),
   };
+}
+
+function resolveNecroticInstantKill(
+  attacker: BattleUnit,
+  target: BattleUnit,
+  waxBlocked: boolean,
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  if (attacker.id !== "necrotic_finger" || target.hp <= 0 || waxBlocked) return;
+  const hpBefore = target.hp;
+  takeDamage(target, hpBefore);
+  const prefix = enemyPrefix(isPlayer);
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      prefix,
+      seg.u(attacker.name),
+      "が触れた先から",
+      seg.u(target.name),
+      "が朽ちる。",
+      seg.hp(`${hpBefore}→0`),
+    ],
+    "skill",
+    skillDamageActions(attacker, target, hpBefore),
+  );
 }
 
 function resolveClash(
@@ -97,7 +109,11 @@ function resolveClash(
     [e.uid]: { type: "clash" },
   });
 
-  const { pDmg, eDmg, pAction, eAction } = applyEquipmentEffects(p, e, ctx);
+  const { pDmg, eDmg, pAction, eAction, pWaxBlocked, eWaxBlocked } = applyEquipmentEffects(
+    p,
+    e,
+    ctx,
+  );
   const pHpBefore = p.hp;
   const eHpBefore = e.hp;
   takeDamage(p, pDmg);
@@ -122,6 +138,9 @@ function resolveClash(
       [e.uid]: { type: eAction, value: `-${eDmg}`, source: p.uid },
     },
   );
+
+  resolveNecroticInstantKill(p, e, eWaxBlocked, true, ctx);
+  resolveNecroticInstantKill(e, p, pWaxBlocked, false, ctx);
 
   applyOnHitSkills(p, ctx.pBoard, true, ctx);
   applyOnHitSkills(e, ctx.eBoard, false, ctx);
@@ -151,6 +170,39 @@ function runCombatRound(ctx: BattleContext) {
 
   if (pKilledE) processKnockoutEffects(p, ctx.eBoard, ctx.pBoard, true, ctx);
   if (eKilledP) processKnockoutEffects(e, ctx.pBoard, ctx.eBoard, false, ctx);
+
+  applyEndOfRoundEffects(ctx.pBoard, true, ctx);
+  applyEndOfRoundEffects(ctx.eBoard, false, ctx);
+}
+
+function applyEndOfRoundEffects(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
+  const prefix = enemyPrefix(isPlayer);
+  for (let i = 0; i < board.length; i++) {
+    const u = board[i]!;
+    if (u.id !== "corroding_mold" || u.hp <= 0) continue;
+    const front = board[i - 1];
+    if (!front || front.hp <= 0) continue;
+    const mult = getMult(board, i);
+    for (let m = 0; m < mult; m++) {
+      const b = atLevel(CORRODING_MOLD.buff, u.level);
+      front.atk += b.atk;
+      front.hp += b.hp;
+      pushFrame(
+        ctx,
+        "skill",
+        [
+          prefix,
+          seg.u(u.name),
+          "が",
+          seg.u(front.name),
+          "に侵蝕する。",
+          seg.s(`+${b.atk}/+${b.hp}`),
+        ],
+        "skill",
+        { [front.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
+      );
+    }
+  }
 }
 
 function determineResult(ctx: BattleContext, timedOut: boolean): BattleResult {

@@ -1,23 +1,13 @@
 import type { BoardUnit } from "../../shared/board-unit";
-import type { Tier } from "../../shared/data/tiers";
+import type { UnitData, DataUnitId } from "../../shared/types";
 import { isEquipType } from "../../shared/equip-type";
-import { UNITS } from "../../shared/data/units";
-import { CHURCH_UNITS } from "../../shared/data/church-units";
-import type { RegularUnitId, ChurchUnitId } from "../../shared/types";
+import { isKnownUnitId, lookupUnitData, isChurchUnit } from "../../shared/data/unit-lookup";
 
 const MAX_BOARD_SIZE = 5;
 const MAX_ROUND = 20;
 
 const STAT_CEILING_MULTIPLIER = 20;
 const STAT_CEILING_BASE = 200;
-
-function lookupMasterData(
-  id: string,
-): { name: string; baseAtk: number; baseHp: number; tier: Tier } | null {
-  if (Object.hasOwn(UNITS, id)) return UNITS[id as RegularUnitId];
-  if (Object.hasOwn(CHURCH_UNITS, id)) return CHURCH_UNITS[id as ChurchUnitId];
-  return null;
-}
 
 function hasNumericFields(o: Record<string, unknown>): boolean {
   return (
@@ -48,21 +38,18 @@ function validateBoundedInt(val: number, min: number, max: number): boolean {
   return Number.isInteger(val) && val >= min && val <= max;
 }
 
-function validateMasterMatch(o: Record<string, unknown>): boolean {
-  const master = lookupMasterData(o["id"] as string);
-  if (!master) return false;
+function validateMasterMatch(
+  o: Record<string, unknown>,
+  master: UnitData,
+  id: DataUnitId,
+): boolean {
   if (o["name"] !== master.name || o["tier"] !== master.tier) return false;
   if (o["baseAtk"] !== master.baseAtk || o["baseHp"] !== master.baseHp) return false;
-
-  const isFromChurch = Object.hasOwn(CHURCH_UNITS, o["id"] as string);
-  if (o["isChurch"] !== isFromChurch) return false;
+  if (o["isChurch"] !== isChurchUnit(id)) return false;
   return true;
 }
 
-function validateStatCeilings(o: Record<string, unknown>): boolean {
-  const master = lookupMasterData(o["id"] as string);
-  if (!master) return false;
-
+function validateStatCeilings(o: Record<string, unknown>, master: UnitData): boolean {
   const buffAtk = o["buffAtk"] as number;
   const buffHp = o["buffHp"] as number;
   if (buffAtk < 0 || buffHp < 0) return false;
@@ -70,6 +57,14 @@ function validateStatCeilings(o: Record<string, unknown>): boolean {
   const atkCeiling = master.baseAtk * STAT_CEILING_MULTIPLIER + STAT_CEILING_BASE;
   const hpCeiling = master.baseHp * STAT_CEILING_MULTIPLIER + STAT_CEILING_BASE;
   return master.baseAtk + buffAtk <= atkCeiling && master.baseHp + buffHp <= hpCeiling;
+}
+
+function validateAgainstMaster(o: Record<string, unknown>): boolean {
+  const id = o["id"] as string;
+  if (!isKnownUnitId(id)) return false;
+  const master = lookupUnitData(id);
+  if (!master) return false;
+  return validateMasterMatch(o, master, id) && validateStatCeilings(o, master);
 }
 
 function validateBoardUnit(u: unknown): u is BoardUnit {
@@ -82,7 +77,7 @@ function validateBoardUnit(u: unknown): u is BoardUnit {
   const uid = o["uid"] as string;
   if (uid.length === 0 || uid.length > 32) return false;
 
-  return validateMasterMatch(o) && validateStatCeilings(o);
+  return validateAgainstMaster(o);
 }
 
 export function validateSnapshotBody(
