@@ -34,8 +34,8 @@ export const createUnit = (id: DataUnitId): UnitInstance => {
   };
 };
 
-export const getShopPool = (round: number): RegularUnitId[] => {
-  const maxTier = getCurrentMaxTier(round);
+export const getShopPool = (night: number): RegularUnitId[] => {
+  const maxTier = getCurrentMaxTier(night);
   return TIERS.filter((t) => t <= maxTier).flatMap((t) => getUnitsByTier(t));
 };
 
@@ -78,11 +78,11 @@ const generateTeamName = (faction: EnemyFaction, rng: Rng): string => {
   return `[${faction}] ${adj}${noun}`;
 };
 
-const generateCultTeam = (round: number, rng: Rng): UnitInstance[] => {
-  if (round === 1) return [createUnit("squire"), createUnit("church_hound")];
-  if (round <= 3)
+const generateCultTeam = (night: number, rng: Rng): UnitInstance[] => {
+  if (night === 1) return [createUnit("squire"), createUnit("church_hound")];
+  if (night <= 3)
     return [createUnit("priest"), createUnit("inquisitor"), createUnit("church_hound")];
-  if (round <= 6)
+  if (night <= 6)
     return [
       createUnit("templar"),
       createUnit("priest"),
@@ -90,7 +90,7 @@ const generateCultTeam = (round: number, rng: Rng): UnitInstance[] => {
       createUnit("church_beast"),
       createUnit("church_hound"),
     ];
-  if (round <= 8)
+  if (night <= 8)
     return [
       createUnit("paladin"),
       createUnit("flagellant"),
@@ -98,7 +98,7 @@ const generateCultTeam = (round: number, rng: Rng): UnitInstance[] => {
       createUnit("priest"),
       createUnit("church_beast"),
     ];
-  if (round <= 10)
+  if (night <= 10)
     return [
       createUnit("cathedral"),
       createUnit("relic_sword"),
@@ -106,7 +106,7 @@ const generateCultTeam = (round: number, rng: Rng): UnitInstance[] => {
       createUnit("flagellant"),
       createUnit("templar"),
     ];
-  if (round <= 12)
+  if (night <= 12)
     return [
       createUnit("holy_fire"),
       createUnit("seraph"),
@@ -125,11 +125,11 @@ const CULT_TEMPLATES_LATE: ChurchUnitId[][] = [
   ["risen_pope", "relic_sword", "flagellant", "holy_fire", "paladin"],
 ];
 
-const generateGrafterTeam = (round: number, rng: Rng): UnitInstance[] => {
-  if (round <= 2) return [createUnit("bat"), createUnit("rat"), createUnit("hound")];
-  if (round <= 4)
+const generateGrafterTeam = (night: number, rng: Rng): UnitInstance[] => {
+  if (night <= 2) return [createUnit("bat"), createUnit("rat"), createUnit("hound")];
+  if (night <= 4)
     return [createUnit("martyr"), createUnit("beast"), createUnit("hound"), createUnit("bat")];
-  if (round <= 7)
+  if (night <= 7)
     return [
       createUnit("parasite"),
       createUnit("maiden"),
@@ -137,7 +137,7 @@ const generateGrafterTeam = (round: number, rng: Rng): UnitInstance[] => {
       createUnit("hound"),
       createUnit("martyr"),
     ];
-  if (round <= 10)
+  if (night <= 10)
     return [
       createUnit("evangelist"),
       createUnit("altar"),
@@ -145,7 +145,7 @@ const generateGrafterTeam = (round: number, rng: Rng): UnitInstance[] => {
       createUnit("maiden"),
       createUnit("hound"),
     ];
-  if (round <= 12)
+  if (night <= 12)
     return [
       createUnit("shrieking_throat"),
       createUnit("hundred_arms"),
@@ -162,25 +162,25 @@ const GRAFTER_TEMPLATES_LATE: RegularUnitId[][] = [
   ["howling_giant", "organ_grinder", "flayed_saint", "eye", "parasite"],
 ];
 
-export const generateEnemyTeam = (round: number, rng: Rng): EnemyTeam => {
-  const isCult = rng.next() > round * 0.1;
+export const generateEnemyTeam = (night: number, rng: Rng): EnemyTeam => {
+  const isCult = rng.next() > night * 0.1;
   const type = isCult ? "教団" : "同業者";
   const teamName = generateTeamName(type, rng);
 
-  let units = isCult ? generateCultTeam(round, rng) : generateGrafterTeam(round, rng);
+  let units = isCult ? generateCultTeam(night, rng) : generateGrafterTeam(night, rng);
 
   // Make end-game enemies stronger randomly
-  if (round >= 5) {
-    const bonus = Math.floor(round / 2);
+  if (night >= 5) {
+    const bonus = Math.floor(night / 2);
     units = units.map((u) => ({
       ...u,
       baseAtk: u.baseAtk + bonus,
       baseHp: u.baseHp + bonus,
-      level: Math.min(3, Math.ceil(round / 4)),
+      level: Math.min(3, Math.ceil(night / 4)),
     }));
   }
 
-  return { teamName, teamType: type, units, round: null, life: null, trophy: null };
+  return { teamName, teamType: type, units, night: null, life: null, trophy: null };
 };
 
 export { getEquipInfo } from "../shared/data/equips";

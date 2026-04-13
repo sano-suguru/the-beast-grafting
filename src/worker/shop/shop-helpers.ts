@@ -134,7 +134,7 @@ async function persistShopState(
   }
 
   if (isWithBoard(value)) {
-    const snapError = await saveBoardSnapshot(db, playerId, run.id, run.round, value.finalBoard, {
+    const snapError = await saveBoardSnapshot(db, playerId, run.id, run.night, value.finalBoard, {
       life: newState.life,
       trophy: run.trophy,
     });
@@ -150,7 +150,7 @@ async function saveBoardSnapshot(
   db: DrizzleD1Database,
   playerId: string,
   runId: string,
-  round: number,
+  night: number,
   finalBoard: (BoardUnit | null)[],
   stats: { life: number; trophy: number },
 ) {
@@ -164,14 +164,14 @@ async function saveBoardSnapshot(
           id: generateId(),
           playerId,
           runId,
-          round,
+          night,
           board: boardUnits,
           life: stats.life,
           trophy: stats.trophy,
           createdAt: now,
         })
         .onConflictDoUpdate({
-          target: [boardSnapshots.runId, boardSnapshots.round],
+          target: [boardSnapshots.runId, boardSnapshots.night],
           set: { board: boardUnits, life: stats.life, trophy: stats.trophy, createdAt: now },
         }),
     dbErr,

@@ -50,6 +50,8 @@ import {
   GRAVE_WORM,
   MARKET_VULTURE,
   ASH_FUNGUS,
+  TAINTED_PLACENTA,
+  CORRODING_MOLD,
 } from "./skill-params";
 
 const houndDeathText = (lv: number) => {
@@ -135,6 +137,10 @@ const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
     const b = atLevel(MARKET_VULTURE.shopBuff, lv);
     return `味方解体: 闇市場の全素体に+${b.atk}/+${b.hp}`;
   },
+  tainted_placenta: (lv) => {
+    const b = atLevel(TAINTED_PLACENTA.shopBuff, lv);
+    return `購入: 闇市場の素体1体に+${b.atk}/+${b.hp}`;
+  },
   flayed_saint: (lv) => `被弾: ランダムな敵に${atLevel(FLAYED_SAINT.damage, lv)}ダメージ`,
   charnel_pit: (lv) => {
     const b = atLevel(CHARNEL_PIT.token, lv);
@@ -180,6 +186,10 @@ const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
   archangel: (lv) => {
     const b = atLevel(ARCHANGEL.buff, lv);
     return `味方${ARCHANGEL.threshold}体死亡ごと: 自身に+${b.atk}/+${b.hp}`;
+  },
+  corroding_mold: (lv) => {
+    const b = atLevel(CORRODING_MOLD.buff, lv);
+    return `開戦: 前の味方に+${b.atk}/+${b.hp}`;
   },
   risen_pope: (lv) => {
     const b = atLevel(RISEN_POPE.buff, lv);

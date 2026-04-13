@@ -13,7 +13,7 @@ import type { AuthEnv } from "../auth/types";
 interface RunResponse {
   run: {
     id: string;
-    round: number;
+    night: number;
     life: number;
     trophy: number;
     status: string;
@@ -38,7 +38,7 @@ async function insertBattle(
   db: DrizzleD1Database,
   playerId: string,
   runId: string,
-  round: number,
+  night: number,
   result: "WIN" | "LOSE" | "DRAW",
 ) {
   const id = generateId();
@@ -47,14 +47,14 @@ async function insertBattle(
     playerId,
     runId,
     opponentPlayerId: null,
-    round,
+    night,
     seed: 12345,
     opponent: {
       playerId: null,
       teamName: "test",
       teamType: "教団",
       units: [],
-      round: null,
+      night: null,
       life: null,
       trophy: null,
     },
@@ -130,8 +130,8 @@ describe("POST /start", () => {
     const { token } = await createTestPlayer(testDb);
     const res = await postStart(app, token, { originId: "thief" });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { run: { round: number; life: number; trophy: number } };
-    expect(body.run.round).toBe(1);
+    const body = (await res.json()) as { run: { night: number; life: number; trophy: number } };
+    expect(body.run.night).toBe(1);
     expect(body.run.life).toBe(5);
     expect(body.run.trophy).toBe(0);
   });
@@ -197,7 +197,7 @@ describe("POST /advance", () => {
     expect(res.status).toBe(403);
   });
 
-  it("advances round on WIN", async () => {
+  it("advances night on WIN", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const startRes = await postStart(app, token);
     const { run } = (await startRes.json()) as RunResponse;
@@ -206,9 +206,9 @@ describe("POST /advance", () => {
     const res = await postAdvance(app, token, battleId);
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
-      run: { round: number; trophy: number; life: number; status: string };
+      run: { night: number; trophy: number; life: number; status: string };
     };
-    expect(body.run.round).toBe(2);
+    expect(body.run.night).toBe(2);
     expect(body.run.trophy).toBe(1);
     expect(body.run.life).toBe(5);
     expect(body.run.status).toBe("active");
@@ -291,7 +291,7 @@ describe("POST /advance", () => {
     await testDb.insert(runs).values({
       id: runId,
       playerId,
-      round: 1,
+      night: 1,
       life: 5,
       trophy: 0,
       board: [],
@@ -303,7 +303,7 @@ describe("POST /advance", () => {
     const battleId = await insertBattle(testDb, playerId, runId, 1, "WIN");
 
     const first = await consumeAndAdvance(testDb, battleId, runId, {
-      round: 2,
+      night: 2,
       life: 5,
       trophy: 1,
       board: [],
@@ -313,7 +313,7 @@ describe("POST /advance", () => {
     expect(first._unsafeUnwrap()).toBe(true);
 
     const second = await consumeAndAdvance(testDb, battleId, runId, {
-      round: 3,
+      night: 3,
       life: 5,
       trophy: 2,
       board: [],
@@ -333,7 +333,7 @@ describe("POST /advance", () => {
     await testDb.insert(runs).values({
       id: runId,
       playerId,
-      round: 1,
+      night: 1,
       life: 5,
       trophy: 0,
       board: [],
@@ -345,7 +345,7 @@ describe("POST /advance", () => {
     const battleId = await insertBattle(testDb, playerId, runId, 1, "WIN");
 
     const result = await consumeAndAdvance(testDb, battleId, runId, {
-      round: 2,
+      night: 2,
       life: 5,
       trophy: 1,
       board: [],
@@ -367,7 +367,7 @@ describe("POST /advance", () => {
     expect(battleRow[0]!.consumed).toBe(true);
   });
 
-  it("rejects battle with mismatched round", async () => {
+  it("rejects battle with mismatched night", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const startRes = await postStart(app, token);
     const { run } = (await startRes.json()) as RunResponse;
@@ -376,7 +376,7 @@ describe("POST /advance", () => {
     const res = await postAdvance(app, token, battleId);
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: { reason: string } };
-    expect(body.error.reason).toBe("round_mismatch");
+    expect(body.error.reason).toBe("night_mismatch");
   });
 
   it("rejects battle from a different run", async () => {
@@ -389,7 +389,7 @@ describe("POST /advance", () => {
     await testDb.insert(runs).values({
       id: otherRunId,
       playerId,
-      round: 1,
+      night: 1,
       life: 0,
       trophy: 3,
       board: [],
@@ -399,7 +399,7 @@ describe("POST /advance", () => {
       updatedAt: now,
     });
 
-    const battleId = await insertBattle(testDb, playerId, otherRunId, activeRun.round, "WIN");
+    const battleId = await insertBattle(testDb, playerId, otherRunId, activeRun.night, "WIN");
     const res = await postAdvance(app, token, battleId);
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: { reason: string } };
@@ -474,7 +474,7 @@ describe("POST /advance", () => {
     await testDb.insert(shopStates).values({
       id: generateId(),
       runId: run.id,
-      round: 1,
+      night: 1,
       blood: 10,
       freeRoll: false,
       cultistUsed: false,

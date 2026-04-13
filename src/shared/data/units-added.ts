@@ -47,7 +47,7 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 2,
     tier: 2,
-    skillText: "購入: ショップの素体1体に+1/+1",
+    skillText: "購入: 闇市場の素体1体に+1/+1",
     lore: "名もなき上位者の胎盤。触れた死肉を変質させ、本来あり得ない活力を与える。闇市場の商人たちは、この胎盤に触れた素体を「格上」と呼ぶ。",
   },
   graft_scion: {
@@ -76,7 +76,7 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 3,
     tier: 3,
-    skillText: "ターン終了: 前の味方に+1/+1",
+    skillText: "開戦: 前の味方に+1/+1",
     lore: "黴に覆われた死体は、生前より遥かに硬い。",
   },
   omen_womb: {

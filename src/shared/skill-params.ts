@@ -223,7 +223,7 @@ export const FLESH_GRANULATION = {
   ] as SB,
 };
 
-// ── ターン終了 ──
+// ── 開戦バフ ──
 
 export const CORRODING_MOLD = {
   buff: [

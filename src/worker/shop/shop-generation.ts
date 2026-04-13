@@ -22,8 +22,8 @@ import {
 import type { ShopSlotJson } from "../../db/shop-state-types";
 
 function getShopSize(r: number): number {
-  for (const { minRound, size } of SHOP_SIZES) {
-    if (r >= minRound) return size;
+  for (const { minNight, size } of SHOP_SIZES) {
+    if (r >= minNight) return size;
   }
   return SHOP_SIZE_DEFAULT;
 }
@@ -69,7 +69,7 @@ export function generateShopItems(
   rng: StatefulRng,
 ): (ShopItemSlot | null)[] {
   const itemPool = getItemPool();
-  const size = r >= ITEM_SHOP_SIZES[0].minRound ? ITEM_SHOP_SIZES[0].size : ITEM_SHOP_SIZE_DEFAULT;
+  const size = r >= ITEM_SHOP_SIZES[0].minNight ? ITEM_SHOP_SIZES[0].size : ITEM_SHOP_SIZE_DEFAULT;
   return [...Array(size).keys()].map((i) => {
     const existing = prev[i];
     if (existing?.frozen) return existing;
@@ -78,8 +78,8 @@ export function generateShopItems(
   });
 }
 
-export function buildShopForRound(
-  currentRound: number,
+export function buildShopForNight(
+  currentNight: number,
   event: EventData | null,
   currentOrigin: OriginId | null,
   prevUnits: (ShopSlot | null)[],
@@ -87,7 +87,7 @@ export function buildShopForRound(
   rng: StatefulRng,
 ): { units: (ShopSlot | null)[]; items: (ShopItemSlot | null)[] } {
   const sizeModifier = event?.shopSizeModifier ?? 0;
-  let units: (ShopSlot | null)[] = generateShopUnits(currentRound, prevUnits, sizeModifier, rng);
+  let units: (ShopSlot | null)[] = generateShopUnits(currentNight, prevUnits, sizeModifier, rng);
   units = applyInquisitorUpgrade(units, currentOrigin, rng);
 
   if (event?.shopUnitBuff) {
@@ -109,24 +109,24 @@ export function buildShopForRound(
   const items =
     event && event.itemOffers.length > 0
       ? buildEventShopItems(event, rng)
-      : generateShopItems(currentRound, prevItems, rng);
+      : generateShopItems(currentNight, prevItems, rng);
 
   return { units, items };
 }
 
-export function deriveRoundSeed(shopSeed: number, round: number): number {
-  invariant(round >= 1, `deriveRoundSeed: round must be >= 1, got ${round}`);
-  const mixed = (shopSeed ^ Math.imul(round, 0x9e3779b9)) | 0;
+export function deriveNightSeed(shopSeed: number, night: number): number {
+  invariant(night >= 1, `deriveNightSeed: night must be >= 1, got ${night}`);
+  const mixed = (shopSeed ^ Math.imul(night, 0x9e3779b9)) | 0;
   return mixed === 0 ? 1 : mixed;
 }
 
 export function generateLevelUpRewards(
   leveledUp: boolean,
-  round: number,
+  night: number,
   rng: StatefulRng,
 ): ShopSlotJson[] {
   if (!leveledUp) return [];
-  const rewardTier = nextTier(getCurrentMaxTier(round));
+  const rewardTier = nextTier(getCurrentMaxTier(night));
   const candidates = getUnitsByTier(rewardTier);
   if (candidates.length === 0) return [];
   return Array.from({ length: LEVEL_UP_REWARD_COUNT }, () => ({

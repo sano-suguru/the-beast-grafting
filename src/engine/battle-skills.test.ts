@@ -182,13 +182,34 @@ describe("runStartSkills – cholera infection", () => {
 });
 
 describe("runStartSkills – brains and edge cases", () => {
-  it("brains does NOT double start-of-battle skills (SAP Tiger rule)", () => {
+  it("brains doubles start-of-battle skills", () => {
     const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2 });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
     const target = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([bat, brains], [target]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(target.hp).toBe(8);
+  });
+
+  it("brains does not double when not directly behind", () => {
+    const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2 });
+    const filler = makeBattleUnit({ hp: 3 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
+    const target = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([bat, filler, brains], [target]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(target.hp).toBe(9);
+  });
+
+  it("brains + devouring_graft: absorbs once, second invocation is no-op", () => {
+    const fodder = makeBattleUnit({ id: "hound", name: "猟犬", atk: 2, hp: 3 });
+    const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
+    const ctx = makeContext([fodder, graft, brains], [makeBattleUnit({ hp: 10 })]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(graft.atk).toBe(3 + 2);
+    expect(graft.hp).toBe(6 + 3);
+    expect(ctx.pBoard).toHaveLength(2);
   });
 
   it("does nothing for units without start skills", () => {

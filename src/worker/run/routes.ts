@@ -66,7 +66,7 @@ runRoutes.post("/start", requireAuth, jsonBody(), async (c) => {
       db.insert(runs).values({
         id: runId,
         playerId,
-        round: 1,
+        night: 1,
         life: INITIAL_LIFE,
         trophy: 0,
         board: [] as (BoardUnit | null)[],
@@ -82,7 +82,7 @@ runRoutes.post("/start", requireAuth, jsonBody(), async (c) => {
 
   const run: RunState = {
     id: runId,
-    round: 1,
+    night: 1,
     life: INITIAL_LIFE,
     trophy: 0,
     status: "active",
@@ -100,7 +100,7 @@ runRoutes.get("/current", requireAuth, async (c) => {
       db
         .select({
           id: runs.id,
-          round: runs.round,
+          night: runs.night,
           life: runs.life,
           trophy: runs.trophy,
           originId: runs.originId,
@@ -112,7 +112,7 @@ runRoutes.get("/current", requireAuth, async (c) => {
           battles,
           and(
             eq(battles.runId, runs.id),
-            eq(battles.round, runs.round),
+            eq(battles.night, runs.night),
             eq(battles.consumed, false),
           ),
         )
@@ -127,7 +127,7 @@ runRoutes.get("/current", requireAuth, async (c) => {
 
   const run: CurrentRunState = {
     id: row.id,
-    round: row.round,
+    night: row.night,
     life: row.life,
     trophy: row.trophy,
     status: row.status,
@@ -175,7 +175,7 @@ runRoutes.post("/advance", requireAuth, jsonBody(), async (c) => {
   if (validated instanceof Response) return validated;
   const { battle, run } = validated;
 
-  const shopBoard = await fetchLatestBoard(db, run.id, battle.round);
+  const shopBoard = await fetchLatestBoard(db, run.id, battle.night);
   if (shopBoard.isErr()) return internalError(c, "[run/advance:board]", shopBoard.error);
 
   const fields = computeAdvanceFields(
@@ -200,7 +200,7 @@ runRoutes.post("/advance", requireAuth, jsonBody(), async (c) => {
   return c.json({
     run: {
       id: run.id,
-      round: fields.round,
+      night: fields.night,
       life: fields.life,
       trophy: fields.trophy,
       status: fields.status,

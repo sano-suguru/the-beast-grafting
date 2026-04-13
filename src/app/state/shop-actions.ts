@@ -10,7 +10,7 @@ import { error as logError } from "../../shared/logger";
 import {
   blood,
   board,
-  round,
+  night,
   life,
   trophy,
   freeRoll,
@@ -131,7 +131,7 @@ export function applyShopState(state: ShopStateResponse) {
     rotRingUses.value = state.rotRingUses;
     activeEvent.value = state.activeEvent;
     canUndo.value = state.canUndo;
-    round.value = state.round;
+    night.value = state.night;
     life.value = state.life;
     trophy.value = state.trophy;
     selection.value = null;

@@ -199,8 +199,8 @@ export interface PreBattleText {
   readonly closing: string;
 }
 
-export type OpponentStatsKnown = { round: number; life: number; trophy: number };
-export type OpponentStats = OpponentStatsKnown | { round: null; life: null; trophy: null };
+export type OpponentStatsKnown = { night: number; life: number; trophy: number };
+export type OpponentStats = OpponentStatsKnown | { night: null; life: null; trophy: null };
 
 export type EnemyTeam = {
   teamName: string;

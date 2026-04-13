@@ -2,14 +2,7 @@ import type { UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../shar
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { generateUid } from "./helpers";
 import type { BattleContext, BattleUnit } from "./battle-context";
-import {
-  pushFrame,
-  takeDamage,
-  skillDamageActions,
-  getMult,
-  enemyPrefix,
-  seg,
-} from "./battle-context";
+import { pushFrame, takeDamage, skillDamageActions, enemyPrefix, seg } from "./battle-context";
 import type { Rng } from "./rng";
 import { createSeededRng } from "./rng";
 import { resolveDeaths } from "./battle-deaths";
@@ -21,8 +14,7 @@ import {
   applyEquipmentEffects,
 } from "./battle-skills";
 import { applyAcidSplash, processKnockoutEffects } from "./battle-skills-combat";
-import { COMBAT_ROUND_LIMIT, NUMBNESS_INITIAL_USES } from "./constants";
-import { atLevel, CORRODING_MOLD } from "../shared/skill-params";
+import { CLASH_LIMIT, NUMBNESS_INITIAL_USES } from "./constants";
 import { runDeploySkills } from "./battle-skills-init";
 import { getInitOverride } from "./battle-init-overrides";
 
@@ -153,7 +145,7 @@ function resolveClash(
   return { pKilledE: e.hp <= 0, eKilledP: p.hp <= 0 };
 }
 
-function runCombatRound(ctx: BattleContext) {
+function runClash(ctx: BattleContext) {
   applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
   applyCholeraBeforeAttack(ctx.eBoard, ctx.pBoard, false, ctx);
 
@@ -170,39 +162,6 @@ function runCombatRound(ctx: BattleContext) {
 
   if (pKilledE) processKnockoutEffects(p, ctx.eBoard, ctx.pBoard, true, ctx);
   if (eKilledP) processKnockoutEffects(e, ctx.pBoard, ctx.eBoard, false, ctx);
-
-  applyEndOfRoundEffects(ctx.pBoard, true, ctx);
-  applyEndOfRoundEffects(ctx.eBoard, false, ctx);
-}
-
-function applyEndOfRoundEffects(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
-  const prefix = enemyPrefix(isPlayer);
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "corroding_mold" || u.hp <= 0) continue;
-    const front = board[i - 1];
-    if (!front || front.hp <= 0) continue;
-    const mult = getMult(board, i);
-    for (let m = 0; m < mult; m++) {
-      const b = atLevel(CORRODING_MOLD.buff, u.level);
-      front.atk += b.atk;
-      front.hp += b.hp;
-      pushFrame(
-        ctx,
-        "skill",
-        [
-          prefix,
-          seg.u(u.name),
-          "が",
-          seg.u(front.name),
-          "に侵蝕する。",
-          seg.s(`+${b.atk}/+${b.hp}`),
-        ],
-        "skill",
-        { [front.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
-      );
-    }
-  }
 }
 
 function determineResult(ctx: BattleContext, timedOut: boolean): BattleResult {
@@ -230,12 +189,12 @@ function pushResultFrame(ctx: BattleContext, result: BattleResult, enemyTeam: En
 export function runBattle(
   ctx: BattleContext,
   enemyTeam: EnemyTeam,
-  round: number,
+  night: number,
 ): { frames: BattleFrame[]; result: BattleResult } {
   pushFrame(
     ctx,
     "info",
-    [seg.e(`第${round}夜`), ` 狂宴が幕を開けた。敵は ${enemyTeam.teamName} だ。`],
+    [seg.e(`第${night}夜`), ` 狂宴が幕を開けた。敵は ${enemyTeam.teamName} だ。`],
     "info",
   );
 
@@ -249,14 +208,14 @@ export function runBattle(
   while (
     ctx.pBoard.length > 0 &&
     ctx.eBoard.length > 0 &&
-    loopSafety < COMBAT_ROUND_LIMIT &&
+    loopSafety < CLASH_LIMIT &&
     !ctx.opLimitExceeded
   ) {
     loopSafety++;
-    runCombatRound(ctx);
+    runClash(ctx);
   }
 
-  const timedOut = loopSafety >= COMBAT_ROUND_LIMIT || ctx.opLimitExceeded;
+  const timedOut = loopSafety >= CLASH_LIMIT || ctx.opLimitExceeded;
   if (timedOut) {
     pushFrame(ctx, "info", ["戦闘が長引きすぎた...引き分けとなる。"], "info");
   }
@@ -270,11 +229,11 @@ export function runBattle(
 export function simulateBattle(
   playerBoard: (UnitInstance | null)[],
   enemyTeam: EnemyTeam,
-  round: number,
+  night: number,
   seed: number,
   lastBattleResult: BattleResult = null,
 ): { frames: BattleFrame[]; result: BattleResult } {
   const rng = createSeededRng(seed);
   const ctx = initContext(playerBoard, enemyTeam, lastBattleResult, rng);
-  return runBattle(ctx, enemyTeam, round);
+  return runBattle(ctx, enemyTeam, night);
 }

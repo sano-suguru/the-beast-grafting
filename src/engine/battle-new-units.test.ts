@@ -1295,10 +1295,29 @@ describe("flesh_granulation – on ally summon", () => {
   });
 });
 
-// ── corroding_mold: ターン終了時に前方バフ ──
+// ── corroding_mold: 開戦スキル（前方バフ） ──
 
-describe("corroding_mold – end of round (integration)", () => {
-  it("buffs unit in front after a battle round", () => {
+describe("corroding_mold – start skill", () => {
+  it("buffs the unit in front at start of battle", () => {
+    const front = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 5 });
+    const mold = makeBattleUnit({ id: "corroding_mold", name: "侵蝕する黴", atk: 2, hp: 3 });
+    const board = [front, mold];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    expect(front.atk).toBe(3 + 1);
+    expect(front.hp).toBe(5 + 1);
+  });
+
+  it("does nothing when mold is at front (no unit ahead)", () => {
+    const mold = makeBattleUnit({ id: "corroding_mold", name: "侵蝕する黴", atk: 2, hp: 3 });
+    const board = [mold];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    expect(mold.atk).toBe(2);
+    expect(mold.hp).toBe(3);
+  });
+
+  it("fires only once per battle, not every clash", () => {
     const front = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 200 });
     const mold = makeBattleUnit({ id: "corroding_mold", name: "侵蝕する黴", atk: 2, hp: 200 });
     const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 200 });
@@ -1309,7 +1328,7 @@ describe("corroding_mold – end of round (integration)", () => {
         f.log.type === "skill" &&
         f.log.segments.some((s) => typeof s !== "string" && s.text === "侵蝕する黴"),
     );
-    expect(moldFrames.length).toBeGreaterThan(0);
+    expect(moldFrames).toHaveLength(1);
   });
 });
 

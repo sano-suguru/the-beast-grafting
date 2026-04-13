@@ -1,7 +1,7 @@
 export { UNIT_COST } from "../shared/constants";
 
 export const DEATH_CASCADE_LIMIT = 20;
-export const COMBAT_ROUND_LIMIT = 500;
+export const CLASH_LIMIT = 500;
 /** 無限ループ防止用安全上限。死亡アニメフレーム等の視覚フレームを含め余裕を持たせる */
 export const MAX_OPS = 15_000;
 export const FLY_SPAWN_CAP = 3;
@@ -27,12 +27,12 @@ export const MAX_BOARD_SIZE = 5;
 export const FRAME_DELAY_DEATH_CHAIN = 300;
 
 export const SHOP_SIZES = [
-  { minRound: 9, size: 5 },
-  { minRound: 5, size: 4 },
+  { minNight: 9, size: 5 },
+  { minNight: 5, size: 4 },
 ] as const;
 export const SHOP_SIZE_DEFAULT = 3;
 
-export const ITEM_SHOP_SIZES = [{ minRound: 7, size: 2 }] as const;
+export const ITEM_SHOP_SIZES = [{ minNight: 7, size: 2 }] as const;
 export const ITEM_SHOP_SIZE_DEFAULT = 1;
 
 export const LEVEL_UP_REWARD_COUNT = 2;

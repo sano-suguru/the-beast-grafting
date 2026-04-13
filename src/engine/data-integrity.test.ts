@@ -164,11 +164,11 @@ describe("Cross-reference integrity", () => {
     }
   });
 
-  it("getShopPool returns valid UNITS IDs for various rounds", () => {
-    for (const round of [1, 3, 5, 7, 9, 11]) {
-      const pool = getShopPool(round);
+  it("getShopPool returns valid UNITS IDs for various nights", () => {
+    for (const night of [1, 3, 5, 7, 9, 11]) {
+      const pool = getShopPool(night);
       for (const id of pool) {
-        expect(id in UNITS, `getShopPool(${round}) returned "${id}" not in UNITS`).toBe(true);
+        expect(id in UNITS, `getShopPool(${night}) returned "${id}" not in UNITS`).toBe(true);
       }
     }
   });

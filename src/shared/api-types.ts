@@ -7,7 +7,7 @@ export type RunStatus = "active" | "won" | "lost" | "retired";
 
 export interface RunState {
   id: string;
-  round: number;
+  night: number;
   life: number;
   trophy: number;
   status: RunStatus;
@@ -51,7 +51,7 @@ export interface ShopStateResponse {
   activeEvent: EventData | null;
   rewardSlots: (ShopSlotResponse | null)[];
   canUndo: boolean;
-  round: number;
+  night: number;
   life: number;
   trophy: number;
 }

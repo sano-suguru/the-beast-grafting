@@ -17,7 +17,7 @@ import type { ShopStateRow } from "./shop-state-row";
 
 export type RunInfo = {
   id: string;
-  round: number;
+  night: number;
   life: number;
   trophy: number;
   originId: OriginId | null;
@@ -56,7 +56,7 @@ export function toResponse(state: ShopStateRow, trophy: number): ShopStateRespon
     ),
     activeEvent: state.activeEvent,
     canUndo: state.undoSnapshot !== null,
-    round: state.round,
+    night: state.night,
     life: state.life,
     trophy,
   };
@@ -70,7 +70,7 @@ export function parseOriginId(value: string | null): OriginId | null {
 
 function dbRowToState(
   row: {
-    round: number;
+    night: number;
     blood: number;
     freeRoll: boolean;
     cultistUsed: boolean;
@@ -99,7 +99,7 @@ function dbRowToState(
     rngS1: row.rngS1,
     rewardSlots: row.rewardSlots,
     undoSnapshot: row.undoSnapshot ?? null,
-    round: row.round,
+    night: row.night,
     life,
   };
 }
@@ -144,7 +144,7 @@ export async function loadShopState(
       db
         .select({
           id: runs.id,
-          round: runs.round,
+          night: runs.night,
           life: runs.life,
           trophy: runs.trophy,
           originId: runs.originId,
@@ -164,7 +164,7 @@ export async function loadShopState(
       db
         .select()
         .from(shopStates)
-        .where(and(eq(shopStates.runId, runId), eq(shopStates.round, run.round)))
+        .where(and(eq(shopStates.runId, runId), eq(shopStates.night, run.night)))
         .limit(1),
     dbErr,
   );
@@ -176,7 +176,7 @@ export async function loadShopState(
     type: "ok",
     run: {
       id: run.id,
-      round: run.round,
+      night: run.night,
       life: run.life,
       trophy: run.trophy,
       originId: parseOriginId(run.originId),
@@ -242,14 +242,14 @@ export function upsertShopState(db: DrizzleD1Database, runId: string, state: Sho
         .values({
           id: generateId(),
           runId,
-          round: state.round,
+          night: state.night,
           ...cols,
           version: 1,
           createdAt: now,
           updatedAt: now,
         })
         .onConflictDoUpdate({
-          target: [shopStates.runId, shopStates.round],
+          target: [shopStates.runId, shopStates.night],
           set: { ...cols, version: 1, updatedAt: now },
         }),
     dbErr,
@@ -267,19 +267,19 @@ interface PrevShopSlots {
 
 const EMPTY_PREV: PrevShopSlots = { shopUnits: [], shopItems: [] };
 
-export async function loadPrevRoundShop(
+export async function loadPrevNightShop(
   db: DrizzleD1Database,
   runId: string,
-  currentRound: number,
+  currentNight: number,
 ): Promise<Result<PrevShopSlots, InfraError>> {
-  const prevRound = currentRound - 1;
-  if (prevRound < 1) return ok(EMPTY_PREV);
+  const prevNight = currentNight - 1;
+  if (prevNight < 1) return ok(EMPTY_PREV);
   const result = await safeAsync(
     () =>
       db
         .select({ shopUnits: shopStates.shopUnits, shopItems: shopStates.shopItems })
         .from(shopStates)
-        .where(and(eq(shopStates.runId, runId), eq(shopStates.round, prevRound)))
+        .where(and(eq(shopStates.runId, runId), eq(shopStates.night, prevNight)))
         .limit(1),
     dbErr,
   );

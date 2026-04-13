@@ -33,10 +33,10 @@ describe("selectPreBattleNarrative", () => {
     expect(a).toEqual(b);
   });
 
-  it("produces variation across different rounds", () => {
+  it("produces variation across different nights", () => {
     const results = new Set<string>();
-    for (let round = 1; round <= 10; round++) {
-      results.add(selectPreBattleNarrative(5, "教団", round).intro);
+    for (let night = 1; night <= 10; night++) {
+      results.add(selectPreBattleNarrative(5, "教団", night).intro);
     }
     expect(results.size).toBeGreaterThan(1);
   });

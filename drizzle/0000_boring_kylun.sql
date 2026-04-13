@@ -16,7 +16,7 @@ CREATE TABLE `battles` (
 	`player_id` text NOT NULL,
 	`run_id` text NOT NULL,
 	`opponent_player_id` text,
-	`round` integer NOT NULL,
+	`night` integer NOT NULL,
 	`seed` integer NOT NULL,
 	`opponent` text NOT NULL,
 	`result` text NOT NULL,
@@ -27,14 +27,14 @@ CREATE TABLE `battles` (
 	FOREIGN KEY (`opponent_player_id`) REFERENCES `players`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `idx_battles_run_round` ON `battles` (`run_id`,`round`);--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_battles_run_night` ON `battles` (`run_id`,`night`);--> statement-breakpoint
 CREATE INDEX `idx_battles_player_id` ON `battles` (`player_id`);--> statement-breakpoint
 CREATE INDEX `idx_battles_created_at` ON `battles` (`created_at`);--> statement-breakpoint
 CREATE TABLE `board_snapshots` (
 	`id` text PRIMARY KEY NOT NULL,
 	`player_id` text NOT NULL,
 	`run_id` text NOT NULL,
-	`round` integer NOT NULL,
+	`night` integer NOT NULL,
 	`board` text NOT NULL,
 	`life` integer NOT NULL,
 	`trophy` integer NOT NULL,
@@ -43,8 +43,8 @@ CREATE TABLE `board_snapshots` (
 	FOREIGN KEY (`run_id`) REFERENCES `runs`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `idx_snapshots_run_round` ON `board_snapshots` (`run_id`,`round`);--> statement-breakpoint
-CREATE INDEX `idx_snapshots_round` ON `board_snapshots` (`round`);--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_snapshots_run_night` ON `board_snapshots` (`run_id`,`night`);--> statement-breakpoint
+CREATE INDEX `idx_snapshots_night` ON `board_snapshots` (`night`);--> statement-breakpoint
 CREATE INDEX `idx_snapshots_player_id` ON `board_snapshots` (`player_id`);--> statement-breakpoint
 CREATE INDEX `idx_snapshots_created_at` ON `board_snapshots` (`created_at`);--> statement-breakpoint
 CREATE TABLE `lore_entries` (
@@ -72,7 +72,7 @@ CREATE TABLE `rate_limits` (
 CREATE TABLE `runs` (
 	`id` text PRIMARY KEY NOT NULL,
 	`player_id` text NOT NULL,
-	`round` integer DEFAULT 1 NOT NULL,
+	`night` integer DEFAULT 1 NOT NULL,
 	`life` integer DEFAULT 5 NOT NULL,
 	`trophy` integer DEFAULT 0 NOT NULL,
 	`board` text NOT NULL,
@@ -100,7 +100,7 @@ CREATE INDEX `idx_sessions_expires_at` ON `sessions` (`expires_at`);--> statemen
 CREATE TABLE `shop_states` (
 	`id` text PRIMARY KEY NOT NULL,
 	`run_id` text NOT NULL,
-	`round` integer NOT NULL,
+	`night` integer NOT NULL,
 	`blood` integer DEFAULT 10 NOT NULL,
 	`free_roll` integer DEFAULT false NOT NULL,
 	`cultist_used` integer DEFAULT false NOT NULL,
@@ -119,5 +119,5 @@ CREATE TABLE `shop_states` (
 	FOREIGN KEY (`run_id`) REFERENCES `runs`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `idx_shop_states_run_round` ON `shop_states` (`run_id`,`round`);--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_shop_states_run_night` ON `shop_states` (`run_id`,`night`);--> statement-breakpoint
 CREATE INDEX `idx_shop_states_run_id` ON `shop_states` (`run_id`);

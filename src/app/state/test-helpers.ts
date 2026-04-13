@@ -16,7 +16,7 @@ export function makeShopState(overrides: Partial<ShopStateResponse> = {}): ShopS
     activeEvent: null,
     rewardSlots: [],
     canUndo: false,
-    round: 1,
+    night: 1,
     life: 5,
     trophy: 0,
     ...overrides,

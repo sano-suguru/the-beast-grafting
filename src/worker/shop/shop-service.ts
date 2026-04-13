@@ -1,7 +1,7 @@
 import type { ShopSlot, ShopItemSlot, OriginId } from "../../shared/types";
 import { createSeededRng } from "../../engine/rng";
 import { createUnit } from "../../engine/helpers";
-import { isEventRound, selectEvent, buildEventShopUnits } from "../../engine/event-helpers";
+import { isEventNight, selectEvent, buildEventShopUnits } from "../../engine/event-helpers";
 import type { ShopStateRow } from "./shop-state-row";
 import {
   slotsToJson,
@@ -12,8 +12,8 @@ import {
 import {
   applyInquisitorUpgrade,
   generateShopItems,
-  buildShopForRound,
-  deriveRoundSeed,
+  buildShopForNight,
+  deriveNightSeed,
 } from "./shop-generation";
 import type { BoardUnit } from "../../shared/board-unit";
 import type { ShopSlotJson, ShopItemSlotJson } from "../../db/shop-state-types";
@@ -24,7 +24,7 @@ interface ShopBuildResult {
 }
 
 function buildTutorialShop(
-  round: number,
+  night: number,
   originId: OriginId | null,
   prevUnits: (ShopSlot | null)[],
   prevItems: (ShopItemSlot | null)[],
@@ -45,27 +45,27 @@ function buildTutorialShop(
     originId,
     rng,
   );
-  return { units, items: generateShopItems(round, prevItems, rng) };
+  return { units, items: generateShopItems(night, prevItems, rng) };
 }
 
 function buildNormalShop(
-  round: number,
+  night: number,
   event: ReturnType<typeof selectEvent> | null,
   originId: OriginId | null,
   prevUnits: (ShopSlot | null)[],
   prevItems: (ShopItemSlot | null)[],
   rng: ReturnType<typeof createSeededRng>,
 ): ShopBuildResult {
-  const result = buildShopForRound(round, event, originId, prevUnits, prevItems, rng);
+  const result = buildShopForNight(night, event, originId, prevUnits, prevItems, rng);
   const hasEventUnits = event && event.unitOffers.length > 0;
   const units = hasEventUnits
-    ? [...result.units, ...buildEventShopUnits(event, round, rng)]
+    ? [...result.units, ...buildEventShopUnits(event, night, rng)]
     : result.units;
   return { units, items: result.items };
 }
 
 export function executeSetup(
-  round: number,
+  night: number,
   life: number,
   originId: OriginId | null,
   shopSeed: number,
@@ -74,13 +74,13 @@ export function executeSetup(
   prevShopUnits: (ShopSlotJson | null)[],
   prevShopItems: (ShopItemSlotJson | null)[],
 ): ShopStateRow {
-  const rng = createSeededRng(deriveRoundSeed(shopSeed, round));
+  const rng = createSeededRng(deriveNightSeed(shopSeed, night));
   const prevUnits = slotsFromJson(prevShopUnits);
   const prevItems = itemSlotsFromJson(prevShopItems);
-  const event = !useTutorialShop && isEventRound(round) ? selectEvent(rng) : null;
+  const event = !useTutorialShop && isEventNight(night) ? selectEvent(rng) : null;
   const shop = useTutorialShop
-    ? buildTutorialShop(round, originId, prevUnits, prevItems, rng)
-    : buildNormalShop(round, event, originId, prevUnits, prevItems, rng);
+    ? buildTutorialShop(night, originId, prevUnits, prevItems, rng)
+    : buildNormalShop(night, event, originId, prevUnits, prevItems, rng);
 
   const rngState = rng.getState();
   return {
@@ -96,7 +96,7 @@ export function executeSetup(
     rngS1: rngState.s1,
     rewardSlots: [],
     undoSnapshot: null,
-    round,
+    night,
     life,
   };
 }

@@ -12,6 +12,7 @@ import {
   CATACOMB_RAT,
   PALADIN,
   HOLY_FIRE,
+  CORRODING_MOLD,
 } from "../shared/skill-params";
 import { getInitOverride } from "./battle-init-overrides";
 
@@ -219,6 +220,25 @@ export function applyDevouringGraftSkill({ u, isPlayer, ctx }: SkillContext) {
     ],
     "skill",
     { [u.uid]: { type: "buff", value: `+${pred.atk}/+${pred.hp}` } },
+  );
+}
+
+export function applyCorrodingMoldSkill({ u, isPlayer, ctx }: SkillContext) {
+  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
+  const idx = allyBoard.indexOf(u);
+  if (idx <= 0) return;
+  const front = allyBoard[idx - 1]!;
+  if (front.hp <= 0) return;
+  const b = atLevel(CORRODING_MOLD.buff, u.level);
+  front.atk += b.atk;
+  front.hp += b.hp;
+  const prefix = enemyPrefix(isPlayer);
+  pushFrame(
+    ctx,
+    "skill",
+    [prefix, seg.u(u.name), "が", seg.u(front.name), "に侵蝕する。", seg.s(`+${b.atk}/+${b.hp}`)],
+    "skill",
+    { [front.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
   );
 }
 

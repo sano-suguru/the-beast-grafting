@@ -77,7 +77,7 @@ describe("POST /setup", () => {
     const res = await shopPost(app, "/setup", token, { runId });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { shop: ShopStateResponse };
-    expect(body.shop.round).toBe(1);
+    expect(body.shop.night).toBe(1);
     expect(body.shop.blood).toBe(10);
     expect(body.shop.board).toHaveLength(5);
   });
@@ -94,7 +94,7 @@ describe("POST /setup", () => {
     expect(res.status).toBe(400);
   });
 
-  it("is idempotent for same round", async () => {
+  it("is idempotent for same night", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const res1 = await shopPost(app, "/setup", token, { runId });
@@ -282,7 +282,7 @@ describe("POST /ready", () => {
     const snaps = await testDb
       .select()
       .from(boardSnapshots)
-      .where(and(eq(boardSnapshots.runId, runId), eq(boardSnapshots.round, 1)));
+      .where(and(eq(boardSnapshots.runId, runId), eq(boardSnapshots.night, 1)));
     expect(snaps).toHaveLength(1);
   });
 });

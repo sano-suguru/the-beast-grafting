@@ -7,7 +7,7 @@ import type { RunStatus, ServerBattleResult } from "../../shared/api-types";
 import { runs, battles, shopStates } from "../../db/schema";
 
 interface AdvanceFields {
-  round: number;
+  night: number;
   life: number;
   trophy: number;
   board: (BoardUnit | null)[];
@@ -58,7 +58,7 @@ export type BattleRow = {
   result: ServerBattleResult;
   playerId: string;
   runId: string;
-  round: number;
+  night: number;
   consumed: boolean;
 };
 
@@ -70,7 +70,7 @@ export function fetchBattle(db: DrizzleD1Database, battleId: string) {
           result: battles.result,
           playerId: battles.playerId,
           runId: battles.runId,
-          round: battles.round,
+          night: battles.night,
           consumed: battles.consumed,
         })
         .from(battles)
@@ -82,17 +82,17 @@ export function fetchBattle(db: DrizzleD1Database, battleId: string) {
 
 export function validateBattleForRun(
   battle: BattleRow,
-  run: { id: string; round: number },
+  run: { id: string; night: number },
 ): string | null {
   if (battle.runId !== run.id) return "run_mismatch";
-  if (battle.round !== run.round) return "round_mismatch";
+  if (battle.night !== run.night) return "night_mismatch";
   if (battle.consumed) return "battle_already_consumed";
   return null;
 }
 
 export function computeAdvanceFields(
   run: {
-    round: number;
+    night: number;
     life: number;
     trophy: number;
     status: RunStatus;
@@ -113,7 +113,7 @@ export function computeAdvanceFields(
   }
 
   return {
-    round: status === "active" ? run.round + 1 : run.round,
+    night: status === "active" ? run.night + 1 : run.night,
     life,
     trophy,
     board: run.board as (BoardUnit | null)[],
@@ -133,13 +133,13 @@ export function fetchActiveRun(db: DrizzleD1Database, playerId: string) {
   );
 }
 
-export function fetchLatestBoard(db: DrizzleD1Database, runId: string, round: number) {
+export function fetchLatestBoard(db: DrizzleD1Database, runId: string, night: number) {
   return safeAsync(
     () =>
       db
         .select({ board: shopStates.board })
         .from(shopStates)
-        .where(and(eq(shopStates.runId, runId), eq(shopStates.round, round)))
+        .where(and(eq(shopStates.runId, runId), eq(shopStates.night, night)))
         .limit(1),
     dbErr,
   );

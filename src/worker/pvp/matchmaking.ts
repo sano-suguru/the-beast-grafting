@@ -5,7 +5,7 @@ import type { Result, InfraError } from "../../shared/errors";
 import type { MatchedOpponent } from "../../shared/board-unit";
 import { players, boardSnapshots, runs } from "../../db/schema";
 
-const ROUND_RANGE = 1;
+const NIGHT_RANGE = 1;
 
 // SAP系ゲームの仕様: 対戦相手のスナップショットは過去データの再利用であり、
 // 複数プレイヤーが同一スナップショットと対戦するのは意図的な設計。
@@ -13,10 +13,10 @@ const ROUND_RANGE = 1;
 export function findOpponent(
   db: DrizzleD1Database,
   playerId: string,
-  round: number,
+  night: number,
 ): Promise<Result<MatchedOpponent | null, InfraError>> {
-  const minRound = Math.max(1, round - ROUND_RANGE);
-  const maxRound = round + ROUND_RANGE;
+  const minNight = Math.max(1, night - NIGHT_RANGE);
+  const maxNight = night + NIGHT_RANGE;
 
   return safeAsync(async () => {
     const rows = await db
@@ -24,7 +24,7 @@ export function findOpponent(
         playerId: boardSnapshots.playerId,
         displayName: players.displayName,
         board: boardSnapshots.board,
-        round: boardSnapshots.round,
+        night: boardSnapshots.night,
         life: boardSnapshots.life,
         trophy: boardSnapshots.trophy,
       })
@@ -33,7 +33,7 @@ export function findOpponent(
       .innerJoin(runs, eq(boardSnapshots.runId, runs.id))
       .where(
         and(
-          between(boardSnapshots.round, minRound, maxRound),
+          between(boardSnapshots.night, minNight, maxNight),
           ne(boardSnapshots.playerId, playerId),
           eq(runs.status, "active"),
         ),
@@ -49,7 +49,7 @@ export function findOpponent(
       teamName: `[同業者] ${row.displayName}`,
       teamType: "同業者" as const,
       units: row.board,
-      round: row.round,
+      night: row.night,
       life: row.life,
       trophy: row.trophy,
     };

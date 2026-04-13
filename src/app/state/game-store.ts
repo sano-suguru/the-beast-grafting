@@ -30,7 +30,7 @@ function resettableSignal<T>(factory: () => T): Signal<T> {
 
 export const phase = resettableSignal<GamePhase>(() => "TITLE");
 export const origin = resettableSignal<OriginId | null>(() => null);
-export const round = resettableSignal(() => 1);
+export const night = resettableSignal(() => 1);
 export const blood = resettableSignal(() => 10);
 export const life = resettableSignal(() => 5);
 export const trophy = resettableSignal(() => 0);

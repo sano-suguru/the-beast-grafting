@@ -213,7 +213,7 @@ function applyMachineFrontlineBuff(board: (UnitInstance | null)[]): boolean {
   return modified;
 }
 
-export const applyEndOfTurnEffects = (
+export const applyEndOfNightEffects = (
   currentBoard: (UnitInstance | null)[],
 ): (UnitInstance | null)[] => {
   const nextBoard = [...currentBoard];

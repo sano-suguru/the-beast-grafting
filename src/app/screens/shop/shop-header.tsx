@@ -2,7 +2,7 @@ import { Heart, Trophy, Droplet, HelpCircle, LogOut } from "lucide-preact";
 import { toLifeTier } from "../../../shared/types";
 import { ORIGINS } from "../../../shared/data/origins";
 import {
-  round,
+  night,
   origin,
   life,
   trophy,
@@ -63,7 +63,7 @@ export function ShopHeader() {
       <div className="flex items-center gap-2">
         <div className="flex flex-col">
           <span className="text-parchment-bright text-base font-bold tracking-wider md:text-lg">
-            第{round.value}夜
+            第{night.value}夜
           </span>
           <span className="text-parchment-dim md:text-body-xs text-card-md">
             {origin.value ? ORIGINS[origin.value]?.name : ""}

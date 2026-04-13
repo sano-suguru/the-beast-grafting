@@ -7,7 +7,7 @@ import {
   blood,
   life,
   trophy,
-  round,
+  night,
   board,
   lastBattleResult,
   lastBattleId,
@@ -61,7 +61,7 @@ function applyLocalGameState(
     blood.value = 10;
     life.value = s;
     trophy.value = t;
-    round.value = r;
+    night.value = r;
     board.value = [null, null, null, null, null];
     lastBattleResult.value = null;
     lastBattleId.value = null;
@@ -83,7 +83,7 @@ async function resumeExistingRun(
   const rawOriginId = run.originId ?? fallbackOrigin;
   if (!rawOriginId || !isOriginId(rawOriginId)) return false;
 
-  applyLocalGameState(rawOriginId, run.round, run.life, run.trophy, run.id);
+  applyLocalGameState(rawOriginId, run.night, run.life, run.trophy, run.id);
   await setupNight(run.id, false);
   return true;
 }
@@ -108,7 +108,7 @@ export async function startGame(selectedOrigin: OriginId) {
   const result = await startRun(selectedOrigin);
   if (result.isOk()) {
     const run = result.value;
-    applyLocalGameState(selectedOrigin, run.round, run.life, run.trophy, run.id);
+    applyLocalGameState(selectedOrigin, run.night, run.life, run.trophy, run.id);
     await setupNight(run.id, !tutorialDone.value);
     gameLoading.value = false;
     return;

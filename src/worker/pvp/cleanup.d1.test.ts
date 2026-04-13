@@ -9,12 +9,12 @@ let testDb: DrizzleD1Database;
 let playerId: string;
 let runId: string;
 
-async function insertSnapshot(db: DrizzleD1Database, round: number, age: Date) {
+async function insertSnapshot(db: DrizzleD1Database, night: number, age: Date) {
   await db.insert(boardSnapshots).values({
-    id: `snap-${round}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `snap-${night}-${Math.random().toString(36).slice(2, 8)}`,
     playerId,
     runId,
-    round,
+    night,
     board: [makeValidUnit()],
     life: 5,
     trophy: 0,
@@ -67,6 +67,6 @@ describe("cleanOldSnapshots", () => {
 
     const remaining = await testDb.select().from(boardSnapshots);
     expect(remaining).toHaveLength(1);
-    expect(remaining[0]!.round).toBe(2);
+    expect(remaining[0]!.night).toBe(2);
   });
 });

@@ -1,5 +1,5 @@
 import { Heart, Trophy } from "lucide-preact";
-import { currentEnemyTeam, round, life, battleLoading, battleLoadError } from "../state/game-store";
+import { currentEnemyTeam, night, life, battleLoading, battleLoadError } from "../state/game-store";
 import { startActualBattle, retryBattle } from "../state/battle-actions";
 import { initAudio, playSE } from "../engine/audio";
 import { selectPreBattleNarrative } from "../data/pre-battle-narrative";
@@ -14,10 +14,10 @@ const TIER_CLASS = {
   low: "animate-pulse font-bold text-blood-bright",
 } as const;
 
-function OpponentStats({ round, life, trophy }: { round: number; life: number; trophy: number }) {
+function OpponentStats({ night, life, trophy }: { night: number; life: number; trophy: number }) {
   return (
     <span className="text-parchment-dim mt-2 flex items-center justify-center gap-3 text-xs font-normal tracking-wider">
-      第{round}夜
+      第{night}夜
       <span className="flex items-center gap-1">
         <Heart size={12} />
         {life}
@@ -64,7 +64,7 @@ export function PreBattleScreen() {
   if (error) return <PreBattleError />;
 
   invariant(team, "PreBattleScreen: team must exist after loading/error guards");
-  const narrative = selectPreBattleNarrative(life.value, team.teamType, round.value);
+  const narrative = selectPreBattleNarrative(life.value, team.teamType, night.value);
   const tier = toLifeTier(life.value);
 
   return (
@@ -80,8 +80,8 @@ export function PreBattleScreen() {
           <span className="text-blood-bright mt-2 block text-sm tracking-widest md:text-lg">
             {team.teamName}
           </span>
-          {team.round != null && (
-            <OpponentStats round={team.round} life={team.life} trophy={team.trophy} />
+          {team.night != null && (
+            <OpponentStats night={team.night} life={team.life} trophy={team.trophy} />
           )}
         </p>
         <p>{narrative.closing}</p>

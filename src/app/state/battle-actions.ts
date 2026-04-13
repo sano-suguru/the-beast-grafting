@@ -4,7 +4,7 @@ import type { ServerBattleResult } from "../../shared/api-types";
 import { pvpOpponentToEnemyTeam } from "../../shared/board-unit";
 import {
   phase,
-  round,
+  night,
   life,
   trophy,
   board,
@@ -43,11 +43,11 @@ function validatePreBattle(currentBoard: (UnitInstance | null)[]): Result<void, 
   return ok(undefined);
 }
 
-function loadBattleInBackground(runId: string, currentRound: number) {
+function loadBattleInBackground(runId: string, currentNight: number) {
   battleLoading.value = true;
   battleLoadError.value = null;
 
-  void requestBattle(runId, currentRound)
+  void requestBattle(runId, currentNight)
     .then((result) => {
       batch(() => {
         battleLoading.value = false;
@@ -83,7 +83,7 @@ export function startPreBattle() {
   if (!runId) return;
 
   const shouldFinishTutorial = onboardingStep.value === "battle";
-  const currentRound = round.value;
+  const currentNight = night.value;
 
   shopLocked.value = true;
 
@@ -97,7 +97,7 @@ export function startPreBattle() {
             phase.value = "PRE_BATTLE";
             if (shouldFinishTutorial) onboardingStep.value = null;
             if (shouldFinishTutorial) markTutorialDone();
-            loadBattleInBackground(runId, currentRound);
+            loadBattleInBackground(runId, currentNight);
           },
           (error) => {
             shopActionError.value = error;
@@ -120,7 +120,7 @@ export function retryBattle() {
   const runId = currentRunId.value;
   if (!runId) return;
   battleLoadError.value = null;
-  loadBattleInBackground(runId, round.value);
+  loadBattleInBackground(runId, night.value);
 }
 
 export function startActualBattle() {
@@ -164,12 +164,12 @@ function applyLocalFallback(localResult: ServerBattleResult) {
     }
   }
 
-  const prevRound = round.value;
+  const prevNight = night.value;
   batch(() => {
     trophy.value = Math.min(trophy.value + trophyDelta, 10);
     life.value = Math.max(life.value + lifeDelta, 0);
-    if (!gameEnded) round.value = round.value + 1;
-    const unlockedTier = gameEnded ? null : detectTierUnlock(prevRound, round.value);
+    if (!gameEnded) night.value = night.value + 1;
+    const unlockedTier = gameEnded ? null : detectTierUnlock(prevNight, night.value);
     battleConcludeData.value = { lifeDelta, trophyDelta, gameEnded, unlockedTier };
     phase.value = "BATTLE_RESULT";
   });
@@ -189,11 +189,11 @@ async function executeConclude() {
       const prevLife = life.value;
       const prevTrophy = trophy.value;
       const gameEnded = run.status === "won" || run.status === "lost";
-      const unlockedTier = gameEnded ? null : detectTierUnlock(round.value, run.round);
+      const unlockedTier = gameEnded ? null : detectTierUnlock(night.value, run.night);
       batch(() => {
         life.value = run.life;
         trophy.value = run.trophy;
-        round.value = run.round;
+        night.value = run.night;
         battleConcludeData.value = {
           lifeDelta: run.life - prevLife,
           trophyDelta: run.trophy - prevTrophy,

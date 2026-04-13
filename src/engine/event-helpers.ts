@@ -8,12 +8,12 @@ import { UNIT_COST, ROTTING_CARGO_CEILING_BONUS } from "./constants";
 
 export const EVENT_SCHEDULE: readonly number[] = [4, 8, 12, 16];
 
-export function isEventRound(round: number): boolean {
-  return EVENT_SCHEDULE.includes(round);
+export function isEventNight(night: number): boolean {
+  return EVENT_SCHEDULE.includes(night);
 }
 
-function getTierAboveCurrent(round: number) {
-  return nextTier(getCurrentMaxTier(round));
+function getTierAboveCurrent(night: number) {
+  return nextTier(getCurrentMaxTier(night));
 }
 
 const EVENT_IDS = Object.keys(EVENTS) as EventId[];
@@ -24,12 +24,12 @@ export function selectEvent(rng: Rng): EventData {
 
 function resolveUnitId(
   offer: EventData["unitOffers"][number],
-  round: number,
+  night: number,
   rng: Rng,
 ): Parameters<typeof createUnit>[0] {
   if (offer.unitId !== "random") return offer.unitId;
   const autoTier = offer.tier == null;
-  const tier = autoTier ? getTierAboveCurrent(round) : offer.tier!;
+  const tier = autoTier ? getTierAboveCurrent(night) : offer.tier!;
   return pickRandom([...getUnitsByTier(tier)], rng);
 }
 
@@ -48,10 +48,10 @@ function boostUnit(
   };
 }
 
-export function buildEventShopUnits(event: EventData, round: number, rng: Rng): ShopSlot[] {
-  const atCeiling = getCurrentMaxTier(round) >= 6;
+export function buildEventShopUnits(event: EventData, night: number, rng: Rng): ShopSlot[] {
+  const atCeiling = getCurrentMaxTier(night) >= 6;
   return event.unitOffers.map((offer) => {
-    const unitId = resolveUnitId(offer, round, rng);
+    const unitId = resolveUnitId(offer, night, rng);
     const unit = boostUnit(createUnit(unitId), offer, atCeiling);
     return {
       unit,

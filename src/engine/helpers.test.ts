@@ -40,7 +40,7 @@ describe("createUnit", () => {
 });
 
 describe("getShopPool", () => {
-  it("returns Tier 1 units for round 1-2", () => {
+  it("returns Tier 1 units for night 1-2", () => {
     const pool = getShopPool(1);
     expect(pool).toContain("rat");
     expect(pool).toContain("ghoul_infant");
@@ -48,35 +48,35 @@ describe("getShopPool", () => {
     expect(pool).toHaveLength(10);
   });
 
-  it("adds Tier 2 units at round 3", () => {
+  it("adds Tier 2 units at night 3", () => {
     const pool = getShopPool(3);
     expect(pool).toContain("martyr");
     expect(pool).toContain("beast");
     expect(pool).toContain("cholera");
   });
 
-  it("adds Tier 3 units at round 5", () => {
+  it("adds Tier 3 units at night 5", () => {
     const pool = getShopPool(5);
     expect(pool).toContain("parasite");
     expect(pool).toContain("maiden");
     expect(pool).toContain("revenant");
   });
 
-  it("adds Tier 4 units at round 7", () => {
+  it("adds Tier 4 units at night 7", () => {
     const pool = getShopPool(7);
     expect(pool).toContain("evangelist");
     expect(pool).toContain("altar");
     expect(pool).toContain("machine");
   });
 
-  it("adds Tier 5 units at round 9", () => {
+  it("adds Tier 5 units at night 9", () => {
     const pool = getShopPool(9);
     expect(pool).toContain("shrieking_throat");
     expect(pool).toContain("hundred_arms");
     expect(pool).toContain("chalice");
   });
 
-  it("adds Tier 6 units at round 11", () => {
+  it("adds Tier 6 units at night 11", () => {
     const pool = getShopPool(11);
     expect(pool).toContain("brains");
     expect(pool).toContain("eye");
@@ -85,7 +85,7 @@ describe("getShopPool", () => {
     expect(pool).toHaveLength(10 + 10 + 10 + 10 + 10 + 10);
   });
 
-  it("is deterministic for the same round", () => {
+  it("is deterministic for the same night", () => {
     expect(getShopPool(5)).toEqual(getShopPool(5));
   });
 });

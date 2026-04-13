@@ -1,4 +1,4 @@
-import { applyEndOfTurnEffects } from "./shop-effects";
+import { applyEndOfNightEffects } from "./shop-effects";
 import type { UnitInstance } from "../shared/types";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 
@@ -22,7 +22,7 @@ function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
   };
 }
 
-describe("applyEndOfTurnEffects – machine", () => {
+describe("applyEndOfNightEffects – machine", () => {
   it("buffs frontmost unit +2/+2", () => {
     const board: (UnitInstance | null)[] = [
       makeUnit({ baseAtk: 3, baseHp: 5, uid: "front" }),
@@ -31,12 +31,12 @@ describe("applyEndOfTurnEffects – machine", () => {
       null,
       null,
     ];
-    const result = applyEndOfTurnEffects(board);
+    const result = applyEndOfNightEffects(board);
     expect(effectiveAtk(result[0]!)).toBe(5);
     expect(effectiveHp(result[0]!)).toBe(7);
   });
 
-  it("brains does NOT double end-of-turn effects (SAP Tiger rule)", () => {
+  it("brains does NOT double end-of-night effects (SAP Tiger rule)", () => {
     const board: (UnitInstance | null)[] = [
       makeUnit({ baseAtk: 3, baseHp: 5, uid: "front" }),
       makeUnit({ id: "machine", baseAtk: 1, baseHp: 2, uid: "machine" }),
@@ -44,7 +44,7 @@ describe("applyEndOfTurnEffects – machine", () => {
       null,
       null,
     ];
-    const result = applyEndOfTurnEffects(board);
+    const result = applyEndOfNightEffects(board);
     expect(effectiveAtk(result[0]!)).toBe(5);
     expect(effectiveHp(result[0]!)).toBe(7);
   });
@@ -57,7 +57,7 @@ describe("applyEndOfTurnEffects – machine", () => {
       null,
       null,
     ];
-    const result = applyEndOfTurnEffects(board);
+    const result = applyEndOfNightEffects(board);
     expect(effectiveAtk(result[0]!)).toBe(6);
     expect(effectiveHp(result[0]!)).toBe(6);
   });
@@ -70,16 +70,16 @@ describe("applyEndOfTurnEffects – machine", () => {
       null,
       null,
     ];
-    const result = applyEndOfTurnEffects(board);
+    const result = applyEndOfNightEffects(board);
     expect(effectiveAtk(result[1]!)).toBe(5);
     expect(effectiveHp(result[1]!)).toBe(5);
   });
 });
 
-describe("applyEndOfTurnEffects – no effects", () => {
+describe("applyEndOfNightEffects – no effects", () => {
   it("returns original board when no effects triggered", () => {
     const board: (UnitInstance | null)[] = [makeUnit(), null, null, null, null];
-    const result = applyEndOfTurnEffects(board);
+    const result = applyEndOfNightEffects(board);
     expect(result).toBe(board);
   });
 });

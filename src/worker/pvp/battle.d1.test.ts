@@ -81,17 +81,17 @@ describe("POST /pvp/battle", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects invalid round", async () => {
+  it("rejects invalid night", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const res = await postBattle(app, token, { runId, round: 0 });
+    const res = await postBattle(app, token, { runId, night: 0 });
     expect(res.status).toBe(400);
   });
 
   it("rejects when no snapshot exists", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const res = await postBattle(app, token, { runId, round: 3 });
+    const res = await postBattle(app, token, { runId, night: 3 });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: { reason: string } };
     expect(body.error.reason).toBe("no_snapshot");
@@ -100,9 +100,9 @@ describe("POST /pvp/battle", () => {
   it("executes battle and returns frames", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    await postSnapshot(app, token, { runId, round: 3, board: [makeValidUnit()] });
+    await postSnapshot(app, token, { runId, night: 3, board: [makeValidUnit()] });
 
-    const res = await postBattle(app, token, { runId, round: 3 });
+    const res = await postBattle(app, token, { runId, night: 3 });
     expect(res.status).toBe(200);
 
     const body = (await res.json()) as {
@@ -122,22 +122,22 @@ describe("POST /pvp/battle", () => {
   it("stores battle record in database", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    await postSnapshot(app, token, { runId, round: 3, board: [makeValidUnit()] });
+    await postSnapshot(app, token, { runId, night: 3, board: [makeValidUnit()] });
 
-    await postBattle(app, token, { runId, round: 3 });
+    await postBattle(app, token, { runId, night: 3 });
 
     const rows = await testDb.select().from(battles).where(eq(battles.playerId, playerId));
     expect(rows).toHaveLength(1);
-    expect(rows[0]!.round).toBe(3);
+    expect(rows[0]!.night).toBe(3);
     expect(["WIN", "LOSE", "DRAW"]).toContain(rows[0]!.result);
   });
 
   it("uses bot when no PvP opponent available", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    await postSnapshot(app, token, { runId, round: 3, board: [makeValidUnit()] });
+    await postSnapshot(app, token, { runId, night: 3, board: [makeValidUnit()] });
 
-    const res = await postBattle(app, token, { runId, round: 3 });
+    const res = await postBattle(app, token, { runId, night: 3 });
     expect(res.status).toBe(200);
 
     const body = (await res.json()) as { opponent: { teamName: string } };
@@ -149,17 +149,17 @@ describe("POST /pvp/battle", () => {
     const runId = await createTestRun(testDb, playerId);
     await postSnapshot(app, token, {
       runId,
-      round: 3,
+      night: 3,
       board: [makeValidUnit({ buffAtk: 8, buffHp: 8 })],
     });
     await postSnapshot(app, token, {
       runId,
-      round: 4,
+      night: 4,
       board: [makeValidUnit({ buffAtk: 8, buffHp: 8 })],
     });
 
-    const res1 = await postBattle(app, token, { runId, round: 3 });
-    const res2 = await postBattle(app, token, { runId, round: 4 });
+    const res1 = await postBattle(app, token, { runId, night: 3 });
+    const res2 = await postBattle(app, token, { runId, night: 4 });
     const body1 = (await res1.json()) as { seed: number; result: string };
     const body2 = (await res2.json()) as { seed: number; result: string };
     expect(typeof body1.seed).toBe("number");
@@ -172,14 +172,14 @@ describe("POST /pvp/battle", () => {
     const runIdA = await createTestRun(testDb, playerIdA);
     const runIdB = await createTestRun(testDb, playerIdB);
 
-    await postSnapshot(app, tokenA, { runId: runIdA, round: 3, board: [makeValidUnit()] });
+    await postSnapshot(app, tokenA, { runId: runIdA, night: 3, board: [makeValidUnit()] });
     await postSnapshot(app, tokenB, {
       runId: runIdB,
-      round: 3,
+      night: 3,
       board: [makeValidUnit({ buffAtk: 3, buffHp: 3 })],
     });
 
-    const res = await postBattle(app, tokenA, { runId: runIdA, round: 3 });
+    const res = await postBattle(app, tokenA, { runId: runIdA, night: 3 });
     expect(res.status).toBe(200);
 
     const body = (await res.json()) as { opponent: { teamName: string } };
@@ -189,9 +189,9 @@ describe("POST /pvp/battle", () => {
   it("does not leak secretLore in response", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    await postSnapshot(app, token, { runId, round: 3, board: [makeValidUnit()] });
+    await postSnapshot(app, token, { runId, night: 3, board: [makeValidUnit()] });
 
-    const res = await postBattle(app, token, { runId, round: 3 });
+    const res = await postBattle(app, token, { runId, night: 3 });
     expect(res.status).toBe(200);
 
     const body = (await res.json()) as { opponent: { units: Record<string, unknown>[] } };
@@ -206,29 +206,29 @@ describe("POST /pvp/battle", () => {
     const runIdA = await createTestRun(testDb, playerA);
     const runIdB = await createTestRun(testDb, playerB);
 
-    await postSnapshot(app, tokenA, { runId: runIdA, round: 3, board: [makeValidUnit()] });
+    await postSnapshot(app, tokenA, { runId: runIdA, night: 3, board: [makeValidUnit()] });
     await postSnapshot(app, tokenB, {
       runId: runIdB,
-      round: 3,
+      night: 3,
       board: [makeValidUnit({ buffAtk: 3, buffHp: 3 })],
     });
 
-    await postBattle(app, tokenA, { runId: runIdA, round: 3 });
+    await postBattle(app, tokenA, { runId: runIdA, night: 3 });
 
     const rows = await testDb.select().from(battles).where(eq(battles.playerId, playerA));
     expect(rows).toHaveLength(1);
     expect(rows[0]!.opponentPlayerId).toBe(playerB);
   });
 
-  it("rejects duplicate battle for same run+round", async () => {
+  it("rejects duplicate battle for same run+night", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    await postSnapshot(app, token, { runId, round: 3, board: [makeValidUnit()] });
+    await postSnapshot(app, token, { runId, night: 3, board: [makeValidUnit()] });
 
-    const res1 = await postBattle(app, token, { runId, round: 3 });
+    const res1 = await postBattle(app, token, { runId, night: 3 });
     expect(res1.status).toBe(200);
 
-    const res2 = await postBattle(app, token, { runId, round: 3 });
+    const res2 = await postBattle(app, token, { runId, night: 3 });
     expect(res2.status).toBe(409);
     const body = (await res2.json()) as { error: { reason: string } };
     expect(body.error.reason).toBe("battle_already_exists");
@@ -237,9 +237,9 @@ describe("POST /pvp/battle", () => {
   it("sets opponentPlayerId to null for bot matches", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    await postSnapshot(app, token, { runId, round: 3, board: [makeValidUnit()] });
+    await postSnapshot(app, token, { runId, night: 3, board: [makeValidUnit()] });
 
-    await postBattle(app, token, { runId, round: 3 });
+    await postBattle(app, token, { runId, night: 3 });
 
     const rows = await testDb.select().from(battles).where(eq(battles.playerId, playerId));
     expect(rows).toHaveLength(1);

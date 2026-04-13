@@ -6,12 +6,12 @@ import type { BattleResponse } from "../../shared/api-types";
 
 export async function requestBattle(
   runId: string,
-  round: number,
+  night: number,
 ): Promise<Result<BattleResponse, InfraError>> {
   const result = await apiFetch<BattleResponse>("/api/pvp/battle", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ runId, round }),
+    body: JSON.stringify({ runId, night }),
   });
   if (result.isOk()) {
     invariant(

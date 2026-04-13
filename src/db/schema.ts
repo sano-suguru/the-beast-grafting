@@ -61,15 +61,15 @@ export const boardSnapshots = sqliteTable(
     runId: text("run_id")
       .notNull()
       .references(() => runs.id),
-    round: integer("round").notNull(),
+    night: integer("night").notNull(),
     board: text("board", { mode: "json" }).$type<BoardUnit[]>().notNull(),
     life: integer("life").notNull(),
     trophy: integer("trophy").notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   },
   (table) => [
-    uniqueIndex("idx_snapshots_run_round").on(table.runId, table.round),
-    index("idx_snapshots_round").on(table.round),
+    uniqueIndex("idx_snapshots_run_night").on(table.runId, table.night),
+    index("idx_snapshots_night").on(table.night),
     index("idx_snapshots_player_id").on(table.playerId),
     index("idx_snapshots_created_at").on(table.createdAt),
   ],
@@ -86,7 +86,7 @@ export const battles = sqliteTable(
       .notNull()
       .references(() => runs.id),
     opponentPlayerId: text("opponent_player_id").references(() => players.id),
-    round: integer("round").notNull(),
+    night: integer("night").notNull(),
     seed: integer("seed").notNull(),
     opponent: text("opponent", { mode: "json" }).$type<PvpOpponent>().notNull(),
     result: text("result", { enum: ["WIN", "LOSE", "DRAW"] }).notNull(),
@@ -94,7 +94,7 @@ export const battles = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   },
   (table) => [
-    uniqueIndex("idx_battles_run_round").on(table.runId, table.round),
+    uniqueIndex("idx_battles_run_night").on(table.runId, table.night),
     index("idx_battles_player_id").on(table.playerId),
     index("idx_battles_created_at").on(table.createdAt),
   ],
@@ -107,7 +107,7 @@ export const runs = sqliteTable(
     playerId: text("player_id")
       .notNull()
       .references(() => players.id),
-    round: integer("round").notNull().default(1),
+    night: integer("night").notNull().default(1),
     life: integer("life").notNull().default(5),
     trophy: integer("trophy").notNull().default(0),
     board: text("board", { mode: "json" }).$type<(BoardUnit | null)[]>().notNull(),
@@ -146,7 +146,7 @@ export const shopStates = sqliteTable(
     runId: text("run_id")
       .notNull()
       .references(() => runs.id, { onDelete: "cascade" }),
-    round: integer("round").notNull(),
+    night: integer("night").notNull(),
     blood: integer("blood").notNull().default(10),
     freeRoll: integer("free_roll", { mode: "boolean" }).notNull().default(false),
     cultistUsed: integer("cultist_used", { mode: "boolean" }).notNull().default(false),
@@ -167,7 +167,7 @@ export const shopStates = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   },
   (table) => [
-    uniqueIndex("idx_shop_states_run_round").on(table.runId, table.round),
+    uniqueIndex("idx_shop_states_run_night").on(table.runId, table.night),
     index("idx_shop_states_run_id").on(table.runId),
   ],
 );

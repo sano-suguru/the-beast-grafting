@@ -91,8 +91,8 @@ export function pvpOpponentToEnemyTeam(pvp: PvpOpponent): EnemyTeam {
     teamType: pvp.teamType,
     units: pvp.units.map(boardUnitToUnitInstance),
   };
-  if (pvp.round != null) {
-    return { ...base, round: pvp.round, life: pvp.life, trophy: pvp.trophy };
+  if (pvp.night != null) {
+    return { ...base, night: pvp.night, life: pvp.life, trophy: pvp.trophy };
   }
-  return { ...base, round: null, life: null, trophy: null };
+  return { ...base, night: null, life: null, trophy: null };
 }

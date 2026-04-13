@@ -20,7 +20,7 @@ import type { AuthEnv } from "../auth/types";
 import { findOpponent } from "./matchmaking";
 import { jsonBody, getParsedBody, bodyField } from "../parse-json";
 import { internalError } from "../error-response";
-import { validateSnapshotBody, validateRound, validateNonEmptyString } from "./pvp-validation";
+import { validateSnapshotBody, validateNight, validateNonEmptyString } from "./pvp-validation";
 import { markSeenAsync } from "../lore/lore-service";
 
 const pvp = new Hono<AuthEnv>();
@@ -58,14 +58,14 @@ pvp.post("/snapshot", requireAuth, jsonBody(10_000), async (c) => {
           id: generateId(),
           playerId,
           runId: body.runId,
-          round: body.round,
+          night: body.night,
           board: body.board,
           life: run.life,
           trophy: run.trophy,
           createdAt: now,
         })
         .onConflictDoUpdate({
-          target: [boardSnapshots.runId, boardSnapshots.round],
+          target: [boardSnapshots.runId, boardSnapshots.night],
           set: {
             board: body.board,
             life: run.life,
@@ -87,9 +87,9 @@ function generateBattleSeed(): number {
   return (buf[0] ?? 0) >>> 0 || 1;
 }
 
-function resolveEnemy(matched: MatchedOpponent | null, round: number): EnemyTeam {
+function resolveEnemy(matched: MatchedOpponent | null, night: number): EnemyTeam {
   if (matched) return pvpOpponentToEnemyTeam(matched);
-  return generateEnemyTeam(round, createSeededRng(generateBattleSeed()));
+  return generateEnemyTeam(night, createSeededRng(generateBattleSeed()));
 }
 
 type SaveVerifyError = { kind: "infra"; label: string; cause: unknown } | { kind: "race" };
@@ -99,14 +99,14 @@ async function saveBattleAndVerify(
   battleId: string,
   values: typeof battles.$inferInsert,
   runId: string,
-  round: number,
+  night: number,
 ): Promise<SaveVerifyError | null> {
   const saveResult = await safeAsync(
     () =>
       db
         .insert(battles)
         .values(values)
-        .onConflictDoNothing({ target: [battles.runId, battles.round] }),
+        .onConflictDoNothing({ target: [battles.runId, battles.night] }),
     dbErr,
   );
   if (saveResult.isErr())
@@ -117,7 +117,7 @@ async function saveBattleAndVerify(
       db
         .select({ id: battles.id })
         .from(battles)
-        .where(and(eq(battles.runId, runId), eq(battles.round, round)))
+        .where(and(eq(battles.runId, runId), eq(battles.night, night)))
         .limit(1),
     dbErr,
   );
@@ -125,7 +125,7 @@ async function saveBattleAndVerify(
   if (verify.value[0]?.id !== battleId) {
     warn("[pvp/battle] race: battle_already_exists", {
       runId,
-      round,
+      night,
       battleId,
       actualId: verify.value[0]?.id,
     });
@@ -142,7 +142,7 @@ type LoadBoardResult =
 async function loadPlayerBoard(
   db: DrizzleD1Database,
   runId: string,
-  round: number,
+  night: number,
   playerId: string,
 ): Promise<LoadBoardResult> {
   const runCheck = await safeAsync(
@@ -162,7 +162,7 @@ async function loadPlayerBoard(
       db
         .select({ board: boardSnapshots.board })
         .from(boardSnapshots)
-        .where(and(eq(boardSnapshots.runId, runId), eq(boardSnapshots.round, round)))
+        .where(and(eq(boardSnapshots.runId, runId), eq(boardSnapshots.night, night)))
         .limit(1),
     dbErr,
   );
@@ -186,13 +186,13 @@ function extractBoard(
 function buildBattleRecord(
   playerId: string,
   runId: string,
-  round: number,
+  night: number,
   matchedOpponent: MatchedOpponent | null,
   playerBoard: ReturnType<typeof boardUnitToUnitInstance>[],
 ) {
-  const enemy = resolveEnemy(matchedOpponent, round);
+  const enemy = resolveEnemy(matchedOpponent, night);
   const battleSeed = generateBattleSeed();
-  const { frames, result } = simulateBattle(playerBoard, enemy, round, battleSeed);
+  const { frames, result } = simulateBattle(playerBoard, enemy, night, battleSeed);
   const mappedUnits = enemy.units.map(unitInstanceToBoardUnit);
   const opponent: PvpOpponent = matchedOpponent
     ? { ...matchedOpponent, units: mappedUnits }
@@ -201,7 +201,7 @@ function buildBattleRecord(
         teamName: enemy.teamName,
         teamType: enemy.teamType,
         units: mappedUnits,
-        round: null,
+        night: null,
         life: null,
         trophy: null,
       };
@@ -211,7 +211,7 @@ function buildBattleRecord(
     playerId,
     runId,
     opponentPlayerId: matchedOpponent?.playerId ?? null,
-    round,
+    night,
     seed: battleSeed,
     opponent,
     result: result ?? "DRAW",
@@ -224,30 +224,30 @@ pvp.post("/battle", requireAuth, jsonBody(), async (c) => {
   const db = c.get("db");
   const playerId = c.get("playerId");
   const parsedBody = getParsedBody(c);
-  const round = bodyField(parsedBody, "round");
+  const night = bodyField(parsedBody, "night");
   const runId = bodyField(parsedBody, "runId");
-  if (!validateRound(round))
-    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_round" } }, 400);
+  if (!validateNight(night))
+    return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_night" } }, 400);
   if (!validateNonEmptyString(runId))
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "invalid_run_id" } }, 400);
 
-  const loaded = await loadPlayerBoard(db, runId, round, playerId);
+  const loaded = await loadPlayerBoard(db, runId, night, playerId);
   const extracted = extractBoard(c, loaded);
   if (extracted instanceof Response) return extracted;
 
-  const opponentResult = await findOpponent(db, playerId, round);
+  const opponentResult = await findOpponent(db, playerId, night);
   if (opponentResult.isErr())
     return internalError(c, "[pvp/battle:opponent]", opponentResult.error);
 
   const { battleId, frames, result, opponent, battleSeed, values } = buildBattleRecord(
     playerId,
     runId,
-    round,
+    night,
     opponentResult.value,
     extracted.board,
   );
 
-  const saveError = await saveBattleAndVerify(db, battleId, values, runId, round);
+  const saveError = await saveBattleAndVerify(db, battleId, values, runId, night);
   if (saveError) {
     if (saveError.kind === "infra") return internalError(c, saveError.label, saveError.cause);
     return c.json({ error: { type: "PRECONDITION_FAILED", reason: "battle_already_exists" } }, 409);

@@ -6,7 +6,7 @@ import {
   blood,
   life,
   trophy,
-  round,
+  night,
   board,
   lastBattleResult,
   lastEnemyTeamType,
@@ -54,7 +54,7 @@ import {
 function defaultRun(overrides: Partial<CurrentRunState> = {}): CurrentRunState {
   return {
     id: "run-1",
-    round: 1,
+    night: 1,
     life: 5,
     trophy: 0,
     status: "active",
@@ -147,10 +147,10 @@ describe("startGame", () => {
     expect(trophy.value).toBe(0);
   });
 
-  it("sets round to 1", async () => {
-    round.value = 10;
+  it("sets night to 1", async () => {
+    night.value = 10;
     await startGame("thief");
-    expect(round.value).toBe(1);
+    expect(night.value).toBe(1);
   });
 
   it("clears board", async () => {
@@ -199,7 +199,7 @@ describe("startGame", () => {
     expect(shopUnits.value.filter(Boolean).length).toBe(3);
   });
 
-  it("no event on round 1 regardless of tutorial state", async () => {
+  it("no event on night 1 regardless of tutorial state", async () => {
     tutorialDone.value = false;
     await startGame("thief");
     expect(activeEvent.value).toBeNull();
@@ -246,12 +246,12 @@ describe("startGame", () => {
   it("resumes existing run when getCurrentRun returns active run", async () => {
     const spy = stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 3, life: 4, trophy: 2 }),
-        shopState: { round: 3, life: 4, trophy: 2 },
+        currentRun: defaultRun({ night: 3, life: 4, trophy: 2 }),
+        shopState: { night: 3, life: 4, trophy: 2 },
       }),
     );
     await startGame("thief");
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(life.value).toBe(4);
     expect(trophy.value).toBe(2);
     expect(fetchCallsTo(spy, "/api/run/start")).toHaveLength(0);
@@ -266,14 +266,14 @@ describe("startGame", () => {
   it("auto-advances when pendingBattleId exists", async () => {
     const spy = stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
-        advanceRun: defaultRun({ round: 3, life: 5, trophy: 2, pendingBattleId: null }),
-        shopState: { round: 3, trophy: 2 },
+        currentRun: defaultRun({ night: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        advanceRun: defaultRun({ night: 3, life: 5, trophy: 2, pendingBattleId: null }),
+        shopState: { night: 3, trophy: 2 },
       }),
     );
     await startGame("thief");
     expect(fetchBodyOf(spy, "/api/run/advance")).toEqual({ battleId: "battle-1" });
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(trophy.value).toBe(2);
     expect(recoveryWarning.value).toBeNull();
   });
@@ -281,13 +281,13 @@ describe("startGame", () => {
   it("falls back to current run state when advance fails on pending battle", async () => {
     stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        currentRun: defaultRun({ night: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
         advanceRun: 500,
-        shopState: { round: 2 },
+        shopState: { night: 2 },
       }),
     );
     await startGame("thief");
-    expect(round.value).toBe(2);
+    expect(night.value).toBe(2);
     expect(phase.value).toBe("SHOP");
     expect(recoveryWarning.value).toBe("前回の戦闘結果を反映できませんでした");
   });
@@ -299,17 +299,17 @@ describe("startGame", () => {
         currentRunCalls++;
         if (currentRunCalls === 1)
           return {
-            run: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+            run: defaultRun({ night: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
           };
-        return { run: defaultRun({ round: 3, life: 5, trophy: 2, pendingBattleId: null }) };
+        return { run: defaultRun({ night: 3, life: 5, trophy: 2, pendingBattleId: null }) };
       }
       if (url === "/api/run/advance") return httpError(409);
-      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 3, trophy: 2 }) };
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ night: 3, trophy: 2 }) };
       if (url === "/api/lore") return { lore: {} };
       return undefined;
     });
     await startGame("thief");
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(trophy.value).toBe(2);
     expect(recoveryWarning.value).toBeNull();
   });
@@ -321,17 +321,17 @@ describe("startGame", () => {
         currentRunCalls++;
         if (currentRunCalls === 1)
           return {
-            run: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+            run: defaultRun({ night: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
           };
         return httpError(500);
       }
       if (url === "/api/run/advance") return httpError(409);
-      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 2 }) };
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ night: 2 }) };
       if (url === "/api/lore") return { lore: {} };
       return undefined;
     });
     await startGame("thief");
-    expect(round.value).toBe(2);
+    expect(night.value).toBe(2);
     expect(recoveryWarning.value).toBe("前回の戦闘結果を反映できませんでした");
   });
 });
@@ -340,13 +340,13 @@ describe("resumeOrSelectOrigin", () => {
   it("goes to SHOP when active run exists", async () => {
     stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 3, life: 4, trophy: 2 }),
-        shopState: { round: 3, life: 4, trophy: 2 },
+        currentRun: defaultRun({ night: 3, life: 4, trophy: 2 }),
+        shopState: { night: 3, life: 4, trophy: 2 },
       }),
     );
     await resumeOrSelectOrigin();
     expect(phase.value).toBe("SHOP");
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(life.value).toBe(4);
     expect(trophy.value).toBe(2);
   });
@@ -381,14 +381,14 @@ describe("resumeOrSelectOrigin", () => {
   it("recovers pending battle before resuming", async () => {
     const spy = stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
-        advanceRun: defaultRun({ round: 3, life: 5, trophy: 2, pendingBattleId: null }),
-        shopState: { round: 3, trophy: 2 },
+        currentRun: defaultRun({ night: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        advanceRun: defaultRun({ night: 3, life: 5, trophy: 2, pendingBattleId: null }),
+        shopState: { night: 3, trophy: 2 },
       }),
     );
     await resumeOrSelectOrigin();
     expect(fetchBodyOf(spy, "/api/run/advance")).toEqual({ battleId: "battle-1" });
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(trophy.value).toBe(2);
     expect(recoveryWarning.value).toBeNull();
   });
@@ -396,14 +396,14 @@ describe("resumeOrSelectOrigin", () => {
   it("sets recoveryWarning when pending battle recovery fails", async () => {
     stubFetch(
       gameRoutes({
-        currentRun: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+        currentRun: defaultRun({ night: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
         advanceRun: 500,
-        shopState: { round: 2 },
+        shopState: { night: 2 },
       }),
     );
     await resumeOrSelectOrigin();
     expect(phase.value).toBe("SHOP");
-    expect(round.value).toBe(2);
+    expect(night.value).toBe(2);
     expect(recoveryWarning.value).toBe("前回の戦闘結果を反映できませんでした");
   });
 
@@ -414,17 +414,17 @@ describe("resumeOrSelectOrigin", () => {
         currentRunCalls++;
         if (currentRunCalls === 1)
           return {
-            run: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+            run: defaultRun({ night: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
           };
-        return { run: defaultRun({ round: 3, life: 5, trophy: 2, pendingBattleId: null }) };
+        return { run: defaultRun({ night: 3, life: 5, trophy: 2, pendingBattleId: null }) };
       }
       if (url === "/api/run/advance") return httpError(409);
-      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 3, trophy: 2 }) };
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ night: 3, trophy: 2 }) };
       if (url === "/api/lore") return { lore: {} };
       return undefined;
     });
     await resumeOrSelectOrigin();
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(trophy.value).toBe(2);
     expect(recoveryWarning.value).toBeNull();
   });
@@ -436,17 +436,17 @@ describe("resumeOrSelectOrigin", () => {
         currentRunCalls++;
         if (currentRunCalls === 1)
           return {
-            run: defaultRun({ round: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
+            run: defaultRun({ night: 2, life: 5, trophy: 1, pendingBattleId: "battle-1" }),
           };
         return httpError(500);
       }
       if (url === "/api/run/advance") return httpError(409);
-      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 2 }) };
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ night: 2 }) };
       if (url === "/api/lore") return { lore: {} };
       return undefined;
     });
     await resumeOrSelectOrigin();
-    expect(round.value).toBe(2);
+    expect(night.value).toBe(2);
     expect(recoveryWarning.value).toBe("前回の戦闘結果を反映できませんでした");
   });
 
@@ -468,7 +468,7 @@ describe("retireGame", () => {
     phase.value = "SHOP";
     currentRunId.value = "run-1";
     origin.value = "thief";
-    round.value = 5;
+    night.value = 5;
     life.value = 3;
     trophy.value = 4;
   });
@@ -505,7 +505,7 @@ describe("retireGame", () => {
     expect(phase.value).toBe("TITLE");
     expect(currentRunId.value).toBeNull();
     expect(origin.value).toBeNull();
-    expect(round.value).toBe(1);
+    expect(night.value).toBe(1);
     expect(life.value).toBe(5);
     expect(trophy.value).toBe(0);
     expect(blood.value).toBe(10);

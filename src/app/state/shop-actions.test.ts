@@ -8,7 +8,7 @@ import {
 import {
   origin,
   blood,
-  round,
+  night,
   board,
   freeRoll,
   cultistUsed,
@@ -35,7 +35,7 @@ beforeEach(() => {
   phase.value = "SHOP";
   origin.value = null;
   blood.value = 10;
-  round.value = 1;
+  night.value = 1;
   board.value = [null, null, null, null, null];
   freeRoll.value = false;
   cultistUsed.value = false;
@@ -69,7 +69,7 @@ describe("setupNight", () => {
       blood: 10,
       shopUnits: [{ unit: toBoardUnit(unit), frozen: false, eventSourced: false }],
       freeRoll: true,
-      round: 2,
+      night: 2,
     });
     stubFetch(shopRoute(state));
 
@@ -77,7 +77,7 @@ describe("setupNight", () => {
 
     expect(blood.value).toBe(10);
     expect(freeRoll.value).toBe(true);
-    expect(round.value).toBe(2);
+    expect(night.value).toBe(2);
     expect(shopUnits.value).toHaveLength(1);
     expect(shopUnits.value[0]!.unit.id).toBe("rat");
   });
@@ -102,7 +102,7 @@ describe("setupNight", () => {
       teamName: "test",
       teamType: "同業者",
       units: [],
-      round: null,
+      night: null,
       life: null,
       trophy: null,
     };

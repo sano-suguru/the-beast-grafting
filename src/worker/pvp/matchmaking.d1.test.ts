@@ -9,12 +9,12 @@ let testEnv: TestDb;
 let db: DrizzleD1Database;
 let playerId: string;
 
-async function insertSnapshot(pid: string, runId: string, round: number) {
+async function insertSnapshot(pid: string, runId: string, night: number) {
   await db.insert(boardSnapshots).values({
     id: `snap-${Math.random().toString(36).slice(2, 8)}`,
     playerId: pid,
     runId,
-    round,
+    night,
     board: [makeValidUnit()],
     life: 5,
     trophy: 0,
@@ -48,7 +48,7 @@ describe("findOpponent", () => {
     expect(result._unsafeUnwrap()).toBeNull();
   });
 
-  it("matches opponent within ROUND_RANGE (±1)", async () => {
+  it("matches opponent within NIGHT_RANGE (±1)", async () => {
     const { playerId: opponentId } = await createTestPlayer(db, "opponent");
     const opponentRun = await createTestRun(db, opponentId);
     await insertSnapshot(opponentId, opponentRun, 4);
@@ -59,7 +59,7 @@ describe("findOpponent", () => {
     expect(result._unsafeUnwrap()!.playerId).toBe(opponentId);
   });
 
-  it("does not match opponent outside ROUND_RANGE", async () => {
+  it("does not match opponent outside NIGHT_RANGE", async () => {
     const { playerId: opponentId } = await createTestPlayer(db, "opponent");
     const opponentRun = await createTestRun(db, opponentId);
     await insertSnapshot(opponentId, opponentRun, 6);

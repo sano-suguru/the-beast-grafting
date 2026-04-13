@@ -4,7 +4,7 @@ import { isEquipType } from "../../shared/equip-type";
 import { isKnownUnitId, lookupUnitData, isChurchUnit } from "../../shared/data/unit-lookup";
 
 const MAX_BOARD_SIZE = 5;
-const MAX_ROUND = 20;
+const MAX_NIGHT = 20;
 
 const STAT_CEILING_MULTIPLIER = 20;
 const STAT_CEILING_BASE = 200;
@@ -82,18 +82,18 @@ function validateBoardUnit(u: unknown): u is BoardUnit {
 
 export function validateSnapshotBody(
   body: unknown,
-): body is { runId: string; round: number; board: BoardUnit[] } {
+): body is { runId: string; night: number; board: BoardUnit[] } {
   if (typeof body !== "object" || body === null) return false;
   const b = body as Record<string, unknown>;
   if (typeof b["runId"] !== "string" || (b["runId"] as string).length === 0) return false;
-  if (!validateBoundedInt(b["round"] as number, 1, MAX_ROUND)) return false;
+  if (!validateBoundedInt(b["night"] as number, 1, MAX_NIGHT)) return false;
   if (!Array.isArray(b["board"])) return false;
   const board = b["board"] as unknown[];
   return board.length >= 1 && board.length <= MAX_BOARD_SIZE && board.every(validateBoardUnit);
 }
 
-export function validateRound(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= MAX_ROUND;
+export function validateNight(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= MAX_NIGHT;
 }
 
 export function validateNonEmptyString(value: unknown): value is string {

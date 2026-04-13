@@ -2,7 +2,7 @@ import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
 import type { OriginId } from "../../shared/types";
 import type { BoardUnit } from "../../shared/board-unit";
-import { graftUnits, applyEndOfTurnEffects } from "../../engine/shop-effects";
+import { graftUnits, applyEndOfNightEffects } from "../../engine/shop-effects";
 import { CULTIST_LIFE_COST, CULTIST_BLOOD_GAIN } from "../../shared/constants";
 import type { ShopStateRow } from "./shop-state-row";
 import { boardToInstances, instancesToBoard, itemSlotsFromJson } from "./shop-serialization";
@@ -129,7 +129,7 @@ export function executeSwap(
 
     if (graft.leveledUp) {
       const { rng, saveRng } = withRng(state);
-      const rewards = generateLevelUpRewards(true, state.round, rng);
+      const rewards = generateLevelUpRewards(true, state.night, rng);
       return ok({
         ...state,
         board: instancesToBoard(newBoard),
@@ -197,7 +197,7 @@ export function executeReady(
   if (!instances.some((u) => u !== null))
     return err({ type: "PRECONDITION_FAILED", reason: "board_empty" });
 
-  const finalInstances = applyEndOfTurnEffects(instances);
+  const finalInstances = applyEndOfNightEffects(instances);
   const finalBoard = instancesToBoard(finalInstances);
 
   return ok({

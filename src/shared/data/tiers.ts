@@ -18,17 +18,17 @@ export const TOKEN_TIER: Tier = 1;
 const NEXT: Record<Tier, Tier> = { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 6 };
 export const nextTier = (t: Tier): Tier => NEXT[t];
 
-export function getCurrentMaxTier(round: number): Tier {
-  if (round >= 11) return 6;
-  if (round >= 9) return 5;
-  if (round >= 7) return 4;
-  if (round >= 5) return 3;
-  if (round >= 3) return 2;
+export function getCurrentMaxTier(night: number): Tier {
+  if (night >= 11) return 6;
+  if (night >= 9) return 5;
+  if (night >= 7) return 4;
+  if (night >= 5) return 3;
+  if (night >= 3) return 2;
   return 1;
 }
 
-export function detectTierUnlock(prevRound: number, nextRound: number): UnlockableTier | null {
-  const prev = getCurrentMaxTier(prevRound);
-  const next = getCurrentMaxTier(nextRound);
+export function detectTierUnlock(prevNight: number, nextNight: number): UnlockableTier | null {
+  const prev = getCurrentMaxTier(prevNight);
+  const next = getCurrentMaxTier(nextNight);
   return next > prev ? (next as UnlockableTier) : null;
 }

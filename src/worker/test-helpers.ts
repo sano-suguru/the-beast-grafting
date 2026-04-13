@@ -32,7 +32,7 @@ export async function createTestRun(db: DrizzleD1Database, playerId: string): Pr
   await db.insert(runs).values({
     id: runId,
     playerId,
-    round: 1,
+    night: 1,
     life: 5,
     trophy: 0,
     board: [],

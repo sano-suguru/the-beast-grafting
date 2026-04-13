@@ -23,7 +23,7 @@ import {
   upsertShopState,
   normalizePrevBoard,
   loadShopState,
-  loadPrevRoundShop,
+  loadPrevNightShop,
 } from "./shop-db";
 import { extractLoreUnitIds } from "../lore/lore-helpers";
 import { markSeenAsync } from "../lore/lore-service";
@@ -57,12 +57,12 @@ shopRoutes.post("/setup", requireAuth, jsonBody(), async (c) => {
   if (seedResult.isErr()) return internalError(c, "[shop/setup:seed]", seedResult.error);
   const shopSeed = seedResult.value;
 
-  const prevResult = await loadPrevRoundShop(db, runId, run.round);
+  const prevResult = await loadPrevNightShop(db, runId, run.night);
   if (prevResult.isErr()) return internalError(c, "[shop/setup:prev]", prevResult.error);
   const prev = prevResult.value;
   const useTutorialShop = bodyField(body, "useTutorialShop") === true;
   const state = executeSetup(
-    run.round,
+    run.night,
     run.life,
     parseOriginId(run.originId),
     shopSeed,

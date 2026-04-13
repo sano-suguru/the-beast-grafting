@@ -71,7 +71,7 @@ describe("simulateBattle", () => {
     expect(enemy.units.map((u) => u.uid)).toEqual(originalOrder.map((u) => u.uid));
   });
 
-  it("returns DRAW and timeout frame when combat round limit is reached", () => {
+  it("returns DRAW and timeout frame when clash limit is reached", () => {
     const ctx = makeContext(
       [makeBattleUnit({ atk: 1, hp: 99999, baseAtk: 1, baseHp: 99999 })],
       [makeBattleUnit({ atk: 1, hp: 99999, baseAtk: 1, baseHp: 99999 })],

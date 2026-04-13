@@ -21,7 +21,7 @@ import {
   itemSlotsToJson,
   itemSlotsFromJson,
 } from "./shop-serialization";
-import { buildShopForRound, generateLevelUpRewards } from "./shop-generation";
+import { buildShopForNight, generateLevelUpRewards } from "./shop-generation";
 import type { Rng } from "../../engine/rng";
 import { captureUndo, placeUnitOnBoard, withRng } from "./shop-helpers";
 
@@ -44,8 +44,8 @@ export function executeRoll(
   const normalPrev = allPrev.map((s) => (s?.eventSourced ? null : s));
   const frozenEventSlots = allPrev.filter((s): s is ShopSlot => !!s?.eventSourced && s.frozen);
   const prevItems = itemSlotsFromJson(state.shopItems);
-  const { units, items } = buildShopForRound(
-    state.round,
+  const { units, items } = buildShopForNight(
+    state.night,
     state.activeEvent,
     originId,
     normalPrev,
@@ -127,7 +127,7 @@ function finalizeBuy(
   const { rng, saveRng } = withRng(state);
   const buyResult = applyBuyEffects(unit, newBoard, state.rotRingUses, rng);
   const throneBoard = applyBoneTreeBuyEffects(unit, buyResult.board);
-  const rewards = generateLevelUpRewards(leveledUp, state.round, rng);
+  const rewards = generateLevelUpRewards(leveledUp, state.night, rng);
 
   let shopUnits = opts.shopUnits ?? state.shopUnits;
   if (buyResult.shopBuff) shopUnits = applyShopBuffToRandom(shopUnits, buyResult.shopBuff, rng);

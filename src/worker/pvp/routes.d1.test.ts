@@ -69,31 +69,31 @@ describe("POST /snapshot", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects missing round", async () => {
+  it("rejects missing night", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const res = await postSnapshot(app, token, { runId, board: [makeValidUnit()] });
     expect(res.status).toBe(400);
   });
 
-  it("rejects non-integer round", async () => {
+  it("rejects non-integer night", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const res = await postSnapshot(app, token, { runId, round: 1.5, board: [makeValidUnit()] });
+    const res = await postSnapshot(app, token, { runId, night: 1.5, board: [makeValidUnit()] });
     expect(res.status).toBe(400);
   });
 
-  it("rejects round < 1", async () => {
+  it("rejects night < 1", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const res = await postSnapshot(app, token, { runId, round: 0, board: [makeValidUnit()] });
+    const res = await postSnapshot(app, token, { runId, night: 0, board: [makeValidUnit()] });
     expect(res.status).toBe(400);
   });
 
   it("rejects empty board", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [] });
     expect(res.status).toBe(400);
   });
 
@@ -101,14 +101,14 @@ describe("POST /snapshot", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const board = Array.from({ length: 6 }, () => makeValidUnit());
-    const res = await postSnapshot(app, token, { runId, round: 1, board });
+    const res = await postSnapshot(app, token, { runId, night: 1, board });
     expect(res.status).toBe(400);
   });
 
   it("rejects board with invalid unit structure", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [{ garbage: true }] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [{ garbage: true }] });
     expect(res.status).toBe(400);
   });
 
@@ -116,13 +116,13 @@ describe("POST /snapshot", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const { isChurch: _, ...incomplete } = makeValidUnit();
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [incomplete] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [incomplete] });
     expect(res.status).toBe(400);
   });
 
   it("rejects missing runId", async () => {
     const { token } = await createTestPlayer(testDb);
-    const res = await postSnapshot(app, token, { round: 3, board: [makeValidUnit()] });
+    const res = await postSnapshot(app, token, { night: 3, board: [makeValidUnit()] });
     expect(res.status).toBe(400);
   });
 
@@ -131,7 +131,7 @@ describe("POST /snapshot", () => {
     await createTestRun(testDb, playerId);
     const res = await postSnapshot(app, token, {
       runId: "nonexistent",
-      round: 3,
+      night: 3,
       board: [makeValidUnit()],
     });
     expect(res.status).toBe(400);
@@ -140,7 +140,7 @@ describe("POST /snapshot", () => {
   it("accepts valid snapshot", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const res = await postSnapshot(app, token, { runId, round: 3, board: [makeValidUnit()] });
+    const res = await postSnapshot(app, token, { runId, night: 3, board: [makeValidUnit()] });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { ok: boolean };
     expect(body.ok).toBe(true);
@@ -150,7 +150,7 @@ describe("POST /snapshot", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ equip: "iron" });
-    const res = await postSnapshot(app, token, { runId, round: 2, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 2, board: [unit] });
     expect(res.status).toBe(200);
   });
 
@@ -158,7 +158,7 @@ describe("POST /snapshot", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ equip: "hax" });
-    const res = await postSnapshot(app, token, { runId, round: 2, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 2, board: [unit] });
     expect(res.status).toBe(400);
   });
 
@@ -166,30 +166,30 @@ describe("POST /snapshot", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const board = Array.from({ length: 5 }, () => makeValidUnit());
-    const res = await postSnapshot(app, token, { runId, round: 1, board });
+    const res = await postSnapshot(app, token, { runId, night: 1, board });
     expect(res.status).toBe(200);
   });
 
-  it("accepts round at MAX_ROUND boundary", async () => {
+  it("accepts night at MAX_NIGHT boundary", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const res = await postSnapshot(app, token, { runId, round: 20, board: [makeValidUnit()] });
+    const res = await postSnapshot(app, token, { runId, night: 20, board: [makeValidUnit()] });
     expect(res.status).toBe(200);
   });
 
-  it("upserts on same run+round", async () => {
+  it("upserts on same run+night", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit1 = makeValidUnit({ buffAtk: 3 });
     const unit2 = makeValidUnit({ buffAtk: 97 });
 
-    await postSnapshot(app, token, { runId, round: 3, board: [unit1] });
-    await postSnapshot(app, token, { runId, round: 3, board: [unit2] });
+    await postSnapshot(app, token, { runId, night: 3, board: [unit1] });
+    await postSnapshot(app, token, { runId, night: 3, board: [unit2] });
 
     const rows = await testDb
       .select()
       .from(boardSnapshots)
-      .where(and(eq(boardSnapshots.runId, runId), eq(boardSnapshots.round, 3)));
+      .where(and(eq(boardSnapshots.runId, runId), eq(boardSnapshots.night, 3)));
     expect(rows).toHaveLength(1);
     expect(rows[0]!.board[0]).toMatchObject({ buffAtk: 97 });
   });
@@ -198,7 +198,7 @@ describe("POST /snapshot", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const hugeUnit = makeValidUnit({ lore: "x".repeat(10_000) });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [hugeUnit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [hugeUnit] });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: { reason: string } };
     expect(body.error.reason).toBe("payload_too_large");
@@ -210,7 +210,7 @@ describe("POST /snapshot – stat validation", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ id: "nonexistent_unit" });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
 
@@ -218,7 +218,7 @@ describe("POST /snapshot – stat validation", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ tier: 6 });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
 
@@ -226,7 +226,7 @@ describe("POST /snapshot – stat validation", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ baseAtk: 99 });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
 
@@ -234,7 +234,7 @@ describe("POST /snapshot – stat validation", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ baseHp: 99 });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
 
@@ -242,7 +242,7 @@ describe("POST /snapshot – stat validation", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ level: 4 });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
 
@@ -250,7 +250,7 @@ describe("POST /snapshot – stat validation", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ level: 0 });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
 
@@ -258,7 +258,7 @@ describe("POST /snapshot – stat validation", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ buffAtk: -1 });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
 
@@ -266,14 +266,14 @@ describe("POST /snapshot – stat validation", () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
     const unit = makeValidUnit({ buffAtk: 9999 });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
     expect(res.status).toBe(400);
   });
 
-  it("rejects round > MAX_ROUND", async () => {
+  it("rejects night > MAX_NIGHT", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const res = await postSnapshot(app, token, { runId, round: 21, board: [makeValidUnit()] });
+    const res = await postSnapshot(app, token, { runId, night: 21, board: [makeValidUnit()] });
     expect(res.status).toBe(400);
   });
 
@@ -290,7 +290,7 @@ describe("POST /snapshot – stat validation", () => {
       tier: 1,
       isChurch: true,
     });
-    const res = await postSnapshot(app, token, { runId, round: 1, board: [unit] });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
     expect(res.status).toBe(200);
   });
 });

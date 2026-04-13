@@ -1,6 +1,6 @@
 import {
   EVENT_SCHEDULE,
-  isEventRound,
+  isEventNight,
   selectEvent,
   buildEventShopUnits,
   buildEventShopItems,
@@ -19,20 +19,20 @@ describe("EVENT_SCHEDULE", () => {
   });
 });
 
-describe("isEventRound", () => {
-  it("returns true for event rounds", () => {
-    expect(isEventRound(4)).toBe(true);
-    expect(isEventRound(8)).toBe(true);
-    expect(isEventRound(12)).toBe(true);
-    expect(isEventRound(16)).toBe(true);
+describe("isEventNight", () => {
+  it("returns true for event nights", () => {
+    expect(isEventNight(4)).toBe(true);
+    expect(isEventNight(8)).toBe(true);
+    expect(isEventNight(12)).toBe(true);
+    expect(isEventNight(16)).toBe(true);
   });
 
-  it("returns false for non-event rounds", () => {
-    expect(isEventRound(1)).toBe(false);
-    expect(isEventRound(3)).toBe(false);
-    expect(isEventRound(5)).toBe(false);
-    expect(isEventRound(7)).toBe(false);
-    expect(isEventRound(10)).toBe(false);
+  it("returns false for non-event nights", () => {
+    expect(isEventNight(1)).toBe(false);
+    expect(isEventNight(3)).toBe(false);
+    expect(isEventNight(5)).toBe(false);
+    expect(isEventNight(7)).toBe(false);
+    expect(isEventNight(10)).toBe(false);
   });
 });
 
@@ -95,7 +95,7 @@ describe("buildEventShopUnits", () => {
     expect(effectiveHp(slot!.unit)).toBeGreaterThanOrEqual(3);
   });
 
-  it("applies ceiling bonus at round 12 when tier is auto-resolved", () => {
+  it("applies ceiling bonus at night 12 when tier is auto-resolved", () => {
     const result = buildEventShopUnits(EVENTS.rotting_cargo, 12, createSeededRng(42));
     result.forEach((slot) => {
       expect(slot).not.toBeNull();
@@ -104,7 +104,7 @@ describe("buildEventShopUnits", () => {
     });
   });
 
-  it("does not apply ceiling bonus at round 4", () => {
+  it("does not apply ceiling bonus at night 4", () => {
     const event = {
       ...EVENTS.rotting_cargo,
       unitOffers: [

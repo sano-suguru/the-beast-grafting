@@ -2,10 +2,10 @@ import type { ShopUndoSnapshot } from "../../db/shop-state-types";
 
 export type ShopStateRow = ShopUndoSnapshot & {
   undoSnapshot: ShopUndoSnapshot | null;
-  round: number;
+  night: number;
 };
 
-type ShopStateNonUndoFields = "undoSnapshot" | "round";
+type ShopStateNonUndoFields = "undoSnapshot" | "night";
 type _AssertUndoCoverage =
   Exclude<keyof ShopStateRow, keyof ShopUndoSnapshot | ShopStateNonUndoFields> extends never
     ? true

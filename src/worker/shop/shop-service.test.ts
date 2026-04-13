@@ -36,7 +36,7 @@ function makeState(overrides: Partial<ShopStateRow> = {}): ShopStateRow {
     rngS1: s1,
     rewardSlots: [],
     undoSnapshot: null,
-    round: 1,
+    night: 1,
     life: 5,
     ...overrides,
   };
@@ -83,7 +83,7 @@ describe("executeSetup", () => {
     expect(hasHigherTier).toBe(true);
   });
 
-  test("non-tutorial generates shop units appropriate for round", () => {
+  test("non-tutorial generates shop units appropriate for night", () => {
     const result = executeSetup(3, 5, null, 42, [null, null, null, null, null], false, [], []);
     const nonNull = result.shopUnits.filter(Boolean);
     expect(nonNull.length).toBeGreaterThan(0);
@@ -589,7 +589,7 @@ describe("rotting_cargo event", () => {
 });
 
 describe("executeReady", () => {
-  test("returns finalBoard with end-of-turn effects applied", () => {
+  test("returns finalBoard with end-of-night effects applied", () => {
     const state = makeState({
       board: [makeBoardUnit("rat"), null, null, null, null],
     });

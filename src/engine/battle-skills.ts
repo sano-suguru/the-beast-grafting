@@ -14,6 +14,7 @@ import {
   applyHolyFireSkill,
   applyDevouringGraftSkill,
   applyMimickingFleshSkill,
+  applyCorrodingMoldSkill,
 } from "./battle-skills-start";
 import {
   applyParasiteBuff,
@@ -36,6 +37,7 @@ const START_SKILL_HANDLERS = {
   paladin: applyPaladinSkill,
   holy_fire: applyHolyFireSkill,
   devouring_graft: applyDevouringGraftSkill,
+  corroding_mold: applyCorrodingMoldSkill,
 } satisfies Partial<Record<UnitId, StartSkillHandler>>;
 
 type StartSkillUnitId = keyof typeof START_SKILL_HANDLERS;
@@ -55,13 +57,21 @@ export function runStartSkills(
   const snapshot = [...boardArr];
   for (const u of snapshot) {
     if (!boardArr.includes(u)) continue;
+    const idx = boardArr.indexOf(u);
+    const mult = getMult(boardArr, idx);
     if (u.id === "mimicking_flesh") {
       applyMimickingFleshSkill({ u, targetArr, isPlayer, ctx }, getStartSkillHandler);
+      for (let m = 1; m < mult; m++) {
+        const copied = getStartSkillHandler(u.id);
+        if (copied) copied({ u, targetArr, isPlayer, ctx });
+      }
       continue;
     }
     const handler = getStartSkillHandler(u.id);
     if (!handler) continue;
-    handler({ u, targetArr, isPlayer, ctx });
+    for (let m = 0; m < mult; m++) {
+      handler({ u, targetArr, isPlayer, ctx });
+    }
   }
 }
 

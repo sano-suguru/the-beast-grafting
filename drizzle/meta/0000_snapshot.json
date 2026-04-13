@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "68ea32f1-9301-4ffe-a0d9-9b04f996af6d",
+  "id": "042b9309-8b96-4537-9c75-930f221f0735",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_providers": {
@@ -115,8 +115,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "round": {
-          "name": "round",
+        "night": {
+          "name": "night",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -160,9 +160,9 @@
         }
       },
       "indexes": {
-        "idx_battles_run_round": {
-          "name": "idx_battles_run_round",
-          "columns": ["run_id", "round"],
+        "idx_battles_run_night": {
+          "name": "idx_battles_run_night",
+          "columns": ["run_id", "night"],
           "isUnique": true
         },
         "idx_battles_player_id": {
@@ -233,8 +233,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "round": {
-          "name": "round",
+        "night": {
+          "name": "night",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -270,14 +270,14 @@
         }
       },
       "indexes": {
-        "idx_snapshots_run_round": {
-          "name": "idx_snapshots_run_round",
-          "columns": ["run_id", "round"],
+        "idx_snapshots_run_night": {
+          "name": "idx_snapshots_run_night",
+          "columns": ["run_id", "night"],
           "isUnique": true
         },
-        "idx_snapshots_round": {
-          "name": "idx_snapshots_round",
-          "columns": ["round"],
+        "idx_snapshots_night": {
+          "name": "idx_snapshots_night",
+          "columns": ["night"],
           "isUnique": false
         },
         "idx_snapshots_player_id": {
@@ -456,8 +456,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "round": {
-          "name": "round",
+        "night": {
+          "name": "night",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -632,8 +632,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "round": {
-          "name": "round",
+        "night": {
+          "name": "night",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -752,9 +752,9 @@
         }
       },
       "indexes": {
-        "idx_shop_states_run_round": {
-          "name": "idx_shop_states_run_round",
-          "columns": ["run_id", "round"],
+        "idx_shop_states_run_night": {
+          "name": "idx_shop_states_run_night",
+          "columns": ["run_id", "night"],
           "isUnique": true
         },
         "idx_shop_states_run_id": {

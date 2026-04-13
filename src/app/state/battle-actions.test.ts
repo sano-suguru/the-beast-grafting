@@ -8,7 +8,7 @@ import {
 import type { ShopStateResponse, RunState, BattleResponse } from "../../shared/api-types";
 import {
   phase,
-  round,
+  night,
   life,
   trophy,
   board,
@@ -65,7 +65,7 @@ function defaultBattleResponse(): BattleResponse {
       teamName: "テスト敵",
       teamType: "同業者",
       units: [],
-      round: 3,
+      night: 3,
       life: 4,
       trophy: 2,
     },
@@ -76,7 +76,7 @@ function defaultBattleResponse(): BattleResponse {
 function defaultRunState(overrides: Partial<RunState> = {}): RunState {
   return {
     id: "run-1",
-    round: 2,
+    night: 2,
     life: 5,
     trophy: 1,
     status: "active",
@@ -111,7 +111,7 @@ function stubError() {
 
 beforeEach(() => {
   phase.value = "SHOP";
-  round.value = 1;
+  night.value = 1;
   life.value = 5;
   trophy.value = 0;
   board.value = [makeUnit({ baseAtk: 10, baseHp: 10 }), null, null, null, null];
@@ -314,19 +314,19 @@ describe("concludeBattle", () => {
     expect(body.battleId).toBe("b-1");
   });
 
-  it("advances round from server response", async () => {
+  it("advances night from server response", async () => {
     battleResult.value = "WIN";
-    round.value = 2;
+    night.value = 2;
     lastBattleId.value = "b-1";
     stubFetch(
       battleRoutes({
-        runState: defaultRunState({ round: 3, trophy: 1 }),
-        shopState: makeShopState({ round: 3, trophy: 1 }),
+        runState: defaultRunState({ night: 3, trophy: 1 }),
+        shopState: makeShopState({ night: 3, trophy: 1 }),
       }),
     );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(phase.value).toBe("BATTLE_RESULT");
   });
 
@@ -367,23 +367,23 @@ describe("concludeBattle", () => {
     expect(phase.value).toBe("BATTLE_RESULT");
   });
 
-  it("draw advances round without changing life or trophy", async () => {
+  it("draw advances night without changing life or trophy", async () => {
     battleResult.value = "DRAW";
     life.value = 5;
     trophy.value = 3;
-    round.value = 2;
+    night.value = 2;
     lastBattleId.value = "b-1";
     stubFetch(
       battleRoutes({
-        runState: defaultRunState({ round: 3, life: 5, trophy: 3 }),
-        shopState: makeShopState({ round: 3, life: 5, trophy: 3 }),
+        runState: defaultRunState({ night: 3, life: 5, trophy: 3 }),
+        shopState: makeShopState({ night: 3, life: 5, trophy: 3 }),
       }),
     );
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(life.value).toBe(5);
     expect(trophy.value).toBe(3);
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(phase.value).toBe("BATTLE_RESULT");
   });
 
@@ -395,32 +395,32 @@ describe("concludeBattle", () => {
     expect(phase.value).toBe("BATTLE");
   });
 
-  it("falls back to local round advance on advanceRun failure", async () => {
+  it("falls back to local night advance on advanceRun failure", async () => {
     battleResult.value = "WIN";
     trophy.value = 3;
-    round.value = 2;
+    night.value = 2;
     lastBattleId.value = "b-1";
     stubFetch((url) => {
-      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ round: 3, trophy: 4 }) };
+      if (url.startsWith("/api/shop/")) return { shop: makeShopState({ night: 3, trophy: 4 }) };
       if (url === "/api/lore") return { lore: {} };
       return undefined;
     });
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(phase.value).toBe("BATTLE_RESULT");
   });
 
   it("advances locally when no battleId", async () => {
     battleResult.value = "WIN";
     trophy.value = 3;
-    round.value = 2;
+    night.value = 2;
     lastBattleId.value = null;
-    stubFetch(battleRoutes({ shopState: makeShopState({ round: 3, trophy: 4 }) }));
+    stubFetch(battleRoutes({ shopState: makeShopState({ night: 3, trophy: 4 }) }));
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(trophy.value).toBe(4);
-    expect(round.value).toBe(3);
+    expect(night.value).toBe(3);
     expect(phase.value).toBe("BATTLE_RESULT");
   });
 });
@@ -475,14 +475,14 @@ describe("proceedFromBattleResult", () => {
 });
 
 describe("tier unlock detection", () => {
-  it("sets unlockedTier when round advances to tier boundary", async () => {
+  it("sets unlockedTier when night advances to tier boundary", async () => {
     battleResult.value = "WIN";
-    round.value = 2;
+    night.value = 2;
     lastBattleId.value = "b-1";
     stubFetch(
       battleRoutes({
-        runState: defaultRunState({ round: 3, trophy: 1 }),
-        shopState: makeShopState({ round: 3, trophy: 1 }),
+        runState: defaultRunState({ night: 3, trophy: 1 }),
+        shopState: makeShopState({ night: 3, trophy: 1 }),
       }),
     );
     concludeBattle();
@@ -492,12 +492,12 @@ describe("tier unlock detection", () => {
 
   it("sets unlockedTier null when tier does not change", async () => {
     battleResult.value = "WIN";
-    round.value = 1;
+    night.value = 1;
     lastBattleId.value = "b-1";
     stubFetch(
       battleRoutes({
-        runState: defaultRunState({ round: 2, trophy: 1 }),
-        shopState: makeShopState({ round: 2, trophy: 1 }),
+        runState: defaultRunState({ night: 2, trophy: 1 }),
+        shopState: makeShopState({ night: 2, trophy: 1 }),
       }),
     );
     concludeBattle();
@@ -507,10 +507,10 @@ describe("tier unlock detection", () => {
 
   it("sets unlockedTier null when game ended", async () => {
     battleResult.value = "LOSE";
-    round.value = 2;
+    night.value = 2;
     life.value = 1;
     lastBattleId.value = "b-1";
-    stubFetch(battleRoutes({ runState: defaultRunState({ round: 3, life: 0, status: "lost" }) }));
+    stubFetch(battleRoutes({ runState: defaultRunState({ night: 3, life: 0, status: "lost" }) }));
     concludeBattle();
     await vi.waitFor(() => expect(battleBusy.value).toBe(false));
     expect(battleConcludeData.value?.unlockedTier).toBeNull();
@@ -518,7 +518,7 @@ describe("tier unlock detection", () => {
 
   it("sets unlockedTier in local fallback path", async () => {
     battleResult.value = "WIN";
-    round.value = 2;
+    night.value = 2;
     trophy.value = 0;
     lastBattleId.value = null;
     concludeBattle();
