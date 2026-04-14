@@ -275,7 +275,8 @@ export function applyMimickingFleshSkill(
   const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
   const idx = allyBoard.indexOf(u);
   if (idx <= 0) return;
-  const pred = allyBoard[idx - 1]!;
+  // 最前線ユニットを模倣する（直前の味方ではなく戦場の主役を真似る）
+  const pred = allyBoard[0]!;
   // TokenIdはDataUnitIdに属さず、UNITS/CHURCH_UNITSにスキル定義が存在しないためコピー不可
   if (pred.id === "token") return;
   const prevName = u.name;

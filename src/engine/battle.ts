@@ -174,7 +174,13 @@ function runClash(ctx: BattleContext) {
 }
 
 function determineResult(ctx: BattleContext, timedOut: boolean): BattleResult {
-  if (timedOut) return "DRAW";
+  if (timedOut) {
+    const pHp = ctx.pBoard.reduce((sum, u) => sum + Math.max(0, u.hp), 0);
+    const eHp = ctx.eBoard.reduce((sum, u) => sum + Math.max(0, u.hp), 0);
+    if (pHp > eHp) return "WIN";
+    if (eHp > pHp) return "LOSE";
+    return "DRAW";
+  }
   if (ctx.pBoard.length > 0) return "WIN";
   if (ctx.eBoard.length > 0) return "LOSE";
   return "DRAW";

@@ -75,7 +75,7 @@ export const RELIC_SWORD = {
 
 export const PLAGUE_BELL = {
   damage: [1, 1, 1] as SN, // AoE + uses がスケールするためダメージは固定
-  uses: [3, 5, 7] as SN,
+  uses: [4, 6, 8] as SN,
 };
 
 // ── 被弾スキル ──
@@ -117,7 +117,7 @@ export const HOWLING_GIANT = {
 };
 
 export const AMNIOTIC_ARMOR = {
-  uses: [1, 2, 3] as SN,
+  uses: [2, 3, 4] as SN,
 };
 
 export const MACHINE = {
@@ -188,11 +188,11 @@ export const CHARNEL_PIT = {
 };
 
 export const GRINNING_SKULL = {
-  threshold: 4,
+  threshold: 3,
   buff: [
+    { atk: 2, hp: 2 },
     { atk: 3, hp: 3 },
     { atk: 5, hp: 5 },
-    { atk: 7, hp: 7 },
   ] as SB,
 };
 

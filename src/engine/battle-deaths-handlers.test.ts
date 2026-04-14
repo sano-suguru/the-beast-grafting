@@ -90,13 +90,13 @@ describe("handleHoundDeath", () => {
     expect(ctx.pBoard[0]!.isChurch).toBe(true);
   });
 
-  it("zealot on board buffs spawned token atk +2", () => {
+  it("zealot on board buffs spawned token atk +1", () => {
     const zealot = makeBattleUnit({ id: "zealot", name: "狂信者", hp: 3 });
     const ctx = makeContext([zealot]);
     const dead = makeBattleUnit({ id: "hound", name: "猟犬" });
     callHandler("hound", dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
-    expect(token!.atk).toBe(5); // 3 base + 2 zealot
+    expect(token!.atk).toBe(4); // 3 base + 1 zealot
   });
 });
 
@@ -125,7 +125,7 @@ describe("handleBeastDeath", () => {
     const dead = makeBattleUnit({ id: "beast", name: "腐肉獣" });
     callHandler("beast", dead, ctx.pBoard, 0, true, ctx);
     const summoned = ctx.pBoard.find((u) => u.id !== "zealot");
-    expect(summoned!.atk).toBe(6); // 4 base + 2 zealot
+    expect(summoned!.atk).toBe(5); // 4 base + 1 zealot
   });
 });
 
@@ -329,7 +329,7 @@ describe("handleEquipDeath", () => {
     const dead = makeBattleUnit({ equip: "maggot_nest", name: "ユニット" });
     handleEquipDeath(dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.name === "巨大蛆虫");
-    expect(token!.atk).toBe(3); // 1 base + 2 zealot
+    expect(token!.atk).toBe(2); // 1 base + 1 zealot
   });
 
   it("death_curse token receives zealot buff", () => {
@@ -338,7 +338,7 @@ describe("handleEquipDeath", () => {
     const dead = makeBattleUnit({ equip: "death_curse", name: "呪兵" });
     handleEquipDeath(dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.name === "呪兵");
-    expect(token!.atk).toBe(3); // 1 base + 2 zealot
+    expect(token!.atk).toBe(2); // 1 base + 1 zealot
   });
 });
 
@@ -380,7 +380,7 @@ describe("handleBeelzebubSpawns", () => {
     const ctx = makeContext([zealot, beelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
-    expect(fly!.atk).toBe(5); // 3 base + 2 zealot
+    expect(fly!.atk).toBe(4); // 3 base + 1 zealot
   });
 
   it("does not trigger when no beelzebub on board", () => {

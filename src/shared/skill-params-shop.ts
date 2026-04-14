@@ -6,14 +6,14 @@ type SB = Scaled<Buff>;
 
 export const ALTAR = {
   buff: [
+    { atk: 2, hp: 1 },
     { atk: 3, hp: 2 },
     { atk: 5, hp: 3 },
-    { atk: 7, hp: 5 },
   ] as SB,
 };
 
 export const ZEALOT = {
-  summonBuff: [2, 3, 4] as SN,
+  summonBuff: [1, 2, 3] as SN,
 };
 
 export const ROT_RING = {

@@ -145,7 +145,7 @@ describe("processAvenge – grinning_skull (independent counters)", () => {
       name: "聖骨箱",
       atk: 2,
       hp: 8,
-      avengeDeathCount: 4,
+      avengeDeathCount: 3,
     });
     const ally = makeBattleUnit({ atk: 3, hp: 5 });
     const board = [rel, ally];
@@ -164,22 +164,22 @@ describe("processAvenge – grinning_skull (independent counters)", () => {
       name: "聖骨箱",
       atk: 2,
       hp: 8,
-      avengeDeathCount: 3,
+      avengeDeathCount: 2,
     });
     const board = [rel];
     const ctx = makeContext(board, []);
     processAvenge(board, true, ctx);
-    expect(rel.avengeDeathCount).toBe(3);
+    expect(rel.avengeDeathCount).toBe(2);
     expect(ctx.frames).toHaveLength(0);
   });
 
-  it("triggers twice with 8 deaths accumulated", () => {
+  it("triggers twice with 6 deaths accumulated", () => {
     const rel = makeBattleUnit({
       id: "grinning_skull",
       name: "聖骨箱",
       atk: 2,
       hp: 8,
-      avengeDeathCount: 8,
+      avengeDeathCount: 6,
     });
     const board = [rel];
     const ctx = makeContext(board, []);
@@ -261,10 +261,10 @@ describe("incrementAvengeCounters – independent per-unit", () => {
 
   it("charnel_pit and grinning_skull trigger independently on same death count", () => {
     const pit = makeBattleUnit({ id: "charnel_pit", atk: 0, hp: 6, avengeDeathCount: 1 });
-    const rel = makeBattleUnit({ id: "grinning_skull", atk: 2, hp: 8, avengeDeathCount: 3 });
+    const rel = makeBattleUnit({ id: "grinning_skull", atk: 2, hp: 8, avengeDeathCount: 2 });
     const board = [pit, rel];
     const ctx = makeContext(board, []);
-    // Simulate 1 more death → pit reaches 2 (threshold), rel reaches 4 (threshold)
+    // Simulate 1 more death → pit reaches 2 (threshold), rel reaches 3 (threshold)
     incrementAvengeCounters(board);
     processAvenge(board, true, ctx);
     expect(pit.avengeDeathCount).toBe(0);
@@ -1007,7 +1007,7 @@ describe("processAvenge snapshot – spawn does not skip later avenge units", ()
       name: "聖骨箱",
       atk: 2,
       hp: 8,
-      avengeDeathCount: 4,
+      avengeDeathCount: 3,
     });
     const board = [pit, skull];
     const ctx = makeContext(board, []);

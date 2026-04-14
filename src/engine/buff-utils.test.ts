@@ -12,8 +12,8 @@ describe("computeZealotBuff", () => {
       requireAlive: true,
       getMultiplier: (i) => i + 1,
     });
-    // zealot at idx 0 → buff 2 × mult 1 = 2, zealot at idx 1 → buff 2 × mult 2 = 4
-    expect(result).toBe(6);
+    // zealot at idx 0 → buff 1 × mult 1 = 1, zealot at idx 1 → buff 1 × mult 2 = 2
+    expect(result).toBe(3);
   });
 
   it("returns sum of buff values when no getMultiplier provided", () => {
@@ -22,7 +22,7 @@ describe("computeZealotBuff", () => {
       makeBattleUnit({ id: "zealot", hp: 5 }),
     ];
     const result = computeZealotBuff(board, { requireAlive: true });
-    expect(result).toBe(4);
+    expect(result).toBe(2);
   });
 
   it("returns 0 when no zealots on board", () => {
@@ -31,10 +31,10 @@ describe("computeZealotBuff", () => {
     expect(result).toBe(0);
   });
 
-  it("Lv2 zealot gives buff of 3", () => {
+  it("Lv2 zealot gives buff of 2", () => {
     const board = [makeBattleUnit({ id: "zealot", hp: 3, level: 2 })];
     const result = computeZealotBuff(board, { requireAlive: true });
-    expect(result).toBe(3);
+    expect(result).toBe(2);
   });
 
   it("Lv2 zealot with multiplier gives buff × multiplier", () => {
@@ -43,7 +43,7 @@ describe("computeZealotBuff", () => {
       requireAlive: true,
       getMultiplier: () => 2,
     });
-    expect(result).toBe(6);
+    expect(result).toBe(4);
   });
 
   it("skips dead zealots when requireAlive is true", () => {
@@ -52,6 +52,6 @@ describe("computeZealotBuff", () => {
       makeBattleUnit({ id: "zealot", hp: 3 }),
     ];
     const result = computeZealotBuff(board, { requireAlive: true });
-    expect(result).toBe(2);
+    expect(result).toBe(1);
   });
 });

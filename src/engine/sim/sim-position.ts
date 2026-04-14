@@ -84,8 +84,12 @@ function assignFront(battleSlots: (RegularUnitId | null)[], remaining: Set<Regul
   const all = [...remaining];
   const frontCandidates = all.filter((id) => getRole(id) === "front");
   const flexCandidates = all.filter((id) => getRole(id) !== "support");
+  const activeCandidates = flexCandidates.filter(
+    (id) => !hasTag(id, "death-reactor") && !hasTag(id, "avenge") && !hasTag(id, "spawn-reactor"),
+  );
   let candidates = all;
   if (frontCandidates.length > 0) candidates = frontCandidates;
+  else if (activeCandidates.length > 0) candidates = activeCandidates;
   else if (flexCandidates.length > 0) candidates = flexCandidates;
   const best = pickBest(candidates)!;
   battleSlots[0] = best;

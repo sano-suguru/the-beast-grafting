@@ -118,36 +118,36 @@ describe("resolveDeaths – equipment death effects", () => {
 });
 
 describe("resolveDeaths – token buff synergies", () => {
-  it("zealot buffs spawned tokens atk +2", () => {
+  it("zealot buffs spawned tokens atk +1", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const zealot = makeBattleUnit({ id: "zealot", name: "狂信者", atk: 2, hp: 3 });
     const ctx = makeContext([hound, zealot], []);
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(5); // 3 base + 2 zealot buff
+    expect(token!.atk).toBe(4); // 3 base + 1 zealot buff
   });
 
-  it("altar buffs spawned tokens +3/+2", () => {
+  it("altar buffs spawned tokens +2/+1", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const altar = makeBattleUnit({ id: "altar", name: "祭壇", atk: 3, hp: 4 });
     const ctx = makeContext([hound, altar], []);
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(6); // 3 base + 3 altar
-    expect(token!.hp).toBe(4); // 2 base + 2 altar
+    expect(token!.atk).toBe(5); // 3 base + 2 altar
+    expect(token!.hp).toBe(3); // 2 base + 1 altar
   });
 
-  it("altar log shows +3/+2 and final stats without brains", () => {
+  it("altar log shows +2/+1 and final stats without brains", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const altar = makeBattleUnit({ id: "altar", name: "祭壇", atk: 3, hp: 4 });
     const ctx = makeContext([hound, altar], []);
     resolveDeaths(ctx);
     const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
-    expect(logText(altarLog!)).toContain("+3/+2");
-    expect(logText(altarLog!)).toContain("→ 6/4");
+    expect(logText(altarLog!)).toContain("+2/+1");
+    expect(logText(altarLog!)).toContain("→ 5/3");
   });
 
   it("altar buff doubles with brains behind it", () => {
@@ -158,8 +158,8 @@ describe("resolveDeaths – token buff synergies", () => {
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(9); // 3 base + 3*2 altar
-    expect(token!.hp).toBe(6); // 2 base + 2*2 altar
+    expect(token!.atk).toBe(7); // 3 base + 2*2 altar
+    expect(token!.hp).toBe(4); // 2 base + 1*2 altar
   });
 
   it("altar log shows doubled buff and final stats with brains", () => {
@@ -170,8 +170,8 @@ describe("resolveDeaths – token buff synergies", () => {
     resolveDeaths(ctx);
     const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
-    expect(logText(altarLog!)).toContain("+6/+4");
-    expect(logText(altarLog!)).toContain("→ 9/6");
+    expect(logText(altarLog!)).toContain("+4/+2");
+    expect(logText(altarLog!)).toContain("→ 7/4");
   });
 });
 

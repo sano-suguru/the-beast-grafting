@@ -17,7 +17,7 @@ export const UNITS_HIGH_TIER = {
     id: "hundred_arms",
     name: "百腕の屠殺体",
     baseAtk: 6,
-    baseHp: 5,
+    baseHp: 7,
     tier: 5,
     lore: "無数の罪人の腕を縫い付けた多腕の怪物。一度殺戮を始めると、目の前の肉がすべて挽肉になるまで止まらない。",
     secretLore:
@@ -81,7 +81,7 @@ export const UNITS_HIGH_TIER = {
     id: "amniotic_armor",
     name: "羊膜の鎧",
     baseAtk: 2,
-    baseHp: 8,
+    baseHp: 10,
     tier: 5,
     lore: "上位者の子を包んでいた羊膜。打たれると硬化し、一撃だけ身を守る。生まれなかった何かの、残り香。",
   },
@@ -180,7 +180,7 @@ export const UNITS_HIGH_TIER = {
   howling_giant: {
     id: "howling_giant",
     name: "吼える巨人",
-    baseAtk: 0,
+    baseAtk: 1,
     baseHp: 12,
     tier: 6,
     lore: "巨大な肉塊。斬りつけるたび裂け目から呻きが漏れ、聞いた者の手が震える。",

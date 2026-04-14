@@ -28,7 +28,7 @@ export const UNITS = resolveSkillTexts({
   hound: {
     id: "hound",
     name: "猟犬の骸",
-    baseAtk: 1,
+    baseAtk: 2,
     baseHp: 4,
     tier: 1,
     lore: "主人の亡骸を守り、騎士たちに最後まで牙を剥いた忠犬。首を落とされてなお、顎の力は衰えていない。",
@@ -49,7 +49,7 @@ export const UNITS = resolveSkillTexts({
     id: "zealot",
     name: "狂信者の生首",
     baseAtk: 2,
-    baseHp: 1,
+    baseHp: 3,
     tier: 1,
     lore: "異端としてギロチンにかけられた男の頭部。口を太い糸で縫い合わせても、未だに悍ましい呪詛を唱え続けている。",
     secretLore: "その口が唱え続けた冒涜の言葉は、ついに空を割り、街に血の雨を降らせた。",

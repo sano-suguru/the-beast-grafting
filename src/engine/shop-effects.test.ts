@@ -252,8 +252,8 @@ describe("applySummonEffects – altar buffs", () => {
       null,
     ];
     const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(5); // 2 + 3(altar)
-    expect(effectiveHp(result[1]!)).toBe(5); // 3 + 2(altar)
+    expect(effectiveAtk(result[1]!)).toBe(4); // 2 + 2(altar)
+    expect(effectiveHp(result[1]!)).toBe(4); // 3 + 1(altar)
   });
 
   it("stacks multiple altar buffs", () => {
@@ -265,13 +265,13 @@ describe("applySummonEffects – altar buffs", () => {
       null,
     ];
     const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(7); // 1 + 3×2(altar)
-    expect(effectiveHp(result[1]!)).toBe(5); // 1 + 2×2(altar)
+    expect(effectiveAtk(result[1]!)).toBe(5); // 1 + 2×2(altar)
+    expect(effectiveHp(result[1]!)).toBe(3); // 1 + 1×2(altar)
   });
 });
 
 describe("applySummonEffects – zealot buffs", () => {
-  it("zealot buffs placed unit +2 ATK", () => {
+  it("zealot buffs placed unit +1 ATK", () => {
     const board: (UnitInstance | null)[] = [
       makeUnit({ id: "zealot" }),
       makeUnit({ baseAtk: 2, baseHp: 3 }),
@@ -280,7 +280,7 @@ describe("applySummonEffects – zealot buffs", () => {
       null,
     ];
     const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(4); // 2 + 2(zealot)
+    expect(effectiveAtk(result[1]!)).toBe(3); // 2 + 1(zealot)
     expect(effectiveHp(result[1]!)).toBe(3);
   });
 
@@ -293,7 +293,7 @@ describe("applySummonEffects – zealot buffs", () => {
       null,
     ];
     const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(5); // 1 + 2×2(zealot)
+    expect(effectiveAtk(result[1]!)).toBe(3); // 1 + 1×2(zealot)
     expect(effectiveHp(result[1]!)).toBe(1);
   });
 });
@@ -308,8 +308,8 @@ describe("applySummonEffects – combined and edge cases", () => {
       null,
     ];
     const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(6); // 1 + 3(altar) + 2(zealot)
-    expect(effectiveHp(result[1]!)).toBe(3); // 1 + 2(altar)
+    expect(effectiveAtk(result[1]!)).toBe(4); // 1 + 2(altar) + 1(zealot)
+    expect(effectiveHp(result[1]!)).toBe(2); // 1 + 1(altar)
   });
 
   it("returns original board when no altar present", () => {
