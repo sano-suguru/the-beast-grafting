@@ -68,22 +68,22 @@ describe("runStartSkills – damage skills", () => {
     expect(back.hp).toBe(10);
   });
 
-  it("shrieking_throat deals 8 damage to enemy back", () => {
-    const throat = makeBattleUnit({ id: "shrieking_throat", name: "叫喚する喉袋", atk: 8, hp: 4 });
+  it("shrieking_throat deals 6 damage to enemy back", () => {
+    const throat = makeBattleUnit({ id: "shrieking_throat", name: "叫喚する喉袋", atk: 7, hp: 4 });
     const front = makeBattleUnit({ hp: 10 });
     const back = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([throat], [front, back]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(front.hp).toBe(10);
-    expect(back.hp).toBe(2);
+    expect(back.hp).toBe(4);
   });
 
   it("shrieking_throat takes self-damage recoil", () => {
-    const throat = makeBattleUnit({ id: "shrieking_throat", name: "叫喚する喉袋", atk: 8, hp: 10 });
+    const throat = makeBattleUnit({ id: "shrieking_throat", name: "叫喚する喉袋", atk: 7, hp: 10 });
     const enemy = makeBattleUnit({ hp: 20 });
     const ctx = makeContext([throat], [enemy]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(enemy.hp).toBe(12); // 20 - 8
+    expect(enemy.hp).toBe(14); // 20 - 6
     expect(throat.hp).toBe(7); // 10 - 3 (selfDamage at lv1)
   });
 });
@@ -247,13 +247,13 @@ describe("applyBeforeAttackSkills", () => {
     expect(parasite.hp).toBe(4);
   });
 
-  it("eye deals 5 damage to a random enemy", () => {
+  it("eye deals 4 damage to a random enemy", () => {
     const front = makeBattleUnit({ atk: 3, hp: 3 });
-    const eye = makeBattleUnit({ id: "eye", name: "大目玉", atk: 6, hp: 6, skillUses: 5 });
+    const eye = makeBattleUnit({ id: "eye", name: "大目玉", atk: 6, hp: 6, skillUses: 4 });
     const target = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([front, eye], [target], null, { next: () => 0 });
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(target.hp).toBe(5);
+    expect(target.hp).toBe(6);
   });
 
   it("parasite at index 2 does not buff itself", () => {

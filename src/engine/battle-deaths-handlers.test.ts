@@ -62,14 +62,14 @@ describe("handleRatDeath", () => {
 });
 
 describe("handleHoundDeath", () => {
-  it("spawns 2/1 token at idx 0", () => {
+  it("spawns 3/2 token at idx 0", () => {
     const ctx = makeContext();
     const dead = makeBattleUnit({ id: "hound", name: "猟犬" });
     callHandler("hound", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.id).toBe("token");
-    expect(ctx.pBoard[0]!.atk).toBe(2);
-    expect(ctx.pBoard[0]!.hp).toBe(1);
+    expect(ctx.pBoard[0]!.atk).toBe(3);
+    expect(ctx.pBoard[0]!.hp).toBe(2);
   });
 
   it("spawns token at correct middle position", () => {
@@ -90,24 +90,24 @@ describe("handleHoundDeath", () => {
     expect(ctx.pBoard[0]!.isChurch).toBe(true);
   });
 
-  it("zealot on board buffs spawned token atk +1", () => {
+  it("zealot on board buffs spawned token atk +2", () => {
     const zealot = makeBattleUnit({ id: "zealot", name: "狂信者", hp: 3 });
     const ctx = makeContext([zealot]);
     const dead = makeBattleUnit({ id: "hound", name: "猟犬" });
     callHandler("hound", dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
-    expect(token!.atk).toBe(3); // 2 base + 1 zealot
+    expect(token!.atk).toBe(5); // 3 base + 2 zealot
   });
 });
 
 describe("handleBeastDeath", () => {
-  it("spawns a tier-3 unit as 3/3", () => {
+  it("spawns a tier-3 unit as 4/4", () => {
     const ctx = makeContext([], [], null, { next: () => 0 });
     const dead = makeBattleUnit({ id: "beast", name: "腐肉獣" });
     callHandler("beast", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
-    expect(ctx.pBoard[0]!.atk).toBe(3);
-    expect(ctx.pBoard[0]!.hp).toBe(3);
+    expect(ctx.pBoard[0]!.atk).toBe(4);
+    expect(ctx.pBoard[0]!.hp).toBe(4);
     // Should be a real unit, not a token
     expect(ctx.pBoard[0]!.id).not.toBe("token");
   });
@@ -125,7 +125,7 @@ describe("handleBeastDeath", () => {
     const dead = makeBattleUnit({ id: "beast", name: "腐肉獣" });
     callHandler("beast", dead, ctx.pBoard, 0, true, ctx);
     const summoned = ctx.pBoard.find((u) => u.id !== "zealot");
-    expect(summoned!.atk).toBe(4); // 3 base + 1 zealot
+    expect(summoned!.atk).toBe(6); // 4 base + 2 zealot
   });
 });
 
@@ -329,7 +329,7 @@ describe("handleEquipDeath", () => {
     const dead = makeBattleUnit({ equip: "maggot_nest", name: "ユニット" });
     handleEquipDeath(dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.name === "巨大蛆虫");
-    expect(token!.atk).toBe(2); // 1 base + 1 zealot
+    expect(token!.atk).toBe(3); // 1 base + 2 zealot
   });
 
   it("death_curse token receives zealot buff", () => {
@@ -338,19 +338,19 @@ describe("handleEquipDeath", () => {
     const dead = makeBattleUnit({ equip: "death_curse", name: "呪兵" });
     handleEquipDeath(dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.name === "呪兵");
-    expect(token!.atk).toBe(2); // 1 base + 1 zealot
+    expect(token!.atk).toBe(3); // 1 base + 2 zealot
   });
 });
 
 describe("handleBeelzebubSpawns", () => {
-  it("spawns 4/4 fly when beelzebub is alive", () => {
+  it("spawns 3/3 fly when beelzebub is alive", () => {
     const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
     const ctx = makeContext([beelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
     expect(fly).toBeDefined();
-    expect(fly!.atk).toBe(4);
-    expect(fly!.hp).toBe(4);
+    expect(fly!.atk).toBe(3);
+    expect(fly!.hp).toBe(3);
     expect(ctx.pFlyCount).toBe(1);
   });
 
@@ -380,7 +380,7 @@ describe("handleBeelzebubSpawns", () => {
     const ctx = makeContext([zealot, beelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
-    expect(fly!.atk).toBe(5); // 4 base + 1 zealot
+    expect(fly!.atk).toBe(5); // 3 base + 2 zealot
   });
 
   it("does not trigger when no beelzebub on board", () => {

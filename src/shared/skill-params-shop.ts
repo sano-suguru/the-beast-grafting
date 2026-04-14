@@ -6,14 +6,14 @@ type SB = Scaled<Buff>;
 
 export const ALTAR = {
   buff: [
-    { atk: 3, hp: 1 },
-    { atk: 6, hp: 2 },
-    { atk: 9, hp: 3 },
+    { atk: 3, hp: 2 },
+    { atk: 5, hp: 3 },
+    { atk: 7, hp: 5 },
   ] as SB,
 };
 
 export const ZEALOT = {
-  summonBuff: [1, 2, 3] as SN,
+  summonBuff: [2, 3, 4] as SN,
 };
 
 export const ROT_RING = {
@@ -26,17 +26,17 @@ export const BLOOD_FONT = {
 
 export const CORPSE_GARDEN = {
   buff: [
-    { atk: 3, hp: 3 },
-    { atk: 5, hp: 5 },
-    { atk: 7, hp: 7 },
+    { atk: 4, hp: 4 },
+    { atk: 6, hp: 6 },
+    { atk: 8, hp: 8 },
   ] as SB,
 };
 
 export const BONE_TREE = {
   buff: [
-    { atk: 1, hp: 0 },
     { atk: 1, hp: 1 },
-    { atk: 2, hp: 1 },
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
   ] as SB,
 };
 

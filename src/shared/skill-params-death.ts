@@ -37,17 +37,17 @@ export const PRIEST = {
 
 export const HOUND = {
   token: [
-    { atk: 2, hp: 1 },
     { atk: 3, hp: 2 },
-    { atk: 5, hp: 3 },
+    { atk: 4, hp: 3 },
+    { atk: 6, hp: 4 },
   ] as SB,
 };
 
 export const BEAST = {
   summon: [
-    { atk: 3, hp: 3 },
-    { atk: 5, hp: 5 },
-    { atk: 8, hp: 8 },
+    { atk: 4, hp: 4 },
+    { atk: 6, hp: 6 },
+    { atk: 9, hp: 9 },
   ] as SB,
 };
 
@@ -100,9 +100,9 @@ export const CATHEDRAL = {
 
 export const BEELZEBUB = {
   token: [
-    { atk: 4, hp: 4 },
-    { atk: 8, hp: 8 },
-    { atk: 12, hp: 12 },
+    { atk: 3, hp: 3 },
+    { atk: 6, hp: 6 },
+    { atk: 9, hp: 9 },
   ] as SB,
 };
 

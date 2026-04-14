@@ -38,23 +38,23 @@ describe("resolveDeaths – spawn on death", () => {
     vi.restoreAllMocks();
   });
 
-  it("hound death spawns 2/1 token", () => {
+  it("hound death spawns 3/2 token", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const ctx = makeContext([hound], []);
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.id).toBe("token");
-    expect(ctx.pBoard[0]!.atk).toBe(2);
-    expect(ctx.pBoard[0]!.hp).toBe(1);
+    expect(ctx.pBoard[0]!.atk).toBe(3);
+    expect(ctx.pBoard[0]!.hp).toBe(2);
   });
 
-  it("beast death spawns 3/3 unit", () => {
+  it("beast death spawns 4/4 unit", () => {
     const beast = makeBattleUnit({ id: "beast", name: "腐肉獣", hp: 0 });
     const ctx = makeContext([beast], []);
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
-    expect(ctx.pBoard[0]!.atk).toBe(3);
-    expect(ctx.pBoard[0]!.hp).toBe(3);
+    expect(ctx.pBoard[0]!.atk).toBe(4);
+    expect(ctx.pBoard[0]!.hp).toBe(4);
   });
 
   it("church_beast death spawns 3/3 token with isChurch", () => {
@@ -118,36 +118,36 @@ describe("resolveDeaths – equipment death effects", () => {
 });
 
 describe("resolveDeaths – token buff synergies", () => {
-  it("zealot buffs spawned tokens atk +1", () => {
+  it("zealot buffs spawned tokens atk +2", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const zealot = makeBattleUnit({ id: "zealot", name: "狂信者", atk: 2, hp: 3 });
     const ctx = makeContext([hound, zealot], []);
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(3); // 2 base + 1 zealot buff
+    expect(token!.atk).toBe(5); // 3 base + 2 zealot buff
   });
 
-  it("altar buffs spawned tokens +3/+1", () => {
+  it("altar buffs spawned tokens +3/+2", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const altar = makeBattleUnit({ id: "altar", name: "祭壇", atk: 3, hp: 4 });
     const ctx = makeContext([hound, altar], []);
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(5); // 2 base + 3 altar
-    expect(token!.hp).toBe(2); // 1 base + 1 altar
+    expect(token!.atk).toBe(6); // 3 base + 3 altar
+    expect(token!.hp).toBe(4); // 2 base + 2 altar
   });
 
-  it("altar log shows +3/+1 and final stats without brains", () => {
+  it("altar log shows +3/+2 and final stats without brains", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const altar = makeBattleUnit({ id: "altar", name: "祭壇", atk: 3, hp: 4 });
     const ctx = makeContext([hound, altar], []);
     resolveDeaths(ctx);
     const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
-    expect(logText(altarLog!)).toContain("+3/+1");
-    expect(logText(altarLog!)).toContain("→ 5/2");
+    expect(logText(altarLog!)).toContain("+3/+2");
+    expect(logText(altarLog!)).toContain("→ 6/4");
   });
 
   it("altar buff doubles with brains behind it", () => {
@@ -158,8 +158,8 @@ describe("resolveDeaths – token buff synergies", () => {
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(8); // 2 base + 3*2 altar
-    expect(token!.hp).toBe(3); // 1 base + 1*2 altar
+    expect(token!.atk).toBe(9); // 3 base + 3*2 altar
+    expect(token!.hp).toBe(6); // 2 base + 2*2 altar
   });
 
   it("altar log shows doubled buff and final stats with brains", () => {
@@ -170,21 +170,21 @@ describe("resolveDeaths – token buff synergies", () => {
     resolveDeaths(ctx);
     const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
-    expect(logText(altarLog!)).toContain("+6/+2");
-    expect(logText(altarLog!)).toContain("→ 8/3");
+    expect(logText(altarLog!)).toContain("+6/+4");
+    expect(logText(altarLog!)).toContain("→ 9/6");
   });
 });
 
 describe("resolveDeaths – beelzebub", () => {
-  it("spawns 4/4 fly on ally death", () => {
+  it("spawns 3/3 fly on ally death", () => {
     const dying = makeBattleUnit({ hp: 0 });
     const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
     const ctx = makeContext([dying, beelzebub], []);
     resolveDeaths(ctx);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
     expect(fly).toBeDefined();
-    expect(fly!.atk).toBe(4);
-    expect(fly!.hp).toBe(4);
+    expect(fly!.atk).toBe(3);
+    expect(fly!.hp).toBe(3);
   });
 
   it("fly spawn is capped at 3", () => {

@@ -25,7 +25,7 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 1,
     tier: 1,
-    skillText: "死亡: 2/1頭部を召喚",
+    skillText: "死亡: 3/2頭部を召喚",
     lore: "聖水に浸された獣は、もはや自らの死を認識できない。",
   },
   priest: {

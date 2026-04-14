@@ -29,7 +29,7 @@ export const INQUISITOR = {
 };
 
 export const BANSHEE = {
-  damage: [8, 16, 24] as SN,
+  damage: [6, 12, 18] as SN,
   selfDamage: [3, 6, 9] as SN,
 };
 
@@ -65,8 +65,8 @@ export const PARASITE = {
 };
 
 export const EYE = {
-  damage: [5, 10, 15] as SN,
-  uses: [5, 7, 9] as SN,
+  damage: [4, 8, 12] as SN,
+  uses: [4, 6, 8] as SN,
 };
 
 export const RELIC_SWORD = {
@@ -141,7 +141,7 @@ export const DEVOURING_WOUND = {
 
 export const HUNDRED_ARMS = {
   damageT1: [8, 16, 24] as SN,
-  damageDefault: [4, 8, 12] as SN,
+  damageDefault: [3, 6, 9] as SN,
 };
 
 export const ORGAN_GRINDER = {
@@ -188,7 +188,7 @@ export const CHARNEL_PIT = {
 };
 
 export const GRINNING_SKULL = {
-  threshold: 3,
+  threshold: 4,
   buff: [
     { atk: 3, hp: 3 },
     { atk: 5, hp: 5 },
@@ -243,17 +243,17 @@ export const CORRODING_MOLD = {
 
 export const CRAWLING_CORD = {
   buff: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
+    { atk: 1, hp: 2 },
+    { atk: 2, hp: 3 },
+    { atk: 3, hp: 4 },
   ] as SB,
 };
 
 export const INSATIABLE_MAW = {
   buff: [
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-    { atk: 4, hp: 4 },
+    { atk: 2, hp: 1 },
+    { atk: 3, hp: 2 },
+    { atk: 4, hp: 2 },
   ] as SB,
 };
 

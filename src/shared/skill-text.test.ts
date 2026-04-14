@@ -18,11 +18,22 @@ describe("getSkillText Lv1 consistency", () => {
 });
 
 describe("template coverage", () => {
+  // bone_tree: Lv1とLv2のバフ値が同じ({1,1})のためテキストも同一
+  const LV1_EQUALS_LV2: ReadonlySet<UnitId> = new Set(["bone_tree"] as UnitId[]);
+
   for (const id of TEMPLATED_UNIT_IDS) {
-    it(`${id}: Lv2 text differs from Lv1`, () => {
-      const lv1 = getSkillText(id, 1, "");
-      const lv2 = getSkillText(id, 2, "");
-      expect(lv2).not.toBe(lv1);
-    });
+    if (LV1_EQUALS_LV2.has(id)) {
+      it(`${id}: Lv3 text differs from Lv1`, () => {
+        const lv1 = getSkillText(id, 1, "");
+        const lv3 = getSkillText(id, 3, "");
+        expect(lv3).not.toBe(lv1);
+      });
+    } else {
+      it(`${id}: Lv2 text differs from Lv1`, () => {
+        const lv1 = getSkillText(id, 1, "");
+        const lv2 = getSkillText(id, 2, "");
+        expect(lv2).not.toBe(lv1);
+      });
+    }
   }
 });

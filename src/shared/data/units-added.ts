@@ -53,7 +53,7 @@ export const UNITS_ADDED = {
   graft_scion: {
     id: "graft_scion",
     name: "接ぎ穂の残骸",
-    baseAtk: 1,
+    baseAtk: 2,
     baseHp: 3,
     tier: 2,
     skillText: "死亡: 前の味方に自身ATK分のATKバフ",
