@@ -30,6 +30,7 @@ export const INQUISITOR = {
 
 export const BANSHEE = {
   damage: [8, 16, 24] as SN,
+  selfDamage: [3, 6, 9] as SN,
 };
 
 export const REVENANT = {
@@ -66,10 +67,6 @@ export const PARASITE = {
 export const EYE = {
   damage: [5, 10, 15] as SN,
   uses: [5, 7, 9] as SN,
-};
-
-export const FAMINE_CORPSE = {
-  atkDebuff: [2, 3, 4] as SN,
 };
 
 export const RELIC_SWORD = {
@@ -121,6 +118,15 @@ export const HOWLING_GIANT = {
 
 export const AMNIOTIC_ARMOR = {
   uses: [1, 2, 3] as SN,
+};
+
+export const MACHINE = {
+  buff: [
+    { atk: 1, hp: 1 },
+    { atk: 1, hp: 2 },
+    { atk: 2, hp: 2 },
+  ] as SB,
+  uses: [3, 3, 3] as SN,
 };
 
 // ── 戦闘スキル（撃破） ──
@@ -254,7 +260,6 @@ export const INSATIABLE_MAW = {
 // ── ショップスキル ──
 export {
   ALTAR,
-  MACHINE,
   ZEALOT,
   ROT_RING,
   BLOOD_FONT,

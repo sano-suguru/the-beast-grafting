@@ -12,14 +12,6 @@ export const ALTAR = {
   ] as SB,
 };
 
-export const MACHINE = {
-  buff: [
-    { atk: 2, hp: 2 },
-    { atk: 4, hp: 4 },
-    { atk: 6, hp: 6 },
-  ] as SB,
-};
-
 export const ZEALOT = {
   summonBuff: [1, 2, 3] as SN,
 };

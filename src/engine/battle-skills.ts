@@ -22,6 +22,7 @@ import {
   applyFamineDebuff,
   applyRelicSwordBuff,
   applyPlagueBellToll,
+  applyMachineTransfusion,
 } from "./battle-skills-before-attack";
 
 // ── 開戦スキルレジストリ ──
@@ -138,6 +139,8 @@ const BEFORE_ATTACK_HANDLERS = {
     applyRelicSwordBuff(u, board, prefix, ctx),
   plague_bell: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>
     applyPlagueBellToll(u, enemyBoard, prefix, ctx),
+  machine: ({ u, board, prefix, ctx }: BeforeAttackArgs) =>
+    applyMachineTransfusion(u, board, prefix, ctx),
 } satisfies Partial<Record<UnitId, BeforeAttackHandler>>;
 
 type BeforeAttackUnitId = keyof typeof BEFORE_ATTACK_HANDLERS;

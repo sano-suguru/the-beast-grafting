@@ -37,25 +37,25 @@ export const PRIEST = {
 
 export const HOUND = {
   token: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
+    { atk: 2, hp: 1 },
+    { atk: 3, hp: 2 },
+    { atk: 5, hp: 3 },
   ] as SB,
 };
 
 export const BEAST = {
   summon: [
-    { atk: 2, hp: 2 },
-    { atk: 4, hp: 4 },
-    { atk: 6, hp: 6 },
+    { atk: 3, hp: 3 },
+    { atk: 5, hp: 5 },
+    { atk: 8, hp: 8 },
   ] as SB,
 };
 
 export const CHURCH_BEAST = {
   token: [
-    { atk: 2, hp: 2 },
-    { atk: 4, hp: 4 },
-    { atk: 6, hp: 6 },
+    { atk: 3, hp: 3 },
+    { atk: 5, hp: 5 },
+    { atk: 8, hp: 8 },
   ] as SB,
 };
 
@@ -73,6 +73,7 @@ export const SERAPH = {
 
 export const EVANGELIST = {
   targets: [1, 2, 3] as SN,
+  selfDamage: [2, 2, 2] as SN,
 };
 
 export const CROW = {
@@ -114,9 +115,9 @@ export const OMEN_WOMB = {
 };
 
 export const STELLAR_COCOON = {
-  token: [
+  summon: [
+    { atk: 3, hp: 3 },
     { atk: 5, hp: 5 },
     { atk: 7, hp: 7 },
-    { atk: 10, hp: 10 },
   ] as SB,
 };

@@ -9,7 +9,7 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 8,
     baseHp: 4,
     tier: 5,
-    skillText: "開戦: 最後尾の敵に8ダメ",
+    skillText: "開戦: 最後尾の敵に8ダメ(自身に3反動)",
     lore: "火炙りにされた魔女の遺灰を強引に実体化させたもの。その絶叫は壁の向こうに隠れ潜む者すら確実に呪い殺す。",
     secretLore:
       "その絶叫を聞いた者は、自らの手で耳を削ぎ落としてもなお、脳髄に響く声に狂い死んでいった。",
@@ -18,7 +18,7 @@ export const UNITS_HIGH_TIER = {
     id: "hundred_arms",
     name: "百腕の屠殺体",
     baseAtk: 6,
-    baseHp: 7,
+    baseHp: 5,
     tier: 5,
     skillText: "撃破: 先頭の敵に4ダメ(Tier1に8ダメ)",
     lore: "無数の罪人の腕を縫い付けた多腕の怪物。一度殺戮を始めると、目の前の肉がすべて挽肉になるまで止まらない。",

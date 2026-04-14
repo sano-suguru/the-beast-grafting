@@ -11,14 +11,7 @@ import {
 } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
-import {
-  atLevel,
-  PARASITE,
-  EYE,
-  FAMINE_CORPSE,
-  RELIC_SWORD,
-  PLAGUE_BELL,
-} from "../shared/skill-params";
+import { atLevel, PARASITE, EYE, RELIC_SWORD, PLAGUE_BELL, MACHINE } from "../shared/skill-params";
 
 export function applyParasiteBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {
   const b = atLevel(PARASITE.buff, u.level);
@@ -70,7 +63,7 @@ export function applyFamineDebuff(
 ) {
   if (enemyBoard.length === 0) return;
   const front = mustGet(enemyBoard, 0, "famine front");
-  const debuff = atLevel(FAMINE_CORPSE.atkDebuff, u.level);
+  const debuff = u.atk;
   front.atk = Math.max(1, front.atk - debuff);
   pushFrame(
     ctx,
@@ -137,4 +130,32 @@ export function applyPlagueBellToll(
   );
   u.skillUses -= 1;
   resolveDeaths(ctx);
+}
+
+export function applyMachineTransfusion(
+  u: BattleUnit,
+  board: BattleUnit[],
+  prefix: string,
+  ctx: BattleContext,
+) {
+  const front = board[0];
+  if (!front || u.skillUses <= 0) return;
+  const b = atLevel(MACHINE.buff, u.level);
+  front.atk += b.atk;
+  front.hp += b.hp;
+  u.skillUses -= 1;
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      prefix,
+      seg.u(u.name),
+      "が",
+      seg.u(front.name),
+      "に不浄な血を送る。",
+      seg.s(`+${b.atk}/+${b.hp}`),
+    ],
+    "skill",
+    { [u.uid]: skillAction(), [front.uid]: buffAction(b, u.uid) },
+  );
 }

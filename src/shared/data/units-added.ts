@@ -132,7 +132,7 @@ export const UNITS_ADDED = {
     baseAtk: 4,
     baseHp: 3,
     tier: 4,
-    skillText: "死亡: 5/5の「星の落とし子」を召喚",
+    skillText: "死亡: 3/3の星の落とし子を召喚(倒した敵を錯乱させる)",
     lore: "星辰の配列が正しい夜にだけ降ってくる、正体不明の繭。破壊されると、中から異形の光を帯びた何かが這い出してくる。闇市の商人は高値を付けるが、手元に長く置きたがる者はいない。",
   },
 } as const satisfies Partial<Record<RegularUnitId, UnitData>>;

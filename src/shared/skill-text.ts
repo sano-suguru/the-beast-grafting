@@ -27,7 +27,6 @@ import {
   PLAGUE_BELL,
   PALADIN,
   HOLY_FIRE,
-  FAMINE_CORPSE,
   RELIC_SWORD,
   LEECH,
   STITCHED_TWIN,
@@ -52,6 +51,7 @@ import {
   ASH_FUNGUS,
   TAINTED_PLACENTA,
   CORRODING_MOLD,
+  STELLAR_COCOON,
 } from "./skill-params";
 
 const houndDeathText = (lv: number) => {
@@ -97,16 +97,18 @@ const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
   },
   revenant: (lv) =>
     `開戦: 前夜敗北なら前方${atLevel(REVENANT.targets, lv)}体の攻撃+${atLevel(REVENANT.buff, lv)}`,
-  evangelist: (lv) => `味方死亡: ランダムな敵${atLevel(EVANGELIST.targets, lv)}体を感染させる`,
+  evangelist: (lv) =>
+    `味方死亡: ランダムな敵${atLevel(EVANGELIST.targets, lv)}体を感染させる(自身に${atLevel(EVANGELIST.selfDamage, lv)}ダメ)`,
   altar: (lv) => {
     const b = atLevel(ALTAR.buff, lv);
     return `味方配置/召喚: その味方に+${b.atk}/+${b.hp}`;
   },
   machine: (lv) => {
     const b = atLevel(MACHINE.buff, lv);
-    return `出陣時: 最前衛に+${b.atk}/+${b.hp}`;
+    return `直前の味方が攻撃: 最前衛に+${b.atk}/+${b.hp}(${atLevel(MACHINE.uses, lv)}回/戦)`;
   },
-  shrieking_throat: (lv) => `開戦: 最後尾の敵に${atLevel(BANSHEE.damage, lv)}ダメ`,
+  shrieking_throat: (lv) =>
+    `開戦: 最後尾の敵に${atLevel(BANSHEE.damage, lv)}ダメ(自身に${atLevel(BANSHEE.selfDamage, lv)}反動)`,
   hundred_arms: (lv) =>
     `撃破: 先頭の敵に${atLevel(HUNDRED_ARMS.damageDefault, lv)}ダメ(Tier1に${atLevel(HUNDRED_ARMS.damageT1, lv)}ダメ)`,
   priest: (lv) => {
@@ -146,7 +148,6 @@ const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
     const b = atLevel(CHARNEL_PIT.token, lv);
     return `味方${CHARNEL_PIT.threshold}体死亡ごと: ${b.atk}/${b.hp}を召喚`;
   },
-  famine_corpse: (lv) => `直前の味方が攻撃: 敵前衛の攻撃-${atLevel(FAMINE_CORPSE.atkDebuff, lv)}`,
   sin_eater: (lv) =>
     `味方死亡: 死んだ味方の攻撃を吸収(1回上限${atLevel(SIN_EATER.atkCap, lv)}, ${atLevel(SIN_EATER.uses, lv)}回)`,
   blood_font: (lv) => `出陣時: 最もHPが低い味方に+0/+${atLevel(BLOOD_FONT.hpBuff, lv)}`,
@@ -190,6 +191,10 @@ const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
   corroding_mold: (lv) => {
     const b = atLevel(CORRODING_MOLD.buff, lv);
     return `開戦: 前の味方に+${b.atk}/+${b.hp}`;
+  },
+  stellar_cocoon: (lv) => {
+    const b = atLevel(STELLAR_COCOON.summon, lv);
+    return `死亡: ${b.atk}/${b.hp}の星の落とし子を召喚(倒した敵を錯乱させる)`;
   },
   risen_pope: (lv) => {
     const b = atLevel(RISEN_POPE.buff, lv);

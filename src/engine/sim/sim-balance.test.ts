@@ -251,7 +251,7 @@ describe("archetype matchups", () => {
   const names = [...positioned.keys()];
   const TRIALS = 500;
 
-  it("runs all-vs-all without crashing", () => {
+  it("runs all-vs-all without crashing", { timeout: 15_000 }, () => {
     for (let i = 0; i < names.length; i++) {
       for (let j = i + 1; j < names.length; j++) {
         const a = names[i]!;

@@ -44,7 +44,6 @@ import {
   PLAGUE_BELL,
   PALADIN,
   HOLY_FIRE,
-  FAMINE_CORPSE,
   RELIC_SWORD,
   LEECH,
   GRINNING_SKULL,
@@ -748,15 +747,14 @@ describe("runStartSkills – holy_fire", () => {
 // ── famine_corpse (before-attack: debuff enemy front atk) ──
 
 describe("applyBeforeAttackSkills – famine_corpse", () => {
-  it("debuffs enemy front unit atk", () => {
+  it("debuffs enemy front unit atk by own atk", () => {
     const front = makeBattleUnit({ atk: 5, hp: 10 });
     const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 3, hp: 3 });
     const ctx = makeContext([front, famine], [makeBattleUnit({ hp: 10, atk: 4 })]);
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    const debuff = atLevel(FAMINE_CORPSE.atkDebuff, 1);
     expect(front.atk).toBe(5);
     expect(famine.atk).toBe(3);
-    expect(ctx.eBoard[0]!.atk).toBe(Math.max(1, 4 - debuff));
+    expect(ctx.eBoard[0]!.atk).toBe(Math.max(1, 4 - 3)); // debuff = famine.atk
   });
 
   it("floors atk at 1", () => {
@@ -1183,16 +1181,67 @@ describe("handleOmenWombDeath", () => {
 });
 
 describe("handleStellarCocoonDeath", () => {
-  it("spawns 1 token with correct stats", () => {
+  it("spawns star_child unit with correct stats", () => {
     const board: BattleUnit[] = [];
     const dead = makeBattleUnit({ id: "stellar_cocoon", name: "星辰の繭", atk: 4, hp: 0 });
     const ctx = makeContext(board, []);
     callDeathHandler("stellar_cocoon", dead, board, 0, true, ctx);
-    const t = atLevel(STELLAR_COCOON.token, 1);
-    const tokens = board.filter((u) => u.name === "星の落とし子");
-    expect(tokens).toHaveLength(1);
-    expect(tokens[0]!.atk).toBe(t.atk);
-    expect(tokens[0]!.hp).toBe(t.hp);
+    const t = atLevel(STELLAR_COCOON.summon, 1);
+    const children = board.filter((u) => u.id === "star_child");
+    expect(children).toHaveLength(1);
+    expect(children[0]!.atk).toBe(t.atk);
+    expect(children[0]!.hp).toBe(t.hp);
+  });
+});
+
+describe("handleStarChildDeath – frenzy", () => {
+  it("killer attacks a random ally on star_child death", () => {
+    const child = makeBattleUnit({
+      id: "star_child",
+      name: "星の落とし子",
+      hp: 0,
+      lastDamageSource: "killer-uid",
+    });
+    const killer = makeBattleUnit({ uid: "killer-uid", atk: 5, hp: 10 });
+    const ally = makeBattleUnit({ uid: "ally-uid", atk: 3, hp: 8 });
+    const ctx = makeContext([], [killer, ally], null, { next: () => 0 });
+    callDeathHandler("star_child", child, ctx.pBoard, 0, true, ctx);
+    expect(ally.hp).toBe(3); // 8 - 5 killer ATK
+  });
+
+  it("does nothing when killer is dead", () => {
+    const child = makeBattleUnit({
+      id: "star_child",
+      name: "星の落とし子",
+      hp: 0,
+      lastDamageSource: "killer-uid",
+    });
+    const killer = makeBattleUnit({ uid: "killer-uid", atk: 5, hp: 0 });
+    const ally = makeBattleUnit({ uid: "ally-uid", atk: 3, hp: 8 });
+    const ctx = makeContext([], [killer, ally], null, { next: () => 0 });
+    callDeathHandler("star_child", child, ctx.pBoard, 0, true, ctx);
+    expect(ally.hp).toBe(8);
+  });
+
+  it("does nothing when killer has no allies", () => {
+    const child = makeBattleUnit({
+      id: "star_child",
+      name: "星の落とし子",
+      hp: 0,
+      lastDamageSource: "killer-uid",
+    });
+    const killer = makeBattleUnit({ uid: "killer-uid", atk: 5, hp: 10 });
+    const ctx = makeContext([], [killer], null, { next: () => 0 });
+    callDeathHandler("star_child", child, ctx.pBoard, 0, true, ctx);
+    expect(ctx.frames).toHaveLength(0);
+  });
+
+  it("does nothing when no lastDamageSource", () => {
+    const child = makeBattleUnit({ id: "star_child", name: "星の落とし子", hp: 0 });
+    const enemy = makeBattleUnit({ uid: "e1", atk: 5, hp: 10 });
+    const ctx = makeContext([], [enemy], null, { next: () => 0 });
+    callDeathHandler("star_child", child, ctx.pBoard, 0, true, ctx);
+    expect(ctx.frames).toHaveLength(0);
   });
 });
 

@@ -62,13 +62,13 @@ describe("handleRatDeath", () => {
 });
 
 describe("handleHoundDeath", () => {
-  it("spawns 1/1 token at idx 0", () => {
+  it("spawns 2/1 token at idx 0", () => {
     const ctx = makeContext();
     const dead = makeBattleUnit({ id: "hound", name: "猟犬" });
     callHandler("hound", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.id).toBe("token");
-    expect(ctx.pBoard[0]!.atk).toBe(1);
+    expect(ctx.pBoard[0]!.atk).toBe(2);
     expect(ctx.pBoard[0]!.hp).toBe(1);
   });
 
@@ -96,18 +96,18 @@ describe("handleHoundDeath", () => {
     const dead = makeBattleUnit({ id: "hound", name: "猟犬" });
     callHandler("hound", dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
-    expect(token!.atk).toBe(2); // 1 base + 1 zealot
+    expect(token!.atk).toBe(3); // 2 base + 1 zealot
   });
 });
 
 describe("handleBeastDeath", () => {
-  it("spawns a tier-3 unit as 2/2", () => {
+  it("spawns a tier-3 unit as 3/3", () => {
     const ctx = makeContext([], [], null, { next: () => 0 });
     const dead = makeBattleUnit({ id: "beast", name: "腐肉獣" });
     callHandler("beast", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
-    expect(ctx.pBoard[0]!.atk).toBe(2);
-    expect(ctx.pBoard[0]!.hp).toBe(2);
+    expect(ctx.pBoard[0]!.atk).toBe(3);
+    expect(ctx.pBoard[0]!.hp).toBe(3);
     // Should be a real unit, not a token
     expect(ctx.pBoard[0]!.id).not.toBe("token");
   });
@@ -125,19 +125,19 @@ describe("handleBeastDeath", () => {
     const dead = makeBattleUnit({ id: "beast", name: "腐肉獣" });
     callHandler("beast", dead, ctx.pBoard, 0, true, ctx);
     const summoned = ctx.pBoard.find((u) => u.id !== "zealot");
-    expect(summoned!.atk).toBe(3); // 2 base + 1 zealot
+    expect(summoned!.atk).toBe(4); // 3 base + 1 zealot
   });
 });
 
 describe("handleChurchBeastDeath", () => {
-  it("spawns 2/2 token with isChurch=true", () => {
+  it("spawns 3/3 token with isChurch=true", () => {
     const ctx = makeContext();
     const dead = makeBattleUnit({ id: "church_beast", name: "偽天使", isChurch: true });
     callHandler("church_beast", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("祝福の幼子");
-    expect(ctx.pBoard[0]!.atk).toBe(2);
-    expect(ctx.pBoard[0]!.hp).toBe(2);
+    expect(ctx.pBoard[0]!.atk).toBe(3);
+    expect(ctx.pBoard[0]!.hp).toBe(3);
     expect(ctx.pBoard[0]!.isChurch).toBe(true);
   });
 });

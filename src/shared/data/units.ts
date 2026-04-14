@@ -32,7 +32,7 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 1,
     baseHp: 3,
     tier: 1,
-    skillText: "死亡: 1/1頭部を召喚",
+    skillText: "死亡: 2/1頭部を召喚",
     lore: "主人の亡骸を守り、騎士たちに最後まで牙を剥いた忠犬。首を落とされてなお、顎の力は衰えていない。",
     secretLore:
       "主人の腕を繋がれた犬は、街中の教団騎士の喉を的確に噛みちぎり、静かに主人の墓前で永遠の眠りについた。",
@@ -106,7 +106,7 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 2,
     tier: 2,
-    skillText: "死亡: ランダムなTier3素体を2/2として召喚",
+    skillText: "死亡: ランダムなTier3素体を3/3として召喚",
     lore: "腹部が異様に膨れ上がった正体不明の獣の死骸。中で何かが胎動しており、今にも腹を食い破って出てきそうだ。",
     secretLore:
       "腹から這い出た『子』たちはネズミ算式に増殖し、王都の広大な地下水路は彼らの巨大で醜悪な苗床と化した。",
@@ -208,10 +208,10 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
   famine_corpse: {
     id: "famine_corpse",
     name: "飢えた蝗の群れ",
-    baseAtk: 3,
+    baseAtk: 2,
     baseHp: 3,
     tier: 3,
-    skillText: "直前の味方が攻撃: 敵前衛の攻撃-2",
+    skillText: "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
     lore: "群れが通った後の素体から、脂肪だけが消えている。",
     secretLore: "蝗が過ぎた村は三代先まで実らなかった。土が飢えていた。",
   },
@@ -222,7 +222,7 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 5,
     tier: 4,
-    skillText: "味方死亡: ランダムな敵1体を感染させる",
+    skillText: "味方死亡: ランダムな敵1体を感染させる(自身に2ダメ)",
     lore: "全身から致死の瘴気を放つ、かつての聖職者。その祈りは最も屈強な騎士の肺すら一瞬で腐らせる。",
     secretLore: "彼が通った街はすべて沈黙し、もはや誰一人として神への祈りを口にする者はいない。",
   },
@@ -239,10 +239,10 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
   machine: {
     id: "machine",
     name: "狂った輸血機械",
-    baseAtk: 1,
-    baseHp: 2,
+    baseAtk: 2,
+    baseHp: 5,
     tier: 4,
-    skillText: "出陣時: 最前衛に+2/+2",
+    skillText: "直前の味方が攻撃: 最前衛に+1/+1(3回/戦)",
     lore: "血液を強制的に循環させる真鍮製のポンプ。常に先頭で血を流す素体へ、際限なく不浄な血を送り込み続ける。",
     secretLore:
       "血を送りすぎた機械は暴走し、周囲の空間すべての血液を霧状に噴出する悍ましいモニュメントと化した。",

@@ -158,6 +158,8 @@ const UNIT_ICONS: Record<UnitId, typeof Rat> = {
   tumor_guardian: Target,
   groaning_coffin: Fingerprint,
   stellar_cocoon: Moon,
+  // Spawn-only
+  star_child: Sparkles,
   // Regular — 追加 Tier 5
   necrotic_finger: Hand,
   insatiable_maw: Bomb,

@@ -2,11 +2,13 @@ import type { BattleAction, UnitId } from "../shared/types";
 import type { BattleUnit } from "./battle-context";
 import {
   pushFrame,
+  takeDamage,
   enemyPrefix,
   seg,
   aoeBuffActions,
   buffAction,
   skillAction,
+  damageAction,
 } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { applySkillDamage, type SkillContext } from "./battle-skills-util";
@@ -91,6 +93,22 @@ export function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext)
     ],
     isPlayer,
     ctx,
+  );
+  const selfDmg = atLevel(BANSHEE.selfDamage, u.level);
+  const selfBefore = u.hp;
+  takeDamage(u, selfDmg);
+  const prefix = enemyPrefix(isPlayer);
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      prefix,
+      seg.u(u.name),
+      "の喉が裂ける。",
+      seg.hp(`${selfBefore}→${Math.max(0, selfBefore - selfDmg)}`),
+    ],
+    "skill",
+    { [u.uid]: damageAction(selfDmg) },
   );
 }
 

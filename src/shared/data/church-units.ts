@@ -25,7 +25,7 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 1,
     tier: 1,
-    skillText: "死亡: 1/1頭部を召喚",
+    skillText: "死亡: 2/1頭部を召喚",
     lore: "聖水に浸された獣は、もはや自らの死を認識できない。",
   },
   priest: {
@@ -52,7 +52,7 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 2,
     tier: 2,
-    skillText: "死亡: 2/2幼子を召喚",
+    skillText: "死亡: 3/3幼子を召喚",
     lore: "教団が『天使の降臨』と呼ぶ何か。その純白の腹の中には、さらに悍ましい『祝福』が詰まっている。",
   },
   // Tier 3

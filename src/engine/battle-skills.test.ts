@@ -77,6 +77,15 @@ describe("runStartSkills – damage skills", () => {
     expect(front.hp).toBe(10);
     expect(back.hp).toBe(2);
   });
+
+  it("shrieking_throat takes self-damage recoil", () => {
+    const throat = makeBattleUnit({ id: "shrieking_throat", name: "叫喚する喉袋", atk: 8, hp: 10 });
+    const enemy = makeBattleUnit({ hp: 20 });
+    const ctx = makeContext([throat], [enemy]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(enemy.hp).toBe(12); // 20 - 8
+    expect(throat.hp).toBe(7); // 10 - 3 (selfDamage at lv1)
+  });
 });
 
 describe("runStartSkills – revenant buff", () => {
@@ -274,6 +283,25 @@ describe("applyBeforeAttackSkills", () => {
     const ctx = makeContext([front], [makeBattleUnit()]);
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(ctx.frames).toHaveLength(0);
+  });
+
+  it("machine buffs frontmost ally +1/+1 per trigger", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 5 });
+    const machine = makeBattleUnit({ id: "machine", name: "輸血機械", skillUses: 3 });
+    const ctx = makeContext([front, machine], [makeBattleUnit()]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(front.atk).toBe(6);
+    expect(front.hp).toBe(6);
+    expect(machine.skillUses).toBe(2);
+  });
+
+  it("machine stops after skillUses exhausted", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 5 });
+    const machine = makeBattleUnit({ id: "machine", name: "輸血機械", skillUses: 0 });
+    const ctx = makeContext([front, machine], [makeBattleUnit()]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(front.atk).toBe(5);
+    expect(front.hp).toBe(5);
   });
 });
 

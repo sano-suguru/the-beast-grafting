@@ -7,7 +7,6 @@ import { CUMULATIVE_EXP, MAX_UNIT_LEVEL } from "../shared/constants";
 import {
   atLevel,
   ALTAR,
-  MACHINE,
   ROT_RING,
   BONE_TREE,
   GRAVE_WORM,
@@ -191,33 +190,6 @@ export const applySummonEffects = (
     modified = true;
   }
 
-  return modified ? nextBoard : currentBoard;
-};
-
-function applyMachineFrontlineBuff(board: (UnitInstance | null)[]): boolean {
-  const frontIdx = board.findIndex((u) => u !== null);
-  if (frontIdx === -1) return false;
-  let modified = false;
-  for (const u of board) {
-    if (!u || u.id !== "machine") continue;
-    modified = true;
-    const front = board[frontIdx];
-    if (!front) continue;
-    const mb = atLevel(MACHINE.buff, u.level);
-    board[frontIdx] = {
-      ...front,
-      buffAtk: front.buffAtk + mb.atk,
-      buffHp: front.buffHp + mb.hp,
-    };
-  }
-  return modified;
-}
-
-export const applyEndOfNightEffects = (
-  currentBoard: (UnitInstance | null)[],
-): (UnitInstance | null)[] => {
-  const nextBoard = [...currentBoard];
-  const modified = applyMachineFrontlineBuff(nextBoard);
   return modified ? nextBoard : currentBoard;
 };
 

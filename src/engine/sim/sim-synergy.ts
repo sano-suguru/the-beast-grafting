@@ -44,7 +44,7 @@ export const UNIT_PROFILES: Readonly<Record<RegularUnitId, UnitSimProfile>> = {
   // ── Tier 4 ──
   evangelist: { role: "flex", tags: ["death-reactor"] },
   altar: { role: "flex", tags: ["spawn-reactor"] },
-  machine: { role: "flex", tags: ["front-synergy"] },
+  machine: { role: "support", tags: ["front-synergy"] },
   sin_eater: { role: "flex", tags: ["death-reactor"] },
   blood_font: { role: "flex", tags: ["front-synergy"] },
   ash_fungus: { role: "flex", tags: ["stat-stick"] },

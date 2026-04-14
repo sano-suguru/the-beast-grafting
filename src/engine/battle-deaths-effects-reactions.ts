@@ -1,12 +1,14 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
 import {
   pushFrame,
+  takeDamage,
   getMult,
   enemyPrefix,
   seg,
   buffAction,
   skillAction,
   defendAction,
+  damageAction,
 } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { FLY_SPAWN_CAP, FRAME_DELAY_DEATH_CHAIN } from "./constants";
@@ -217,5 +219,15 @@ export function handleEvangelistPlague(
     for (let m = 0; m < mult; m++) {
       infectTargets(u, enemyBoard, targets, prefix, ctx);
     }
+    const selfDmg = atLevel(EVANGELIST.selfDamage, u.level);
+    takeDamage(u, selfDmg);
+    pushFrame(
+      ctx,
+      "skill",
+      [prefix, seg.u(u.name), "の肉体が瘴気に蝕まれる。", seg.s(`-${selfDmg}HP`)],
+      "skill",
+      { [u.uid]: damageAction(selfDmg) },
+      FRAME_DELAY_DEATH_CHAIN,
+    );
   }
 }

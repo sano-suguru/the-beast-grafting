@@ -83,8 +83,9 @@ export type ChurchUnitId =
   | "archangel"
   | "risen_pope";
 
+export type SpawnOnlyUnitId = "star_child";
 export type TokenId = "token";
-export type DataUnitId = RegularUnitId | ChurchUnitId;
+export type DataUnitId = RegularUnitId | ChurchUnitId | SpawnOnlyUnitId;
 export type UnitId = DataUnitId | TokenId;
 
 export type ItemId =

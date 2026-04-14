@@ -1,5 +1,6 @@
 import { UNITS } from "../shared/data/units";
 import { CHURCH_UNITS } from "../shared/data/church-units";
+import { SPAWN_ONLY_UNITS } from "../shared/data/spawn-only-units";
 import { ITEMS } from "../shared/data/items";
 import { EQUIPS } from "../shared/data/equips";
 import type { EquipType } from "../shared/types";
@@ -147,9 +148,9 @@ describe("ORIGINS data integrity", () => {
 });
 
 describe("Cross-reference integrity", () => {
-  it("every unit ID in UNIT_DEATH_HANDLERS exists in UNITS or CHURCH_UNITS", () => {
+  it("every unit ID in UNIT_DEATH_HANDLERS exists in UNITS, CHURCH_UNITS, or SPAWN_ONLY_UNITS", () => {
     for (const key of Object.keys(UNIT_DEATH_HANDLERS)) {
-      const exists = key in UNITS || key in CHURCH_UNITS;
+      const exists = key in UNITS || key in CHURCH_UNITS || key in SPAWN_ONLY_UNITS;
       expect(exists, `handler for "${key}" but unit not found`).toBe(true);
     }
   });

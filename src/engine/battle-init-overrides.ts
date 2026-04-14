@@ -8,6 +8,7 @@ import {
   SIN_EATER,
   PLAGUE_BELL,
   AMNIOTIC_ARMOR,
+  MACHINE,
 } from "../shared/skill-params";
 
 const INIT_OVERRIDES = {
@@ -28,6 +29,9 @@ const INIT_OVERRIDES = {
   },
   amniotic_armor: (bu: BattleUnit) => {
     bu.skillUses = atLevel(AMNIOTIC_ARMOR.uses, bu.level);
+  },
+  machine: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(MACHINE.uses, bu.level);
   },
 } satisfies Partial<Record<UnitId, (bu: BattleUnit) => void>>;
 

@@ -1,12 +1,21 @@
 import type { LogSegment, DataUnitId } from "../shared/types";
 import type { DeathContext } from "./battle-deaths-handlers-unit";
 import type { AbsorbedData, BattleContext } from "./battle-context";
-import { pushFrame, enemyPrefix, seg, buffAction } from "./battle-context";
+import {
+  pushFrame,
+  takeDamage,
+  enemyPrefix,
+  seg,
+  buffAction,
+  skillAction,
+  damageAction,
+} from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { spawnTokenAndNotify, spawnSummonedUnitAndNotify } from "./battle-spawn";
 import { lookupUnitData } from "../shared/data/unit-lookup";
-import { invariant } from "../shared/invariant";
+import { invariant, mustGet } from "../shared/invariant";
 import { atLevel, OMEN_WOMB, STELLAR_COCOON } from "../shared/skill-params";
+import { SPAWN_ONLY_UNITS } from "../shared/data/spawn-only-units";
 
 export function handleGraftScionDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
   if (!successor) return;
@@ -49,25 +58,58 @@ export function handleOmenWombDeath({ dead, board, idx, isPlayer, ctx }: DeathCo
 }
 
 export function handleStellarCocoonDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
-  const t = atLevel(STELLAR_COCOON.token, dead.level);
-  spawnTokenAndNotify({
+  const t = atLevel(STELLAR_COCOON.summon, dead.level);
+  const stat = `${t.atk}/${t.hp}`;
+  const segments = [
+    enemyPrefix(isPlayer),
+    seg.u(dead.name),
+    "の殻が砕ける。中から何かが…… ",
+    seg.s(`${stat} 召喚`),
+  ];
+  spawnSummonedUnitAndNotify({
     board,
     idx,
-    name: "星の落とし子",
+    unitData: SPAWN_ONLY_UNITS.star_child,
     atk: t.atk,
     hp: t.hp,
     isChurch: dead.isChurch,
-    segments: [
-      enemyPrefix(isPlayer),
-      seg.u(dead.name),
-      "の殻が砕ける。中から何かが…… ",
-      seg.s(`${t.atk}/${t.hp} 召喚`),
-    ],
+    level: dead.level,
+    segments,
     isPlayer,
     ctx,
     delay: FRAME_DELAY_DEATH_CHAIN,
     spawnerUid: dead.uid,
   });
+}
+
+export function handleStarChildDeath({ dead, isPlayer, ctx }: DeathContext) {
+  const killerUid = dead.lastDamageSource;
+  if (!killerUid) return;
+
+  const killerBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
+  const killer = killerBoard.find((u) => u.uid === killerUid && u.hp > 0);
+  if (!killer) return;
+
+  const allies = killerBoard.filter((u) => u.uid !== killer.uid && u.hp > 0);
+  if (allies.length === 0) return;
+
+  const target = mustGet(allies, Math.floor(ctx.rng.next() * allies.length), "frenzy target");
+  takeDamage(target, killer.atk, killer.uid);
+  pushFrame(
+    ctx,
+    "skill",
+    [
+      enemyPrefix(!isPlayer),
+      seg.u(killer.name),
+      "が正気を失い、",
+      seg.u(target.name),
+      "に襲いかかる！ ",
+      seg.s(`${killer.atk}ダメージ`),
+    ],
+    "skill",
+    { [killer.uid]: skillAction(), [target.uid]: damageAction(killer.atk) },
+    FRAME_DELAY_DEATH_CHAIN,
+  );
 }
 
 export function handleDevouringGraftDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {

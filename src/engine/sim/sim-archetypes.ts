@@ -8,6 +8,10 @@ export const ARCHETYPES: Readonly<Record<string, readonly RegularUnitId[]>> = {
   debuff_control: ["famine_corpse", "evangelist", "cholera", "shrieking_throat", "organ_grinder"],
   tank_sustain: ["howling_giant", "amniotic_armor", "tumor_guardian", "leech", "hundred_arms"],
   support_stack: ["parasite", "eye", "brains", "corroding_mold", "plague_bell"],
+  avenge_ramp: ["dead_hand", "rat", "charnel_pit", "wailing_cursechild", "grinning_skull"],
+  mimicking_combo: ["hundred_arms", "parasite", "mimicking_flesh", "blood_font", "corroding_mold"],
+  value_trade: ["devouring_graft", "stitched_twin", "flayed_saint", "stellar_cocoon", "omen_womb"],
+  machine_sustain: ["howling_giant", "machine", "brains", "leech", "tumor_guardian"],
 };
 
 /** 各アーキタイプにポジション最適化を適用して返す */
