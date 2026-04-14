@@ -1,7 +1,7 @@
 import type { BattleAction } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { invariant, mustGet } from "../shared/invariant";
-import { pushFrame, enemyPrefix, seg } from "./battle-context";
+import { pushFrame, enemyPrefix, seg, buffAction, defendAction } from "./battle-context";
 import { UNITS } from "../shared/data/units";
 import { getUnitsByTier } from "./helpers";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
@@ -52,7 +52,7 @@ export function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
     ],
     "skill",
     {
-      [target.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` },
+      [target.uid]: buffAction(b, dead.uid),
     },
     FRAME_DELAY_DEATH_CHAIN,
   );
@@ -60,18 +60,24 @@ export function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
 
 export function handleHoundDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const t = atLevel(HOUND.token, dead.level);
-  spawnTokenAndNotify(
+  spawnTokenAndNotify({
     board,
     idx,
-    "噛み付く頭部",
-    t.atk,
-    t.hp,
-    dead.isChurch,
-    [enemyPrefix(isPlayer), seg.u(dead.name), "の首が牙を剥く！ ", seg.s(`${t.atk}/${t.hp} 召喚`)],
+    name: "噛み付く頭部",
+    atk: t.atk,
+    hp: t.hp,
+    isChurch: dead.isChurch,
+    segments: [
+      enemyPrefix(isPlayer),
+      seg.u(dead.name),
+      "の首が牙を剥く！ ",
+      seg.s(`${t.atk}/${t.hp} 召喚`),
+    ],
     isPlayer,
     ctx,
-    FRAME_DELAY_DEATH_CHAIN,
-  );
+    delay: FRAME_DELAY_DEATH_CHAIN,
+    spawnerUid: dead.uid,
+  });
 }
 
 export function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
@@ -100,19 +106,20 @@ export function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathConte
     isPlayer,
     ctx,
     delay: FRAME_DELAY_DEATH_CHAIN,
+    spawnerUid: dead.uid,
   });
 }
 
 export function handleChurchBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const t = atLevel(CHURCH_BEAST.token, dead.level);
-  spawnTokenAndNotify(
+  spawnTokenAndNotify({
     board,
     idx,
-    "祝福の幼子",
-    t.atk,
-    t.hp,
-    dead.isChurch,
-    [
+    name: "祝福の幼子",
+    atk: t.atk,
+    hp: t.hp,
+    isChurch: dead.isChurch,
+    segments: [
       enemyPrefix(isPlayer),
       seg.u(dead.name),
       "の腹が裂け、",
@@ -122,8 +129,9 @@ export function handleChurchBeastDeath({ dead, board, idx, isPlayer, ctx }: Deat
     ],
     isPlayer,
     ctx,
-    FRAME_DELAY_DEATH_CHAIN,
-  );
+    delay: FRAME_DELAY_DEATH_CHAIN,
+    spawnerUid: dead.uid,
+  });
 }
 
 function buffSuccessor(
@@ -148,7 +156,7 @@ function buffSuccessor(
       seg.s(`+${b.atk}/+${b.hp}`),
     ],
     "skill",
-    { [target.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
+    { [target.uid]: buffAction(b, dead.uid) },
     FRAME_DELAY_DEATH_CHAIN,
   );
 }
@@ -167,7 +175,7 @@ export function handlePriestDeath({ dead, board, isPlayer, ctx }: DeathContext) 
     u.hp += b.hp;
   });
   const actionMap: Record<string, BattleAction> = {};
-  board.forEach((u) => (actionMap[u.uid] = { type: "buff", value: `+${b.atk}/+${b.hp}` }));
+  board.forEach((u) => (actionMap[u.uid] = buffAction(b, dead.uid)));
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
@@ -194,7 +202,7 @@ export function handleMaidenDeath({ dead, isPlayer, ctx, successor }: DeathConte
     [prefix, seg.u(dead.name), "の残骸が", seg.u(successor.name), "を覆う！ ", seg.e("屍蝋の盾")],
     "skill",
     {
-      [successor.uid]: { type: "defend", value: "盾" },
+      [successor.uid]: defendAction("盾"),
     },
     FRAME_DELAY_DEATH_CHAIN,
   );
@@ -221,7 +229,7 @@ export function handleHangedManDeath({ dead, board, isPlayer, ctx }: DeathContex
   for (const target of chosen) {
     target.atk += atkShare;
     target.hp += hpShare;
-    actionMap[target.uid] = { type: "buff", value: `+${atkShare}/+${hpShare}` };
+    actionMap[target.uid] = buffAction({ atk: atkShare, hp: hpShare }, dead.uid);
   }
   pushFrame(
     ctx,
@@ -245,7 +253,7 @@ export function handleSeraphDeath({ dead, board, isPlayer, ctx }: DeathContext) 
   for (const u of board) {
     u.atk += b.atk;
     u.hp += b.hp;
-    actionMap[u.uid] = { type: "buff", value: `+${b.atk}/+${b.hp}` };
+    actionMap[u.uid] = buffAction(b, dead.uid);
   }
   const prefix = enemyPrefix(isPlayer);
   pushFrame(

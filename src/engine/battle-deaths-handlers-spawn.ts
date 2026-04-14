@@ -1,7 +1,7 @@
 import type { LogSegment, DataUnitId } from "../shared/types";
 import type { DeathContext } from "./battle-deaths-handlers-unit";
 import type { AbsorbedData, BattleContext } from "./battle-context";
-import { pushFrame, enemyPrefix, seg } from "./battle-context";
+import { pushFrame, enemyPrefix, seg, buffAction } from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { spawnTokenAndNotify, spawnSummonedUnitAndNotify } from "./battle-spawn";
 import { lookupUnitData } from "../shared/data/unit-lookup";
@@ -23,7 +23,7 @@ export function handleGraftScionDeath({ dead, isPlayer, ctx, successor }: DeathC
       seg.s(`+${dead.atk}/+0`),
     ],
     "skill",
-    { [successor.uid]: { type: "buff", value: `+${dead.atk}/+0` } },
+    { [successor.uid]: buffAction({ atk: dead.atk, hp: 0 }, dead.uid) },
     FRAME_DELAY_DEATH_CHAIN,
   );
 }
@@ -32,31 +32,32 @@ export function handleOmenWombDeath({ dead, board, idx, isPlayer, ctx }: DeathCo
   const t = atLevel(OMEN_WOMB.token, dead.level);
   const prefix = enemyPrefix(isPlayer);
   for (let i = 0; i < 2; i++) {
-    spawnTokenAndNotify(
+    spawnTokenAndNotify({
       board,
       idx,
-      "忌み子",
-      t.atk,
-      t.hp,
-      dead.isChurch,
-      [prefix, seg.u(dead.name), "の腹が裂ける！ ", seg.s(`${t.atk}/${t.hp} 召喚`)],
+      name: "忌み子",
+      atk: t.atk,
+      hp: t.hp,
+      isChurch: dead.isChurch,
+      segments: [prefix, seg.u(dead.name), "の腹が裂ける！ ", seg.s(`${t.atk}/${t.hp} 召喚`)],
       isPlayer,
       ctx,
-      FRAME_DELAY_DEATH_CHAIN,
-    );
+      delay: FRAME_DELAY_DEATH_CHAIN,
+      spawnerUid: dead.uid,
+    });
   }
 }
 
 export function handleStellarCocoonDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const t = atLevel(STELLAR_COCOON.token, dead.level);
-  spawnTokenAndNotify(
+  spawnTokenAndNotify({
     board,
     idx,
-    "星の落とし子",
-    t.atk,
-    t.hp,
-    dead.isChurch,
-    [
+    name: "星の落とし子",
+    atk: t.atk,
+    hp: t.hp,
+    isChurch: dead.isChurch,
+    segments: [
       enemyPrefix(isPlayer),
       seg.u(dead.name),
       "の殻が砕ける。中から何かが…… ",
@@ -64,8 +65,9 @@ export function handleStellarCocoonDeath({ dead, board, idx, isPlayer, ctx }: De
     ],
     isPlayer,
     ctx,
-    FRAME_DELAY_DEATH_CHAIN,
-  );
+    delay: FRAME_DELAY_DEATH_CHAIN,
+    spawnerUid: dead.uid,
+  });
 }
 
 export function handleDevouringGraftDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
@@ -83,18 +85,19 @@ export function handleDevouringGraftDeath({ dead, board, idx, isPlayer, ctx }: D
   ];
   const spawned =
     absorbed.id === "token"
-      ? spawnTokenAndNotify(
+      ? spawnTokenAndNotify({
           board,
           idx,
-          absorbed.name,
-          absorbed.atk,
-          absorbed.hp,
-          absorbed.isChurch,
+          name: absorbed.name,
+          atk: absorbed.atk,
+          hp: absorbed.hp,
+          isChurch: absorbed.isChurch,
           segments,
           isPlayer,
           ctx,
-          FRAME_DELAY_DEATH_CHAIN,
-        )
+          delay: FRAME_DELAY_DEATH_CHAIN,
+          spawnerUid: dead.uid,
+        })
       : spawnNamedUnit(absorbed, dead, board, idx, segments, isPlayer, ctx);
   if (spawned && absorbed.equip) spawned.equip = absorbed.equip;
 }
@@ -122,5 +125,6 @@ function spawnNamedUnit(
     isPlayer,
     ctx,
     delay: FRAME_DELAY_DEATH_CHAIN,
+    spawnerUid: dead.uid,
   });
 }

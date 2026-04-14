@@ -11,6 +11,7 @@ import type {
   DataUnitId,
   Tier,
 } from "../shared/types";
+import type { Buff } from "../shared/skill-params";
 import type { Rng } from "./rng";
 import { TOKEN_TIER } from "../shared/data/tiers";
 import { generateUid } from "./helpers";
@@ -26,6 +27,7 @@ export interface BattleUnit extends UnitInstance {
   avengeDeathCount: number;
   equipUses: number;
   skillUses: number;
+  lastDamageSource: string | null;
 }
 
 export interface AbsorbedData {
@@ -88,6 +90,54 @@ export function pushFrame(
   });
 }
 
+export function skillAction(): BattleAction {
+  return { type: "skill" };
+}
+
+export function clashAction(): BattleAction {
+  return { type: "clash" };
+}
+
+export function defendAction(value?: string): BattleAction {
+  return { type: "defend", ...(value !== undefined && { value }) };
+}
+
+export function deathAction(killer?: string): BattleAction {
+  return { type: "death", ...(killer !== undefined && { killer }) };
+}
+
+export function summonAction(spawnedBy?: string): BattleAction {
+  return { type: "summon", ...(spawnedBy !== undefined && { spawnedBy }) };
+}
+
+export function buffAction(buff: Buff, source?: string): BattleAction {
+  return {
+    type: "buff",
+    value: `+${buff.atk}/+${buff.hp}`,
+    buff,
+    ...(source !== undefined && { source }),
+  };
+}
+
+export function healAction(hp: number, source?: string): BattleAction {
+  return {
+    type: "heal",
+    value: `+0/+${hp}`,
+    heal: hp,
+    ...(source !== undefined && { source }),
+  };
+}
+
+export type ClashActionType = "damage" | "defend";
+
+export function damageAction(
+  damage: number,
+  source?: string,
+  actionType: ClashActionType = "damage",
+): BattleAction {
+  return { type: actionType, value: `-${damage}`, damage, ...(source !== undefined && { source }) };
+}
+
 export function skillDamageActions(
   attacker: BattleUnit,
   target: BattleUnit,
@@ -95,7 +145,7 @@ export function skillDamageActions(
 ): Record<string, BattleAction> {
   return {
     [attacker.uid]: { type: "skill" },
-    [target.uid]: { type: "damage", value: `-${damage}`, source: attacker.uid },
+    [target.uid]: damageAction(damage, attacker.uid),
   };
 }
 
@@ -104,19 +154,18 @@ export function aoeDamageActions(
   targets: readonly BattleUnit[],
   damage: number,
 ): Record<string, BattleAction> {
-  const actions: Record<string, BattleAction> = { [attacker.uid]: { type: "skill" } };
-  for (const t of targets)
-    actions[t.uid] = { type: "damage", value: `-${damage}`, source: attacker.uid };
+  const actions: Record<string, BattleAction> = { [attacker.uid]: skillAction() };
+  for (const t of targets) actions[t.uid] = damageAction(damage, attacker.uid);
   return actions;
 }
 
 export function aoeBuffActions(
   source: BattleUnit,
   targets: readonly BattleUnit[],
-  value: string,
+  buff: Buff,
 ): Record<string, BattleAction> {
-  const actions: Record<string, BattleAction> = { [source.uid]: { type: "skill" } };
-  for (const t of targets) actions[t.uid] = { type: "buff", value };
+  const actions: Record<string, BattleAction> = { [source.uid]: skillAction() };
+  for (const t of targets) actions[t.uid] = buffAction(buff, source.uid);
   return actions;
 }
 
@@ -131,9 +180,10 @@ export function getPuppeteerDeathMult(boardArr: BattleUnit[], deathIdx: number):
   return prev?.id === "puppeteer" && prev.hp > 0 ? 2 : 1;
 }
 
-export function takeDamage(unit: BattleUnit, amount: number): void {
+export function takeDamage(unit: BattleUnit, amount: number, source?: string): void {
   if (unit.hp > 0) unit.preDeathHp = unit.hp;
   unit.hp -= amount;
+  if (source) unit.lastDamageSource = source;
 }
 
 export function createToken(name: string, atk: number, hp: number, isChurch = false): BattleUnit {
@@ -160,6 +210,7 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
     avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
+    lastDamageSource: null,
   };
 }
 
@@ -195,5 +246,6 @@ export function createSummonedUnit(
     avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
+    lastDamageSource: null,
   };
 }

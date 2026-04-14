@@ -1,5 +1,13 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, getPuppeteerDeathMult, enemyPrefix, seg } from "./battle-context";
+import {
+  pushFrame,
+  getMult,
+  getPuppeteerDeathMult,
+  enemyPrefix,
+  seg,
+  buffAction,
+  deathAction,
+} from "./battle-context";
 import { invariant } from "../shared/invariant";
 import {
   getDeathHandler,
@@ -41,7 +49,7 @@ function buffTokenFromAltar(
     ],
     "skill",
     {
-      [token.uid]: { type: "buff", value: `+${atkBuff}/+${hpBuff}` },
+      [token.uid]: buffAction({ atk: atkBuff, hp: hpBuff }, altar.uid),
     },
     FRAME_DELAY_DEATH_CHAIN,
   );
@@ -152,7 +160,7 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
 
   const prefix = enemyPrefix(isPlayer);
   pushFrame(ctx, "death", [prefix, seg.u(dead.name), " は無残に引き裂かれた。"], "death", {
-    [dead.uid]: { type: "death" },
+    [dead.uid]: deathAction(dead.lastDamageSource ?? undefined),
   });
 
   board.splice(bestIdx, 1);

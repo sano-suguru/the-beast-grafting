@@ -2,7 +2,15 @@ import type { UnitInstance, EnemyTeam, BattleFrame, BattleResult } from "../shar
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { generateUid } from "./helpers";
 import type { BattleContext, BattleUnit } from "./battle-context";
-import { pushFrame, takeDamage, skillDamageActions, enemyPrefix, seg } from "./battle-context";
+import {
+  pushFrame,
+  takeDamage,
+  skillDamageActions,
+  damageAction,
+  clashAction,
+  enemyPrefix,
+  seg,
+} from "./battle-context";
 import type { Rng } from "./rng";
 import { createSeededRng } from "./rng";
 import { resolveDeaths } from "./battle-deaths";
@@ -34,6 +42,7 @@ function initBattleUnit(u: UnitInstance): BattleUnit {
     avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
+    lastDamageSource: null,
   };
   getInitOverride(bu.id)?.(bu);
   if (bu.equip === "numbness") bu.equipUses = NUMBNESS_INITIAL_USES;
@@ -73,7 +82,7 @@ function resolveNecroticInstantKill(
 ) {
   if (attacker.id !== "necrotic_finger" || target.hp <= 0 || waxBlocked) return;
   const hpBefore = target.hp;
-  takeDamage(target, hpBefore);
+  takeDamage(target, hpBefore, attacker.uid);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
@@ -97,8 +106,8 @@ function resolveClash(
   ctx: BattleContext,
 ): { pKilledE: boolean; eKilledP: boolean } {
   pushFrame(ctx, "clash", [seg.u(p.name), " と 敵の", seg.u(e.name), " が喰らい合う！"], "clash", {
-    [p.uid]: { type: "clash" },
-    [e.uid]: { type: "clash" },
+    [p.uid]: clashAction(),
+    [e.uid]: clashAction(),
   });
 
   const { pDmg, eDmg, pAction, eAction, pWaxBlocked, eWaxBlocked } = applyEquipmentEffects(
@@ -108,8 +117,8 @@ function resolveClash(
   );
   const pHpBefore = p.hp;
   const eHpBefore = e.hp;
-  takeDamage(p, pDmg);
-  takeDamage(e, eDmg);
+  takeDamage(p, pDmg, e.uid);
+  takeDamage(e, eDmg, p.uid);
 
   pushFrame(
     ctx,
@@ -126,8 +135,8 @@ function resolveClash(
     ],
     "damage",
     {
-      [p.uid]: { type: pAction, value: `-${pDmg}`, source: e.uid },
-      [e.uid]: { type: eAction, value: `-${eDmg}`, source: p.uid },
+      [p.uid]: damageAction(pDmg, e.uid, pAction),
+      [e.uid]: damageAction(eDmg, p.uid, eAction),
     },
   );
 

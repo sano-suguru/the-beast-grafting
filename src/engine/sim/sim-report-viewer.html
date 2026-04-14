@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sim Balance Report</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #1a1a2e;
+        color: #e0e0e0;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        padding: 24px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #c4a882;
+        font-size: 1.6rem;
+        margin-bottom: 4px;
+      }
+      h2 {
+        color: #c4a882;
+        font-size: 1.2rem;
+        margin: 24px 0 12px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 6px;
+      }
+      h3 {
+        color: #a89070;
+        font-size: 1rem;
+        margin: 16px 0 8px;
+      }
+      .meta {
+        color: #888;
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+      }
+      nav {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      nav button {
+        background: #16213e;
+        border: 1px solid #444;
+        color: #ccc;
+        padding: 6px 14px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 0.85rem;
+      }
+      nav button.active {
+        background: #0f3460;
+        color: #e0e0e0;
+        border-color: #c4a882;
+      }
+      section {
+        display: none;
+      }
+      section.active {
+        display: block;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.82rem;
+        margin-bottom: 16px;
+      }
+      th {
+        background: #16213e;
+        color: #c4a882;
+        padding: 6px 8px;
+        text-align: left;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+      }
+      th:hover {
+        background: #1a2a4e;
+      }
+      th .arrow {
+        font-size: 0.7rem;
+        margin-left: 3px;
+        opacity: 0.5;
+      }
+      th.sorted .arrow {
+        opacity: 1;
+      }
+      td {
+        padding: 5px 8px;
+        border-bottom: 1px solid #2a2a3e;
+      }
+      tr:hover {
+        background: #1e1e3a;
+      }
+      .num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .warn {
+        color: #e74c3c;
+        font-weight: 600;
+      }
+      .ok {
+        color: #2ecc71;
+      }
+      .matrix {
+        overflow-x: auto;
+      }
+      .matrix table {
+        width: auto;
+      }
+      .matrix td,
+      .matrix th {
+        text-align: center;
+        padding: 6px 10px;
+        min-width: 80px;
+      }
+      .outlier-list {
+        background: #2a1a1a;
+        border: 1px solid #e74c3c44;
+        border-radius: 6px;
+        padding: 12px;
+        margin: 8px 0;
+      }
+      .outlier-list li {
+        margin: 4px 0;
+        font-size: 0.85rem;
+      }
+      .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .stat-card {
+        background: #16213e;
+        border: 1px solid #333;
+        border-radius: 6px;
+        padding: 14px;
+      }
+      .stat-card .label {
+        color: #888;
+        font-size: 0.8rem;
+      }
+      .stat-card .value {
+        color: #c4a882;
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+      .scroll-wrap {
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+      details {
+        margin: 4px 0;
+      }
+      details summary {
+        cursor: pointer;
+        padding: 4px 0;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>The Beast Grafter &#x2014; Sim Balance Report</h1>
+    <div class="meta" id="generated-at"></div>
+    <nav id="tabs"></nav>
+
+    <section id="s-overview" class="active"></section>
+    <section id="s-matchups"></section>
+    <section id="s-balance"></section>
+    <section id="s-crossnight"></section>
+    <section id="s-scaling"></section>
+
+    <script type="application/json" id="sim-data">
+      { "_placeholder": true }
+    </script>
+    <script>
+      (function () {
+        "use strict";
+
+        // ── Utilities ──
+
+        function wr(rate) {
+          return (rate * 100).toFixed(1);
+        }
+        function num(v, d) {
+          return v.toFixed(d || 0);
+        }
+        function pct(v) {
+          return (v * 100).toFixed(1);
+        }
+
+        function wrColor(rate) {
+          if (rate >= 0.55) return rate >= 0.65 ? "#e74c3c" : "#e67e22";
+          if (rate <= 0.45) return rate <= 0.35 ? "#3498db" : "#2ecc71";
+          return "#2ecc71";
+        }
+
+        function esc(s) {
+          return s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        function el(tag, attrs, children) {
+          var e = document.createElement(tag);
+          if (attrs)
+            Object.keys(attrs).forEach(function (k) {
+              if (k === "textContent") e.textContent = attrs[k];
+              else if (k === "className") e.className = attrs[k];
+              else if (k === "innerHTML") e.innerHTML = attrs[k];
+              else e.setAttribute(k, attrs[k]);
+            });
+          if (children)
+            children.forEach(function (c) {
+              if (typeof c === "string") e.appendChild(document.createTextNode(c));
+              else if (c) e.appendChild(c);
+            });
+          return e;
+        }
+
+        // ── Tab Navigation ──
+
+        var TABS = [
+          ["s-overview", "Overview"],
+          ["s-matchups", "Matchups"],
+          ["s-balance", "Unit Balance"],
+          ["s-crossnight", "Cross-Night"],
+          ["s-scaling", "Scaling"],
+        ];
+
+        function initTabs() {
+          var nav = document.getElementById("tabs");
+          TABS.forEach(function (t, i) {
+            var btn = el("button", { "data-target": t[0], textContent: t[1] });
+            if (i === 0) btn.classList.add("active");
+            btn.addEventListener("click", function () {
+              nav.querySelectorAll("button").forEach(function (b) {
+                b.classList.remove("active");
+              });
+              document.querySelectorAll("section").forEach(function (s) {
+                s.classList.remove("active");
+              });
+              btn.classList.add("active");
+              var target = document.getElementById(btn.getAttribute("data-target"));
+              if (target) target.classList.add("active");
+            });
+            nav.appendChild(btn);
+          });
+        }
+
+        // ── Sortable Table ──
+
+        function makeSortable(table) {
+          var ths = table.querySelectorAll("thead th");
+          ths.forEach(function (th, idx) {
+            var arrow = document.createElement("span");
+            arrow.className = "arrow";
+            arrow.textContent = "\u25B2";
+            th.appendChild(arrow);
+            th.addEventListener("click", function () {
+              var tbody = table.querySelector("tbody");
+              var rows = Array.from(tbody.querySelectorAll("tr"));
+              var asc = th.classList.contains("sorted") && !th.classList.contains("desc");
+              ths.forEach(function (t) {
+                t.classList.remove("sorted", "desc");
+              });
+              th.classList.add("sorted");
+              if (!asc) th.classList.add("desc");
+              rows.sort(function (a, b) {
+                var av = a.children[idx].textContent.replace(/%/g, "").replace(/\+/g, "");
+                var bv = b.children[idx].textContent.replace(/%/g, "").replace(/\+/g, "");
+                var an = parseFloat(av),
+                  bn = parseFloat(bv);
+                if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
+                return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+              });
+              rows.forEach(function (r) {
+                tbody.appendChild(r);
+              });
+            });
+          });
+        }
+
+        // ── Unit Performance Table ──
+
+        var PERF_COLS = [
+          [
+            "Unit",
+            false,
+            function (id) {
+              return id;
+            },
+          ],
+          [
+            "T",
+            true,
+            function (_, p) {
+              return p.tier;
+            },
+          ],
+          [
+            "Win%",
+            true,
+            function (_, p) {
+              return wr(p.wins / p.appearances);
+            },
+          ],
+          [
+            "CI95",
+            true,
+            function (_, p) {
+              return wr(p.winRateCI95[0]) + "-" + wr(p.winRateCI95[1]);
+            },
+          ],
+          [
+            "TNorm",
+            true,
+            function (_, p) {
+              return (p.tierNormalizedWinRate >= 0 ? "+" : "") + pct(p.tierNormalizedWinRate);
+            },
+          ],
+          [
+            "Dmg",
+            true,
+            function (_, p) {
+              return num(p.avgDamage);
+            },
+          ],
+          [
+            "Recv",
+            true,
+            function (_, p) {
+              return num(p.avgDamageReceived);
+            },
+          ],
+          [
+            "Kill",
+            true,
+            function (_, p) {
+              return num(p.avgKills, 1);
+            },
+          ],
+          [
+            "Spawn",
+            true,
+            function (_, p) {
+              return num(p.avgSpawnsProduced, 1);
+            },
+          ],
+          [
+            "Buff+",
+            true,
+            function (_, p) {
+              return num(p.avgBuffAtk, 1) + "/" + num(p.avgBuffHp, 1);
+            },
+          ],
+          [
+            "Gave+",
+            true,
+            function (_, p) {
+              return num(p.avgBuffAtkGiven, 1) + "/" + num(p.avgBuffHpGiven, 1);
+            },
+          ],
+          [
+            "Surv%",
+            true,
+            function (_, p) {
+              return pct(p.survivalRate);
+            },
+          ],
+          [
+            "DeathF",
+            true,
+            function (_, p) {
+              return p.avgDeathFrame !== null ? num(p.avgDeathFrame, 1) : "-";
+            },
+          ],
+          [
+            "Skill/b",
+            true,
+            function (_, p) {
+              return num(p.totalSkillActivations / p.appearances, 1);
+            },
+          ],
+          [
+            "Impact",
+            true,
+            function (_, p) {
+              return num(p.impactScore, 1);
+            },
+          ],
+          [
+            "n",
+            true,
+            function (_, p) {
+              return p.appearances;
+            },
+          ],
+        ];
+
+        function renderPerfTable(container, perfs) {
+          var entries = Object.entries(perfs);
+          if (entries.length === 0) {
+            container.innerHTML = "<p>No unit data</p>";
+            return;
+          }
+
+          entries.sort(function (a, b) {
+            return b[1].wins / b[1].appearances - a[1].wins / a[1].appearances;
+          });
+
+          var table = el("table", { className: "sortable" });
+          var thead = el("thead");
+          var headRow = el("tr");
+          PERF_COLS.forEach(function (col) {
+            headRow.appendChild(el("th", { className: col[1] ? "num" : "" }, [col[0]]));
+          });
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+
+          var tbody = el("tbody");
+          entries.forEach(function (entry) {
+            var id = entry[0],
+              p = entry[1];
+            var winRate = p.wins / p.appearances;
+            var row = el("tr");
+            PERF_COLS.forEach(function (col, ci) {
+              var val = col[2](id, p);
+              var td = el("td", { className: col[1] ? "num" : "", textContent: String(val) });
+              if (ci === 2) td.style.color = wrColor(winRate);
+              row.appendChild(td);
+            });
+            tbody.appendChild(row);
+          });
+          table.appendChild(tbody);
+          container.appendChild(table);
+          makeSortable(table);
+        }
+
+        // ── Overview ──
+
+        function renderOverview(data) {
+          var sec = document.getElementById("s-overview");
+          sec.innerHTML = "<h2>Overview</h2>";
+          var grid = el("div", { className: "overview-grid" });
+
+          function addCard(label, value) {
+            grid.appendChild(
+              el("div", {
+                className: "stat-card",
+                innerHTML:
+                  '<div class="label">' +
+                  esc(label) +
+                  '</div><div class="value">' +
+                  esc(String(value)) +
+                  "</div>",
+              }),
+            );
+          }
+
+          if (data.positionOptimization) {
+            addCard("Position Opt Delta", "+" + num(data.positionOptimization.deltaPp, 1) + "pp");
+          }
+          if (data.randomBalance.length > 0) {
+            var main =
+              data.randomBalance.find(function (r) {
+                return r.trials >= 1000;
+              }) || data.randomBalance[0];
+            addCard("Mirror Win Rate", wr(main.winRate) + "%");
+            addCard("Avg Frame Count", num(main.avgFrameCount, 0));
+          }
+          var totalMatchups = data.archetypeMatchups.length;
+          var imbalanced = data.archetypeMatchups.filter(function (m) {
+            return m.warnings.some(function (w) {
+              return w.indexOf("IMBALANCE") >= 0;
+            });
+          }).length;
+          addCard("Archetype Matchups", totalMatchups + " (" + imbalanced + " imbalanced)");
+          if (data.crossNight.length > 0) {
+            var totalOutliers = data.crossNight.reduce(function (s, c) {
+              return s + c.outliers.length;
+            }, 0);
+            addCard("Cross-Night Outliers", totalOutliers);
+          }
+          sec.appendChild(grid);
+        }
+
+        // ── Matchups ──
+
+        function renderMatchups(data) {
+          var sec = document.getElementById("s-matchups");
+          sec.innerHTML = "<h2>Archetype Matchups</h2>";
+          if (data.archetypeMatchups.length === 0) {
+            sec.innerHTML += "<p>No data</p>";
+            return;
+          }
+
+          var names = [];
+          var lookup = {};
+          data.archetypeMatchups.forEach(function (m) {
+            if (names.indexOf(m.teamA) < 0) names.push(m.teamA);
+            if (names.indexOf(m.teamB) < 0) names.push(m.teamB);
+            lookup[m.teamA + ":" + m.teamB] = m;
+          });
+
+          // Matrix
+          var wrap = el("div", { className: "matrix" });
+          var table = el("table");
+          var headRow = el("tr");
+          headRow.appendChild(el("th"));
+          names.forEach(function (n) {
+            headRow.appendChild(el("th", { textContent: n }));
+          });
+          table.appendChild(headRow);
+
+          names.forEach(function (row) {
+            var tr = el("tr");
+            tr.appendChild(el("th", { textContent: row }));
+            names.forEach(function (col) {
+              if (row === col) {
+                tr.appendChild(el("td", { style: "background:#2a2a3e", textContent: "-" }));
+                return;
+              }
+              var m = lookup[row + ":" + col] || lookup[col + ":" + row];
+              if (!m) {
+                tr.appendChild(el("td", { textContent: "?" }));
+                return;
+              }
+              var rate = m.teamA === row ? m.aWins / m.trials : m.bWins / m.trials;
+              var c = wrColor(rate);
+              tr.appendChild(
+                el("td", {
+                  style: "background:" + c + "22;color:" + c,
+                  textContent: wr(rate) + "%",
+                }),
+              );
+            });
+            table.appendChild(tr);
+          });
+          wrap.appendChild(table);
+          sec.appendChild(wrap);
+
+          // Details
+          sec.appendChild(el("h3", { textContent: "Matchup Details" }));
+          data.archetypeMatchups.forEach(function (m) {
+            var aRate = m.aWins / m.trials;
+            var cls = m.warnings.length > 0 ? "warn" : "ok";
+            var warn = m.warnings.length > 0 ? " [" + m.warnings.join(", ") + "]" : "";
+            var summary =
+              esc(m.teamA) +
+              " vs " +
+              esc(m.teamB) +
+              ": " +
+              wr(aRate) +
+              "% (" +
+              m.aWins +
+              "W/" +
+              m.bWins +
+              "L/" +
+              m.draws +
+              "D) avg " +
+              num(m.avgFrameCount) +
+              "f" +
+              warn;
+
+            var details = document.createElement("details");
+            var sumEl = el("summary", { className: cls, innerHTML: summary });
+            details.appendChild(sumEl);
+            var perfDiv = el("div");
+            renderPerfTable(perfDiv, m.unitPerformance);
+            details.appendChild(perfDiv);
+            sec.appendChild(details);
+          });
+        }
+
+        // ── Unit Balance ──
+
+        function renderBalance(data) {
+          var sec = document.getElementById("s-balance");
+          var main = data.randomBalance.find(function (r) {
+            return r.trials >= 1000;
+          });
+          if (!main) {
+            sec.innerHTML = "<h2>Unit Balance</h2><p>No data</p>";
+            return;
+          }
+          sec.innerHTML =
+            "<h2>Unit Balance (Night " + main.night + ", " + main.trials + " trials)</h2>";
+          var wrap = el("div", { className: "scroll-wrap" });
+          renderPerfTable(wrap, main.unitPerformance);
+          sec.appendChild(wrap);
+        }
+
+        // ── Cross-Night ──
+
+        function renderCrossNight(data) {
+          var sec = document.getElementById("s-crossnight");
+          sec.innerHTML = "<h2>Cross-Night Balance</h2>";
+          if (data.crossNight.length === 0) {
+            sec.innerHTML += "<p>No data</p>";
+            return;
+          }
+
+          var table = el("table");
+          table.innerHTML =
+            "<tr><th>Night</th><th>Win Rate</th><th>Avg Frames</th><th>Unique Units</th><th>Outliers</th></tr>";
+          data.crossNight.forEach(function (c) {
+            var tr = el("tr");
+            tr.innerHTML =
+              '<td class="num">' +
+              c.night +
+              "</td>" +
+              '<td class="num" style="color:' +
+              wrColor(c.winRate) +
+              '">' +
+              wr(c.winRate) +
+              "%</td>" +
+              '<td class="num">' +
+              num(c.avgFrameCount) +
+              "</td>" +
+              '<td class="num">' +
+              c.uniqueUnitCount +
+              "</td>" +
+              '<td class="num">' +
+              c.outliers.length +
+              "</td>";
+            table.appendChild(tr);
+          });
+          sec.appendChild(table);
+
+          var allOutliers = [];
+          data.crossNight.forEach(function (c) {
+            allOutliers = allOutliers.concat(c.outliers);
+          });
+          if (allOutliers.length > 0) {
+            var box = el("div", { className: "outlier-list" });
+            box.innerHTML =
+              "<strong>Outliers</strong><ul>" +
+              allOutliers
+                .map(function (o) {
+                  return (
+                    "<li>T" +
+                    o.tier +
+                    " N" +
+                    o.night +
+                    ": <strong>" +
+                    esc(o.unitId) +
+                    "</strong> win=" +
+                    wr(o.winRate) +
+                    "% (n=" +
+                    o.appearances +
+                    ")</li>"
+                  );
+                })
+                .join("") +
+              "</ul>";
+            sec.appendChild(box);
+          }
+        }
+
+        // ── Scaling ──
+
+        function renderRankingTable(container, title, units, metricFn) {
+          if (units.length === 0) return;
+          container.appendChild(el("h3", { textContent: title }));
+          var table = el("table");
+          table.innerHTML =
+            "<tr><th>#</th><th>Unit</th><th>Tier</th><th>Value</th><th>Win%</th><th>Impact</th><th>n</th></tr>";
+          units.forEach(function (u, i) {
+            var p = u.perf;
+            var winRate = p.wins / p.appearances;
+            var tr = el("tr");
+            tr.innerHTML =
+              '<td class="num">' +
+              (i + 1) +
+              "</td>" +
+              "<td>" +
+              esc(u.unitId) +
+              "</td>" +
+              '<td class="num">' +
+              p.tier +
+              "</td>" +
+              '<td class="num">' +
+              metricFn(p) +
+              "</td>" +
+              '<td class="num" style="color:' +
+              wrColor(winRate) +
+              '">' +
+              wr(winRate) +
+              "%</td>" +
+              '<td class="num">' +
+              num(p.impactScore, 1) +
+              "</td>" +
+              '<td class="num">' +
+              p.appearances +
+              "</td>";
+            table.appendChild(tr);
+          });
+          container.appendChild(table);
+        }
+
+        function renderScaling(data) {
+          var sec = document.getElementById("s-scaling");
+          sec.innerHTML = "<h2>Scaling &amp; Durability Analysis</h2>";
+          if (!data.scalingAnalysis) {
+            sec.innerHTML += "<p>No data</p>";
+            return;
+          }
+          var s = data.scalingAnalysis;
+          renderRankingTable(sec, "Top Buff Receivers", s.topBuffReceivers, function (p) {
+            return num(p.avgBuffAtk + p.avgBuffHp, 1);
+          });
+          renderRankingTable(sec, "Earliest Deaths", s.earliestDeaths, function (p) {
+            return p.avgDeathFrame !== null ? num(p.avgDeathFrame, 1) : "-";
+          });
+          renderRankingTable(sec, "Top Damage Sponges", s.topDamageSponges, function (p) {
+            return num(p.avgDamageReceived);
+          });
+          renderRankingTable(sec, "Top Killers", s.topKillers, function (p) {
+            return num(p.avgKills, 1);
+          });
+          renderRankingTable(sec, "Top Spawners", s.topSpawners, function (p) {
+            return num(p.avgSpawnsProduced, 1);
+          });
+        }
+
+        // ── Init ──
+
+        var DATA = JSON.parse(document.getElementById("sim-data").textContent);
+
+        document.getElementById("generated-at").textContent = "Generated: " + DATA.generatedAt;
+        initTabs();
+        renderOverview(DATA);
+        renderMatchups(DATA);
+        renderBalance(DATA);
+        renderCrossNight(DATA);
+        renderScaling(DATA);
+      })();
+    </script>
+  </body>
+</html>

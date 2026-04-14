@@ -1,6 +1,6 @@
 import type { LogSegment } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, takeDamage, enemyPrefix } from "./battle-context";
+import { pushFrame, takeDamage, enemyPrefix, damageAction, skillAction } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 
 export type SkillContext = {
@@ -26,11 +26,11 @@ export function applySkillDamage(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  takeDamage(target, dmg);
+  takeDamage(target, dmg, u.uid);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(ctx, "skill", [prefix, ...segments], "skill", {
-    [u.uid]: { type: "skill" },
-    [target.uid]: { type: "damage", value: `-${dmg}`, source: u.uid },
+    [u.uid]: skillAction(),
+    [target.uid]: damageAction(dmg, u.uid),
   });
   resolveDeaths(ctx);
 }

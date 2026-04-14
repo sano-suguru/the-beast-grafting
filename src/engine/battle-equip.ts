@@ -1,6 +1,5 @@
-import type { BattleAction } from "../shared/types";
-import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, enemyPrefix, seg } from "./battle-context";
+import type { BattleUnit, BattleContext, ClashActionType } from "./battle-context";
+import { pushFrame, enemyPrefix, seg, skillAction, defendAction } from "./battle-context";
 import {
   BERSERK_BONUS,
   IRON_REDUCTION,
@@ -12,7 +11,7 @@ import {
 
 interface DefenseResult {
   dmg: number;
-  action: BattleAction["type"];
+  action: ClashActionType;
   waxBlocked?: true;
 }
 
@@ -24,7 +23,7 @@ function applyBerserkBonus(unit: BattleUnit, ctx: BattleContext, isPlayer: boole
     "skill",
     [prefix, seg.u(unit.name), "が荒ぶる！", seg.e("狂乱"), seg.s(`攻撃ダメ+${BERSERK_BONUS}`)],
     "skill",
-    { [unit.uid]: { type: "skill" } },
+    { [unit.uid]: skillAction() },
   );
   return BERSERK_BONUS;
 }
@@ -63,7 +62,7 @@ function applyIronDefense(
     "defend",
     [prefix, "刃が弾かれる。", seg.e("鉄の皮膚"), seg.s(`被ダメ-${IRON_REDUCTION}`)],
     "defend",
-    { [unit.uid]: { type: "defend" } },
+    { [unit.uid]: defendAction() },
   );
   return { dmg: reduced, action: "defend" };
 }
@@ -88,7 +87,7 @@ function applyCorpseWaxDefense(
       seg.s(`${CORPSE_WAX_REDUCTION}軽減`),
     ],
     "defend",
-    { [unit.uid]: { type: "defend", value: `${CORPSE_WAX_REDUCTION}軽減` } },
+    { [unit.uid]: defendAction(`${CORPSE_WAX_REDUCTION}軽減`) },
   );
   return { dmg: reduced, action: "defend", waxBlocked: true };
 }
@@ -114,7 +113,7 @@ function applyNumbnessDefense(
       seg.s(`被ダメ-${NUMBNESS_REDUCTION}, 残${uses - 1}回`),
     ],
     "defend",
-    { [unit.uid]: { type: "defend" } },
+    { [unit.uid]: defendAction() },
   );
   if (uses - 1 <= 0) unit.equip = null;
   return { dmg: reduced, action: "defend" };
@@ -137,8 +136,8 @@ function applyDefensiveEquip(
 interface EquipmentResult {
   pDmg: number;
   eDmg: number;
-  pAction: BattleAction["type"];
-  eAction: BattleAction["type"];
+  pAction: ClashActionType;
+  eAction: ClashActionType;
   pWaxBlocked: boolean;
   eWaxBlocked: boolean;
 }

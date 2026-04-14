@@ -1,6 +1,13 @@
 import type { BattleAction, UnitId } from "../shared/types";
 import type { BattleUnit } from "./battle-context";
-import { pushFrame, enemyPrefix, seg, aoeBuffActions } from "./battle-context";
+import {
+  pushFrame,
+  enemyPrefix,
+  seg,
+  aoeBuffActions,
+  buffAction,
+  skillAction,
+} from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { applySkillDamage, type SkillContext } from "./battle-skills-util";
 import {
@@ -94,14 +101,14 @@ export function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
   const maxTargets = atLevel(REVENANT.targets, u.level);
   const buffAmount = atLevel(REVENANT.buff, u.level);
   const actions: Record<string, BattleAction> = {
-    [u.uid]: { type: "skill" },
+    [u.uid]: skillAction(),
   };
   let buffed = 0;
   for (const ally of allyBoard) {
     if (buffed >= maxTargets) break;
     if (ally.uid === u.uid) continue;
     ally.atk += buffAmount;
-    actions[ally.uid] = { type: "buff", value: `+${buffAmount}/+0` };
+    actions[ally.uid] = buffAction({ atk: buffAmount, hp: 0 }, u.uid);
     buffed++;
   }
   if (buffed > 0) {
@@ -157,7 +164,7 @@ export function applyPaladinSkill({ u, isPlayer, ctx }: SkillContext) {
     "skill",
     [prefix, seg.u(u.name), "が手を掲げる。淡い光が味方の傷を塞いでいく。", seg.s(`+0/+${hpBuff}`)],
     "skill",
-    aoeBuffActions(u, buffed, `+0/+${hpBuff}`),
+    aoeBuffActions(u, buffed, { atk: 0, hp: hpBuff }),
   );
 }
 
@@ -219,7 +226,7 @@ export function applyDevouringGraftSkill({ u, isPlayer, ctx }: SkillContext) {
       seg.s(`+${pred.atk}/+${pred.hp}`),
     ],
     "skill",
-    { [u.uid]: { type: "buff", value: `+${pred.atk}/+${pred.hp}` } },
+    { [u.uid]: buffAction({ atk: pred.atk, hp: pred.hp }, u.uid) },
   );
 }
 
@@ -238,7 +245,7 @@ export function applyCorrodingMoldSkill({ u, isPlayer, ctx }: SkillContext) {
     "skill",
     [prefix, seg.u(u.name), "が", seg.u(front.name), "に侵蝕する。", seg.s(`+${b.atk}/+${b.hp}`)],
     "skill",
-    { [front.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
+    { [front.uid]: buffAction(b, u.uid) },
   );
 }
 
@@ -264,7 +271,7 @@ export function applyMimickingFleshSkill(
     "skill",
     [prefix, seg.u(prevName), "が震え、", seg.u(pred.name), "の形に変わる。"],
     "skill",
-    { [u.uid]: { type: "skill" } },
+    { [u.uid]: skillAction() },
   );
   const handler = getStartHandler(u.id);
   if (handler) handler({ u, targetArr, isPlayer, ctx });

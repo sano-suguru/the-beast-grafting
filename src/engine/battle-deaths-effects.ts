@@ -23,32 +23,39 @@ export function handleEquipDeath(
 ) {
   const prefix = enemyPrefix(isPlayer);
   if (dead.equip === "maggot_nest") {
-    spawnTokenAndNotify(
+    spawnTokenAndNotify({
       board,
       idx,
-      "巨大蛆虫",
-      MAGGOT_TOKEN.atk,
-      MAGGOT_TOKEN.hp,
-      dead.isChurch,
-      [prefix, seg.u(dead.name), "の傷口から蛆虫が這い出した！ ", seg.s("1/1 召喚")],
+      name: "巨大蛆虫",
+      atk: MAGGOT_TOKEN.atk,
+      hp: MAGGOT_TOKEN.hp,
+      isChurch: dead.isChurch,
+      segments: [prefix, seg.u(dead.name), "の傷口から蛆虫が這い出した！ ", seg.s("1/1 召喚")],
       isPlayer,
       ctx,
-      FRAME_DELAY_DEATH_CHAIN,
-    );
+      delay: FRAME_DELAY_DEATH_CHAIN,
+      spawnerUid: dead.uid,
+    });
   }
   if (dead.equip === "death_curse") {
-    spawnTokenAndNotify(
+    spawnTokenAndNotify({
       board,
       idx,
-      dead.name,
-      DEATH_CURSE_TOKEN.atk,
-      DEATH_CURSE_TOKEN.hp,
-      dead.isChurch,
-      [prefix, seg.u(dead.name), "の呪符が光る。怨念が肉体を繋ぎ止める！ ", seg.s("1/1 蘇生")],
+      name: dead.name,
+      atk: DEATH_CURSE_TOKEN.atk,
+      hp: DEATH_CURSE_TOKEN.hp,
+      isChurch: dead.isChurch,
+      segments: [
+        prefix,
+        seg.u(dead.name),
+        "の呪符が光る。怨念が肉体を繋ぎ止める！ ",
+        seg.s("1/1 蘇生"),
+      ],
       isPlayer,
       ctx,
-      FRAME_DELAY_DEATH_CHAIN,
-    );
+      delay: FRAME_DELAY_DEATH_CHAIN,
+      spawnerUid: dead.uid,
+    });
   }
 }
 

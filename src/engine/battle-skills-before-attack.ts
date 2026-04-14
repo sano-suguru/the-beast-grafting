@@ -1,5 +1,14 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, takeDamage, seg, skillDamageActions, aoeDamageActions } from "./battle-context";
+import {
+  pushFrame,
+  takeDamage,
+  seg,
+  skillDamageActions,
+  aoeDamageActions,
+  buffAction,
+  skillAction,
+  defendAction,
+} from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
 import {
@@ -20,7 +29,7 @@ export function applyParasiteBuff(u: BattleUnit, prefix: string, ctx: BattleCont
     "skill",
     [prefix, seg.u(u.name), "が前衛の闘争に興奮する！ ", seg.s(`+${b.atk}/+${b.hp}`)],
     "skill",
-    { [u.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
+    { [u.uid]: buffAction(b, u.uid) },
   );
 }
 
@@ -34,7 +43,7 @@ export function applyEyeGaze(
   const target = mustGet(enemyBoard, Math.floor(ctx.rng.next() * enemyBoard.length), "eye target");
   const dmg = atLevel(EYE.damage, u.level);
   const hpBefore = target.hp;
-  takeDamage(target, dmg);
+  takeDamage(target, dmg, u.uid);
   pushFrame(
     ctx,
     "skill",
@@ -75,7 +84,7 @@ export function applyFamineDebuff(
       seg.s(`-${debuff}/+0`),
     ],
     "skill",
-    { [u.uid]: { type: "skill" }, [front.uid]: { type: "defend", value: `-${debuff}/+0` } },
+    { [u.uid]: skillAction(), [front.uid]: defendAction(`-${debuff}/+0`) },
   );
 }
 
@@ -101,7 +110,7 @@ export function applyRelicSwordBuff(
       seg.s(`+${atkGain}/+0`),
     ],
     "skill",
-    { [u.uid]: { type: "skill" }, [ally.uid]: { type: "buff", value: `+${atkGain}/+0` } },
+    { [u.uid]: skillAction(), [ally.uid]: buffAction({ atk: atkGain, hp: 0 }, u.uid) },
   );
 }
 
@@ -116,7 +125,7 @@ export function applyPlagueBellToll(
   const hit: BattleUnit[] = [];
   for (const target of enemyBoard) {
     if (target.hp <= 0) continue;
-    takeDamage(target, dmg);
+    takeDamage(target, dmg, u.uid);
     hit.push(target);
   }
   pushFrame(

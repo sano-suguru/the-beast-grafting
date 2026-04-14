@@ -1,5 +1,5 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, enemyPrefix, seg } from "./battle-context";
+import { pushFrame, enemyPrefix, seg, buffAction, skillAction } from "./battle-context";
 import { spawnTokenAndNotify } from "./battle-spawn";
 import { atLevel, BLOOD_FONT, CORPSE_GARDEN } from "../shared/skill-params";
 import { MAX_BOARD_SIZE } from "./constants";
@@ -34,8 +34,8 @@ function applyBloodFontBuffs(board: BattleUnit[], isPlayer: boolean, ctx: Battle
       ],
       "skill",
       {
-        [u.uid]: { type: "skill" },
-        [target.uid]: { type: "buff", value: `+0/+${hpBuff}` },
+        [u.uid]: skillAction(),
+        [target.uid]: buffAction({ atk: 0, hp: hpBuff }, u.uid),
       },
     );
   }
@@ -49,17 +49,18 @@ function applyCorpseGardenSpawns(board: BattleUnit[], isPlayer: boolean, ctx: Ba
     const empty = MAX_BOARD_SIZE - board.length;
     if (empty <= 0) continue;
     for (let s = 0; s < empty; s++) {
-      spawnTokenAndNotify(
+      spawnTokenAndNotify({
         board,
-        board.length,
-        "苗床の芽",
-        b.atk,
-        b.hp,
-        false,
-        [enemyPrefix(isPlayer), seg.u(u.name), "から芽が這い出す。"],
+        idx: board.length,
+        name: "苗床の芽",
+        atk: b.atk,
+        hp: b.hp,
+        isChurch: false,
+        segments: [enemyPrefix(isPlayer), seg.u(u.name), "から芽が這い出す。"],
         isPlayer,
         ctx,
-      );
+        spawnerUid: u.uid,
+      });
     }
   }
 }

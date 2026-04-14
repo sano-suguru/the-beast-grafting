@@ -1,6 +1,6 @@
 import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg } from "./battle-context";
+import { pushFrame, getMult, enemyPrefix, seg, skillAction, defendAction } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { SUPPORT_IDX } from "./constants";
 import type { SkillContext, BeforeAttackArgs } from "./battle-skills-util";
@@ -103,8 +103,8 @@ function applyCholeraSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
     ],
     "skill",
     {
-      [u.uid]: { type: "skill" },
-      [target.uid]: { type: "defend", value: "感染" },
+      [u.uid]: skillAction(),
+      [target.uid]: defendAction("感染"),
     },
   );
 }

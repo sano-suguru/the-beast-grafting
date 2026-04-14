@@ -1,5 +1,5 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg } from "./battle-context";
+import { pushFrame, getMult, enemyPrefix, seg, buffAction } from "./battle-context";
 import { invariant } from "../shared/invariant";
 import { computeZealotBuff } from "./buff-utils";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
@@ -34,7 +34,7 @@ export function applyZealotBuff(
       seg.s(`+${buffAmount}/+0`),
     ],
     "skill",
-    { [tokenUid]: { type: "buff", value: `+${buffAmount}/+0` } },
+    { [tokenUid]: buffAction({ atk: buffAmount, hp: 0 }, zealot.uid) },
     FRAME_DELAY_DEATH_CHAIN,
   );
 }

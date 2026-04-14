@@ -79,6 +79,14 @@ export default defineConfig({
           "eslint-js/no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX_BASE],
         },
       },
+      {
+        files: ["src/engine/sim/**/*.ts"],
+        rules: {
+          "no-console": "off",
+          "max-lines": "off",
+          "max-lines-per-function": "off",
+        },
+      },
     ],
     options: { denyWarnings: true, typeAware: true, typeCheck: true },
   },
@@ -97,7 +105,7 @@ export default defineConfig({
         test: {
           name: "default",
           include: ["src/**/*.test.{ts,tsx}"],
-          exclude: ["src/worker/**/*.test.ts"],
+          exclude: ["src/worker/**/*.test.ts", "src/engine/sim/**/*.test.ts"],
           environment: "node",
         },
       },
@@ -107,6 +115,14 @@ export default defineConfig({
           name: "worker-unit",
           include: ["src/worker/**/*.test.ts"],
           exclude: ["src/worker/**/*.d1.test.ts"],
+          environment: "node",
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "sim",
+          include: ["src/engine/sim/**/*.test.ts"],
           environment: "node",
         },
       },

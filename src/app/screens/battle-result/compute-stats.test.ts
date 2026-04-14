@@ -29,8 +29,8 @@ describe("computeBattleStats", () => {
         pBoard: [{ ...p, hp: 2 }],
         eBoard: [{ ...e, hp: 1 }],
         actions: {
-          p1: { type: "damage", value: "-3", source: "e1" },
-          e1: { type: "damage", value: "-5", source: "p1" },
+          p1: { type: "damage", value: "-3", source: "e1", damage: 3 },
+          e1: { type: "damage", value: "-5", source: "p1", damage: 5 },
         },
       }),
     ];
@@ -74,16 +74,16 @@ describe("computeBattleStats", () => {
         pBoard: [{ ...p, hp: 7 }],
         eBoard: [{ ...e, hp: 6 }],
         actions: {
-          p1: { type: "damage", value: "-3", source: "e1" },
-          e1: { type: "damage", value: "-4", source: "p1" },
+          p1: { type: "damage", value: "-3", source: "e1", damage: 3 },
+          e1: { type: "damage", value: "-4", source: "p1", damage: 4 },
         },
       }),
       frame({
         pBoard: [{ ...p, hp: 5 }],
         eBoard: [{ ...e, hp: 0 }],
         actions: {
-          p1: { type: "damage", value: "-2", source: "e1" },
-          e1: { type: "damage", value: "-6", source: "p1" },
+          p1: { type: "damage", value: "-2", source: "e1", damage: 2 },
+          e1: { type: "damage", value: "-6", source: "p1", damage: 6 },
         },
       }),
     ];
@@ -109,6 +109,56 @@ describe("computeBattleStats", () => {
     const stats = computeBattleStats(frames);
     expect(stats.playerUnits[0]!.damageDealt).toBe(0);
     expect(stats.enemyUnits[0]!.damageDealt).toBe(0);
+  });
+
+  it("counts defended damage toward the attacker's total", () => {
+    const p = makeSnapshot({ uid: "p1", name: "腐鼠", hp: 5 });
+    const e = makeSnapshot({ uid: "e1", name: "教団兵", hp: 8 });
+
+    const frames: BattleFrame[] = [
+      frame({ pBoard: [p], eBoard: [e] }),
+      frame({
+        pBoard: [{ ...p, hp: 2 }],
+        eBoard: [{ ...e, hp: 5 }],
+        actions: {
+          p1: { type: "defend", value: "-3", source: "e1", damage: 3 },
+          e1: { type: "defend", value: "-3", source: "p1", damage: 3 },
+        },
+      }),
+    ];
+
+    const stats = computeBattleStats(frames);
+    expect(stats.playerUnits[0]!.damageDealt).toBe(3);
+    expect(stats.enemyUnits[0]!.damageDealt).toBe(3);
+  });
+
+  it("accumulates damage across damage and defend action types", () => {
+    const p = makeSnapshot({ uid: "p1", name: "腐鼠", hp: 10 });
+    const e = makeSnapshot({ uid: "e1", name: "教団兵", hp: 10 });
+
+    const frames: BattleFrame[] = [
+      frame({ pBoard: [p], eBoard: [e] }),
+      frame({
+        pBoard: [{ ...p, hp: 7 }],
+        eBoard: [{ ...e, hp: 6 }],
+        actions: {
+          p1: { type: "damage", value: "-3", source: "e1", damage: 3 },
+          e1: { type: "damage", value: "-4", source: "p1", damage: 4 },
+        },
+      }),
+      frame({
+        pBoard: [{ ...p, hp: 5 }],
+        eBoard: [{ ...e, hp: 4 }],
+        actions: {
+          p1: { type: "defend", value: "-2", source: "e1", damage: 2 },
+          e1: { type: "defend", value: "-2", source: "p1", damage: 2 },
+        },
+      }),
+    ];
+
+    const stats = computeBattleStats(frames);
+    expect(stats.playerUnits[0]!.damageDealt).toBe(6);
+    expect(stats.enemyUnits[0]!.damageDealt).toBe(5);
   });
 
   it("uses maxHp from initial frame", () => {

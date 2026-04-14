@@ -8,6 +8,9 @@ import {
   seg,
   aoeDamageActions,
   aoeBuffActions,
+  healAction,
+  damageAction,
+  skillAction,
 } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
@@ -30,7 +33,7 @@ export function applyAcidSplash(
   if (attacker.equip !== "acid" || targetBoard.length <= 1) return;
   const splashTarget = mustGet(targetBoard, 1, "acid splash target");
   const hpBefore = splashTarget.hp;
-  takeDamage(splashTarget, ACID_SPLASH_DAMAGE);
+  takeDamage(splashTarget, ACID_SPLASH_DAMAGE, attacker.uid);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
@@ -47,8 +50,8 @@ export function applyAcidSplash(
     ],
     "skill",
     {
-      [attacker.uid]: { type: "skill" },
-      [splashTarget.uid]: { type: "damage", value: `-${ACID_SPLASH_DAMAGE}`, source: attacker.uid },
+      [attacker.uid]: skillAction(),
+      [splashTarget.uid]: damageAction(ACID_SPLASH_DAMAGE, attacker.uid),
     },
   );
   resolveDeaths(ctx);
@@ -115,7 +118,7 @@ function processDeadHandKnockout(
       "skill",
       [prefix, seg.u(attacker.name), "が死肉を掴む。少し膨れる。", seg.s(`+0/+${heal}`)],
       "skill",
-      { [attacker.uid]: { type: "buff", value: `+0/+${heal}` } },
+      { [attacker.uid]: healAction(heal, attacker.uid) },
     );
   }
 }
@@ -137,7 +140,7 @@ function processDevouringWoundKnockout(
       "skill",
       [prefix, seg.u(attacker.name), "が塞がり、また開く。", seg.s(`+0/+${heal}`)],
       "skill",
-      { [attacker.uid]: { type: "buff", value: `+0/+${heal}` } },
+      { [attacker.uid]: healAction(heal, attacker.uid) },
     );
   }
 }
@@ -157,7 +160,7 @@ function processOrganGrinderKnockout(
     const hit: BattleUnit[] = [];
     for (const target of defenderBoard) {
       if (target.hp <= 0) continue;
-      takeDamage(target, dmg);
+      takeDamage(target, dmg, attacker.uid);
       hit.push(target);
     }
     pushFrame(
@@ -199,7 +202,7 @@ function processRisenPopeKnockout(
         seg.s(`+${b.atk}/+${b.hp}`),
       ],
       "skill",
-      aoeBuffActions(attacker, buffed, `+${b.atk}/+${b.hp}`),
+      aoeBuffActions(attacker, buffed, b),
     );
   }
 }
@@ -227,7 +230,7 @@ export function processHundredArmsKnockout(
           ? atLevel(HUNDRED_ARMS.damageT1, attacker.level)
           : atLevel(HUNDRED_ARMS.damageDefault, attacker.level);
       const hpBefore = target.hp;
-      takeDamage(target, dmg);
+      takeDamage(target, dmg, attacker.uid);
       pushFrame(
         ctx,
         "skill",
@@ -242,8 +245,8 @@ export function processHundredArmsKnockout(
         ],
         "skill",
         {
-          [attacker.uid]: { type: "skill" },
-          [target.uid]: { type: "damage", value: `-${dmg}`, source: attacker.uid },
+          [attacker.uid]: skillAction(),
+          [target.uid]: damageAction(dmg, attacker.uid),
         },
       );
       if (target.hp <= 0) {

@@ -2,6 +2,7 @@ import type { EquipType } from "./equip-type";
 import type { OriginId } from "./origin-id";
 import type { EnemyFaction } from "./enemy-faction";
 import type { Tier } from "./data/tiers";
+import type { Buff } from "./skill-params";
 export type { EquipType, OriginId, EnemyFaction, Tier };
 
 export type RegularUnitId =
@@ -220,10 +221,20 @@ export type IconType =
   | "skull";
 
 export interface BattleAction {
-  type: "clash" | "damage" | "buff" | "skill" | "defend" | "summon" | "death";
+  type: "clash" | "damage" | "buff" | "heal" | "skill" | "defend" | "summon" | "death";
   value?: string;
   /** ダメージを与えたユニットのuid */
   source?: string;
+  /** 構造化ダメージ量（正の整数）。ダメージを伴うアクションに設定 */
+  damage?: number;
+  /** 構造化バフ。type === "buff" の場合に設定 */
+  buff?: Buff;
+  /** 致命打を与えたユニットのuid。type === "death" の場合に設定 */
+  killer?: string;
+  /** スポーンを発生させたユニットのuid。type === "summon" の場合に設定 */
+  spawnedBy?: string;
+  /** 構造化回復量。type === "heal" の場合に設定 */
+  heal?: number;
 }
 
 export type LogSegmentKind = "unit" | "effect" | "stat" | "hp";

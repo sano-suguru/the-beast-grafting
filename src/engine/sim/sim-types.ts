@@ -1,0 +1,103 @@
+import type { BattleResult, DataUnitId, RegularUnitId, UnitId } from "../../shared/types";
+
+export type PositionRole = "front" | "support" | "flex";
+
+export type SynergyTag =
+  | "spawner"
+  | "spawn-reactor"
+  | "death-provider"
+  | "death-reactor"
+  | "avenge"
+  | "front-synergy"
+  | "multiplier"
+  | "stat-stick"
+  | "self-contained";
+
+export interface UnitSimProfile {
+  readonly role: PositionRole;
+  readonly tags: readonly SynergyTag[];
+}
+
+// ── 1戦闘のメトリクス ──
+
+export interface UnitActionTally {
+  readonly unitId: UnitId;
+  readonly side: "player" | "enemy";
+  readonly damageDealt: number;
+  readonly damageReceived: number;
+  readonly buffAtk: number;
+  readonly buffHp: number;
+  readonly skillCount: number;
+  readonly kills: number;
+  readonly spawnsProduced: number;
+  readonly buffAtkGiven: number;
+  readonly buffHpGiven: number;
+  readonly healingDone: number;
+  readonly healingReceived: number;
+  readonly survived: boolean;
+  readonly deathFrame: number | null;
+}
+
+export interface BattleMetrics {
+  readonly frameCount: number;
+  readonly result: BattleResult;
+  readonly pSurvivorCount: number;
+  readonly eSurvivorCount: number;
+  readonly winnerRemainingHp: number;
+  readonly unitActions: ReadonlyMap<string, UnitActionTally>;
+}
+
+// ── 複数試行の集約 ──
+
+export interface UnitPerformance {
+  readonly appearances: number;
+  readonly wins: number;
+  readonly totalDamage: number;
+  readonly avgDamage: number;
+  readonly avgDamageReceived: number;
+  readonly avgBuffAtk: number;
+  readonly avgBuffHp: number;
+  readonly avgKills: number;
+  readonly avgSpawnsProduced: number;
+  readonly avgBuffAtkGiven: number;
+  readonly avgBuffHpGiven: number;
+  readonly avgHealingDone: number;
+  readonly avgHealingReceived: number;
+  readonly survivalRate: number;
+  readonly avgDeathFrame: number | null;
+  readonly totalSkillActivations: number;
+  readonly tier: number;
+  readonly tierNormalizedWinRate: number;
+  readonly impactScore: number;
+  readonly winRateCI95: readonly [number, number];
+}
+
+// ── Runner の戻り値型 ──
+
+export interface SimResult {
+  readonly wins: number;
+  readonly losses: number;
+  readonly draws: number;
+  readonly trials: number;
+  readonly winRate: number;
+}
+
+export interface MatchupResult {
+  readonly teamA: string;
+  readonly teamB: string;
+  readonly aWins: number;
+  readonly bWins: number;
+  readonly draws: number;
+  readonly trials: number;
+  readonly avgFrameCount: number;
+  readonly avgWinnerRemainingHp: number;
+  readonly winMarginMedian: number;
+  readonly frameCountP25: number;
+  readonly frameCountP75: number;
+  readonly unitPerformance: ReadonlyMap<DataUnitId, UnitPerformance>;
+}
+
+export interface RandomTrialResult extends SimResult {
+  readonly avgFrameCount: number;
+  readonly unitPerformance: ReadonlyMap<RegularUnitId, UnitPerformance>;
+}

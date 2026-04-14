@@ -8,6 +8,8 @@ import {
   getMult,
   enemyPrefix,
   seg,
+  buffAction,
+  summonAction,
 } from "./battle-context";
 import { applyZealotBuff } from "./battle-deaths-zealot";
 import { getInitOverride } from "./battle-init-overrides";
@@ -25,11 +27,19 @@ type SpawnBase = {
   isPlayer: boolean;
   ctx: BattleContext;
   delay?: number | undefined;
+  spawnerUid?: string | undefined;
 };
 
 function finalize(s: SpawnBase, unit: BattleUnit): BattleUnit {
   s.board.splice(s.idx, 0, unit);
-  pushFrame(s.ctx, "skill", s.segments, "skill", { [unit.uid]: { type: "summon" } }, s.delay);
+  pushFrame(
+    s.ctx,
+    "skill",
+    s.segments,
+    "skill",
+    { [unit.uid]: summonAction(s.spawnerUid) },
+    s.delay,
+  );
   applyZealotBuff(s.board, unit.uid, s.isPlayer, s.ctx);
   applyFleshGranulationBuff(s.board, s.isPlayer, s.ctx);
   return unit;
@@ -47,37 +57,22 @@ function applyFleshGranulationBuff(
     const mult = getMult(board, i);
     for (let m = 0; m < mult; m++) {
       const b = atLevel(FLESH_GRANULATION.buff, u.level);
-      const stat = `+${b.atk}/+${b.hp}`;
       u.atk += b.atk;
       u.hp += b.hp;
       pushFrame(
         ctx,
         "skill",
-        [prefix, seg.u(u.name), "が脈動し、膨れ上がる。", seg.s(stat)],
+        [prefix, seg.u(u.name), "が脈動し、膨れ上がる。", seg.s(`+${b.atk}/+${b.hp}`)],
         "skill",
-        { [u.uid]: { type: "buff", value: stat } },
+        { [u.uid]: buffAction(b, u.uid) },
       );
     }
   }
 }
 
-export function spawnTokenAndNotify(
-  board: BattleUnit[],
-  idx: number,
-  name: string,
-  atk: number,
-  hp: number,
-  isChurch: boolean,
-  segments: LogSegment[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-  delay?: number,
-): BattleUnit | null {
-  if (board.length >= MAX_BOARD_SIZE) return null;
-  return finalize(
-    { board, idx, atk, hp, isChurch, segments, isPlayer, ctx, delay },
-    createToken(name, atk, hp, isChurch),
-  );
+export function spawnTokenAndNotify(s: SpawnBase & { name: string }): BattleUnit | null {
+  if (s.board.length >= MAX_BOARD_SIZE) return null;
+  return finalize(s, createToken(s.name, s.atk, s.hp, s.isChurch));
 }
 
 export function spawnSummonedUnitAndNotify(

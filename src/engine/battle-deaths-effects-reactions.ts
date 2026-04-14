@@ -1,5 +1,13 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg } from "./battle-context";
+import {
+  pushFrame,
+  getMult,
+  enemyPrefix,
+  seg,
+  buffAction,
+  skillAction,
+  defendAction,
+} from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { FLY_SPAWN_CAP, FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { atLevel, BEELZEBUB, EVANGELIST, CROW, SIN_EATER, CATHEDRAL } from "../shared/skill-params";
@@ -38,18 +46,24 @@ export function handleBeelzebubSpawns(
   for (const { beelzebub, count } of spawns) {
     const ft = atLevel(BEELZEBUB.token, beelzebub.level);
     for (let m = 0; m < count; m++) {
-      const token = spawnTokenAndNotify(
+      const token = spawnTokenAndNotify({
         board,
-        deathIdx,
-        "腐肉の蠅",
-        ft.atk,
-        ft.hp,
-        beelzebub.isChurch,
-        [prefix, seg.u(beelzebub.name), "の周りに蠅が湧く。", seg.s(`${ft.atk}/${ft.hp} 蠅召喚`)],
+        idx: deathIdx,
+        name: "腐肉の蠅",
+        atk: ft.atk,
+        hp: ft.hp,
+        isChurch: beelzebub.isChurch,
+        segments: [
+          prefix,
+          seg.u(beelzebub.name),
+          "の周りに蠅が湧く。",
+          seg.s(`${ft.atk}/${ft.hp} 蠅召喚`),
+        ],
         isPlayer,
         ctx,
-        FRAME_DELAY_DEATH_CHAIN,
-      );
+        delay: FRAME_DELAY_DEATH_CHAIN,
+        spawnerUid: beelzebub.uid,
+      });
       if (!token) break;
       actualSpawned++;
     }
@@ -73,7 +87,7 @@ export function handleCrowBuffs(board: BattleUnit[], isPlayer: boolean, ctx: Bat
         "skill",
         [prefix, seg.u(u.name), "が死肉を啄む。", seg.s(`+${b.atk}/+${b.hp}`)],
         "skill",
-        { [u.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
+        { [u.uid]: buffAction(b, u.uid) },
         FRAME_DELAY_DEATH_CHAIN,
       );
     }
@@ -100,7 +114,7 @@ export function handleSinEaterAbsorb(
         "skill",
         [enemyPrefix(isPlayer), seg.u(u.name), "が屍に群がり、殻が膨れる。", seg.s(`+${gain}/+0`)],
         "skill",
-        { [u.uid]: { type: "buff", value: `+${gain}/+0` } },
+        { [u.uid]: buffAction({ atk: gain, hp: 0 }, u.uid) },
         FRAME_DELAY_DEATH_CHAIN,
       );
     }
@@ -122,14 +136,14 @@ export function handleCathedralSpawns(
       const t = atLevel(CATHEDRAL.token, u.level);
       u.skillUses -= 1;
       const stat = `${t.atk}/${t.hp}`;
-      const token = spawnTokenAndNotify(
+      const token = spawnTokenAndNotify({
         board,
-        deathIdx,
-        "信徒",
-        t.atk,
-        t.hp,
-        u.isChurch,
-        [
+        idx: deathIdx,
+        name: "信徒",
+        atk: t.atk,
+        hp: t.hp,
+        isChurch: u.isChurch,
+        segments: [
           enemyPrefix(isPlayer),
           seg.u(u.name),
           "の扉が軋み、中から信徒が這い出す。",
@@ -137,8 +151,9 @@ export function handleCathedralSpawns(
         ],
         isPlayer,
         ctx,
-        FRAME_DELAY_DEATH_CHAIN,
-      );
+        delay: FRAME_DELAY_DEATH_CHAIN,
+        spawnerUid: u.uid,
+      });
       if (!token) break;
     }
   }
@@ -179,8 +194,8 @@ function infectTargets(
       [prefix, seg.u(u.name), "の瘴気が", seg.u(target.name), "に纏わりつく。", seg.e("感染")],
       "skill",
       {
-        [u.uid]: { type: "skill" },
-        [target.uid]: { type: "defend", value: "感染" },
+        [u.uid]: skillAction(),
+        [target.uid]: defendAction("感染"),
       },
       FRAME_DELAY_DEATH_CHAIN,
     );

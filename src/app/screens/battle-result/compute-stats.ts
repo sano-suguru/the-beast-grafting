@@ -14,14 +14,6 @@ interface BattleStats {
   enemyUnits: UnitBattleStat[];
 }
 
-const DAMAGE_RE = /^-(\d+)$/;
-
-function parseDamageValue(value: string | undefined): number {
-  if (!value) return 0;
-  const m = DAMAGE_RE.exec(value);
-  return m ? Number(m[1]) : 0;
-}
-
 export function computeBattleStats(frames: BattleFrame[]): BattleStats {
   if (frames.length === 0) return { playerUnits: [], enemyUnits: [] };
 
@@ -32,11 +24,8 @@ export function computeBattleStats(frames: BattleFrame[]): BattleStats {
 
   for (const frame of frames) {
     for (const [, action] of Object.entries(frame.actions)) {
-      if (action.type === "damage" && action.source) {
-        damageMap.set(
-          action.source,
-          (damageMap.get(action.source) ?? 0) + parseDamageValue(action.value),
-        );
+      if (action.damage != null && action.damage > 0 && action.source) {
+        damageMap.set(action.source, (damageMap.get(action.source) ?? 0) + action.damage);
       }
     }
   }

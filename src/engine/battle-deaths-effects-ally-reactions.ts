@@ -1,6 +1,6 @@
 import type { LogSegment } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg } from "./battle-context";
+import { pushFrame, getMult, enemyPrefix, seg, buffAction } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { atLevel, CRAWLING_CORD, INSATIABLE_MAW, type Buff } from "../shared/skill-params";
@@ -26,7 +26,7 @@ export function handleCrawlingCordBuff(board: BattleUnit[], isPlayer: boolean, c
     const alive = board.filter((a) => a.hp > 0 && a.uid !== u.uid);
     if (alive.length === 0) return;
     const target = mustGet(alive, Math.floor(ctx.rng.next() * alive.length), "cord buff target");
-    buffAlly(ctx, target, b, [
+    buffAlly(ctx, u, target, b, [
       prefix,
       seg.u(u.name),
       "が蠢き、",
@@ -44,7 +44,7 @@ export function handleInsatiableMawBuff(
 ) {
   applyAllyDeathReaction(board, "insatiable_maw", isPlayer, (u, prefix) => {
     const b = atLevel(INSATIABLE_MAW.buff, u.level);
-    buffAlly(ctx, u, b, [
+    buffAlly(ctx, u, u, b, [
       prefix,
       seg.u(u.name),
       "の咢が脈動する。牙の間から涎が垂れ、膨れ上がる。",
@@ -53,7 +53,13 @@ export function handleInsatiableMawBuff(
   });
 }
 
-function buffAlly(ctx: BattleContext, target: BattleUnit, b: Buff, segments: LogSegment[]) {
+function buffAlly(
+  ctx: BattleContext,
+  source: BattleUnit,
+  target: BattleUnit,
+  b: Buff,
+  segments: LogSegment[],
+) {
   target.atk += b.atk;
   target.hp += b.hp;
   pushFrame(
@@ -62,7 +68,7 @@ function buffAlly(ctx: BattleContext, target: BattleUnit, b: Buff, segments: Log
     segments,
     "skill",
     {
-      [target.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` },
+      [target.uid]: buffAction(b, source.uid),
     },
     FRAME_DELAY_DEATH_CHAIN,
   );

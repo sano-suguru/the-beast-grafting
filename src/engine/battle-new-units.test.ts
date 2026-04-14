@@ -842,7 +842,17 @@ describe("spawnTokenAndNotify – board size guard", () => {
   it("returns null and does not grow board when at MAX_BOARD_SIZE", () => {
     const units = Array.from({ length: MAX_BOARD_SIZE }, () => makeBattleUnit({ hp: 5 }));
     const ctx = makeContext(units, []);
-    const result = spawnTokenAndNotify(units, 0, "test", 1, 1, false, [], true, ctx);
+    const result = spawnTokenAndNotify({
+      board: units,
+      idx: 0,
+      name: "test",
+      atk: 1,
+      hp: 1,
+      isChurch: false,
+      segments: [],
+      isPlayer: true,
+      ctx,
+    });
     expect(result).toBeNull();
     expect(units).toHaveLength(MAX_BOARD_SIZE);
   });
@@ -850,7 +860,17 @@ describe("spawnTokenAndNotify – board size guard", () => {
   it("spawns when board has room", () => {
     const units = [makeBattleUnit({ hp: 5 })];
     const ctx = makeContext(units, []);
-    const result = spawnTokenAndNotify(units, 0, "test", 1, 1, false, [], true, ctx);
+    const result = spawnTokenAndNotify({
+      board: units,
+      idx: 0,
+      name: "test",
+      atk: 1,
+      hp: 1,
+      isChurch: false,
+      segments: [],
+      isPlayer: true,
+      ctx,
+    });
     expect(result).not.toBeNull();
     expect(units).toHaveLength(2);
   });
@@ -1280,7 +1300,17 @@ describe("flesh_granulation – on ally summon", () => {
     const fg = makeBattleUnit({ id: "flesh_granulation", name: "増殖する肉芽", atk: 2, hp: 3 });
     const board = [fg];
     const ctx = makeContext(board, []);
-    spawnTokenAndNotify(board, 1, "肉塊", 1, 1, false, ["召喚"], true, ctx);
+    spawnTokenAndNotify({
+      board,
+      idx: 1,
+      name: "肉塊",
+      atk: 1,
+      hp: 1,
+      isChurch: false,
+      segments: ["召喚"],
+      isPlayer: true,
+      ctx,
+    });
     const b = atLevel(FLESH_GRANULATION.buff, 1);
     expect(fg.atk).toBe(2 + b.atk);
     expect(fg.hp).toBe(3 + b.hp);
@@ -1290,7 +1320,17 @@ describe("flesh_granulation – on ally summon", () => {
     const fg = makeBattleUnit({ id: "flesh_granulation", name: "増殖する肉芽", atk: 2, hp: 0 });
     const board = [fg];
     const ctx = makeContext(board, []);
-    spawnTokenAndNotify(board, 1, "肉塊", 1, 1, false, ["召喚"], true, ctx);
+    spawnTokenAndNotify({
+      board,
+      idx: 1,
+      name: "肉塊",
+      atk: 1,
+      hp: 1,
+      isChurch: false,
+      segments: ["召喚"],
+      isPlayer: true,
+      ctx,
+    });
     expect(fg.atk).toBe(2);
   });
 });

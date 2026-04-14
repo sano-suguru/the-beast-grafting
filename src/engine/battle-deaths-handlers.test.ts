@@ -198,8 +198,18 @@ describe("handlePriestDeath", () => {
     const dead = makeBattleUnit({ id: "priest", name: "司祭" });
     callHandler("priest", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.frames).toHaveLength(1);
-    expect(ctx.frames[0]!.actions["a"]).toEqual({ type: "buff", value: "+0/+1" });
-    expect(ctx.frames[0]!.actions["b"]).toEqual({ type: "buff", value: "+0/+1" });
+    expect(ctx.frames[0]!.actions["a"]).toEqual({
+      type: "buff",
+      value: "+0/+1",
+      buff: { atk: 0, hp: 1 },
+      source: dead.uid,
+    });
+    expect(ctx.frames[0]!.actions["b"]).toEqual({
+      type: "buff",
+      value: "+0/+1",
+      buff: { atk: 0, hp: 1 },
+      source: dead.uid,
+    });
   });
 });
 

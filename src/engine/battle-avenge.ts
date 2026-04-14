@@ -8,6 +8,7 @@ import {
   seg,
   skillDamageActions,
   aoeBuffActions,
+  buffAction,
 } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import {
@@ -32,18 +33,19 @@ function spawnAvengeToken(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  spawnTokenAndNotify(
+  spawnTokenAndNotify({
     board,
     idx,
     name,
     atk,
     hp,
-    u.isChurch,
-    [enemyPrefix(isPlayer), seg.u(u.name), text, seg.s(`${atk}/${hp} 召喚`)],
+    isChurch: u.isChurch,
+    segments: [enemyPrefix(isPlayer), seg.u(u.name), text, seg.s(`${atk}/${hp} 召喚`)],
     isPlayer,
     ctx,
-    FRAME_DELAY_DEATH_CHAIN,
-  );
+    delay: FRAME_DELAY_DEATH_CHAIN,
+    spawnerUid: u.uid,
+  });
 }
 
 type AvengeCtx = {
@@ -78,7 +80,7 @@ function avengeAoeBuff(
     "skill",
     [prefix, seg.u(u.name), logText, seg.s(`+${b.atk}/+${b.hp}`)],
     "skill",
-    aoeBuffActions(u, buffed, `+${b.atk}/+${b.hp}`),
+    aoeBuffActions(u, buffed, b),
     FRAME_DELAY_DEATH_CHAIN,
   );
 }
@@ -91,7 +93,6 @@ function handleArchangel({ u, isPlayer, ctx }: AvengeCtx) {
   const b = atLevel(ARCHANGEL.buff, u.level);
   u.atk += b.atk;
   u.hp += b.hp;
-  const stat = `${b.atk}/${b.hp}`;
   pushFrame(
     ctx,
     "skill",
@@ -99,10 +100,10 @@ function handleArchangel({ u, isPlayer, ctx }: AvengeCtx) {
       enemyPrefix(isPlayer),
       seg.u(u.name),
       "の光輪が軋む。翼の一枚が赤く染まる。",
-      seg.s(`+${stat}`),
+      seg.s(`+${b.atk}/+${b.hp}`),
     ],
     "skill",
-    { [u.uid]: { type: "buff", value: `+${stat}` } },
+    { [u.uid]: buffAction(b, u.uid) },
     FRAME_DELAY_DEATH_CHAIN,
   );
 }
@@ -115,7 +116,7 @@ function handleGroaningCoffin({ u, isPlayer, ctx }: AvengeCtx) {
   const target = mustGet(alive, idx, "coffin target");
   const dmg = atLevel(GROANING_COFFIN.damage, u.level);
   const before = target.hp;
-  takeDamage(target, dmg);
+  takeDamage(target, dmg, u.uid);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,

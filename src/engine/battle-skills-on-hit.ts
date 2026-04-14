@@ -1,6 +1,17 @@
 import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, takeDamage, enemyPrefix, seg, aoeBuffActions } from "./battle-context";
+import {
+  pushFrame,
+  getMult,
+  takeDamage,
+  enemyPrefix,
+  seg,
+  aoeBuffActions,
+  buffAction,
+  healAction,
+  damageAction,
+  skillAction,
+} from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import {
   atLevel,
@@ -68,7 +79,7 @@ function applyTemplarHit({ defender: u, prefix, ctx }: HitCtx) {
     [prefix, seg.u(u.name), "が傷を受け、嗤う。", seg.s(`+${b}/+0`)],
     "skill",
     {
-      [u.uid]: { type: "buff", value: `+${b}/+0` },
+      [u.uid]: buffAction({ atk: b, hp: 0 }, u.uid),
     },
   );
 }
@@ -77,7 +88,7 @@ function applyLeechHit({ defender: u, prefix, ctx }: HitCtx) {
   const b = atLevel(LEECH.hpBuff, u.level);
   u.hp += b;
   pushFrame(ctx, "skill", [prefix, seg.u(u.name), "が血を啜る。", seg.s(`+0/+${b}`)], "skill", {
-    [u.uid]: { type: "buff", value: `+0/+${b}` },
+    [u.uid]: healAction(b, u.uid),
   });
 }
 
@@ -90,13 +101,13 @@ function applyStitchedTwinHit({ defender: u, board, idx, prefix, ctx }: HitCtx) 
     [prefix, seg.u(u.name), "の縫い目が引き攣り、牙を剥く。", seg.s(`+${b}/+0`)],
     "skill",
     {
-      [u.uid]: { type: "buff", value: `+${b}/+0` },
+      [u.uid]: buffAction({ atk: b, hp: 0 }, u.uid),
     },
   );
   const behind = board[idx + 1];
   if (behind && behind.hp > 0) {
     const dmg = b;
-    takeDamage(behind, dmg);
+    takeDamage(behind, dmg, u.uid);
     pushFrame(
       ctx,
       "skill",
@@ -110,7 +121,7 @@ function applyStitchedTwinHit({ defender: u, board, idx, prefix, ctx }: HitCtx) 
       ],
       "skill",
       {
-        [behind.uid]: { type: "damage", value: `-${dmg}` },
+        [behind.uid]: damageAction(dmg, u.uid),
       },
     );
   }
@@ -123,7 +134,7 @@ function applyFlayedSaintHit({ defender: u, isPlayer, prefix, ctx }: HitCtx) {
   const target = mustGet(alive, Math.floor(ctx.rng.next() * alive.length), "flayed_saint target");
   const dmg = atLevel(FLAYED_SAINT.damage, u.level);
   const hpBefore = target.hp;
-  takeDamage(target, dmg);
+  takeDamage(target, dmg, u.uid);
   pushFrame(
     ctx,
     "skill",
@@ -136,8 +147,8 @@ function applyFlayedSaintHit({ defender: u, isPlayer, prefix, ctx }: HitCtx) {
     ],
     "skill",
     {
-      [u.uid]: { type: "skill" },
-      [target.uid]: { type: "damage", value: `-${dmg}`, source: u.uid },
+      [u.uid]: skillAction(),
+      [target.uid]: damageAction(dmg, u.uid),
     },
   );
 }
@@ -161,7 +172,7 @@ function applyFlagellantHit({ defender: u, board, idx, prefix, ctx }: HitCtx) {
     ],
     "skill",
     {
-      [behind.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` },
+      [behind.uid]: buffAction(b, u.uid),
     },
   );
 }
@@ -179,7 +190,7 @@ function applyHowlingGiantHit({ defender: u, board, prefix, ctx }: HitCtx) {
     "skill",
     [prefix, seg.u(u.name), "が吼える。味方の腕が震え、拳が白む。", seg.s(`+${b}/+0`)],
     "skill",
-    aoeBuffActions(u, buffed, `+${b}/+0`),
+    aoeBuffActions(u, buffed, { atk: b, hp: 0 }),
   );
 }
 
@@ -201,7 +212,7 @@ function applyTumorGuardianHit({ defender: u, board, idx, prefix, ctx }: HitCtx)
       seg.s(`+${b.atk}/+${b.hp}`),
     ],
     "skill",
-    { [behind.uid]: { type: "buff", value: `+${b.atk}/+${b.hp}` } },
+    { [behind.uid]: buffAction(b, u.uid) },
   );
 }
 
