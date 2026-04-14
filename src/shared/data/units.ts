@@ -1,8 +1,9 @@
-import type { RegularUnitId, UnitData } from "../types";
+import type { RegularUnitId, RawUnitData } from "../types";
 import { UNITS_ADDED } from "./units-added";
 import { UNITS_HIGH_TIER } from "./units-high-tier";
+import { resolveSkillTexts } from "../skill-text";
 
-export const UNITS: Record<RegularUnitId, UnitData> = {
+export const UNITS = resolveSkillTexts({
   // Tier 1
   rat: {
     id: "rat",
@@ -10,7 +11,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 2,
     tier: 1,
-    skillText: "死亡: 味方1体に+1/+1",
     lore: "路地裏で掃いて捨てるほど見つかる。価値はないが、腹に溜め込んだ病原菌は他の素体を刺激する。",
     secretLore:
       "外へ放たれた巨大なネズミは、一夜にして貧民街を壊滅させた。彼らが通った後には、骨すら残らなかったという。",
@@ -21,7 +21,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 4,
     baseHp: 2,
     tier: 1,
-    skillText: "解体: {blood}を1多く獲得",
     lore: "教会の施しを受けられず餓死した名もなき者。胃袋を裂けば飲み込んで隠した硬貨が出てくるかもしれない。",
     secretLore:
       "その胃袋から無限に溢れ出る硬貨は、数多の強欲な商人たちを狂わせ、街を凄惨な殺し合いへと発展させた。",
@@ -32,7 +31,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 1,
     baseHp: 4,
     tier: 1,
-    skillText: "死亡: 3/2頭部を召喚",
     lore: "主人の亡骸を守り、騎士たちに最後まで牙を剥いた忠犬。首を落とされてなお、顎の力は衰えていない。",
     secretLore:
       "主人の腕を繋がれた犬は、街中の教団騎士の喉を的確に噛みちぎり、静かに主人の墓前で永遠の眠りについた。",
@@ -43,7 +41,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 2,
     tier: 1,
-    skillText: "開戦: ランダムな敵1体に1ダメージ",
     lore: "異端審問官の放った銀の矢に貫かれた夜の獣。まだ微かに皮膜を動かし、生き血を求めている。",
     secretLore:
       "太陽の光すら克服したその恐るべき吸血鬼は、大聖堂の鐘楼に巣食い、毎夜神父たちの血を啜り続けている。",
@@ -54,7 +51,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 1,
     tier: 1,
-    skillText: "味方召喚時: 現れた味方の攻撃+2",
     lore: "異端としてギロチンにかけられた男の頭部。口を太い糸で縫い合わせても、未だに悍ましい呪詛を唱え続けている。",
     secretLore: "その口が唱え続けた冒涜の言葉は、ついに空を割り、街に血の雨を降らせた。",
   },
@@ -64,7 +60,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 3,
     tier: 1,
-    skillText: "解体: ランダムな味方1体に+1/+1",
     lore: "死体の傷口に湧く白い蛆。潰しても翌朝には、潰した跡に二匹いる。",
     secretLore: "蛆が土と区別がつかなくなった頃、棺がすべて内側から開いた。",
   },
@@ -74,7 +69,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 1,
     baseHp: 2,
     tier: 1,
-    skillText: "被弾: 自身のHP+1",
     lore: "沼底に沈んでいた巨大な蛭。叩くと潰れるが、潰した手から血を吸って元に戻る。",
     secretLore: "水路の水を汲んだ修道女の喉が、内側から膨らんだ。",
   },
@@ -84,7 +78,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 1,
     tier: 1,
-    skillText: "味方死亡: 自身に+1/+0",
     lore: "絞首台に棲みつく鴉。仲間が吊るされるたび降りてきて、まだ温かい目玉から啄む。",
     secretLore: "最後の屍を啄み終えた鴉は、もう空に収まらなかった。",
   },
@@ -95,7 +88,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 2,
     tier: 2,
-    skillText: "死亡: 後ろ2体に+1/+1",
     lore: "火炙りにされた異端者の黒焦げの遺体。その喉は焼かれながらも、同胞を鼓舞する呪詛を叫び続けている。",
     secretLore:
       "その果てなき呪詛は本物の奇跡を呼び起こし、中央処刑場跡には今も決して消えることのない業火が燃え盛っている。",
@@ -106,7 +98,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 3,
     tier: 2,
-    skillText: "死亡: ランダムなTier3素体を4/4として召喚",
     lore: "腹部が異様に膨れ上がった正体不明の獣の死骸。中で何かが胎動しており、今にも腹を食い破って出てきそうだ。",
     secretLore:
       "腹から這い出た『子』たちはネズミ算式に増殖し、王都の広大な地下水路は彼らの巨大で醜悪な苗床と化した。",
@@ -117,7 +108,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 4,
     baseHp: 2,
     tier: 2,
-    skillText: "攻撃前: ランダムな敵1体の装備を【感染】(被ダメージ+3)に変える(1回/戦)",
     lore: "隔離病棟から盗み出された遺体。その体液は触れる者すべてを死に至らしめる。",
     secretLore: "その致死の病はついに貴族街へと到達し、豪奢な館はすべて静寂な霊廟へと変わった。",
   },
@@ -127,7 +117,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 3,
     tier: 2,
-    skillText: "開戦: ランダムな敵にTier×1ダメージ",
     lore: "地下墓地の聖人の骨を齧って育った鼠。位の高い骨ほど、旨いらしい。",
     secretLore: "大聖堂の礎石が崩れた朝、基礎に無数の歯形があった。",
   },
@@ -137,7 +126,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 4,
     tier: 2,
-    skillText: "被弾: 自身の攻撃+2、後方味方にも同ダメージ",
     lore: "背中合わせに縫い付けた二匹の獣。片方を殴ると、もう片方が手当たり次第に噛みつく。",
     secretLore: "二匹の叫びが重なった瞬間、十歩以内の鼓膜がすべて裂けた。",
   },
@@ -147,7 +135,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 1,
     baseHp: 3,
     tier: 2,
-    skillText: "味方解体: 闇市場の全素体に+1/+1",
     lore: "市場の梁に止まる太った禿鷹。こいつがいる日は、なぜか素体の血色がいい。",
     secretLore: "禿鷹が飛び立った日、市場に並ぶ肉がすべて腐った。",
   },
@@ -158,7 +145,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 1,
     baseHp: 2,
     tier: 3,
-    skillText: "直前の味方が攻撃: 自身に+2/+2",
     lore: "独自の意志を持った肉塊。他の素体の背中に縫い付けると、宿主の闘争に興奮して急激に肥大化していく。",
     secretLore:
       "肥大化した肉塊はついに宿主を飲み込み、街の建物を次々と喰らいながら巨大化を続けている。",
@@ -169,7 +155,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 1,
     baseHp: 2,
     tier: 3,
-    skillText: "死亡: 後ろに【屍蝋の盾】",
     lore: "内側に無数の棘が並ぶ拷問具。中に素体を押し込めば、死の間際に後続の盾となるよう完璧に固定される。",
     secretLore:
       "この拷問具から生還した者は一人もおらず、その血を吸った鉄は神の雷すら弾き返すという。",
@@ -180,7 +165,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 3,
     tier: 3,
-    skillText: "開戦: 前夜敗北なら前方3体の攻撃+1",
     lore: "教会の火炙りにされた魔女の怨念。工房が襲撃を受けた気配を察知すると、凄まじい怒りで味方を鼓舞する。",
     secretLore:
       "復讐を果たした亡霊は虚空へ消え去った。後には、恐怖に歪んだ教皇の白骨死体だけが残された。",
@@ -191,7 +175,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 5,
     tier: 3,
-    skillText: "被弾: ランダムな敵に2ダメージ",
     lore: "生きたまま皮を剥がれた殉教者。剥き出しの肉に触れた刃が、持ち主の手まで変色する。",
     secretLore: "聖者の皮で綴じた祈祷書を開いた司教は、指が頁に溶けるのを見た。",
   },
@@ -201,7 +184,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 0,
     baseHp: 6,
     tier: 3,
-    skillText: "味方2体死亡ごと: 3/3を召喚",
     lore: "屍を投げ込む穴。底を見た者はいない。投げた覚えのない形の肉が、縁から溢れ出す。",
     secretLore: "穴は地下の聖堂に通じていた。司祭は腰まで肉に浸かったまま祈っていた。",
   },
@@ -211,7 +193,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 3,
     tier: 3,
-    skillText: "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
     lore: "群れが通った後の素体から、脂肪だけが消えている。",
     secretLore: "蝗が過ぎた村は三代先まで実らなかった。土が飢えていた。",
   },
@@ -222,7 +203,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 5,
     tier: 4,
-    skillText: "味方死亡: ランダムな敵1体を感染させる(自身に2ダメ)",
     lore: "全身から致死の瘴気を放つ、かつての聖職者。その祈りは最も屈強な騎士の肺すら一瞬で腐らせる。",
     secretLore: "彼が通った街はすべて沈黙し、もはや誰一人として神への祈りを口にする者はいない。",
   },
@@ -232,7 +212,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 4,
     tier: 4,
-    skillText: "味方配置/召喚: その味方に+3/+2",
     lore: "邪神を祀る血塗られた石の台座。この上で生まれた命は、等しく狂気と怪力を授かる。",
     secretLore: "祭壇はついに大地と癒着し、無尽蔵に異形の怪物を産み落とす地獄の門となった。",
   },
@@ -242,7 +221,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 5,
     tier: 4,
-    skillText: "直前の味方が攻撃: 最前衛に+1/+1(3回/戦)",
     lore: "血液を強制的に循環させる真鍮製のポンプ。常に先頭で血を流す素体へ、際限なく不浄な血を送り込み続ける。",
     secretLore:
       "血を送りすぎた機械は暴走し、周囲の空間すべての血液を霧状に噴出する悍ましいモニュメントと化した。",
@@ -253,7 +231,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 7,
     tier: 4,
-    skillText: "味方死亡: 死んだ味方の攻撃を吸収(1回上限5, 3回)",
     lore: "死体に群がる黒い甲虫。仲間の屍を喰うたびに殻が硬く、脚が太くなる。",
     secretLore: "最後の一匹になった屍蟲は、城門を顎で砕いた。",
   },
@@ -263,7 +240,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 1,
     baseHp: 5,
     tier: 4,
-    skillText: "出陣時: 最もHPが低い味方に+0/+3",
     lore: "名前のない獣の死体。どこを切っても血が止まらない。浴びた素体の傷口が塞がる。",
     secretLore: "獣の血が染みた地面から赤い草が生えた。刈っても翌朝には戻っている。",
   },
@@ -273,7 +249,6 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 4,
     tier: 4,
-    skillText: "味方解体: スタッツの25%をランダム味方にバフ",
     lore: "死体から生える灰色の茸。菌糸がいつの間にか、隣の素体にまで伸びている。",
     secretLore: "茸を食べた乞食は翌朝には消え、寝ていた場所に灰色の胞子だけが残った。",
   },
@@ -281,4 +256,4 @@ export const UNITS: Record<RegularUnitId, UnitData> = {
   ...UNITS_ADDED,
   // Tier 5-6 は units-high-tier.ts に定義
   ...UNITS_HIGH_TIER,
-};
+} satisfies Record<RegularUnitId, RawUnitData>);

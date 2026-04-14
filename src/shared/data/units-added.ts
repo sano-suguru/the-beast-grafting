@@ -1,4 +1,4 @@
-import type { RegularUnitId, UnitData } from "../types";
+import type { RegularUnitId, RawUnitData } from "../types";
 
 /** 追加ユニット定義 (Tier 1-4) */
 export const UNITS_ADDED = {
@@ -9,7 +9,6 @@ export const UNITS_ADDED = {
     baseAtk: 1,
     baseHp: 2,
     tier: 1,
-    skillText: "購入: 味方1体にATK+1",
     lore: "闇市場の片隅で蠢く小さな人喰い。新しい荷が届くたびに甲高く鳴き、近くの素体が微かに痙攣する。",
   },
   dead_hand: {
@@ -18,7 +17,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 1,
     tier: 1,
-    skillText: "撃破: 自身にHP+1",
     lore: "絞首台から落ちた手首。まだ指が動いている。噛みついた先の血を吸い、少しずつ肉が盛り上がっていく。",
   },
 
@@ -29,7 +27,6 @@ export const UNITS_ADDED = {
     baseAtk: 3,
     baseHp: 2,
     tier: 2,
-    skillText: "撃破: 自身にHP+2",
     lore: "接合術の失敗で開いた傷口。それ自体が口となり、喰らい、塞がり、また開く。",
   },
   crawling_cord: {
@@ -38,7 +35,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 3,
     tier: 2,
-    skillText: "味方死亡: ランダム味方1体に+1/+1",
     lore: "切っても千切れない。死体から死体へ這い移り、何かを運び続けている。",
   },
   tainted_placenta: {
@@ -47,7 +43,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 2,
     tier: 2,
-    skillText: "購入: 闇市場の素体1体に+1/+1",
     lore: "名もなき上位者の胎盤。触れた死肉を変質させ、本来あり得ない活力を与える。闇市場の商人たちは、この胎盤に触れた素体を「格上」と呼ぶ。",
   },
   graft_scion: {
@@ -56,7 +51,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 3,
     tier: 2,
-    skillText: "死亡: 前の味方に自身ATK分のATKバフ",
     lore: "接合術の先駆者が遺した未完成の接ぎ穂。朽ちると筋繊維が前方の宿主に食い込み、すべてを譲り渡す。",
   },
 
@@ -67,7 +61,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 3,
     tier: 3,
-    skillText: "味方召喚時: 自身に+1/+1",
     lore: "新しい肉体が近づくたびに膨れ上がる、異常な肉芽組織。制御不能。だが有用。",
   },
   corroding_mold: {
@@ -76,7 +69,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 3,
     tier: 3,
-    skillText: "開戦: 前の味方に+1/+1",
     lore: "黴に覆われた死体は、生前より遥かに硬い。",
   },
   omen_womb: {
@@ -85,7 +77,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 4,
     tier: 3,
-    skillText: "死亡: 2体の2/2「忌み子」を召喚",
     lore: "腹に忌みの刻印を持つ死体。裂くと、中から二つの何かが這い出す。",
   },
   corpse_broker: {
@@ -94,7 +85,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 3,
     tier: 3,
-    skillText: "味方解体: 自身に+1/+1",
     lore: "取引のたびに体が大きくなる仲買人。客が持ち込む骨を、自分の体に接ぎ足しているのだ。",
   },
 
@@ -105,7 +95,6 @@ export const UNITS_ADDED = {
     baseAtk: 3,
     baseHp: 6,
     tier: 4,
-    skillText: "開戦: 前の味方を吸収(+ATK/HP)。死亡: 吸収先を再召喚",
     lore: "前にいるものを丸呑みにする。倒されると、腹から飲み込んだ獣が血まみれで這い出してくる。",
   },
   tumor_guardian: {
@@ -114,7 +103,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 6,
     tier: 4,
-    skillText: "被弾: 後ろの味方に+1/+1",
     lore: "背中の瘤は傷を受けるたびに脈打ち、背後の死体に何かを注いでいる。",
   },
   groaning_coffin: {
@@ -123,7 +111,6 @@ export const UNITS_ADDED = {
     baseAtk: 2,
     baseHp: 5,
     tier: 4,
-    skillText: "味方2体死亡ごと: ランダム敵に3ダメージ",
     lore: "蓋を開けた者はいない。中から唸り声がする。味方が倒れるたびに、蓋の隙間から何かが漏れ出る。",
   },
   stellar_cocoon: {
@@ -132,7 +119,6 @@ export const UNITS_ADDED = {
     baseAtk: 4,
     baseHp: 3,
     tier: 4,
-    skillText: "死亡: 3/3の星の落とし子を召喚(倒した敵を錯乱させる)",
     lore: "星辰の配列が正しい夜にだけ降ってくる、正体不明の繭。破壊されると、中から異形の光を帯びた何かが這い出してくる。闇市の商人は高値を付けるが、手元に長く置きたがる者はいない。",
   },
-} as const satisfies Partial<Record<RegularUnitId, UnitData>>;
+} as const satisfies Partial<Record<RegularUnitId, RawUnitData>>;

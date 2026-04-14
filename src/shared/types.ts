@@ -110,6 +110,9 @@ export interface UnitData {
   secretLore?: string;
 }
 
+/** skillText を除いたデータ定義用型。テンプレートから自動解決される。 */
+export type RawUnitData = Omit<UnitData, "skillText">;
+
 export interface UnitInstance {
   id: UnitId;
   name: string;

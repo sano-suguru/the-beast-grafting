@@ -81,7 +81,7 @@ export function buildProgressedUnit(id: DataUnitId, night: number, rng: Rng): Un
     level,
     exp,
     equip,
-    skillText: getSkillText(id, level, base.skillText),
+    skillText: getSkillText(id, level),
   };
 }
 

@@ -68,7 +68,7 @@ export const graftUnits = (base: UnitInstance, material: UnitInstance): GraftRes
       buffHp: 0,
       exp: newExp,
       level: newLevel,
-      skillText: getSkillText(base.id, newLevel, base.skillText),
+      skillText: getSkillText(base.id, newLevel),
     },
     leveledUp,
   };

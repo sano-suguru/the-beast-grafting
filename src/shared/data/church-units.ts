@@ -1,13 +1,13 @@
-import type { ChurchUnitId, UnitData } from "../types";
+import type { ChurchUnitId, RawUnitData } from "../types";
+import { resolveSkillTexts } from "../skill-text";
 
-export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
+export const CHURCH_UNITS = resolveSkillTexts({
   squire: {
     id: "squire",
     name: "見習い従騎士",
     baseAtk: 1,
     baseHp: 2,
     tier: 1,
-    skillText: "死亡: 後ろの味方に+1/+1",
     lore: "異端を知らぬ瞳が、最も深く剣を突き立てる。",
   },
   inquisitor: {
@@ -16,7 +16,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 1,
     tier: 1,
-    skillText: "開戦: 敵前衛に1ダメージ",
     lore: "異端を焼き払う松明を持つ者。彼らの目に慈悲はない。",
   },
   church_hound: {
@@ -25,7 +24,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 1,
     tier: 1,
-    skillText: "死亡: 3/2頭部を召喚",
     lore: "聖水に浸された獣は、もはや自らの死を認識できない。",
   },
   priest: {
@@ -34,7 +32,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 2,
     tier: 2,
-    skillText: "死亡: 味方全体に+0/+1",
     lore: "彼の祝福を受けた騎士は、腕を失っても微笑んでいた。",
   },
   templar: {
@@ -43,7 +40,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 4,
     baseHp: 3,
     tier: 2,
-    skillText: "被弾: 自身に+1/+0",
     lore: "鎧の裏には聖句を刻んだ釘が並ぶ。傷を負うたび、彼は恍惚と微笑む。",
   },
   church_beast: {
@@ -52,7 +48,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 2,
     tier: 2,
-    skillText: "死亡: 3/3幼子を召喚",
     lore: "教団が『天使の降臨』と呼ぶ何か。その純白の腹の中には、さらに悍ましい『祝福』が詰まっている。",
   },
   // Tier 3
@@ -62,7 +57,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 3,
     baseHp: 5,
     tier: 3,
-    skillText: "開戦: 味方全体のHP+1",
     lore: "鎧が光を弾くだけで、瀕死の兵が立つ。立った兵の瞳が、みな同じ色になる。",
   },
   flagellant: {
@@ -71,7 +65,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 2,
     baseHp: 4,
     tier: 3,
-    skillText: "被弾: 後方味方に+1/+1",
     lore: "己の背を打つたび、隣の騎士の傷が塞がる。苦行者の背にはもう余白がない。",
   },
   // Tier 4
@@ -81,7 +74,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 1,
     baseHp: 8,
     tier: 4,
-    skillText: "味方死亡: 2/2信徒を召喚(最大2回/戦)",
     lore: "殉教者が出るたび、扉を開けて信徒が出てくる。いつ中に入ったかは、記録にない。",
   },
   relic_sword: {
@@ -90,7 +82,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 5,
     baseHp: 3,
     tier: 4,
-    skillText: "直前の味方が攻撃: 前衛の攻撃+2",
     lore: "聖人の大腿骨を削り出した白い刃。握った騎士の指の骨が、柄と同じ色に変わり始めている。",
   },
   // Tier 5
@@ -100,7 +91,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 4,
     baseHp: 6,
     tier: 5,
-    skillText: "死亡: 味方全体に+2/+2",
     lore: "六枚の翼のうち四枚は腐り落ちていた。残りの光を浴びた者の傷は消えたが、何か別のものも消えていた。",
   },
   holy_fire: {
@@ -109,7 +99,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 6,
     baseHp: 4,
     tier: 5,
-    skillText: "開戦: 最もHPの高い敵に10ダメージ",
     lore: "異端を焼いた火が、消えない。薪はとうに灰になったのに。",
   },
   // Tier 6
@@ -119,7 +108,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 6,
     baseHp: 8,
     tier: 6,
-    skillText: "味方2体死亡ごと: 自身に+4/+4",
     lore: "何の翼かわからない。殉教者が増えるほど羽が伸びる。降りてきたのか、落とされたのか。",
   },
   risen_pope: {
@@ -128,7 +116,6 @@ export const CHURCH_UNITS: Record<ChurchUnitId, UnitData> = {
     baseAtk: 4,
     baseHp: 6,
     tier: 6,
-    skillText: "撃破: 味方全体に+1/+1",
     lore: "三日前に埋葬したはずの教皇。棺の蓋が内側から開いていた。信徒たちはそれを奇跡と呼んだ。",
   },
-};
+} satisfies Record<ChurchUnitId, RawUnitData>);

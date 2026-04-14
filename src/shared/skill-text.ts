@@ -1,4 +1,5 @@
-import type { UnitId } from "./types";
+import type { ChurchUnitId, RawUnitData, RegularUnitId, UnitData, UnitId } from "./types";
+import { invariant } from "./invariant";
 import {
   atLevel,
   BAT,
@@ -52,6 +53,18 @@ import {
   TAINTED_PLACENTA,
   CORRODING_MOLD,
   STELLAR_COCOON,
+  DEAD_HAND,
+  DEVOURING_WOUND,
+  CRAWLING_CORD,
+  GHOUL_INFANT,
+  FLESH_GRANULATION,
+  CORPSE_BROKER,
+  TUMOR_GUARDIAN,
+  GROANING_COFFIN,
+  INSATIABLE_MAW,
+  WAILING_CURSECHILD,
+  AMNIOTIC_ARMOR,
+  OMEN_WOMB,
 } from "./skill-params";
 
 const houndDeathText = (lv: number) => {
@@ -59,7 +72,9 @@ const houndDeathText = (lv: number) => {
   return `死亡: ${b.atk}/${b.hp}頭部を召喚`;
 };
 
-const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
+type SkillTemplate = (lv: number) => string;
+
+const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   rat: (lv) => {
     const b = atLevel(RAT.deathBuff, lv);
     return `死亡: 味方1体に+${b.atk}/+${b.hp}`;
@@ -200,12 +215,75 @@ const TEMPLATES: Partial<Record<UnitId, (lv: number) => string>> = {
     const b = atLevel(RISEN_POPE.buff, lv);
     return `撃破: 味方全体に+${b.atk}/+${b.hp}`;
   },
+  dead_hand: (lv) => `撃破: 自身にHP+${atLevel(DEAD_HAND.hpHeal, lv)}`,
+  devouring_wound: (lv) => `撃破: 自身にHP+${atLevel(DEVOURING_WOUND.hpHeal, lv)}`,
+  crawling_cord: (lv) => {
+    const b = atLevel(CRAWLING_CORD.buff, lv);
+    return `味方死亡: ランダム味方1体に+${b.atk}/+${b.hp}`;
+  },
+  ghoul_infant: (lv) => `購入: 味方1体にATK+${atLevel(GHOUL_INFANT.atkBuff, lv)}`,
+  flesh_granulation: (lv) => {
+    const b = atLevel(FLESH_GRANULATION.buff, lv);
+    return `味方召喚時: 自身に+${b.atk}/+${b.hp}`;
+  },
+  corpse_broker: (lv) => {
+    const b = atLevel(CORPSE_BROKER.sellBuff, lv);
+    return `味方解体: 自身に+${b.atk}/+${b.hp}`;
+  },
+  tumor_guardian: (lv) => {
+    const b = atLevel(TUMOR_GUARDIAN.buff, lv);
+    return `被弾: 後ろの味方に+${b.atk}/+${b.hp}`;
+  },
+  groaning_coffin: (lv) =>
+    `味方${GROANING_COFFIN.threshold}体死亡ごと: ランダム敵に${atLevel(GROANING_COFFIN.damage, lv)}ダメージ`,
+  insatiable_maw: (lv) => {
+    const b = atLevel(INSATIABLE_MAW.buff, lv);
+    return `味方死亡: 自身に+${b.atk}/+${b.hp}`;
+  },
+  wailing_cursechild: (lv) => {
+    const b = atLevel(WAILING_CURSECHILD.buff, lv);
+    return `味方${WAILING_CURSECHILD.threshold}体死亡ごと: 味方全体に+${b.atk}/+${b.hp}`;
+  },
+  amniotic_armor: (lv) => `被弾: 自身に【屍蝋】を装備(${atLevel(AMNIOTIC_ARMOR.uses, lv)}回/戦)`,
+  omen_womb: (lv) => {
+    const t = atLevel(OMEN_WOMB.token, lv);
+    return `死亡: 2体の${t.atk}/${t.hp}「忌み子」を召喚`;
+  },
+  // 固定テキスト（レベルで変化しない）
+  beggar: () => "解体: {blood}を1多く獲得",
+  maiden: () => "死亡: 後ろに【屍蝋の盾】",
+  famine_corpse: () => "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
+  graft_scion: () => "死亡: 前の味方に自身ATK分のATKバフ",
+  devouring_graft: () => "開戦: 前の味方を吸収(+ATK/HP)。死亡: 吸収先を再召喚",
+  chalice: () => "購入: 闇市場の薬を2つの無料【純血】(+1/+2)に",
+  necrotic_finger: () => "常時: 攻撃で対象を即死させる",
+  mimicking_flesh: () => "開戦: 前の味方のスキルをコピー(戦闘中のみ)",
+  brains: () => "常時: 前の味方の能力2回発動",
+  puppeteer: () => "常時: 後ろの味方の死亡能力2回発動",
 };
 
 /** テンプレートが登録されているユニットID一覧 */
 export const TEMPLATED_UNIT_IDS: ReadonlySet<UnitId> = new Set(Object.keys(TEMPLATES) as UnitId[]);
 
-export function getSkillText(id: UnitId, level: number, fallback: string): string {
-  const tmpl = TEMPLATES[id];
-  return tmpl ? tmpl(level) : fallback;
+/** レベルに依存しない固定テキストユニットID一覧（テンプレートの引数arity で自動検出） */
+export const FIXED_SKILL_IDS: ReadonlySet<RegularUnitId | ChurchUnitId> = new Set(
+  (Object.keys(TEMPLATES) as (RegularUnitId | ChurchUnitId)[]).filter(
+    (id) => TEMPLATES[id].length === 0,
+  ),
+);
+
+export function getSkillText(id: UnitId, level: number): string {
+  const tmpl = (TEMPLATES as Partial<Record<UnitId, SkillTemplate>>)[id];
+  invariant(tmpl, `no skill template for ${id}`);
+  return tmpl(level);
+}
+
+export function resolveSkillTexts<K extends RegularUnitId | ChurchUnitId>(
+  raw: Record<K, RawUnitData>,
+): Record<K, UnitData> {
+  const result = {} as Record<K, UnitData>;
+  for (const key of Object.keys(raw) as K[]) {
+    result[key] = { ...raw[key], skillText: TEMPLATES[key](1) };
+  }
+  return result;
 }

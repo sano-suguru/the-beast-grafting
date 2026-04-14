@@ -1,4 +1,4 @@
-import type { RegularUnitId, UnitData } from "../types";
+import type { RegularUnitId, RawUnitData } from "../types";
 
 /** Tier 5-6 ユニット定義 */
 export const UNITS_HIGH_TIER = {
@@ -9,7 +9,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 7,
     baseHp: 4,
     tier: 5,
-    skillText: "開戦: 最後尾の敵に6ダメ(自身に3反動)",
     lore: "火炙りにされた魔女の遺灰を強引に実体化させたもの。その絶叫は壁の向こうに隠れ潜む者すら確実に呪い殺す。",
     secretLore:
       "その絶叫を聞いた者は、自らの手で耳を削ぎ落としてもなお、脳髄に響く声に狂い死んでいった。",
@@ -20,7 +19,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 6,
     baseHp: 5,
     tier: 5,
-    skillText: "撃破: 先頭の敵に3ダメ(Tier1に8ダメ)",
     lore: "無数の罪人の腕を縫い付けた多腕の怪物。一度殺戮を始めると、目の前の肉がすべて挽肉になるまで止まらない。",
     secretLore:
       "百の腕はついに聖堂の巨大な扉を粉砕し、中に逃げ込んだ信徒たちを一人残らず挽肉に変えた。",
@@ -31,7 +29,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 4,
     baseHp: 6,
     tier: 5,
-    skillText: "購入: 闇市場の薬を2つの無料【純血】(+1/+2)に",
     lore: "教会の深部から盗み出された黄金の杯。どんな泥水も、これを経由すれば生命力に溢れる純血へと変異する。",
     secretLore:
       "杯から溢れ出た血は川となり、それに触れた死体はすべて神を呪う不死の怪物として蘇った。",
@@ -42,7 +39,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 3,
     baseHp: 7,
     tier: 5,
-    skillText: "直前の味方が攻撃: 敵全体に1ダメージ(3回/戦)",
     lore: "封鎖街区の鐘撞きだった男。疫病で死んだ後も、背中に癒着した鐘ごと立ち上がり、弔鐘を鳴らし続けている。",
     secretLore:
       "鐘撞きが最後に倒れた朝、その腕は鐘縄を離さなかった。鐘は今も、毎夜鳴り続けている。",
@@ -53,7 +49,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 4,
     baseHp: 5,
     tier: 5,
-    skillText: "死亡: 最終スタッツを前方の味方2体に分配",
     lore: "絞首台から落ちた遺体の口が、まだ動いている。刑吏は、何を言ったか思い出せない。",
     secretLore: "その言葉を夢で聞いた者は、翌朝から死を恐れなくなった。",
   },
@@ -64,7 +59,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 1,
     baseHp: 1,
     tier: 5,
-    skillText: "常時: 攻撃で対象を即死させる",
     lore: "黒ずんだ一本の指。触れたものを腐らせる。指自体は、少し突けば崩れる。",
   },
   insatiable_maw: {
@@ -73,7 +67,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 4,
     baseHp: 4,
     tier: 5,
-    skillText: "味方死亡: 自身に+2/+1",
     lore: "深淵の底で餓え続けた何かの、最後に残った器官。死の匂いを嗅ぐと脈動し、際限なく肥大化する。",
   },
   wailing_cursechild: {
@@ -82,7 +75,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 3,
     baseHp: 7,
     tier: 5,
-    skillText: "味方3体死亡ごと: 味方全体に+2/+2",
     lore: "泣き声が大きくなるたびに、まだ動いている者の肉が震え始める。泣き止ませる方法は、まだ見つかっていない。",
   },
   amniotic_armor: {
@@ -91,7 +83,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 2,
     baseHp: 8,
     tier: 5,
-    skillText: "被弾: 自身に【屍蝋】を装備(1回/戦)",
     lore: "上位者の子を包んでいた羊膜。打たれると硬化し、一撃だけ身を守る。生まれなかった何かの、残り香。",
   },
   mimicking_flesh: {
@@ -100,7 +91,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 4,
     baseHp: 3,
     tier: 5,
-    skillText: "開戦: 前の味方のスキルをコピー(戦闘中のみ)",
     lore: "銀色の肉塊。隣の素体の動きを完璧に模倣し、戦いが終わると粘液に戻る。模倣は本物を超えられない。だが、二つあれば十分だ。",
   },
 
@@ -111,7 +101,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 6,
     baseHp: 4,
     tier: 6,
-    skillText: "常時: 前の味方の能力2回発動",
     lore: "異様に肥大化したふたつの脳髄。宿主の神経を強引に侵蝕し、限界を超えた異常な挙動を繰り返させる。",
     secretLore: "二つの脳はついに一つの完全な悪意となり、王都すべての人間を精神的支配下に置いた。",
   },
@@ -121,7 +110,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 6,
     baseHp: 3,
     tier: 6,
-    skillText: "直前の味方が攻撃: ランダム敵に4ダメ(4回/戦)",
     lore: "深淵の悪魔から抉り取った巨大な眼球。前衛の激しい動きに呼応して充血し、敵の急所へ致死の呪詛を撃ち込み続ける。",
     secretLore:
       "その眼差しに見つめられた者は、肉体が内側から崩壊し、ただの血の染みとなって地面に消えた。",
@@ -132,7 +120,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 4,
     baseHp: 4,
     tier: 6,
-    skillText: "味方死亡: 3/3の蠅を死亡位置に召喚(最大3回)",
     lore: "腐敗の象徴たる悪魔の抜け殻。この肉塊が放つ強烈な瘴気は、死んだ味方の肉を瞬時に苗床とし、新たな羽音を呼び覚ます。",
     secretLore: "王都の空は無数の蠅によって黒く塗りつぶされ、陽の光が二度と差すことはなかった。",
   },
@@ -142,7 +129,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 4,
     baseHp: 8,
     tier: 6,
-    skillText: "Tier1購入: 味方全体に+1/+1(4回/夜)",
     lore: "自らの尾を喰らう蛇のミイラ。最も無価値な命を捧げるたび、工房の全ての肉塊が脈打ち、肥大化していく。",
     secretLore: "終わりのない輪廻は世界を飲み込み、生と死の境界線を完全に消し去った。",
   },
@@ -152,7 +138,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 5,
     baseHp: 5,
     tier: 6,
-    skillText: "撃破: 敵全体に2ダメージ",
     lore: "巨大な挽き機と癒着した死体。回すと血霧が出るが、機械の中に臓腑はとうに残っていない。",
     secretLore: "ハンドルを止めようとした者は、内側から回されていることに気づいた。",
   },
@@ -162,7 +147,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 2,
     baseHp: 8,
     tier: 6,
-    skillText: "味方4体死亡ごと: 味方全体に+3/+3",
     lore: "黒檀の箱に納められた聖人の頭蓋。十分な死者が出ると、歯列が動く。",
     secretLore: "頭蓋が嗤い終わるたび、箱の中の歯が一本ずつ増えている。",
   },
@@ -172,7 +156,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 4,
     baseHp: 6,
     tier: 6,
-    skillText: "常時: 後ろの味方の死亡能力2回発動",
     lore: "腱の糸を垂らす遺体。近くで味方が倒れると、その四肢がもう一度だけ動く。",
     secretLore: "糸が墓地の地下に届いた夜から、棺の蓋が内側から叩かれるようになった。",
   },
@@ -182,7 +165,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 3,
     baseHp: 10,
     tier: 6,
-    skillText: "出陣時: 空きに+4/+4のTier1を召喚",
     lore: "腐肉を養分にした培養槽。朝になると、昨夜なかった指が土から突き出ている。",
     secretLore: "踏んだ土から手が生え、巡礼者の足首を掴んだ。",
   },
@@ -192,7 +174,6 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 2,
     baseHp: 8,
     tier: 6,
-    skillText: "購入: Tier数×味方全体に+1/+1",
     lore: "工房に捨てた骨が、ある朝枝を伸ばしていた。上等の骨を根元に埋めると、よく育つ。",
     secretLore: "骨樹の根は工房の床を突き破り、地下の墓地まで達していた。",
   },
@@ -202,8 +183,7 @@ export const UNITS_HIGH_TIER = {
     baseAtk: 0,
     baseHp: 12,
     tier: 6,
-    skillText: "被弾: 味方全体の攻撃+1",
     lore: "巨大な肉塊。斬りつけるたび裂け目から呻きが漏れ、聞いた者の手が震える。",
     secretLore: "巨人が吼えた夜、三つの王国の墓地で土が動いた。",
   },
-} as const satisfies Partial<Record<RegularUnitId, UnitData>>;
+} as const satisfies Partial<Record<RegularUnitId, RawUnitData>>;

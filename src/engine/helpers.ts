@@ -30,7 +30,7 @@ export const createUnit = (id: DataUnitId): UnitInstance => {
     equip: null,
     uid: generateUid(),
     isChurch,
-    skillText: getSkillText(id, 1, data.skillText),
+    skillText: getSkillText(id, 1),
   };
 };
 
