@@ -159,14 +159,14 @@ export const UNITS_HIGH_TIER = {
     lore: "腱の糸を垂らす遺体。近くで味方が倒れると、その四肢がもう一度だけ動く。",
     secretLore: "糸が墓地の地下に届いた夜から、棺の蓋が内側から叩かれるようになった。",
   },
-  corpse_garden: {
-    id: "corpse_garden",
-    name: "死肉の苗床",
+  budding_hydra: {
+    id: "budding_hydra",
+    name: "肉芽のヒドラ",
     baseAtk: 3,
     baseHp: 10,
     tier: 6,
-    lore: "腐肉を養分にした培養槽。朝になると、昨夜なかった指が土から突き出ている。",
-    secretLore: "踏んだ土から手が生え、巡礼者の足首を掴んだ。",
+    lore: "首を落とすたび、切り口から新しい肉芽が膨らむ。殺すほどに増える。",
+    secretLore: "焼いても切っても、翌朝には傷口から小さな顔が覗いていた。",
   },
   bone_tree: {
     id: "bone_tree",

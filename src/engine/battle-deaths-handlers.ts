@@ -18,6 +18,7 @@ import {
   handleStellarCocoonDeath,
   handleStarChildDeath,
   handleDevouringGraftDeath,
+  handleBuddingHydraDeath,
 } from "./battle-deaths-handlers-spawn";
 
 export const UNIT_DEATH_HANDLERS = {
@@ -37,6 +38,7 @@ export const UNIT_DEATH_HANDLERS = {
   stellar_cocoon: handleStellarCocoonDeath,
   star_child: handleStarChildDeath,
   devouring_graft: handleDevouringGraftDeath,
+  budding_hydra: handleBuddingHydraDeath,
 } satisfies Partial<Record<UnitId, DeathHandler>>;
 
 export type DeathHandlerUnitId = keyof typeof UNIT_DEATH_HANDLERS;

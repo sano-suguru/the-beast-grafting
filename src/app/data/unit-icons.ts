@@ -122,7 +122,7 @@ const UNIT_ICONS: Record<UnitId, typeof Rat> = {
   organ_grinder: Drum,
   grinning_skull: Drama,
   puppeteer: Waypoints,
-  corpse_garden: Sprout,
+  budding_hydra: Sprout,
   bone_tree: TreePine,
   howling_giant: Mountain,
   // Church

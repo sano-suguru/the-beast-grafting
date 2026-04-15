@@ -73,7 +73,7 @@ export const UNIT_PROFILES: Readonly<Record<RegularUnitId, UnitSimProfile>> = {
   organ_grinder: { role: "front", tags: ["self-contained"] },
   grinning_skull: { role: "flex", tags: ["avenge"] },
   puppeteer: { role: "flex", tags: ["multiplier"] },
-  corpse_garden: { role: "flex", tags: ["spawner"] },
+  budding_hydra: { role: "flex", tags: ["spawner", "death-provider"] },
   bone_tree: { role: "flex", tags: ["stat-stick"] },
   howling_giant: { role: "front", tags: ["self-contained"] },
 };

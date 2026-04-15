@@ -12,6 +12,7 @@ export const ARCHETYPES: Readonly<Record<string, readonly RegularUnitId[]>> = {
   mimicking_combo: ["hundred_arms", "parasite", "mimicking_flesh", "blood_font", "corroding_mold"],
   value_trade: ["devouring_graft", "charnel_pit", "flayed_saint", "stellar_cocoon", "omen_womb"],
   machine_sustain: ["howling_giant", "machine", "brains", "leech", "tumor_guardian"],
+  hydra_swarm: ["budding_hydra", "tumor_guardian", "altar", "crawling_cord", "insatiable_maw"],
 };
 
 /** 各アーキタイプにポジション最適化を適用して返す */

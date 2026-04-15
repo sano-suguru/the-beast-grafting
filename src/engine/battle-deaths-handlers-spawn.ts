@@ -10,11 +10,11 @@ import {
   skillAction,
   damageAction,
 } from "./battle-context";
-import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
+import { FRAME_DELAY_DEATH_CHAIN, MAX_BOARD_SIZE } from "./constants";
 import { spawnTokenAndNotify, spawnSummonedUnitAndNotify } from "./battle-spawn";
 import { lookupUnitData } from "../shared/data/unit-lookup";
 import { invariant, mustGet } from "../shared/invariant";
-import { atLevel, OMEN_WOMB, STELLAR_COCOON } from "../shared/skill-params";
+import { atLevel, OMEN_WOMB, STELLAR_COCOON, BUDDING_HYDRA } from "../shared/skill-params";
 import { SPAWN_ONLY_UNITS } from "../shared/data/spawn-only-units";
 
 export function handleGraftScionDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
@@ -169,4 +169,32 @@ function spawnNamedUnit(
     delay: FRAME_DELAY_DEATH_CHAIN,
     spawnerUid: dead.uid,
   });
+}
+
+export function handleBuddingHydraDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
+  const divisor = atLevel(BUDDING_HYDRA.divisor, dead.level);
+  const count = Math.min(Math.floor(dead.preDeathHp / divisor), MAX_BOARD_SIZE - board.length);
+  if (count <= 0) return;
+  const t = atLevel(BUDDING_HYDRA.token, dead.level);
+  const segments: LogSegment[] = [
+    enemyPrefix(isPlayer),
+    seg.u(dead.name),
+    "の切り口から首が生える！ ",
+    seg.s(`${t.atk}/${t.hp} 召喚`),
+  ];
+  for (let i = 0; i < count; i++) {
+    spawnTokenAndNotify({
+      board,
+      idx,
+      name: "ヒドラの首",
+      atk: t.atk,
+      hp: t.hp,
+      isChurch: dead.isChurch,
+      segments,
+      isPlayer,
+      ctx,
+      delay: FRAME_DELAY_DEATH_CHAIN,
+      spawnerUid: dead.uid,
+    });
+  }
 }

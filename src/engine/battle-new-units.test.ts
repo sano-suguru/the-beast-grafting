@@ -38,7 +38,7 @@ import {
   STITCHED_TWIN,
   FLAGELLANT,
   HOWLING_GIANT,
-  CORPSE_GARDEN,
+  BUDDING_HYDRA,
   BLOOD_FONT,
   CATACOMB_RAT,
   PLAGUE_BELL,
@@ -609,28 +609,89 @@ describe("applyOnHitSkills – flagellant", () => {
   });
 });
 
-// ── corpse_garden (pre-battle spawn) ──
+// ── budding_hydra (death: HP-dependent token spawn) ──
 
-describe("corpse_garden – deploy spawns", () => {
-  it("spawns tokens to fill empty board slots", () => {
-    const garden = makeBattleUnit({ id: "corpse_garden", name: "苗床", atk: 1, hp: 10 });
-    const ctx = makeContext([garden], []);
-    runDeploySkills(ctx.pBoard, true, ctx);
-    const b = atLevel(CORPSE_GARDEN.buff, 1);
-    const tokens = ctx.pBoard.filter((u) => u.name === "苗床の芽");
-    expect(tokens.length).toBe(4);
-    for (const t of tokens) {
-      expect(t.atk).toBe(b.atk);
-      expect(t.hp).toBe(b.hp);
+describe("budding_hydra – death spawns", () => {
+  it("spawns floor(HP / divisor) tokens on death", () => {
+    const hydra = makeBattleUnit({
+      id: "budding_hydra",
+      name: "肉芽のヒドラ",
+      atk: 3,
+      hp: 0,
+      preDeathHp: 10,
+    });
+    const board: BattleUnit[] = [];
+    const ctx = makeContext(board, []);
+    callDeathHandler("budding_hydra", hydra, board, 0, true, ctx);
+    const divisor = atLevel(BUDDING_HYDRA.divisor, 1);
+    const t = atLevel(BUDDING_HYDRA.token, 1);
+    const tokens = board.filter((u) => u.name === "ヒドラの首");
+    expect(tokens.length).toBe(Math.floor(10 / divisor));
+    for (const tk of tokens) {
+      expect(tk.atk).toBe(t.atk);
+      expect(tk.hp).toBe(t.hp);
     }
   });
 
-  it("does not spawn when board is full", () => {
-    const ids = ["corpse_garden", "token", "token", "token", "token"] as const;
-    const units = ids.map((id) => makeBattleUnit({ id, hp: 10, atk: 1 }));
-    const ctx = makeContext(units, []);
-    runDeploySkills(ctx.pBoard, true, ctx);
-    expect(ctx.pBoard.filter((u) => u.name === "苗床の芽")).toHaveLength(0);
+  it("spawns more tokens with higher HP", () => {
+    const hydra = makeBattleUnit({
+      id: "budding_hydra",
+      name: "肉芽のヒドラ",
+      atk: 3,
+      hp: 0,
+      preDeathHp: 20,
+    });
+    const board: BattleUnit[] = [];
+    const ctx = makeContext(board, []);
+    callDeathHandler("budding_hydra", hydra, board, 0, true, ctx);
+    const divisor = atLevel(BUDDING_HYDRA.divisor, 1);
+    expect(board.filter((u) => u.name === "ヒドラの首").length).toBe(Math.floor(20 / divisor));
+  });
+
+  it("spawns nothing when HP < divisor", () => {
+    const hydra = makeBattleUnit({
+      id: "budding_hydra",
+      name: "肉芽のヒドラ",
+      atk: 3,
+      hp: 0,
+      preDeathHp: 3,
+    });
+    const board: BattleUnit[] = [];
+    const ctx = makeContext(board, []);
+    callDeathHandler("budding_hydra", hydra, board, 0, true, ctx);
+    expect(board.filter((u) => u.name === "ヒドラの首")).toHaveLength(0);
+  });
+
+  it("caps spawns at MAX_BOARD_SIZE", () => {
+    const hydra = makeBattleUnit({
+      id: "budding_hydra",
+      name: "肉芽のヒドラ",
+      atk: 3,
+      hp: 0,
+      preDeathHp: 100,
+    });
+    const board: BattleUnit[] = [];
+    const ctx = makeContext(board, []);
+    callDeathHandler("budding_hydra", hydra, board, 0, true, ctx);
+    expect(board.filter((u) => u.name === "ヒドラの首").length).toBeLessThanOrEqual(MAX_BOARD_SIZE);
+  });
+
+  it("respects remaining board capacity", () => {
+    const hydra = makeBattleUnit({
+      id: "budding_hydra",
+      name: "肉芽のヒドラ",
+      atk: 3,
+      hp: 0,
+      preDeathHp: 100,
+    });
+    const existing = Array.from({ length: 3 }, () =>
+      makeBattleUnit({ id: "token", atk: 1, hp: 1 }),
+    );
+    const board: BattleUnit[] = [...existing];
+    const ctx = makeContext(board, []);
+    callDeathHandler("budding_hydra", hydra, board, 0, true, ctx);
+    expect(board.length).toBeLessThanOrEqual(MAX_BOARD_SIZE);
+    expect(board.filter((u) => u.name === "ヒドラの首").length).toBe(MAX_BOARD_SIZE - 3);
   });
 });
 

@@ -45,7 +45,7 @@ import {
   GRINNING_SKULL,
   ARCHANGEL,
   BLOOD_FONT,
-  CORPSE_GARDEN,
+  BUDDING_HYDRA,
   BONE_TREE,
   GRAVE_WORM,
   MARKET_VULTURE,
@@ -175,9 +175,10 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(GRINNING_SKULL.buff, lv);
     return `味方${GRINNING_SKULL.threshold}体死亡ごと: 味方全体に+${b.atk}/+${b.hp}`;
   },
-  corpse_garden: (lv) => {
-    const b = atLevel(CORPSE_GARDEN.buff, lv);
-    return `出陣時: 空きに+${b.atk}/+${b.hp}のTier1を召喚`;
+  budding_hydra: (lv) => {
+    const d = atLevel(BUDDING_HYDRA.divisor, lv);
+    const t = atLevel(BUDDING_HYDRA.token, lv);
+    return `死亡: HP÷${d}体の${t.atk}/${t.hp}ヒドラの首を召喚`;
   },
   bone_tree: (lv) => {
     const b = atLevel(BONE_TREE.buff, lv);

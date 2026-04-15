@@ -24,11 +24,12 @@ export const BLOOD_FONT = {
   hpBuff: [3, 5, 7] as SN,
 };
 
-export const CORPSE_GARDEN = {
-  buff: [
+export const BUDDING_HYDRA = {
+  divisor: [5, 4, 3] as SN,
+  token: [
+    { atk: 3, hp: 3 },
     { atk: 4, hp: 4 },
-    { atk: 6, hp: 6 },
-    { atk: 8, hp: 8 },
+    { atk: 5, hp: 5 },
   ] as SB,
 };
 

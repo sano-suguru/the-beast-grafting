@@ -44,7 +44,7 @@ export type RegularUnitId =
   | "organ_grinder"
   | "grinning_skull"
   | "puppeteer"
-  | "corpse_garden"
+  | "budding_hydra"
   | "bone_tree"
   | "howling_giant"
   | "ghoul_infant"
