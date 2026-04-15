@@ -19,6 +19,7 @@ export interface DiscoveredArchetype {
   readonly unitIds: readonly RegularUnitId[];
   readonly seedPair: readonly [RegularUnitId, RegularUnitId];
   readonly totalSynergyDelta: number;
+  readonly avgMemberWR: number | null;
 }
 
 const MIN_PAIR_SAMPLES = 30;
@@ -212,8 +213,36 @@ function deduplicateByJaccard(
  *
  * 「正しいアーキタイプ」ではなく「データが示す最強候補」。
  */
+
+const SYNERGY_WEIGHT = 0.6;
+const ABS_WR_WEIGHT = 0.4;
+const MIN_MEMBER_WIN_RATE = 0.32;
+
+function avgWinRate(
+  team: readonly RegularUnitId[],
+  unitPerformance: ReadonlyMap<RegularUnitId, UnitPerformance>,
+): number {
+  let totalWR = 0;
+  let count = 0;
+  for (const id of team) {
+    const perf = unitPerformance.get(id);
+    if (perf && perf.appearances > 0) {
+      totalWR += perf.wins / perf.appearances;
+      count++;
+    }
+  }
+  return count > 0 ? totalWR / count : 0;
+}
+
+function compositeScore(c: DiscoveredArchetype): number {
+  const synergy = c.totalSynergyDelta;
+  const absWR = c.avgMemberWR ?? 0.5;
+  return synergy * SYNERGY_WEIGHT + absWR * ABS_WR_WEIGHT;
+}
+
 export function discoverArchetypes(
   pairSynergies: readonly PairSynergy[],
+  unitPerformance?: ReadonlyMap<RegularUnitId, UnitPerformance>,
   maxCompositions = 10,
 ): readonly DiscoveredArchetype[] {
   const pairMap = buildPairMap(pairSynergies);
@@ -225,17 +254,23 @@ export function discoverArchetypes(
     const team = greedyFillTeam([seed.unitA, seed.unitB], unitPool, pairMap);
     if (team.length < TEAM_SIZE) continue;
 
+    const totalSynergyDelta = computeTotalDelta(team, pairMap);
+    const avgMemberWR = unitPerformance ? avgWinRate(team, unitPerformance) : null;
+
+    if (avgMemberWR !== null && avgMemberWR < MIN_MEMBER_WIN_RATE) continue;
+
     candidates.push({
       name: `comp-${candidates.length + 1}`,
       unitIds: team,
       seedPair: [seed.unitA, seed.unitB],
-      totalSynergyDelta: computeTotalDelta(team, pairMap),
+      totalSynergyDelta,
+      avgMemberWR,
     });
 
     if (candidates.length >= maxCompositions * 3) break;
   }
 
-  candidates.sort((a, b) => b.totalSynergyDelta - a.totalSynergyDelta);
+  candidates.sort((a, b) => compositeScore(b) - compositeScore(a));
   const filtered = deduplicateByJaccard(candidates, maxCompositions);
   return filtered.map((c, i) => ({ ...c, name: `comp-${i + 1}` }));
 }

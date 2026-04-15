@@ -60,6 +60,10 @@ function buildMatchupTeams(
   return [teamA, teamB];
 }
 
+function randomLastBattleResult(seed: number): BattleResult {
+  return createSeededRng(seed).next() < 0.5 ? "LOSE" : null;
+}
+
 /** 固定チーム同士の N 試行マッチアップ */
 export function runMatchup(
   teamAIds: readonly DataUnitId[],
@@ -87,7 +91,8 @@ export function runMatchup(
       night,
       realistic,
     );
-    const sim = simulateBattleSim(teamA, makeSimEnemy(teamB), night, seed);
+    const lastResult = randomLastBattleResult(deriveSeed(baseSeed, trials * 6 + i));
+    const sim = simulateBattleSim(teamA, makeSimEnemy(teamB), night, seed, lastResult);
 
     const m = extractBattleMetricsSim(sim);
     frameCounts.push(m.frameCount);
@@ -149,7 +154,8 @@ export function runRandomTrials(
     const eShopRng = createSeededRng(deriveSeed(baseSeed, trials * 6 + i));
     applySimShopEffects(pTeam, night, pShopRng);
     applySimShopEffects(eTeam, night, eShopRng);
-    const sim = simulateBattleSim(pTeam, makeSimEnemy(eTeam), night, battleSeed);
+    const lastResult = randomLastBattleResult(deriveSeed(baseSeed, trials * 7 + i));
+    const sim = simulateBattleSim(pTeam, makeSimEnemy(eTeam), night, battleSeed, lastResult);
 
     const m = extractBattleMetricsSim(sim);
     totalFrames += m.frameCount;

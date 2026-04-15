@@ -189,24 +189,37 @@ describe("archetype discovery pipeline", () => {
   let positioned: ReadonlyMap<string, readonly RegularUnitId[]>;
 
   beforeAll(() => {
-    trialResult = runRandomTrials(10_000, 12, 100);
+    trialResult = runRandomTrials(30_000, 12, 100);
     pairSynergies = analyzePairSynergies(
       trialResult.teamTrials,
       trialResult.unitPerformance,
       trialResult.winRate,
     );
-    archetypes = discoverArchetypes(pairSynergies);
+    archetypes = discoverArchetypes(pairSynergies, trialResult.unitPerformance);
     positioned = positionArchetypes(archetypes, 12, 200, 30);
-  }, 60_000);
+  }, 120_000);
 
   it("no unit dominates: per-unit win rate within bounds", () => {
-    const MIN_APPEARANCES = 100;
+    const PRECISION_THRESHOLD = 0.1;
+    const TIER_NORM_LIMIT = 0.2;
 
     for (const [id, perf] of trialResult.unitPerformance) {
-      if (perf.appearances < MIN_APPEARANCES) continue;
+      const [ciLo, ciHi] = perf.winRateCI95;
+      const ciWidth = ciHi - ciLo;
+
+      if (ciWidth > PRECISION_THRESHOLD) {
+        collector.addInsufficientSample({ unitId: id, appearances: perf.appearances, ciWidth });
+        continue;
+      }
+
       const winRate = perf.wins / perf.appearances;
-      expect(winRate, `${id} too strong`).toBeLessThan(0.8);
-      expect(winRate, `${id} too weak`).toBeGreaterThan(0.2);
+      // Layer 1: absolute limits
+      expect(winRate, `${id} too strong (absolute)`).toBeLessThan(0.85);
+      expect(winRate, `${id} too weak (absolute)`).toBeGreaterThan(0.15);
+      // Layer 2: tier-relative limits
+      const tierNorm = perf.tierNormalizedWinRate;
+      expect(tierNorm, `${id} too strong for tier`).toBeLessThan(TIER_NORM_LIMIT);
+      expect(tierNorm, `${id} too weak for tier`).toBeGreaterThan(-TIER_NORM_LIMIT);
     }
 
     collector.addRandomBalance({
@@ -275,7 +288,7 @@ describe("archetype discovery pipeline", () => {
 
   it("runs all-vs-all without crashing", () => {
     const names = [...positioned.keys()];
-    const TRIALS = 500;
+    const TRIALS = 1_000;
 
     for (let i = 0; i < names.length; i++) {
       for (let j = i + 1; j < names.length; j++) {
@@ -294,7 +307,7 @@ describe("archetype discovery pipeline", () => {
         expect(r.aWins + r.bWins + r.draws).toBe(TRIALS);
 
         const warnings: string[] = [];
-        if (aRate > 0.85 || aRate < 0.15)
+        if (aRate > 0.8 || aRate < 0.2)
           warnings.push(`IMBALANCE: ${aRate > 0.5 ? a : b} dominates`);
         if (r.avgFrameCount < 5) warnings.push("STOMP: battles too short");
         if (r.avgFrameCount > 80) warnings.push("STALL: battles too long");
@@ -323,7 +336,7 @@ describe("archetype discovery pipeline", () => {
 
 describe("cross-night balance", () => {
   const NIGHT_CHECKPOINTS = [3, 5, 7, 9, 12] as const;
-  const TRIALS_PER_NIGHT = 500;
+  const TRIALS_PER_NIGHT = 2_000;
 
   it("mirror win rate stays balanced across nights", () => {
     for (const night of NIGHT_CHECKPOINTS) {
@@ -338,7 +351,10 @@ describe("cross-night balance", () => {
     for (const night of NIGHT_CHECKPOINTS) {
       const r = runRandomTrials(TRIALS_PER_NIGHT, night, night * 200);
       for (const [id, perf] of r.unitPerformance) {
-        if (perf.appearances < 50) continue;
+        const [ciLo, ciHi] = perf.winRateCI95;
+        const ciWidth = ciHi - ciLo;
+        if (ciWidth > 0.15) continue;
+
         const winRate = perf.wins / perf.appearances;
         if (winRate > 0.75 || winRate < 0.25) {
           collector.addCrossNightOutlier(night, {
@@ -349,8 +365,8 @@ describe("cross-night balance", () => {
             appearances: perf.appearances,
           });
         }
-        expect(winRate, `${id} at night ${night}`).toBeLessThan(0.95);
-        expect(winRate, `${id} at night ${night}`).toBeGreaterThan(0.05);
+        expect(winRate, `${id} at night ${night}`).toBeLessThan(0.85);
+        expect(winRate, `${id} at night ${night}`).toBeGreaterThan(0.15);
       }
     }
   });

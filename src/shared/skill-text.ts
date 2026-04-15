@@ -110,8 +110,10 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(PARASITE.buff, lv);
     return `直前の味方が攻撃: 自身に+${b.atk}/+${b.hp}`;
   },
-  revenant: (lv) =>
-    `開戦: 前夜敗北なら前方${atLevel(REVENANT.targets, lv)}体の攻撃+${atLevel(REVENANT.buff, lv)}`,
+  revenant: (lv) => {
+    const b = atLevel(REVENANT.buff, lv);
+    return `開戦: 前方${atLevel(REVENANT.targets, lv)}体の攻撃+${b} (前夜敗北なら+${b * REVENANT.lossBonusMult})`;
+  },
   evangelist: (lv) =>
     `味方死亡: ランダムな敵${atLevel(EVANGELIST.targets, lv)}体を感染させる(自身に${atLevel(EVANGELIST.selfDamage, lv)}ダメ)`,
   altar: (lv) => {
@@ -183,7 +185,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   bone_tree: (lv) => {
     const b = atLevel(BONE_TREE.buff, lv);
-    return `購入: Tier数×味方全体に+${b.atk}/+${b.hp}`;
+    return `購入: 味方全体に+${b.atk}/+${b.hp}`;
   },
   howling_giant: (lv) => `被弾: 味方全体の攻撃+${atLevel(HOWLING_GIANT.atkBuff, lv)}`,
   paladin: (lv) => `開戦: 味方全体のHP+${atLevel(PALADIN.hpBuff, lv)}`,

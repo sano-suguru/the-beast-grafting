@@ -67,7 +67,7 @@ export const UNITS = resolveSkillTexts({
     id: "leech",
     name: "沼地の大蛭",
     baseAtk: 1,
-    baseHp: 2,
+    baseHp: 3,
     tier: 1,
     lore: "沼底に沈んでいた巨大な蛭。叩くと潰れるが、潰した手から血を吸って元に戻る。",
     secretLore: "水路の水を汲んだ修道女の喉が、内側から膨らんだ。",

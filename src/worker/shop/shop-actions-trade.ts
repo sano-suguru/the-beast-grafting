@@ -126,7 +126,7 @@ function finalizeBuy(
 
   const { rng, saveRng } = withRng(state);
   const buyResult = applyBuyEffects(unit, newBoard, state.rotRingUses, rng);
-  const throneBoard = applyBoneTreeBuyEffects(unit, buyResult.board);
+  const throneBoard = applyBoneTreeBuyEffects(buyResult.board);
   const rewards = generateLevelUpRewards(leveledUp, state.night, rng);
 
   let shopUnits = opts.shopUnits ?? state.shopUnits;

@@ -1,8 +1,7 @@
 import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
-import { getCurrentMaxTier } from "../../shared/data/tiers";
-import { getUnitsByTier } from "../helpers";
+
 import { atLevel } from "../../shared/skill-params";
 import { BONE_TREE, GHOUL_INFANT, ASH_FUNGUS, CORPSE_BROKER } from "../../shared/skill-params-shop";
 
@@ -58,17 +57,6 @@ function estimateNightActions(
 }
 
 /** Night N のショッププール内ユニットの平均Tier（実データ） */
-function avgPoolTier(night: number): number {
-  const maxTier = getCurrentMaxTier(night);
-  let totalTier = 0;
-  let count = 0;
-  for (let t = 1; t <= maxTier; t++) {
-    const n = getUnitsByTier(t as Tier).length;
-    totalTier += t * n;
-    count += n;
-  }
-  return count > 0 ? totalTier / count : 1;
-}
 
 /** Night N の平均的な売却ユニットの合計スタッツ（baseAtk+baseHp + progression） */
 function avgSoldUnitTotalStats(night: number): number {
@@ -118,9 +106,8 @@ function applyBoneTreeAccumulation(
   const appearNight = TIER_APPEAR_NIGHT[boneTree.tier as Tier];
   for (let n = appearNight; n <= night; n++) {
     const { purchases } = estimateNightActions(n, n === appearNight);
-    const avgTier = avgPoolTier(n);
-    rawAtk += buff.atk * avgTier * purchases;
-    rawHp += buff.hp * avgTier * purchases;
+    rawAtk += buff.atk * purchases;
+    rawHp += buff.hp * purchases;
   }
 
   const totalAtk = Math.floor(rawAtk);

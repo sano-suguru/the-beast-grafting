@@ -113,11 +113,11 @@ export function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext)
 }
 
 export function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
-  if (ctx.lastBattleResult !== "LOSE") return;
   const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
   const prefix = enemyPrefix(isPlayer);
   const maxTargets = atLevel(REVENANT.targets, u.level);
-  const buffAmount = atLevel(REVENANT.buff, u.level);
+  const baseBuff = atLevel(REVENANT.buff, u.level);
+  const buffAmount = ctx.lastBattleResult === "LOSE" ? baseBuff * REVENANT.lossBonusMult : baseBuff;
   const actions: Record<string, BattleAction> = {
     [u.uid]: skillAction(),
   };
@@ -130,15 +130,14 @@ export function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
     buffed++;
   }
   if (buffed > 0) {
+    const logSuffix =
+      ctx.lastBattleResult === "LOSE"
+        ? `の眼が血走り激怒する。前方${buffed}体の肉が激しく脈打つ。`
+        : `の眼が血走る。前方${buffed}体の肉が脈打つ。`;
     pushFrame(
       ctx,
       "skill",
-      () => [
-        prefix,
-        seg.u(u.name),
-        `の眼が血走る。前方${buffed}体の肉が脈打つ。`,
-        seg.s(`+${buffAmount}/+0`),
-      ],
+      () => [prefix, seg.u(u.name), logSuffix, seg.s(`+${buffAmount}/+0`)],
       "skill",
       actions,
     );

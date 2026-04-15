@@ -370,26 +370,24 @@ describe("applySellEffects – determinism", () => {
 });
 
 describe("applyBoneTreeBuyEffects – bone_tree", () => {
-  it("buffs all allies by tier multiplier", () => {
+  it("buffs all allies by flat amount", () => {
     const throne = makeUnit({ id: "bone_tree", uid: "throne-1" });
     const ally = makeUnit({ uid: "ally-1" });
-    const bought = makeUnit({ uid: "bought-1", tier: 3 });
     const board: (UnitInstance | null)[] = [throne, ally, null];
-    const result = applyBoneTreeBuyEffects(bought, board);
+    const result = applyBoneTreeBuyEffects(board);
     const b = atLevel(BONE_TREE.buff, 1);
     const throneResult = result.find((u) => u?.uid === "throne-1");
     const allyResult = result.find((u) => u?.uid === "ally-1");
-    expect(throneResult!.buffAtk).toBe(b.atk * 3);
-    expect(throneResult!.buffHp).toBe(b.hp * 3);
-    expect(allyResult!.buffAtk).toBe(b.atk * 3);
-    expect(allyResult!.buffHp).toBe(b.hp * 3);
+    expect(throneResult!.buffAtk).toBe(b.atk);
+    expect(throneResult!.buffHp).toBe(b.hp);
+    expect(allyResult!.buffAtk).toBe(b.atk);
+    expect(allyResult!.buffHp).toBe(b.hp);
   });
 
   it("returns original board when no throne on board", () => {
     const ally = makeUnit({ uid: "ally-1" });
-    const bought = makeUnit({ uid: "bought-1", tier: 2 });
     const board: (UnitInstance | null)[] = [ally, null];
-    const result = applyBoneTreeBuyEffects(bought, board);
+    const result = applyBoneTreeBuyEffects(board);
     expect(result).toBe(board);
   });
 });

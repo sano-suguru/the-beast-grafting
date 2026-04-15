@@ -259,10 +259,9 @@ export const applySellEffects = (
 };
 
 export const applyBoneTreeBuyEffects = (
-  boughtUnit: UnitInstance,
   currentBoard: (UnitInstance | null)[],
 ): (UnitInstance | null)[] => {
-  const { atk, hp } = sumBuffByUnitId(currentBoard, "bone_tree", BONE_TREE.buff, boughtUnit.tier);
+  const { atk, hp } = sumBuffByUnitId(currentBoard, "bone_tree", BONE_TREE.buff);
   if (atk === 0 && hp === 0) return currentBoard;
   return currentBoard.map((u) =>
     u ? { ...u, buffAtk: u.buffAtk + atk, buffHp: u.buffHp + hp } : null,

@@ -4,6 +4,7 @@ import type {
   CrossNightEntry,
   CrossNightOutlier,
   CompositionEntry,
+  InsufficientSampleEntry,
   MatchupEntry,
   PairSynergyEntry,
   PositionOptResult,
@@ -41,6 +42,7 @@ export class SimReportCollector {
   private _scaling: ScalingAnalysis | null = null;
   private _pairSynergies: readonly PairSynergyEntry[] = [];
   private _discoveredCompositions: readonly CompositionEntry[] = [];
+  private readonly _insufficientSamples: InsufficientSampleEntry[] = [];
 
   setPositionOpt(result: PositionOptResult): void {
     this._positionOpt = result;
@@ -91,6 +93,10 @@ export class SimReportCollector {
     this._discoveredCompositions = compositions;
   }
 
+  addInsufficientSample(entry: InsufficientSampleEntry): void {
+    this._insufficientSamples.push(entry);
+  }
+
   build(): SimReportData {
     const crossNight: CrossNightEntry[] = [...this._crossNight.values()]
       .sort((a, b) => a.night - b.night)
@@ -111,6 +117,7 @@ export class SimReportCollector {
       scalingAnalysis: this._scaling,
       pairSynergies: this._pairSynergies,
       discoveredCompositions: this._discoveredCompositions,
+      insufficientSamples: this._insufficientSamples,
     };
   }
 }

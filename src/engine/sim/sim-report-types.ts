@@ -76,6 +76,12 @@ export interface CompositionEntry {
   readonly totalSynergyDelta: number;
 }
 
+export interface InsufficientSampleEntry {
+  readonly unitId: string;
+  readonly appearances: number;
+  readonly ciWidth: number;
+}
+
 export interface SimReportData {
   readonly generatedAt: string;
   readonly positionOptimization: PositionOptResult | null;
@@ -85,4 +91,5 @@ export interface SimReportData {
   readonly scalingAnalysis: ScalingAnalysis | null;
   readonly pairSynergies: readonly PairSynergyEntry[];
   readonly discoveredCompositions: readonly CompositionEntry[];
+  readonly insufficientSamples: readonly InsufficientSampleEntry[];
 }

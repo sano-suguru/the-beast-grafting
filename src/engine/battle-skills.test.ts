@@ -89,7 +89,7 @@ describe("runStartSkills – damage skills", () => {
 });
 
 describe("runStartSkills – revenant buff", () => {
-  it("buffs front 3 allies (excluding self) ATK+1 when last battle was LOSE", () => {
+  it("doubles buff when last battle was LOSE", () => {
     const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
     const ally1 = makeBattleUnit({ atk: 3, hp: 3 });
     const ally2 = makeBattleUnit({ atk: 4, hp: 2 });
@@ -97,32 +97,33 @@ describe("runStartSkills – revenant buff", () => {
     const ctx = makeContext([rev, ally1, ally2], [enemy], "LOSE");
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(rev.atk).toBe(2); // self not buffed (SAP Snail rule)
-    expect(ally1.atk).toBe(4);
-    expect(ally2.atk).toBe(5);
+    expect(ally1.atk).toBe(5); // +2 (baseBuff 1 × lossBonusMult 2)
+    expect(ally2.atk).toBe(6);
   });
 
-  it("does nothing when last battle was WIN", () => {
+  it("applies base buff when last battle was WIN", () => {
     const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
     const ally = makeBattleUnit({ atk: 3, hp: 3 });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([rev, ally], [enemy], "WIN");
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(rev.atk).toBe(2);
-    expect(ally.atk).toBe(3);
-    expect(ctx.frames).toHaveLength(0);
+    expect(ally.atk).toBe(4); // +1 (baseBuff)
+    expect(ctx.frames).toHaveLength(1);
   });
 
-  it("does nothing when lastBattleResult is null", () => {
+  it("applies base buff when lastBattleResult is null", () => {
     const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
     const ally = makeBattleUnit({ atk: 3, hp: 3 });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([rev, ally], [enemy], null);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(rev.atk).toBe(2);
-    expect(ctx.frames).toHaveLength(0);
+    expect(ally.atk).toBe(4); // +1 (baseBuff)
+    expect(ctx.frames).toHaveLength(1);
   });
 
-  it("generates a skill frame", () => {
+  it("generates a skill frame with loss log", () => {
     const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
     const ally = makeBattleUnit({ atk: 3, hp: 3 });
     const enemy = makeBattleUnit({ hp: 10 });
@@ -130,7 +131,7 @@ describe("runStartSkills – revenant buff", () => {
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(ctx.frames).toHaveLength(1);
     expect(ctx.frames[0]!.log.type).toBe("skill");
-    expect(logText(ctx.frames[0]!)).toContain("復讐の亡霊");
+    expect(logText(ctx.frames[0]!)).toContain("激怒");
   });
 
   it("buffs at most 3 allies even with more on board", () => {
@@ -143,9 +144,9 @@ describe("runStartSkills – revenant buff", () => {
     const ctx = makeContext([rev, a1, a2, a3, a4], [enemy], "LOSE");
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(rev.atk).toBe(2); // self not buffed
-    expect(a1.atk).toBe(2);
-    expect(a2.atk).toBe(2);
-    expect(a3.atk).toBe(2);
+    expect(a1.atk).toBe(3); // +2 (doubled on LOSE)
+    expect(a2.atk).toBe(3);
+    expect(a3.atk).toBe(3);
     expect(a4.atk).toBe(1); // 4th ally (5th unit), not buffed
   });
 
@@ -156,7 +157,7 @@ describe("runStartSkills – revenant buff", () => {
     const ctx = makeContext([player], [rev, eAlly], "LOSE");
     runStartSkills(ctx.eBoard, ctx.pBoard, false, ctx);
     expect(rev.atk).toBe(2); // self not buffed
-    expect(eAlly.atk).toBe(4);
+    expect(eAlly.atk).toBe(5); // +2 (doubled on LOSE)
     expect(ctx.frames).toHaveLength(1);
     expect(logText(ctx.frames[0]!)).toContain("敵の");
   });

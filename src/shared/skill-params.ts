@@ -36,6 +36,7 @@ export const BANSHEE = {
 export const REVENANT = {
   targets: [3, 4, 5] as SN,
   buff: [1, 2, 3] as SN,
+  lossBonusMult: 2,
 };
 
 export const CATACOMB_RAT = {
