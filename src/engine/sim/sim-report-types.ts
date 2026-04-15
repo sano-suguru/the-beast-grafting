@@ -82,6 +82,42 @@ export interface InsufficientSampleEntry {
   readonly ciWidth: number;
 }
 
+// ── GA Discovery ──
+
+export interface GaRankedTeamEntry {
+  readonly teamIds: readonly string[];
+  readonly fitness: number;
+  readonly fitnessCI95: [number, number];
+  readonly novelty: boolean;
+}
+
+export interface GaGenerationStatsEntry {
+  readonly generation: number;
+  readonly bestFitness: number;
+  readonly avgFitness: number;
+  readonly diversity: number;
+}
+
+export interface GaReportData {
+  readonly topTeams: readonly GaRankedTeamEntry[];
+  readonly generationStats: readonly GaGenerationStatsEntry[];
+  readonly totalBattles: number;
+  readonly convergenceGeneration: number | null;
+  readonly breakageAlerts: readonly string[];
+}
+
+export interface NightGaEntry {
+  readonly night: number;
+  readonly poolSize: number;
+  readonly topTeams: readonly GaRankedTeamEntry[];
+  readonly breakageAlerts: readonly string[];
+}
+
+/**
+ * テスト各ブロックが独立にcollectorへデータを供給するため、
+ * 単一セッターで設定するセクション（positionOptimization, scalingAnalysis, gaDiscovery）は
+ * テスト未実行時に null となる。配列系セクションは空配列で表現。
+ */
 export interface SimReportData {
   readonly generatedAt: string;
   readonly positionOptimization: PositionOptResult | null;
@@ -92,4 +128,6 @@ export interface SimReportData {
   readonly pairSynergies: readonly PairSynergyEntry[];
   readonly discoveredCompositions: readonly CompositionEntry[];
   readonly insufficientSamples: readonly InsufficientSampleEntry[];
+  readonly gaDiscovery: GaReportData | null;
+  readonly nightGaResults: readonly NightGaEntry[];
 }

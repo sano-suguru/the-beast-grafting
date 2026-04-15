@@ -181,6 +181,7 @@
     <section id="s-balance"></section>
     <section id="s-crossnight"></section>
     <section id="s-scaling"></section>
+    <section id="s-ga"></section>
 
     <script type="application/json" id="sim-data">
       { "_placeholder": true }
@@ -241,6 +242,7 @@
           ["s-balance", "Unit Balance"],
           ["s-crossnight", "Cross-Night"],
           ["s-scaling", "Scaling"],
+          ["s-ga", "GA Discovery"],
         ];
 
         function initTabs() {
@@ -849,6 +851,260 @@
           });
         }
 
+        // ── GA Discovery ──
+
+        function renderGA(data) {
+          var sec = document.getElementById("s-ga");
+          var ga = data.gaDiscovery;
+          if (!ga) {
+            sec.innerHTML = "<h2>GA Discovery</h2><p>No GA data available.</p>";
+            return;
+          }
+          sec.innerHTML = "<h2>GA Discovery</h2>";
+
+          // Alerts
+          if (ga.breakageAlerts.length > 0) {
+            var alertBox = el("div", {
+              style:
+                "background:#4a1a1a;border:1px solid #ff4444;padding:12px;border-radius:6px;margin-bottom:16px",
+            });
+            alertBox.appendChild(
+              el("strong", { style: "color:#ff4444", textContent: "⚠ Breakage Alerts" }),
+            );
+            var alertList = el("ul", { style: "margin-top:8px;padding-left:20px" });
+            ga.breakageAlerts.forEach(function (msg) {
+              alertList.appendChild(el("li", { style: "color:#ffaaaa", textContent: msg }));
+            });
+            alertBox.appendChild(alertList);
+            sec.appendChild(alertBox);
+          }
+
+          // Summary cards
+          var grid = el("div", { className: "overview-grid" });
+          function addCard(label, value) {
+            grid.appendChild(
+              el("div", {
+                className: "stat-card",
+                innerHTML:
+                  '<div class="label">' +
+                  esc(label) +
+                  '</div><div class="value">' +
+                  esc(String(value)) +
+                  "</div>",
+              }),
+            );
+          }
+          addCard("Total Battles", ga.totalBattles.toLocaleString());
+          addCard("Top Fitness", wr(ga.topTeams[0] ? ga.topTeams[0].fitness : 0) + "%");
+          addCard(
+            "Convergence",
+            ga.convergenceGeneration !== null
+              ? "Gen " + ga.convergenceGeneration
+              : "Gen " + ga.generationStats.length,
+          );
+          addCard(
+            "Novel Teams",
+            ga.topTeams.filter(function (t) {
+              return t.novelty;
+            }).length +
+              "/" +
+              ga.topTeams.length,
+          );
+          sec.appendChild(grid);
+
+          // Top teams table
+          sec.appendChild(el("h2", { textContent: "Top Compositions" }));
+          var table = el("table", { className: "sortable" });
+          var thead = el("thead");
+          var headRow = el("tr");
+          ["Rank", "Units", "Win%", "CI95", "Novel"].forEach(function (h) {
+            headRow.appendChild(
+              el("th", { className: h !== "Units" ? "num" : "", textContent: h }),
+            );
+          });
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+
+          var tbody = el("tbody");
+          ga.topTeams.forEach(function (team, i) {
+            var row = el("tr");
+            row.appendChild(el("td", { className: "num", textContent: String(i + 1) }));
+            row.appendChild(el("td", { textContent: team.teamIds.join(", ") }));
+            var wrTd = el("td", {
+              className: "num",
+              textContent: wr(team.fitness) + "%",
+              style: "color:" + wrColor(team.fitness),
+            });
+            row.appendChild(wrTd);
+            row.appendChild(
+              el("td", {
+                className: "num",
+                textContent: wr(team.fitnessCI95[0]) + "-" + wr(team.fitnessCI95[1]),
+              }),
+            );
+            row.appendChild(
+              el("td", {
+                className: "num",
+                textContent: team.novelty ? "✦ NEW" : "—",
+                style: team.novelty ? "color:#ffcc00;font-weight:bold" : "",
+              }),
+            );
+            tbody.appendChild(row);
+          });
+          table.appendChild(tbody);
+          sec.appendChild(table);
+          makeSortable(table);
+
+          // Convergence curve (canvas)
+          if (ga.generationStats.length > 1) {
+            sec.appendChild(el("h2", { textContent: "Convergence Curve" }));
+            var canvas = el("canvas", { width: 700, height: 280 });
+            canvas.style.background = "#16213e";
+            canvas.style.borderRadius = "6px";
+            canvas.style.display = "block";
+            canvas.style.marginBottom = "16px";
+            sec.appendChild(canvas);
+
+            var ctx = canvas.getContext("2d");
+            var W = canvas.width,
+              H = canvas.height;
+            var pad = { t: 20, r: 20, b: 30, l: 50 };
+            var gw = W - pad.l - pad.r,
+              gh = H - pad.t - pad.b;
+            var stats = ga.generationStats;
+            var maxGen = stats[stats.length - 1].generation;
+            var minF = Math.min.apply(
+              null,
+              stats.map(function (s) {
+                return s.avgFitness;
+              }),
+            );
+            var maxF = Math.max.apply(
+              null,
+              stats.map(function (s) {
+                return s.bestFitness;
+              }),
+            );
+            var fRange = maxF - minF || 0.01;
+
+            function gx(gen) {
+              return pad.l + (gen / (maxGen || 1)) * gw;
+            }
+            function gy(f) {
+              return pad.t + gh - ((f - minF) / fRange) * gh;
+            }
+
+            // Grid
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 0.5;
+            for (var g = 0; g <= 4; g++) {
+              var yy = pad.t + (gh * g) / 4;
+              ctx.beginPath();
+              ctx.moveTo(pad.l, yy);
+              ctx.lineTo(W - pad.r, yy);
+              ctx.stroke();
+            }
+
+            // Best fitness line
+            ctx.strokeStyle = "#c4a882";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            stats.forEach(function (s, i) {
+              var x = gx(s.generation),
+                y = gy(s.bestFitness);
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Avg fitness line
+            ctx.strokeStyle = "#6a9bc3";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            stats.forEach(function (s, i) {
+              var x = gx(s.generation),
+                y = gy(s.avgFitness);
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = "#999";
+            ctx.font = "11px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("Generation", W / 2, H - 4);
+            ctx.textAlign = "left";
+            ctx.fillText(wr(maxF) + "%", pad.l + 4, pad.t - 4);
+            ctx.fillText(wr(minF) + "%", pad.l + 4, H - pad.b + 14);
+
+            // Legend
+            ctx.fillStyle = "#c4a882";
+            ctx.fillText("■ Best", W - pad.r - 120, pad.t + 14);
+            ctx.fillStyle = "#6a9bc3";
+            ctx.fillText("■ Avg", W - pad.r - 60, pad.t + 14);
+          }
+
+          // Night-varying GA results
+          var nightGa = data.nightGaResults;
+          if (nightGa && nightGa.length > 0) {
+            sec.appendChild(el("h2", { textContent: "Cross-Night GA" }));
+            nightGa.forEach(function (entry) {
+              var hdr = el("h3", {
+                textContent: "Night " + entry.night + " (pool: " + entry.poolSize + " units)",
+                style: "color:#c4a882;margin:16px 0 8px",
+              });
+              sec.appendChild(hdr);
+
+              if (entry.breakageAlerts.length > 0) {
+                var ab = el("div", {
+                  style:
+                    "background:#4a1a1a;border:1px solid #ff4444;padding:8px;border-radius:4px;margin-bottom:8px;font-size:0.9em",
+                });
+                entry.breakageAlerts.forEach(function (msg) {
+                  ab.appendChild(el("div", { style: "color:#ffaaaa", textContent: msg }));
+                });
+                sec.appendChild(ab);
+              }
+
+              if (entry.topTeams.length > 0) {
+                var ntable = el("table");
+                var nth = el("thead");
+                var nhr = el("tr");
+                ["#", "Units", "Win%", "CI95"].forEach(function (h) {
+                  nhr.appendChild(
+                    el("th", { className: h !== "Units" ? "num" : "", textContent: h }),
+                  );
+                });
+                nth.appendChild(nhr);
+                ntable.appendChild(nth);
+                var ntb = el("tbody");
+                entry.topTeams.slice(0, 5).forEach(function (t, i) {
+                  var r = el("tr");
+                  r.appendChild(el("td", { className: "num", textContent: String(i + 1) }));
+                  r.appendChild(el("td", { textContent: t.teamIds.join(", ") }));
+                  r.appendChild(
+                    el("td", {
+                      className: "num",
+                      textContent: wr(t.fitness) + "%",
+                      style: "color:" + wrColor(t.fitness),
+                    }),
+                  );
+                  r.appendChild(
+                    el("td", {
+                      className: "num",
+                      textContent: wr(t.fitnessCI95[0]) + "-" + wr(t.fitnessCI95[1]),
+                    }),
+                  );
+                  ntb.appendChild(r);
+                });
+                ntable.appendChild(ntb);
+                sec.appendChild(ntable);
+              }
+            });
+          }
+        }
+
         // ── Init ──
 
         var DATA = JSON.parse(document.getElementById("sim-data").textContent);
@@ -867,6 +1123,7 @@
         renderBalance(DATA);
         renderCrossNight(DATA);
         renderScaling(DATA);
+        renderGA(DATA);
       })();
     </script>
   </body>

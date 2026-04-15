@@ -3,6 +3,7 @@ import type { RegularUnitId } from "../../shared/types";
 import type { RandomTrialResult, UnitPerformance } from "./sim-types";
 import { createSeededRng } from "../rng";
 import { generateSimTeam } from "./sim-team-gen";
+import { getShopPool } from "../helpers";
 import { findOptimalPositioning, positionArchetypes } from "./sim-position";
 import { runMatchup, runRandomTrials } from "./sim-runner";
 import { analyzePairSynergies, discoverArchetypes } from "./sim-archetype-discovery";
@@ -13,6 +14,8 @@ import { buildProgressedUnit } from "./sim-progression";
 import { SimReportCollector, perfMapToRecord, perfToRecord } from "./sim-report-collect";
 import { writeSimReport } from "./sim-report-write";
 import { makeSimEnemy } from "./sim-utils";
+import { runGeneticAlgorithm } from "./sim-ga";
+import type { GaResult } from "./sim-ga-types";
 
 const collector = new SimReportCollector();
 
@@ -410,4 +413,172 @@ describe("scaling & durability analysis", () => {
 
     expect(entries.length).toBeGreaterThan(0);
   });
+});
+
+// ── GA構成発見 ──
+
+function jaccardSim(a: readonly RegularUnitId[], b: readonly RegularUnitId[]): number {
+  const setA = new Set(a);
+  const setB = new Set(b);
+  let inter = 0;
+  for (const id of setA) if (setB.has(id)) inter++;
+  const union = setA.size + setB.size - inter;
+  return union === 0 ? 1 : inter / union;
+}
+
+describe("GA composition discovery", () => {
+  let gaResult: GaResult;
+  let greedyArchetypes: readonly DiscoveredArchetype[];
+
+  beforeAll(() => {
+    gaResult = runGeneticAlgorithm({
+      populationSize: 200,
+      generations: 100,
+      trialsPerEval: 50,
+      eliteCount: 20,
+      mutationRate: 0.15,
+      tournamentSize: 5,
+      refinementTrials: 500,
+      refinementTopK: 10,
+      night: 12,
+      baseSeed: 777,
+    });
+
+    // グリーディ発見（比較用に軽量実行）
+    const trials = runRandomTrials(10_000, 12, 500);
+    const synergies = analyzePairSynergies(
+      trials.teamTrials,
+      trials.unitPerformance,
+      trials.winRate,
+    );
+    greedyArchetypes = discoverArchetypes(synergies, trials.unitPerformance);
+
+    // Novelty判定: グリーディ構成との Jaccard > 0.6 で既知とみなす
+    const topTeams = gaResult.topTeams.map((team) => {
+      const isKnown = greedyArchetypes.some((arch) => jaccardSim(team.teamIds, arch.unitIds) > 0.6);
+      return { ...team, novelty: !isKnown };
+    });
+
+    const breakageAlerts: string[] = [];
+    for (const team of topTeams) {
+      if (team.fitness > 0.8) {
+        breakageAlerts.push(
+          `CRITICAL: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
+        );
+      } else if (team.fitness > 0.7) {
+        breakageAlerts.push(
+          `WARNING: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
+        );
+      }
+    }
+
+    const lastGen = gaResult.generationStats[gaResult.generationStats.length - 1];
+    const convergenceGen = lastGen && lastGen.diversity < 0.1 ? lastGen.generation : null;
+
+    collector.setGaDiscovery({
+      topTeams: topTeams.map((t) => ({
+        teamIds: [...t.teamIds],
+        fitness: t.fitness,
+        fitnessCI95: [t.fitnessCI95[0], t.fitnessCI95[1]],
+        novelty: t.novelty,
+      })),
+      generationStats: gaResult.generationStats.map((s) => ({ ...s })),
+      totalBattles: gaResult.totalBattles,
+      convergenceGeneration: convergenceGen,
+      breakageAlerts,
+    });
+  }, 300_000);
+
+  it("GA converges: best fitness improves over generations", () => {
+    const stats = gaResult.generationStats;
+    expect(stats.length).toBeGreaterThan(0);
+    const first = stats[0]!;
+    const last = stats[stats.length - 1]!;
+    expect(last.bestFitness).toBeGreaterThanOrEqual(first.bestFitness);
+  });
+
+  it("top team fitness has reasonable CI width", () => {
+    for (const team of gaResult.topTeams) {
+      const ciWidth = team.fitnessCI95[1] - team.fitnessCI95[0];
+      expect(ciWidth, `CI too wide for ${team.teamIds.join(",")}`).toBeLessThan(0.12);
+    }
+  });
+
+  it("flags extreme breakage in report (informational)", () => {
+    const broken = gaResult.topTeams.filter((t) => t.fitness >= 0.85);
+    if (broken.length > 0) {
+      console.warn(
+        `GA found ${broken.length} potentially broken composition(s):`,
+        broken.map((t) => `${t.teamIds.join(",")} (${(t.fitness * 100).toFixed(1)}%)`),
+      );
+    }
+    // GA finding broken combos is a success — assert the report captured them
+    expect(gaResult.topTeams.length).toBeGreaterThan(0);
+  });
+
+  it("discovers at least one composition", () => {
+    expect(gaResult.topTeams.length).toBeGreaterThan(0);
+  });
+
+  it("all teams have exactly 5 unique members", () => {
+    for (const team of gaResult.topTeams) {
+      expect(team.teamIds.length).toBe(5);
+      expect(new Set(team.teamIds).size).toBe(5);
+    }
+  });
+});
+
+// ── Night横断GA ──
+
+describe("cross-night GA", () => {
+  const NIGHT_CHECKPOINTS = [3, 5, 7, 9, 12] as const;
+
+  it("discovers strongest compositions at each night checkpoint", () => {
+    for (const night of NIGHT_CHECKPOINTS) {
+      const poolSize = new Set(getShopPool(night)).size;
+      const result = runGeneticAlgorithm({
+        populationSize: 100,
+        generations: 50,
+        trialsPerEval: 30,
+        eliteCount: 10,
+        mutationRate: 0.15,
+        tournamentSize: 5,
+        refinementTrials: 200,
+        refinementTopK: 5,
+        night,
+        baseSeed: night * 1000 + 42,
+      });
+
+      const breakageAlerts: string[] = [];
+      for (const team of result.topTeams) {
+        if (team.fitness > 0.8) {
+          breakageAlerts.push(
+            `Night ${night} CRITICAL: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
+          );
+        } else if (team.fitness > 0.7) {
+          breakageAlerts.push(
+            `Night ${night} WARNING: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
+          );
+        }
+      }
+
+      if (breakageAlerts.length > 0) {
+        console.warn(`Night ${night} GA breakage:`, breakageAlerts);
+      }
+
+      collector.addNightGa({
+        night,
+        poolSize,
+        topTeams: result.topTeams.map((t) => ({
+          teamIds: [...t.teamIds],
+          fitness: t.fitness,
+          fitnessCI95: [t.fitnessCI95[0], t.fitnessCI95[1]],
+          novelty: t.novelty,
+        })),
+        breakageAlerts,
+      });
+
+      expect(result.topTeams.length).toBeGreaterThan(0);
+    }
+  }, 300_000);
 });

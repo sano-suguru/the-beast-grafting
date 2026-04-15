@@ -4,8 +4,10 @@ import type {
   CrossNightEntry,
   CrossNightOutlier,
   CompositionEntry,
+  GaReportData,
   InsufficientSampleEntry,
   MatchupEntry,
+  NightGaEntry,
   PairSynergyEntry,
   PositionOptResult,
   RandomBalanceEntry,
@@ -43,6 +45,8 @@ export class SimReportCollector {
   private _pairSynergies: readonly PairSynergyEntry[] = [];
   private _discoveredCompositions: readonly CompositionEntry[] = [];
   private readonly _insufficientSamples: InsufficientSampleEntry[] = [];
+  private _gaDiscovery: GaReportData | null = null;
+  private readonly _nightGaResults: NightGaEntry[] = [];
 
   setPositionOpt(result: PositionOptResult): void {
     this._positionOpt = result;
@@ -97,6 +101,14 @@ export class SimReportCollector {
     this._insufficientSamples.push(entry);
   }
 
+  setGaDiscovery(data: GaReportData): void {
+    this._gaDiscovery = data;
+  }
+
+  addNightGa(entry: NightGaEntry): void {
+    this._nightGaResults.push(entry);
+  }
+
   build(): SimReportData {
     const crossNight: CrossNightEntry[] = [...this._crossNight.values()]
       .sort((a, b) => a.night - b.night)
@@ -118,6 +130,8 @@ export class SimReportCollector {
       pairSynergies: this._pairSynergies,
       discoveredCompositions: this._discoveredCompositions,
       insufficientSamples: this._insufficientSamples,
+      gaDiscovery: this._gaDiscovery,
+      nightGaResults: [...this._nightGaResults].sort((a, b) => a.night - b.night),
     };
   }
 }
