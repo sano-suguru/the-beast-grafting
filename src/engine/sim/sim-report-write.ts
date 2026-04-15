@@ -9,16 +9,19 @@ export function writeSimReport(data: SimReportData): void {
   const dir = resolve(process.cwd(), "sim-results");
   mkdirSync(dir, { recursive: true });
 
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/:/g, "-")
+    .replace(/\.\d+Z$/, "Z");
   const json = JSON.stringify(data, null, 2);
-  writeFileSync(resolve(dir, "latest.json"), json, "utf-8");
-
   const template = readFileSync(VIEWER_PATH, "utf-8");
   const safeJson = json.replace(/<\/script>/gi, "<\\/script>");
-  writeFileSync(
-    resolve(dir, "latest.html"),
-    template.replace(DATA_TAG_RE, `$1${safeJson}$2`),
-    "utf-8",
-  );
+  const html = template.replace(DATA_TAG_RE, `$1${safeJson}$2`);
 
-  console.log(`\nSim report → sim-results/latest.{json,html}`);
+  writeFileSync(resolve(dir, "latest.json"), json, "utf-8");
+  writeFileSync(resolve(dir, "latest.html"), html, "utf-8");
+  writeFileSync(resolve(dir, `${timestamp}.json`), json, "utf-8");
+  writeFileSync(resolve(dir, `${timestamp}.html`), html, "utf-8");
+
+  console.log(`\nSim report → sim-results/${timestamp}.{json,html} (+ latest.*)`);
 }
