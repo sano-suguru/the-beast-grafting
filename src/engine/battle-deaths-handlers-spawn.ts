@@ -14,7 +14,13 @@ import { FRAME_DELAY_DEATH_CHAIN, MAX_BOARD_SIZE } from "./constants";
 import { spawnTokenAndNotify, spawnSummonedUnitAndNotify } from "./battle-spawn";
 import { lookupUnitData } from "../shared/data/unit-lookup";
 import { invariant, mustGet } from "../shared/invariant";
-import { atLevel, OMEN_WOMB, STELLAR_COCOON, BUDDING_HYDRA } from "../shared/skill-params";
+import {
+  atLevel,
+  OMEN_WOMB,
+  STELLAR_COCOON,
+  BUDDING_HYDRA,
+  DEVOURING_GRAFT,
+} from "../shared/skill-params";
 import { SPAWN_ONLY_UNITS } from "../shared/data/spawn-only-units";
 
 export function handleGraftScionDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
@@ -117,13 +123,16 @@ export function handleDevouringGraftDeath({ dead, board, idx, isPlayer, ctx }: D
   if (!absorbed) return;
   ctx.absorbedUnits.delete(dead.uid);
   const prefix = enemyPrefix(isPlayer);
+  const decay = DEVOURING_GRAFT.decayPercent / 100;
+  const decayedAtk = Math.floor(absorbed.atk * decay);
+  const decayedHp = Math.max(1, Math.floor(absorbed.hp * decay));
   const segments = () => [
     prefix,
     seg.u(dead.name),
     "の腹から",
     seg.u(absorbed.name),
     "が這い出した！ ",
-    seg.s(`${absorbed.atk}/${absorbed.hp} 召喚`),
+    seg.s(`${decayedAtk}/${decayedHp} 召喚`),
   ];
   const spawned =
     absorbed.id === "token"
@@ -131,8 +140,8 @@ export function handleDevouringGraftDeath({ dead, board, idx, isPlayer, ctx }: D
           board,
           idx,
           name: absorbed.name,
-          atk: absorbed.atk,
-          hp: absorbed.hp,
+          atk: decayedAtk,
+          hp: decayedHp,
           isChurch: absorbed.isChurch,
           segments,
           isPlayer,
@@ -140,7 +149,15 @@ export function handleDevouringGraftDeath({ dead, board, idx, isPlayer, ctx }: D
           delay: FRAME_DELAY_DEATH_CHAIN,
           spawnerUid: dead.uid,
         })
-      : spawnNamedUnit(absorbed, dead, board, idx, segments, isPlayer, ctx);
+      : spawnNamedUnit(
+          { ...absorbed, atk: decayedAtk, hp: decayedHp },
+          dead,
+          board,
+          idx,
+          segments,
+          isPlayer,
+          ctx,
+        );
   if (spawned && absorbed.equip) spawned.equip = absorbed.equip;
 }
 

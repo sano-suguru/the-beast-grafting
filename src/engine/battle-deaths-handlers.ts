@@ -20,6 +20,7 @@ import {
   handleDevouringGraftDeath,
   handleBuddingHydraDeath,
 } from "./battle-deaths-handlers-spawn";
+import { handleAshFungusDeath } from "./battle-deaths-handlers-buff";
 
 export const UNIT_DEATH_HANDLERS = {
   rat: handleRatDeath,
@@ -39,6 +40,7 @@ export const UNIT_DEATH_HANDLERS = {
   star_child: handleStarChildDeath,
   devouring_graft: handleDevouringGraftDeath,
   budding_hydra: handleBuddingHydraDeath,
+  ash_fungus: handleAshFungusDeath,
 } satisfies Partial<Record<UnitId, DeathHandler>>;
 
 export type DeathHandlerUnitId = keyof typeof UNIT_DEATH_HANDLERS;

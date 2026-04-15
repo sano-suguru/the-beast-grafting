@@ -133,7 +133,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   templar: (lv) => `被弾: 自身に+${atLevel(TEMPLAR.atkBuff, lv)}/+0`,
   beelzebub: (lv) => {
     const b = atLevel(BEELZEBUB.token, lv);
-    return `味方死亡: ${b.atk}/${b.hp}の蠅を死亡位置に召喚(最大3回)`;
+    return `味方死亡: ${b.atk}/${b.hp}の蠅を死亡位置に召喚(最大2回)`;
   },
   eye: (lv) =>
     `直前の味方が攻撃: ランダム敵に${atLevel(EYE.damage, lv)}ダメ(${atLevel(EYE.uses, lv)}回/戦)`,
@@ -166,7 +166,8 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   sin_eater: (lv) =>
     `味方死亡: 死んだ味方の攻撃を吸収(1回上限${atLevel(SIN_EATER.atkCap, lv)}, ${atLevel(SIN_EATER.uses, lv)}回)`,
   blood_font: (lv) => `出陣時: 最もHPが低い味方に+0/+${atLevel(BLOOD_FONT.hpBuff, lv)}`,
-  ash_fungus: (lv) => `味方解体: スタッツの${atLevel(ASH_FUNGUS.percent, lv)}%をランダム味方にバフ`,
+  ash_fungus: (lv) =>
+    `味方解体/死亡: スタッツの${atLevel(ASH_FUNGUS.percent, lv)}%をランダム味方にバフ`,
   plague_bell: (lv) =>
     `直前の味方が攻撃: 敵全体に${atLevel(PLAGUE_BELL.damage, lv)}ダメージ(${atLevel(PLAGUE_BELL.uses, lv)}回/戦)`,
   hanged_man: (lv) => `死亡: 最終スタッツを前方の味方${atLevel(HANGED_MAN.targets, lv)}体に分配`,
@@ -220,7 +221,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   devouring_wound: (lv) => `撃破: 自身にHP+${atLevel(DEVOURING_WOUND.hpHeal, lv)}`,
   crawling_cord: (lv) => {
     const b = atLevel(CRAWLING_CORD.buff, lv);
-    return `味方死亡: ランダム味方1体に+${b.atk}/+${b.hp}`;
+    return `味方死亡: ランダム味方1体に+${b.atk}/+${b.hp}(${atLevel(CRAWLING_CORD.uses, lv)}回/戦)`;
   },
   ghoul_infant: (lv) => `購入: 味方1体にATK+${atLevel(GHOUL_INFANT.atkBuff, lv)}`,
   flesh_granulation: (lv) => {
@@ -255,9 +256,9 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   maiden: () => "死亡: 後ろに【屍蝋の盾】",
   famine_corpse: () => "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
   graft_scion: () => "死亡: 前の味方に自身ATK分のATKバフ",
-  devouring_graft: () => "開戦: 前の味方を吸収(+ATK/HP)。死亡: 吸収先を再召喚",
+  devouring_graft: () => "開戦: 前の味方を吸収(+ATK/HP)。死亡: 吸収先を半減して再召喚",
   chalice: () => "購入: 闇市場の薬を2つの無料【純血】(+1/+2)に",
-  necrotic_finger: () => "常時: 攻撃で対象を即死させる",
+  necrotic_finger: () => "常時: 攻撃で対象を即死させる。内蔵: 屍蝋の盾",
   mimicking_flesh: () => "開戦: 前の味方のスキルをコピー(戦闘中のみ)",
   brains: () => "常時: 前の味方の能力2回発動",
   puppeteer: () => "常時: 後ろの味方の死亡能力2回発動",

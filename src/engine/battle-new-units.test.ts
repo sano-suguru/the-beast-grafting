@@ -1370,7 +1370,13 @@ describe("processAvenge – wailing_cursechild", () => {
 
 describe("handleCrawlingCordBuff", () => {
   it("buffs a random living ally on ally death", () => {
-    const cord = makeBattleUnit({ id: "crawling_cord", name: "這い回る臍帯", atk: 2, hp: 3 });
+    const cord = makeBattleUnit({
+      id: "crawling_cord",
+      name: "這い回る臍帯",
+      atk: 2,
+      hp: 3,
+      skillUses: 3,
+    });
     const ally = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 4 });
     const board = [cord, ally];
     const ctx = makeContext(board, []);
@@ -1382,7 +1388,13 @@ describe("handleCrawlingCordBuff", () => {
   });
 
   it("does nothing when no other living allies", () => {
-    const cord = makeBattleUnit({ id: "crawling_cord", name: "這い回る臍帯", atk: 2, hp: 3 });
+    const cord = makeBattleUnit({
+      id: "crawling_cord",
+      name: "這い回る臍帯",
+      atk: 2,
+      hp: 3,
+      skillUses: 3,
+    });
     const board = [cord];
     const ctx = makeContext(board, []);
     handleCrawlingCordBuff(board, true, ctx);
@@ -1536,8 +1548,8 @@ describe("devouring_graft – death re-summon", () => {
     // Absorbed unit should be re-spawned
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("疫病ネズミ");
-    expect(ctx.pBoard[0]!.atk).toBe(5);
-    expect(ctx.pBoard[0]!.hp).toBe(3);
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(5 * 0.5));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.5)));
   });
 
   it("re-spawns absorbed church unit on death", () => {
@@ -1558,8 +1570,8 @@ describe("devouring_graft – death re-summon", () => {
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("見習い従騎士");
-    expect(ctx.pBoard[0]!.atk).toBe(2);
-    expect(ctx.pBoard[0]!.hp).toBe(3);
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(2 * 0.5));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.5)));
   });
 
   it("re-spawns absorbed token on death", () => {
@@ -1575,8 +1587,8 @@ describe("devouring_graft – death re-summon", () => {
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.id).toBe("token");
     expect(ctx.pBoard[0]!.name).toBe("肉塊");
-    expect(ctx.pBoard[0]!.atk).toBe(4);
-    expect(ctx.pBoard[0]!.hp).toBe(3);
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(4 * 0.5));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.5)));
   });
 
   it("does nothing if no absorbed data", () => {
@@ -1730,8 +1742,8 @@ describe("mimicking_flesh + devouring_graft – interaction edge cases", () => {
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("模倣する粘肉");
-    expect(ctx.pBoard[0]!.atk).toBe(4);
-    expect(ctx.pBoard[0]!.hp).toBe(3);
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(4 * 0.5));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.5)));
   });
 
   it("multiple grafts chain: B absorbs A after A absorbs rat", () => {
@@ -1750,13 +1762,13 @@ describe("mimicking_flesh + devouring_graft – interaction edge cases", () => {
     const absorbedByB = ctx.absorbedUnits.get(graftB.uid)!;
     expect(absorbedByB.id).toBe("devouring_graft");
     expect(absorbedByB.atk).toBe(3 + 2);
-    // Kill B → A is re-spawned with A's buffed stats
+    // Kill B → A is re-spawned with 50% decayed stats
     graftB.hp = 0;
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("貪る接合体");
-    expect(ctx.pBoard[0]!.atk).toBe(3 + 2);
-    expect(ctx.pBoard[0]!.hp).toBe(6 + 1);
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor((3 + 2) * 0.5));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor((6 + 1) * 0.5)));
   });
 });
 

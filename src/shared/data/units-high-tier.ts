@@ -154,7 +154,7 @@ export const UNITS_HIGH_TIER = {
     id: "puppeteer",
     name: "操り糸の屍",
     baseAtk: 4,
-    baseHp: 6,
+    baseHp: 10,
     tier: 6,
     lore: "腱の糸を垂らす遺体。近くで味方が倒れると、その四肢がもう一度だけ動く。",
     secretLore: "糸が墓地の地下に届いた夜から、棺の蓋が内側から叩かれるようになった。",

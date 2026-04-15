@@ -9,6 +9,7 @@ import {
   PLAGUE_BELL,
   AMNIOTIC_ARMOR,
   MACHINE,
+  CRAWLING_CORD,
 } from "../shared/skill-params";
 
 const INIT_OVERRIDES = {
@@ -32,6 +33,12 @@ const INIT_OVERRIDES = {
   },
   machine: (bu: BattleUnit) => {
     bu.skillUses = atLevel(MACHINE.uses, bu.level);
+  },
+  crawling_cord: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(CRAWLING_CORD.uses, bu.level);
+  },
+  necrotic_finger: (bu: BattleUnit) => {
+    if (!bu.equip) bu.equip = "corpse_wax";
   },
 } satisfies Partial<Record<UnitId, (bu: BattleUnit) => void>>;
 

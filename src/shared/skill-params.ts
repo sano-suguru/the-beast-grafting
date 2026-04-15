@@ -174,6 +174,7 @@ export {
   BEELZEBUB,
   OMEN_WOMB,
   STELLAR_COCOON,
+  DEVOURING_GRAFT,
 } from "./skill-params-death";
 
 // ── Avengeスキル ──
@@ -247,6 +248,7 @@ export const CRAWLING_CORD = {
     { atk: 2, hp: 3 },
     { atk: 3, hp: 4 },
   ] as SB,
+  uses: [3, 4, 5] as SN,
 };
 
 export const INSATIABLE_MAW = {

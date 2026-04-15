@@ -121,3 +121,7 @@ export const STELLAR_COCOON = {
     { atk: 7, hp: 7 },
   ] as SB,
 };
+
+export const DEVOURING_GRAFT = {
+  decayPercent: 50,
+};

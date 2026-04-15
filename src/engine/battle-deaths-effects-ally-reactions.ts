@@ -21,20 +21,31 @@ function applyAllyDeathReaction(
 }
 
 export function handleCrawlingCordBuff(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
-  applyAllyDeathReaction(board, "crawling_cord", isPlayer, (u, prefix) => {
+  const prefix = enemyPrefix(isPlayer);
+  for (let i = 0; i < board.length; i++) {
+    const u = board[i]!;
+    if (u.id !== "crawling_cord" || u.hp <= 0) continue;
+    const mult = getMult(board, i);
     const b = atLevel(CRAWLING_CORD.buff, u.level);
-    const alive = board.filter((a) => a.hp > 0 && a.uid !== u.uid);
-    if (alive.length === 0) return;
-    const target = mustGet(alive, Math.floor(ctx.rng.next() * alive.length), "cord buff target");
-    buffAlly(ctx, u, target, b, () => [
-      prefix,
-      seg.u(u.name),
-      "が蠢き、",
-      seg.u(target.name),
-      "に巻きつく。",
-      seg.s(`+${b.atk}/+${b.hp}`),
-    ]);
-  });
+    const candidates = board.filter((a) => a.hp > 0 && a.uid !== u.uid);
+    if (candidates.length === 0) continue;
+    for (let m = 0; m < mult && u.skillUses > 0; m++) {
+      u.skillUses -= 1;
+      const target = mustGet(
+        candidates,
+        Math.floor(ctx.rng.next() * candidates.length),
+        "cord buff target",
+      );
+      buffAlly(ctx, u, target, b, () => [
+        prefix,
+        seg.u(u.name),
+        "が蠢き、",
+        seg.u(target.name),
+        "に巻きつく。",
+        seg.s(`+${b.atk}/+${b.hp}`),
+      ]);
+    }
+  }
 }
 
 export function handleInsatiableMawBuff(

@@ -14,6 +14,7 @@ import { buildProgressedUnit } from "./sim-progression";
 import { extractBattleMetricsSim } from "./sim-metrics";
 import { type PerfMap, accumulatePerformance, finalizePerformance, percentile } from "./sim-perf";
 import { deriveSeed, makeSimEnemy } from "./sim-utils";
+import { applySimShopEffects } from "./sim-shop-effects";
 
 function buildTeam(ids: readonly DataUnitId[]): UnitInstance[] {
   return ids.map((id) => createUnit(id));
@@ -40,6 +41,25 @@ function accumulateTrialPerformance(
   }
 }
 
+function buildMatchupTeams(
+  teamAIds: readonly DataUnitId[],
+  teamBIds: readonly DataUnitId[],
+  baseSeed: number,
+  trials: number,
+  i: number,
+  night: number,
+  realistic: boolean,
+): [UnitInstance[], UnitInstance[]] {
+  if (!realistic) return [buildTeam(teamAIds), buildTeam(teamBIds)];
+  const pProgRng = createSeededRng(deriveSeed(baseSeed, trials * 2 + i));
+  const eProgRng = createSeededRng(deriveSeed(baseSeed, trials * 3 + i));
+  const teamA = buildRealisticTeam(teamAIds, night, pProgRng);
+  const teamB = buildRealisticTeam(teamBIds, night, eProgRng);
+  applySimShopEffects(teamA, night, createSeededRng(deriveSeed(baseSeed, trials * 4 + i)));
+  applySimShopEffects(teamB, night, createSeededRng(deriveSeed(baseSeed, trials * 5 + i)));
+  return [teamA, teamB];
+}
+
 /** 固定チーム同士の N 試行マッチアップ */
 export function runMatchup(
   teamAIds: readonly DataUnitId[],
@@ -58,12 +78,16 @@ export function runMatchup(
 
   for (let i = 0; i < trials; i++) {
     const seed = deriveSeed(baseSeed, i);
-    const pProgRng = realistic ? createSeededRng(deriveSeed(baseSeed, trials * 2 + i)) : null;
-    const eProgRng = realistic ? createSeededRng(deriveSeed(baseSeed, trials * 3 + i)) : null;
-    const teamA = pProgRng ? buildRealisticTeam(teamAIds, night, pProgRng) : buildTeam(teamAIds);
-    const teamB = eProgRng ? buildRealisticTeam(teamBIds, night, eProgRng) : buildTeam(teamBIds);
-    const enemy = makeSimEnemy(teamB);
-    const sim = simulateBattleSim(teamA, enemy, night, seed);
+    const [teamA, teamB] = buildMatchupTeams(
+      teamAIds,
+      teamBIds,
+      baseSeed,
+      trials,
+      i,
+      night,
+      realistic,
+    );
+    const sim = simulateBattleSim(teamA, makeSimEnemy(teamB), night, seed);
 
     const m = extractBattleMetricsSim(sim);
     frameCounts.push(m.frameCount);
@@ -119,12 +143,13 @@ export function runRandomTrials(
     const eIds = generateSimTeam(night, eRng);
     const pProgRng = createSeededRng(deriveSeed(baseSeed, trials * 3 + i));
     const eProgRng = createSeededRng(deriveSeed(baseSeed, trials * 4 + i));
-    const sim = simulateBattleSim(
-      buildRealisticTeam(pIds, night, pProgRng),
-      makeSimEnemy(buildRealisticTeam(eIds, night, eProgRng)),
-      night,
-      battleSeed,
-    );
+    const pTeam = buildRealisticTeam(pIds, night, pProgRng);
+    const eTeam = buildRealisticTeam(eIds, night, eProgRng);
+    const pShopRng = createSeededRng(deriveSeed(baseSeed, trials * 5 + i));
+    const eShopRng = createSeededRng(deriveSeed(baseSeed, trials * 6 + i));
+    applySimShopEffects(pTeam, night, pShopRng);
+    applySimShopEffects(eTeam, night, eShopRng);
+    const sim = simulateBattleSim(pTeam, makeSimEnemy(eTeam), night, battleSeed);
 
     const m = extractBattleMetricsSim(sim);
     totalFrames += m.frameCount;

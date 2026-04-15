@@ -234,7 +234,7 @@ describe("resolveDeaths – beelzebub", () => {
     const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
     const ctx = makeContext([d1, d2, d3, beelzebub], []);
     resolveDeaths(ctx);
-    expect(ctx.pFlyCount).toBe(3);
+    expect(ctx.pFlyCount).toBe(2);
   });
 
   it("token (zombie fly) death does not trigger beelzebub spawns (SAP準拠)", () => {
