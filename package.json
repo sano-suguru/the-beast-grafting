@@ -47,7 +47,7 @@
     "drizzle-kit": "^0.31.10",
     "jscpd": "^4.0.8",
     "jsdom": "^29.0.2",
-    "knip": "^6.0.3",
+    "knip": "^6.4.1",
     "miniflare": "^4.20260405.0",
     "oxlint-plugin-eslint": "^1.59.0",
     "tailwindcss": "^4.2.2",
