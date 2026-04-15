@@ -908,7 +908,7 @@ describe("spawnTokenAndNotify – board size guard", () => {
       atk: 1,
       hp: 1,
       isChurch: false,
-      segments: [],
+      segments: () => [],
       isPlayer: true,
       ctx,
     });
@@ -926,7 +926,7 @@ describe("spawnTokenAndNotify – board size guard", () => {
       atk: 1,
       hp: 1,
       isChurch: false,
-      segments: [],
+      segments: () => [],
       isPlayer: true,
       ctx,
     });
@@ -1417,7 +1417,7 @@ describe("flesh_granulation – on ally summon", () => {
       atk: 1,
       hp: 1,
       isChurch: false,
-      segments: ["召喚"],
+      segments: () => ["召喚"],
       isPlayer: true,
       ctx,
     });
@@ -1437,7 +1437,7 @@ describe("flesh_granulation – on ally summon", () => {
       atk: 1,
       hp: 1,
       isChurch: false,
-      segments: ["召喚"],
+      segments: () => ["召喚"],
       isPlayer: true,
       ctx,
     });

@@ -1,6 +1,6 @@
-import type { BattleFrame, BattleResult, BattleUnitSnapshot, UnitId } from "../../shared/types";
+import type { UnitId } from "../../shared/types";
 import type { Buff } from "../../shared/skill-params";
-import type { BattleMetrics, UnitActionTally } from "./sim-types";
+import type { BattleMetrics, SimBattleResult, UnitActionTally } from "./sim-types";
 
 interface MutableTally {
   unitId: UnitId;
@@ -28,33 +28,6 @@ const EMPTY_METRICS: BattleMetrics = {
   unitActions: new Map(),
 };
 
-/** 1戦闘のフレームデータからバトルメトリクスを抽出 */
-export function extractBattleMetrics(
-  frames: readonly BattleFrame[],
-  result: BattleResult,
-): BattleMetrics {
-  if (frames.length === 0) return { ...EMPTY_METRICS, result };
-
-  const first = frames[0]!;
-  const last = frames[frames.length - 1]!;
-
-  const tallyMap = buildTallyMap(first);
-  scanFrameActions(frames, tallyMap);
-
-  const pSurvivors = new Set(last.pBoard.map((u) => u.uid));
-  const eSurvivors = new Set(last.eBoard.map((u) => u.uid));
-  const unitActions = freezeTallies(tallyMap, pSurvivors, eSurvivors);
-
-  return {
-    frameCount: frames.length,
-    result,
-    pSurvivorCount: pSurvivors.size,
-    eSurvivorCount: eSurvivors.size,
-    winnerRemainingHp: computeWinnerHp(result, last),
-    unitActions,
-  };
-}
-
 function emptyTally(id: UnitId, side: "player" | "enemy"): MutableTally {
   return {
     unitId: id,
@@ -74,25 +47,6 @@ function emptyTally(id: UnitId, side: "player" | "enemy"): MutableTally {
   };
 }
 
-function buildTallyMap(first: BattleFrame): Map<string, MutableTally> {
-  const map = new Map<string, MutableTally>();
-  for (const u of first.pBoard) map.set(u.uid, emptyTally(u.id, "player"));
-  for (const u of first.eBoard) map.set(u.uid, emptyTally(u.id, "enemy"));
-  return map;
-}
-
-function scanFrameActions(
-  frames: readonly BattleFrame[],
-  tallyMap: Map<string, MutableTally>,
-): void {
-  for (let fi = 0; fi < frames.length; fi++) {
-    const frame = frames[fi]!;
-    for (const [uid, action] of Object.entries(frame.actions)) {
-      processAction(tallyMap, uid, action, frame, fi);
-    }
-  }
-}
-
 type ActionFields = {
   type: string;
   source?: string;
@@ -102,51 +56,6 @@ type ActionFields = {
   killer?: string;
   spawnedBy?: string;
 };
-
-function processAction(
-  tallyMap: Map<string, MutableTally>,
-  uid: string,
-  action: ActionFields,
-  frame: BattleFrame,
-  fi: number,
-): void {
-  // フィールドベース抽出（type に依存しない）
-  if (action.damage != null) {
-    recordDamage(tallyMap, uid, action.source, action.damage);
-  }
-  if (action.buff) {
-    recordBuff(tallyMap, uid, action.source, action.buff);
-  }
-  if (action.heal != null) {
-    recordHeal(tallyMap, uid, action.source, action.heal);
-  }
-
-  // type ベース抽出（type が唯一の情報源であるもの）
-  processActionType(tallyMap, uid, action, frame, fi);
-}
-
-function processActionType(
-  tallyMap: Map<string, MutableTally>,
-  uid: string,
-  action: ActionFields,
-  frame: BattleFrame,
-  fi: number,
-): void {
-  switch (action.type) {
-    case "skill": {
-      const t = tallyMap.get(uid);
-      if (t) t.skillCount++;
-      break;
-    }
-    case "death":
-      recordDeath(tallyMap, uid, action.killer, fi);
-      break;
-    case "summon":
-      registerSummon(tallyMap, uid, frame);
-      recordSpawn(tallyMap, action.spawnedBy);
-      break;
-  }
-}
 
 function recordDeath(
   tallyMap: Map<string, MutableTally>,
@@ -219,22 +128,6 @@ function recordHeal(
   }
 }
 
-function registerSummon(
-  tallyMap: Map<string, MutableTally>,
-  uid: string,
-  frame: BattleFrame,
-): void {
-  if (tallyMap.has(uid)) return;
-  const snap = findSnapshot(frame, uid);
-  if (!snap) return;
-  const side = frame.pBoard.some((u) => u.uid === uid) ? "player" : "enemy";
-  tallyMap.set(uid, emptyTally(snap.id, side));
-}
-
-function findSnapshot(frame: BattleFrame, uid: string): BattleUnitSnapshot | undefined {
-  return frame.pBoard.find((u) => u.uid === uid) ?? frame.eBoard.find((u) => u.uid === uid);
-}
-
 function freezeTallies(
   tallyMap: ReadonlyMap<string, MutableTally>,
   pSurvivors: ReadonlySet<string>,
@@ -263,10 +156,61 @@ function freezeTallies(
   return result;
 }
 
-function computeWinnerHp(result: BattleResult, last: BattleFrame): number {
-  const sumHp = (board: readonly BattleUnitSnapshot[]) =>
-    board.reduce((sum, u) => sum + Math.max(u.hp, 0), 0);
-  if (result === "WIN") return sumHp(last.pBoard);
-  if (result === "LOSE") return sumHp(last.eBoard);
-  return 0;
+/** Extract metrics from lightweight sim data (no frame board clones). */
+export function extractBattleMetricsSim(sim: SimBattleResult): BattleMetrics {
+  if (sim.frameCount === 0) return { ...EMPTY_METRICS, result: sim.result };
+
+  const tallyMap = new Map<string, MutableTally>();
+  for (const [uid, entry] of sim.unitRegistry) {
+    tallyMap.set(uid, emptyTally(entry.id, entry.side));
+  }
+
+  for (let fi = 0; fi < sim.simFrameActions.length; fi++) {
+    const actions = sim.simFrameActions[fi]!;
+    for (const uid of Object.keys(actions)) {
+      processSimAction(tallyMap, uid, actions[uid]!, sim.unitRegistry, fi);
+    }
+  }
+
+  const unitActions = freezeTallies(tallyMap, sim.pSurvivorUids, sim.eSurvivorUids);
+
+  return {
+    frameCount: sim.frameCount,
+    result: sim.result,
+    pSurvivorCount: sim.pSurvivorUids.size,
+    eSurvivorCount: sim.eSurvivorUids.size,
+    winnerRemainingHp: sim.winnerRemainingHp,
+    unitActions,
+  };
+}
+
+function processSimAction(
+  tallyMap: Map<string, MutableTally>,
+  uid: string,
+  action: ActionFields,
+  registry: SimBattleResult["unitRegistry"],
+  fi: number,
+): void {
+  if (action.damage != null) recordDamage(tallyMap, uid, action.source, action.damage);
+  if (action.buff) recordBuff(tallyMap, uid, action.source, action.buff);
+  if (action.heal != null) recordHeal(tallyMap, uid, action.source, action.heal);
+
+  switch (action.type) {
+    case "skill": {
+      const t = tallyMap.get(uid);
+      if (t) t.skillCount++;
+      break;
+    }
+    case "death":
+      recordDeath(tallyMap, uid, action.killer, fi);
+      break;
+    case "summon": {
+      if (!tallyMap.has(uid)) {
+        const entry = registry.get(uid);
+        if (entry) tallyMap.set(uid, emptyTally(entry.id, entry.side));
+      }
+      recordSpawn(tallyMap, action.spawnedBy);
+      break;
+    }
+  }
 }

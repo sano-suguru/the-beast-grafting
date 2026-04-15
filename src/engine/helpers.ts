@@ -34,9 +34,15 @@ export const createUnit = (id: DataUnitId): UnitInstance => {
   };
 };
 
-export const getShopPool = (night: number): RegularUnitId[] => {
+const SHOP_POOL_CACHE = new Map<number, readonly RegularUnitId[]>();
+
+export const getShopPool = (night: number): readonly RegularUnitId[] => {
+  const cached = SHOP_POOL_CACHE.get(night);
+  if (cached) return cached;
   const maxTier = getCurrentMaxTier(night);
-  return TIERS.filter((t) => t <= maxTier).flatMap((t) => getUnitsByTier(t));
+  const pool = TIERS.filter((t) => t <= maxTier).flatMap((t) => getUnitsByTier(t));
+  SHOP_POOL_CACHE.set(night, pool);
+  return pool;
 };
 
 const UNITS_BY_TIER = new Map<Tier, RegularUnitId[]>();
@@ -61,7 +67,7 @@ export const getItemPool = (): ItemId[] => [
   "death_curse",
 ];
 
-export const pickRandom = <T>(arr: T[], rng: Rng): T => {
+export const pickRandom = <T>(arr: readonly T[], rng: Rng): T => {
   invariant(arr.length > 0, "pickRandom: empty array");
   return arr[Math.floor(rng.next() * arr.length)]!;
 };

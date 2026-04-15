@@ -25,7 +25,7 @@ export function applyZealotBuff(
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(zealotName),
       "が呪詛を唱える！ ",

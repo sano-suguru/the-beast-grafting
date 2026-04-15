@@ -30,7 +30,12 @@ export function handleEquipDeath(
       atk: MAGGOT_TOKEN.atk,
       hp: MAGGOT_TOKEN.hp,
       isChurch: dead.isChurch,
-      segments: [prefix, seg.u(dead.name), "の傷口から蛆虫が這い出した！ ", seg.s("1/1 召喚")],
+      segments: () => [
+        prefix,
+        seg.u(dead.name),
+        "の傷口から蛆虫が這い出した！ ",
+        seg.s("1/1 召喚"),
+      ],
       isPlayer,
       ctx,
       delay: FRAME_DELAY_DEATH_CHAIN,
@@ -45,7 +50,7 @@ export function handleEquipDeath(
       atk: DEATH_CURSE_TOKEN.atk,
       hp: DEATH_CURSE_TOKEN.hp,
       isChurch: dead.isChurch,
-      segments: [
+      segments: () => [
         prefix,
         seg.u(dead.name),
         "の呪符が光る。怨念が肉体を繋ぎ止める！ ",

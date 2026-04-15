@@ -23,7 +23,7 @@ export function handleGraftScionDeath({ dead, isPlayer, ctx, successor }: DeathC
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       enemyPrefix(isPlayer),
       seg.u(dead.name),
       "の筋繊維が",
@@ -48,7 +48,7 @@ export function handleOmenWombDeath({ dead, board, idx, isPlayer, ctx }: DeathCo
       atk: t.atk,
       hp: t.hp,
       isChurch: dead.isChurch,
-      segments: [prefix, seg.u(dead.name), "の腹が裂ける！ ", seg.s(`${t.atk}/${t.hp} 召喚`)],
+      segments: () => [prefix, seg.u(dead.name), "の腹が裂ける！ ", seg.s(`${t.atk}/${t.hp} 召喚`)],
       isPlayer,
       ctx,
       delay: FRAME_DELAY_DEATH_CHAIN,
@@ -60,7 +60,7 @@ export function handleOmenWombDeath({ dead, board, idx, isPlayer, ctx }: DeathCo
 export function handleStellarCocoonDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const t = atLevel(STELLAR_COCOON.summon, dead.level);
   const stat = `${t.atk}/${t.hp}`;
-  const segments = [
+  const segments = () => [
     enemyPrefix(isPlayer),
     seg.u(dead.name),
     "の殻が砕ける。中から何かが…… ",
@@ -98,7 +98,7 @@ export function handleStarChildDeath({ dead, isPlayer, ctx }: DeathContext) {
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       enemyPrefix(!isPlayer),
       seg.u(killer.name),
       "が正気を失い、",
@@ -117,7 +117,7 @@ export function handleDevouringGraftDeath({ dead, board, idx, isPlayer, ctx }: D
   if (!absorbed) return;
   ctx.absorbedUnits.delete(dead.uid);
   const prefix = enemyPrefix(isPlayer);
-  const segments = [
+  const segments = () => [
     prefix,
     seg.u(dead.name),
     "の腹から",
@@ -149,7 +149,7 @@ function spawnNamedUnit(
   dead: DeathContext["dead"],
   board: DeathContext["board"],
   idx: number,
-  segments: LogSegment[],
+  segments: () => LogSegment[],
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
@@ -176,7 +176,7 @@ export function handleBuddingHydraDeath({ dead, board, idx, isPlayer, ctx }: Dea
   const count = Math.min(Math.floor(dead.preDeathHp / divisor), MAX_BOARD_SIZE - board.length);
   if (count <= 0) return;
   const t = atLevel(BUDDING_HYDRA.token, dead.level);
-  const segments: LogSegment[] = [
+  const segments = () => [
     enemyPrefix(isPlayer),
     seg.u(dead.name),
     "の切り口から首が生える！ ",

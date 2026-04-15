@@ -13,6 +13,7 @@ import {
   skillAction,
 } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
+import { buffAllAlive } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { HUNDRED_ARMS_SAFETY, ACID_SPLASH_DAMAGE } from "./constants";
 import {
@@ -38,7 +39,7 @@ export function applyAcidSplash(
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(attacker.name),
       "から",
@@ -116,7 +117,7 @@ function processDeadHandKnockout(
     pushFrame(
       ctx,
       "skill",
-      [prefix, seg.u(attacker.name), "が死肉を掴む。少し膨れる。", seg.s(`+0/+${heal}`)],
+      () => [prefix, seg.u(attacker.name), "が死肉を掴む。少し膨れる。", seg.s(`+0/+${heal}`)],
       "skill",
       { [attacker.uid]: healAction(heal, attacker.uid) },
     );
@@ -138,7 +139,7 @@ function processDevouringWoundKnockout(
     pushFrame(
       ctx,
       "skill",
-      [prefix, seg.u(attacker.name), "が塞がり、また開く。", seg.s(`+0/+${heal}`)],
+      () => [prefix, seg.u(attacker.name), "が塞がり、また開く。", seg.s(`+0/+${heal}`)],
       "skill",
       { [attacker.uid]: healAction(heal, attacker.uid) },
     );
@@ -166,7 +167,7 @@ function processOrganGrinderKnockout(
     pushFrame(
       ctx,
       "skill",
-      [prefix, seg.u(attacker.name), "が肉を挽く！ 敵全体に", seg.s(`${dmg}ダメージ`)],
+      () => [prefix, seg.u(attacker.name), "が肉を挽く！ 敵全体に", seg.s(`${dmg}ダメージ`)],
       "skill",
       aoeDamageActions(attacker, hit, dmg),
     );
@@ -185,17 +186,11 @@ function processRisenPopeKnockout(
   const prefix = enemyPrefix(isPlayer);
   for (let m = 0; m < mult; m++) {
     const b = atLevel(RISEN_POPE.buff, attacker.level);
-    const buffed: BattleUnit[] = [];
-    for (const ally of attackerBoard) {
-      if (ally.hp <= 0) continue;
-      ally.atk += b.atk;
-      ally.hp += b.hp;
-      buffed.push(ally);
-    }
+    const buffed = buffAllAlive(attackerBoard, b);
     pushFrame(
       ctx,
       "skill",
-      [
+      () => [
         prefix,
         seg.u(attacker.name),
         "が血塗れの槌を掲げる。味方の目に狂気の光が灯る。",
@@ -234,7 +229,7 @@ export function processHundredArmsKnockout(
       pushFrame(
         ctx,
         "skill",
-        [
+        () => [
           prefix,
           seg.u(attacker.name),
           "の無数の拳が",

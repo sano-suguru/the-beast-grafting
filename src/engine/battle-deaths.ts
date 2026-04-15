@@ -37,7 +37,7 @@ function buffTokenFromAltar(
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(altar.name),
       "から瘴気が溢れる。",
@@ -159,7 +159,7 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   const deathMult = getPuppeteerDeathMult(board, bestIdx);
 
   const prefix = enemyPrefix(isPlayer);
-  pushFrame(ctx, "death", [prefix, seg.u(dead.name), " は無残に引き裂かれた。"], "death", {
+  pushFrame(ctx, "death", () => [prefix, seg.u(dead.name), " は無残に引き裂かれた。"], "death", {
     [dead.uid]: deathAction(dead.lastDamageSource ?? undefined),
   });
 

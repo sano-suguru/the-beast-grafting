@@ -76,7 +76,7 @@ function applyTemplarHit({ defender: u, prefix, ctx }: HitCtx) {
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), "が傷を受け、嗤う。", seg.s(`+${b}/+0`)],
+    () => [prefix, seg.u(u.name), "が傷を受け、嗤う。", seg.s(`+${b}/+0`)],
     "skill",
     {
       [u.uid]: buffAction({ atk: b, hp: 0 }, u.uid),
@@ -87,9 +87,15 @@ function applyTemplarHit({ defender: u, prefix, ctx }: HitCtx) {
 function applyLeechHit({ defender: u, prefix, ctx }: HitCtx) {
   const b = atLevel(LEECH.hpBuff, u.level);
   u.hp += b;
-  pushFrame(ctx, "skill", [prefix, seg.u(u.name), "が血を啜る。", seg.s(`+0/+${b}`)], "skill", {
-    [u.uid]: healAction(b, u.uid),
-  });
+  pushFrame(
+    ctx,
+    "skill",
+    () => [prefix, seg.u(u.name), "が血を啜る。", seg.s(`+0/+${b}`)],
+    "skill",
+    {
+      [u.uid]: healAction(b, u.uid),
+    },
+  );
 }
 
 function applyStitchedTwinHit({ defender: u, board, idx, prefix, ctx }: HitCtx) {
@@ -98,7 +104,7 @@ function applyStitchedTwinHit({ defender: u, board, idx, prefix, ctx }: HitCtx) 
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), "の縫い目が引き攣り、牙を剥く。", seg.s(`+${b}/+0`)],
+    () => [prefix, seg.u(u.name), "の縫い目が引き攣り、牙を剥く。", seg.s(`+${b}/+0`)],
     "skill",
     {
       [u.uid]: buffAction({ atk: b, hp: 0 }, u.uid),
@@ -111,7 +117,7 @@ function applyStitchedTwinHit({ defender: u, board, idx, prefix, ctx }: HitCtx) 
     pushFrame(
       ctx,
       "skill",
-      [
+      () => [
         prefix,
         seg.u(u.name),
         "がのたうち、",
@@ -138,7 +144,7 @@ function applyFlayedSaintHit({ defender: u, isPlayer, prefix, ctx }: HitCtx) {
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "の肉片が弾け飛ぶ。",
@@ -162,7 +168,7 @@ function applyFlagellantHit({ defender: u, board, idx, prefix, ctx }: HitCtx) {
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "の背が裂ける。血飛沫を浴びた",
@@ -188,7 +194,7 @@ function applyHowlingGiantHit({ defender: u, board, prefix, ctx }: HitCtx) {
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), "が吼える。味方の腕が震え、拳が白む。", seg.s(`+${b}/+0`)],
+    () => [prefix, seg.u(u.name), "が吼える。味方の腕が震え、拳が白む。", seg.s(`+${b}/+0`)],
     "skill",
     aoeBuffActions(u, buffed, { atk: b, hp: 0 }),
   );
@@ -203,7 +209,7 @@ function applyTumorGuardianHit({ defender: u, board, idx, prefix, ctx }: HitCtx)
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "の瘤が脈打つ。",
@@ -224,7 +230,7 @@ function applyAmnioticArmorHit({ defender: u, prefix, ctx }: HitCtx) {
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), "の膜が硬化し、", seg.e("屍蝋"), "が纏う。"],
+    () => [prefix, seg.u(u.name), "の膜が硬化し、", seg.e("屍蝋"), "が纏う。"],
     "skill",
     { [u.uid]: { type: "buff", value: "屍蝋" } },
   );

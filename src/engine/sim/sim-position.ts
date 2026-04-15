@@ -1,6 +1,6 @@
 import type { RegularUnitId, UnitInstance, EnemyTeam } from "../../shared/types";
 import { createSeededRng } from "../rng";
-import { simulateBattle } from "../battle";
+import { simulateBattleResult } from "./sim-battle";
 import { generateSimTeam } from "./sim-team-gen";
 import { buildProgressedUnit } from "./sim-progression";
 import { invariant } from "../../shared/invariant";
@@ -70,7 +70,7 @@ export function findOptimalPositioning(
     for (let p = 0; p < allPerms.length; p++) {
       const playerUnits = allPerms[p]!.map((id) => prebuilt.get(id)!);
       const trialSeed = deriveSeed(baseSeed, p * trialsPerPerm + t);
-      const { result } = simulateBattle(playerUnits, enemy, night, trialSeed);
+      const result = simulateBattleResult(playerUnits, enemy, night, trialSeed);
       if (result === "WIN") wins[p]!++;
     }
   }

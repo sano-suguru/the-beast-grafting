@@ -1,4 +1,30 @@
-import type { BattleResult, DataUnitId, RegularUnitId, UnitId } from "../../shared/types";
+import type {
+  BattleAction,
+  BattleResult,
+  DataUnitId,
+  RegularUnitId,
+  UnitId,
+} from "../../shared/types";
+
+export interface SimUnitEntry {
+  readonly id: UnitId;
+  readonly side: "player" | "enemy";
+}
+
+export interface SimMetricsCollector {
+  readonly frameActions: Record<string, BattleAction>[];
+  readonly unitRegistry: Map<string, SimUnitEntry>;
+}
+
+export interface SimBattleResult {
+  readonly result: BattleResult;
+  readonly frameCount: number;
+  readonly simFrameActions: readonly Record<string, BattleAction>[];
+  readonly unitRegistry: ReadonlyMap<string, SimUnitEntry>;
+  readonly pSurvivorUids: ReadonlySet<string>;
+  readonly eSurvivorUids: ReadonlySet<string>;
+  readonly winnerRemainingHp: number;
+}
 
 // ── 1戦闘のメトリクス ──
 

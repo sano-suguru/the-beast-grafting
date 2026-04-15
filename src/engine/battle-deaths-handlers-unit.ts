@@ -42,7 +42,7 @@ export function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(dead.name),
       "の汚染された血が",
@@ -67,7 +67,7 @@ export function handleHoundDeath({ dead, board, idx, isPlayer, ctx }: DeathConte
     atk: t.atk,
     hp: t.hp,
     isChurch: dead.isChurch,
-    segments: [
+    segments: () => [
       enemyPrefix(isPlayer),
       seg.u(dead.name),
       "の首が牙を剥く！ ",
@@ -95,7 +95,7 @@ export function handleBeastDeath({ dead, board, idx, isPlayer, ctx }: DeathConte
     hp: t.hp,
     isChurch: dead.isChurch,
     level: dead.level,
-    segments: [
+    segments: () => [
       enemyPrefix(isPlayer),
       seg.u(dead.name),
       "の腹から",
@@ -119,7 +119,7 @@ export function handleChurchBeastDeath({ dead, board, idx, isPlayer, ctx }: Deat
     atk: t.atk,
     hp: t.hp,
     isChurch: dead.isChurch,
-    segments: [
+    segments: () => [
       enemyPrefix(isPlayer),
       seg.u(dead.name),
       "の腹が裂け、",
@@ -147,7 +147,7 @@ function buffSuccessor(
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       enemyPrefix(isPlayer),
       seg.u(dead.name),
       texts.mid,
@@ -180,7 +180,7 @@ export function handlePriestDeath({ dead, board, isPlayer, ctx }: DeathContext) 
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(dead.name),
       "が崩れ落ちる。その唇がまだ動いている。味方全体",
@@ -199,7 +199,14 @@ export function handleMaidenDeath({ dead, isPlayer, ctx, successor }: DeathConte
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(dead.name), "の残骸が", seg.u(successor.name), "を覆う！ ", seg.e("屍蝋の盾")],
+    () => [
+      prefix,
+      seg.u(dead.name),
+      "の残骸が",
+      seg.u(successor.name),
+      "を覆う！ ",
+      seg.e("屍蝋の盾"),
+    ],
     "skill",
     {
       [successor.uid]: defendAction("盾"),
@@ -234,7 +241,7 @@ export function handleHangedManDeath({ dead, board, isPlayer, ctx }: DeathContex
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(dead.name),
       `の唇が動く。${targets}体の肉が震え、膨れ上がる。`,
@@ -259,7 +266,7 @@ export function handleSeraphDeath({ dead, board, isPlayer, ctx }: DeathContext) 
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(dead.name), "の光が味方全体を包む。", seg.s(`+${b.atk}/+${b.hp}`)],
+    () => [prefix, seg.u(dead.name), "の光が味方全体を包む。", seg.s(`+${b.atk}/+${b.hp}`)],
     "skill",
     actionMap,
     FRAME_DELAY_DEATH_CHAIN,

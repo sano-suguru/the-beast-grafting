@@ -20,7 +20,7 @@ export function applyParasiteBuff(u: BattleUnit, prefix: string, ctx: BattleCont
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), "が前衛の闘争に興奮する！ ", seg.s(`+${b.atk}/+${b.hp}`)],
+    () => [prefix, seg.u(u.name), "が前衛の闘争に興奮する！ ", seg.s(`+${b.atk}/+${b.hp}`)],
     "skill",
     { [u.uid]: buffAction(b, u.uid) },
   );
@@ -40,7 +40,7 @@ export function applyEyeGaze(
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "が",
@@ -68,7 +68,7 @@ export function applyFamineDebuff(
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "が",
@@ -94,7 +94,7 @@ export function applyRelicSwordBuff(
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "が白く脈打つ。",
@@ -124,7 +124,7 @@ export function applyPlagueBellToll(
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), "が弔鐘を鳴らす！ 敵全体に", seg.s(`${dmg}ダメージ`)],
+    () => [prefix, seg.u(u.name), "が弔鐘を鳴らす！ 敵全体に", seg.s(`${dmg}ダメージ`)],
     "skill",
     aoeDamageActions(u, hit, dmg),
   );
@@ -147,7 +147,7 @@ export function applyMachineTransfusion(
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "が",

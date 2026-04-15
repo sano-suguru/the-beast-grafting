@@ -41,7 +41,7 @@ export function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
       u,
       target,
       dmg,
-      [
+      () => [
         seg.u(u.name),
         "が喰らいつく！ ",
         seg.u(target.name),
@@ -63,7 +63,7 @@ export function applyInquisitorSkill({ u, targetArr, isPlayer, ctx }: SkillConte
     u,
     target,
     dmg,
-    [
+    () => [
       seg.u(u.name),
       "が裁きを下す！ ",
       seg.u(target.name),
@@ -84,7 +84,7 @@ export function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext)
     u,
     back,
     dmg,
-    [
+    () => [
       seg.u(u.name),
       "が叫ぶ！ 最後尾の",
       seg.u(back.name),
@@ -101,7 +101,7 @@ export function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext)
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "の喉が裂ける。",
@@ -133,7 +133,7 @@ export function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
     pushFrame(
       ctx,
       "skill",
-      [
+      () => [
         prefix,
         seg.u(u.name),
         `の眼が血走る。前方${buffed}体の肉が脈打つ。`,
@@ -155,7 +155,7 @@ export function applyCatacombRatSkill({ u, targetArr, isPlayer, ctx }: SkillCont
     u,
     victim,
     tierDmg,
-    [
+    () => [
       seg.u(u.name),
       "が聖骨を齧る！ ",
       seg.u(victim.name),
@@ -180,7 +180,12 @@ export function applyPaladinSkill({ u, isPlayer, ctx }: SkillContext) {
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), "が手を掲げる。淡い光が味方の傷を塞いでいく。", seg.s(`+0/+${hpBuff}`)],
+    () => [
+      prefix,
+      seg.u(u.name),
+      "が手を掲げる。淡い光が味方の傷を塞いでいく。",
+      seg.s(`+0/+${hpBuff}`),
+    ],
     "skill",
     aoeBuffActions(u, buffed, { atk: 0, hp: hpBuff }),
   );
@@ -202,7 +207,7 @@ export function applyHolyFireSkill({ u, targetArr, isPlayer, ctx }: SkillContext
     u,
     target,
     dmg,
-    [
+    () => [
       seg.u(u.name),
       "が降り注ぐ！ ",
       seg.u(target.name),
@@ -235,7 +240,7 @@ export function applyDevouringGraftSkill({ u, isPlayer, ctx }: SkillContext) {
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "が",
@@ -261,7 +266,14 @@ export function applyCorrodingMoldSkill({ u, isPlayer, ctx }: SkillContext) {
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(u.name), "が", seg.u(front.name), "に侵蝕する。", seg.s(`+${b.atk}/+${b.hp}`)],
+    () => [
+      prefix,
+      seg.u(u.name),
+      "が",
+      seg.u(front.name),
+      "に侵蝕する。",
+      seg.s(`+${b.atk}/+${b.hp}`),
+    ],
     "skill",
     { [front.uid]: buffAction(b, u.uid) },
   );
@@ -288,7 +300,7 @@ export function applyMimickingFleshSkill(
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(prevName), "が震え、", seg.u(pred.name), "の形に変わる。"],
+    () => [prefix, seg.u(prevName), "が震え、", seg.u(pred.name), "の形に変わる。"],
     "skill",
     { [u.uid]: skillAction() },
   );

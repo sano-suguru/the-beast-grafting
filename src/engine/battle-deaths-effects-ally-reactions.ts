@@ -26,7 +26,7 @@ export function handleCrawlingCordBuff(board: BattleUnit[], isPlayer: boolean, c
     const alive = board.filter((a) => a.hp > 0 && a.uid !== u.uid);
     if (alive.length === 0) return;
     const target = mustGet(alive, Math.floor(ctx.rng.next() * alive.length), "cord buff target");
-    buffAlly(ctx, u, target, b, [
+    buffAlly(ctx, u, target, b, () => [
       prefix,
       seg.u(u.name),
       "が蠢き、",
@@ -44,7 +44,7 @@ export function handleInsatiableMawBuff(
 ) {
   applyAllyDeathReaction(board, "insatiable_maw", isPlayer, (u, prefix) => {
     const b = atLevel(INSATIABLE_MAW.buff, u.level);
-    buffAlly(ctx, u, u, b, [
+    buffAlly(ctx, u, u, b, () => [
       prefix,
       seg.u(u.name),
       "の咢が脈動する。牙の間から涎が垂れ、膨れ上がる。",
@@ -58,7 +58,7 @@ function buffAlly(
   source: BattleUnit,
   target: BattleUnit,
   b: Buff,
-  segments: LogSegment[],
+  segments: () => LogSegment[],
 ) {
   target.atk += b.atk;
   target.hp += b.hp;

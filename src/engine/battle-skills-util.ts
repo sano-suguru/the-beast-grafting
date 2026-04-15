@@ -22,13 +22,13 @@ export function applySkillDamage(
   u: BattleUnit,
   target: BattleUnit,
   dmg: number,
-  segments: LogSegment[],
+  segments: () => LogSegment[],
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
   takeDamage(target, dmg, u.uid);
   const prefix = enemyPrefix(isPlayer);
-  pushFrame(ctx, "skill", [prefix, ...segments], "skill", {
+  pushFrame(ctx, "skill", () => [prefix, ...segments()], "skill", {
     [u.uid]: skillAction(),
     [target.uid]: damageAction(dmg, u.uid),
   });

@@ -16,7 +16,9 @@ export function generateSimTeam(night: number, rng: Rng): RegularUnitId[] {
     invariant(available.length > 0, "generateSimTeam: pool exhausted");
     const idx = Math.floor(rng.next() * available.length);
     selected.push(available[idx]!);
-    available.splice(idx, 1);
+    // swap-and-pop: O(1) instead of splice O(n)
+    available[idx] = available[available.length - 1]!;
+    available.pop();
   }
 
   return selected;

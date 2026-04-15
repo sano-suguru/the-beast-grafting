@@ -13,6 +13,7 @@ import {
 import { mustGet } from "../shared/invariant";
 import { FLY_SPAWN_CAP, FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { atLevel, BEELZEBUB, EVANGELIST, CROW, SIN_EATER, CATHEDRAL } from "../shared/skill-params";
+import { notifyEquipInfection } from "./battle-context";
 import { spawnTokenAndNotify } from "./battle-spawn";
 
 function collectBeelzebubSpawns(
@@ -55,7 +56,7 @@ export function handleBeelzebubSpawns(
         atk: ft.atk,
         hp: ft.hp,
         isChurch: beelzebub.isChurch,
-        segments: [
+        segments: () => [
           prefix,
           seg.u(beelzebub.name),
           "の周りに蠅が湧く。",
@@ -87,7 +88,7 @@ export function handleCrowBuffs(board: BattleUnit[], isPlayer: boolean, ctx: Bat
       pushFrame(
         ctx,
         "skill",
-        [prefix, seg.u(u.name), "が死肉を啄む。", seg.s(`+${b.atk}/+${b.hp}`)],
+        () => [prefix, seg.u(u.name), "が死肉を啄む。", seg.s(`+${b.atk}/+${b.hp}`)],
         "skill",
         { [u.uid]: buffAction(b, u.uid) },
         FRAME_DELAY_DEATH_CHAIN,
@@ -114,7 +115,12 @@ export function handleSinEaterAbsorb(
       pushFrame(
         ctx,
         "skill",
-        [enemyPrefix(isPlayer), seg.u(u.name), "が屍に群がり、殻が膨れる。", seg.s(`+${gain}/+0`)],
+        () => [
+          enemyPrefix(isPlayer),
+          seg.u(u.name),
+          "が屍に群がり、殻が膨れる。",
+          seg.s(`+${gain}/+0`),
+        ],
         "skill",
         { [u.uid]: buffAction({ atk: gain, hp: 0 }, u.uid) },
         FRAME_DELAY_DEATH_CHAIN,
@@ -145,7 +151,7 @@ export function handleCathedralSpawns(
         atk: t.atk,
         hp: t.hp,
         isChurch: u.isChurch,
-        segments: [
+        segments: () => [
           enemyPrefix(isPlayer),
           seg.u(u.name),
           "の扉が軋み、中から信徒が這い出す。",
@@ -181,19 +187,19 @@ function infectTargets(
     target.equip = "infection";
     infected++;
     if (prevEquip && prevEquip !== "infection") {
-      pushFrame(
-        ctx,
-        "skill",
-        [prefix, seg.u(target.name), "の装備が疫病に蝕まれた！"],
-        "skill",
-        { [target.uid]: { type: "damage", value: "装備消去" } },
-        FRAME_DELAY_DEATH_CHAIN,
-      );
+      notifyEquipInfection(ctx, prefix, target, FRAME_DELAY_DEATH_CHAIN);
     }
     pushFrame(
       ctx,
       "skill",
-      [prefix, seg.u(u.name), "の瘴気が", seg.u(target.name), "に纏わりつく。", seg.e("感染")],
+      () => [
+        prefix,
+        seg.u(u.name),
+        "の瘴気が",
+        seg.u(target.name),
+        "に纏わりつく。",
+        seg.e("感染"),
+      ],
       "skill",
       {
         [u.uid]: skillAction(),
@@ -224,7 +230,7 @@ export function handleEvangelistPlague(
     pushFrame(
       ctx,
       "skill",
-      [prefix, seg.u(u.name), "の肉体が瘴気に蝕まれる。", seg.s(`-${selfDmg}HP`)],
+      () => [prefix, seg.u(u.name), "の肉体が瘴気に蝕まれる。", seg.s(`-${selfDmg}HP`)],
       "skill",
       { [u.uid]: damageAction(selfDmg) },
       FRAME_DELAY_DEATH_CHAIN,

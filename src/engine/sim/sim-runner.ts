@@ -8,10 +8,10 @@ import type {
 } from "./sim-types";
 import { createSeededRng } from "../rng";
 import { createUnit } from "../helpers";
-import { simulateBattle } from "../battle";
+import { simulateBattleSim } from "./sim-battle";
 import { generateSimTeam } from "./sim-team-gen";
 import { buildProgressedUnit } from "./sim-progression";
-import { extractBattleMetrics } from "./sim-metrics";
+import { extractBattleMetricsSim } from "./sim-metrics";
 import { type PerfMap, accumulatePerformance, finalizePerformance, percentile } from "./sim-perf";
 import { deriveSeed, makeSimEnemy } from "./sim-utils";
 
@@ -63,15 +63,15 @@ export function runMatchup(
     const teamA = pProgRng ? buildRealisticTeam(teamAIds, night, pProgRng) : buildTeam(teamAIds);
     const teamB = eProgRng ? buildRealisticTeam(teamBIds, night, eProgRng) : buildTeam(teamBIds);
     const enemy = makeSimEnemy(teamB);
-    const { frames, result } = simulateBattle(teamA, enemy, night, seed);
+    const sim = simulateBattleSim(teamA, enemy, night, seed);
 
-    const m = extractBattleMetrics(frames, result);
+    const m = extractBattleMetricsSim(sim);
     frameCounts.push(m.frameCount);
     winnerHps.push(m.winnerRemainingHp);
-    accumulateTrialPerformance(perfMap, m, result);
+    accumulateTrialPerformance(perfMap, m, sim.result);
 
-    if (result === "WIN") aWins++;
-    else if (result === "LOSE") bWins++;
+    if (sim.result === "WIN") aWins++;
+    else if (sim.result === "LOSE") bWins++;
     else draws++;
   }
 
@@ -119,22 +119,22 @@ export function runRandomTrials(
     const eIds = generateSimTeam(night, eRng);
     const pProgRng = createSeededRng(deriveSeed(baseSeed, trials * 3 + i));
     const eProgRng = createSeededRng(deriveSeed(baseSeed, trials * 4 + i));
-    const { frames, result } = simulateBattle(
+    const sim = simulateBattleSim(
       buildRealisticTeam(pIds, night, pProgRng),
       makeSimEnemy(buildRealisticTeam(eIds, night, eProgRng)),
       night,
       battleSeed,
     );
 
-    const m = extractBattleMetrics(frames, result);
+    const m = extractBattleMetricsSim(sim);
     totalFrames += m.frameCount;
-    accumulateTrialPerformance(perfMap, m, result);
+    accumulateTrialPerformance(perfMap, m, sim.result);
 
-    teamTrials.push({ teamIds: pIds, won: result === "WIN" });
-    teamTrials.push({ teamIds: eIds, won: result === "LOSE" });
+    teamTrials.push({ teamIds: pIds, won: sim.result === "WIN" });
+    teamTrials.push({ teamIds: eIds, won: sim.result === "LOSE" });
 
-    if (result === "WIN") wins++;
-    else if (result === "LOSE") losses++;
+    if (sim.result === "WIN") wins++;
+    else if (sim.result === "LOSE") losses++;
     else draws++;
   }
 

@@ -3,6 +3,7 @@ import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { generateUid } from "./helpers";
 import type { BattleContext, BattleUnit } from "./battle-context";
 import {
+  createBattleContext,
   pushFrame,
   takeDamage,
   skillDamageActions,
@@ -49,28 +50,21 @@ function initBattleUnit(u: UnitInstance): BattleUnit {
   return bu;
 }
 
-function initContext(
+export function initBattleContext(
   playerBoard: (UnitInstance | null)[],
   enemyTeam: EnemyTeam,
   lastBattleResult: BattleResult,
   rng: Rng,
 ): BattleContext {
-  return {
-    rng,
-    pBoard: playerBoard
+  return createBattleContext(
+    playerBoard
       .filter((u): u is UnitInstance => u !== null)
       .reverse()
       .map(initBattleUnit),
-    eBoard: enemyTeam.units.toReversed().map(initBattleUnit),
-    frames: [],
-    logCounter: 0,
-    pFlyCount: 0,
-    eFlyCount: 0,
+    enemyTeam.units.toReversed().map(initBattleUnit),
     lastBattleResult,
-    opCount: 0,
-    opLimitExceeded: false,
-    absorbedUnits: new Map(),
-  };
+    rng,
+  );
 }
 
 function resolveNecroticInstantKill(
@@ -87,7 +81,7 @@ function resolveNecroticInstantKill(
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(attacker.name),
       "が触れた先から",
@@ -105,10 +99,13 @@ function resolveClash(
   e: BattleUnit,
   ctx: BattleContext,
 ): { pKilledE: boolean; eKilledP: boolean } {
-  pushFrame(ctx, "clash", [seg.u(p.name), " と 敵の", seg.u(e.name), " が喰らい合う！"], "clash", {
-    [p.uid]: clashAction(),
-    [e.uid]: clashAction(),
-  });
+  pushFrame(
+    ctx,
+    "clash",
+    () => [seg.u(p.name), " と 敵の", seg.u(e.name), " が喰らい合う！"],
+    "clash",
+    { [p.uid]: clashAction(), [e.uid]: clashAction() },
+  );
 
   const { pDmg, eDmg, pAction, eAction, pWaxBlocked, eWaxBlocked } = applyEquipmentEffects(
     p,
@@ -123,7 +120,7 @@ function resolveClash(
   pushFrame(
     ctx,
     "damage",
-    [
+    () => [
       "互いの肉が裂ける！ ",
       seg.u(p.name),
       " ",
@@ -188,15 +185,15 @@ function determineResult(ctx: BattleContext, timedOut: boolean): BattleResult {
 
 function pushResultFrame(ctx: BattleContext, result: BattleResult, enemyTeam: EnemyTeam) {
   if (result === "WIN") {
-    pushFrame(ctx, "result", ["勝利。死体の山から、あなたの傑作が嗤っている。"], "trophy");
+    pushFrame(ctx, "result", () => ["勝利。死体の山から、あなたの傑作が嗤っている。"], "trophy");
   } else if (result === "LOSE") {
     const msg =
       enemyTeam.teamType === "教団"
         ? "敗北。あなたの傑作は異端審問官の炎に巻かれ、灰も残さず焼き尽くされた。"
         : "敗北。あなたの傑作は無残に解体され、同業者のキメラに貪り喰われた。";
-    pushFrame(ctx, "result", [msg], "skull");
+    pushFrame(ctx, "result", () => [msg], "skull");
   } else {
-    pushFrame(ctx, "result", ["引き分け。路地裏には静寂と腐臭だけが残った。"], "info");
+    pushFrame(ctx, "result", () => ["引き分け。路地裏には静寂と腐臭だけが残った。"], "info");
   }
 }
 
@@ -209,7 +206,7 @@ export function runBattle(
   pushFrame(
     ctx,
     "info",
-    [seg.e(`第${night}夜`), ` 狂宴が幕を開けた。敵は ${enemyTeam.teamName} だ。`],
+    () => [seg.e(`第${night}夜`), ` 狂宴が幕を開けた。敵は ${enemyTeam.teamName} だ。`],
     "info",
   );
 
@@ -232,7 +229,7 @@ export function runBattle(
 
   const timedOut = loopSafety >= CLASH_LIMIT || ctx.opLimitExceeded;
   if (timedOut) {
-    pushFrame(ctx, "info", ["戦闘が長引きすぎた...引き分けとなる。"], "info");
+    pushFrame(ctx, "info", () => ["戦闘が長引きすぎた...引き分けとなる。"], "info");
   }
 
   const result = determineResult(ctx, timedOut);
@@ -249,6 +246,6 @@ export function simulateBattle(
   lastBattleResult: BattleResult = null,
 ): { frames: BattleFrame[]; result: BattleResult } {
   const rng = createSeededRng(seed);
-  const ctx = initContext(playerBoard, enemyTeam, lastBattleResult, rng);
+  const ctx = initBattleContext(playerBoard, enemyTeam, lastBattleResult, rng);
   return runBattle(ctx, enemyTeam, night);
 }

@@ -21,7 +21,13 @@ function applyBerserkBonus(unit: BattleUnit, ctx: BattleContext, isPlayer: boole
   pushFrame(
     ctx,
     "skill",
-    [prefix, seg.u(unit.name), "が荒ぶる！", seg.e("狂乱"), seg.s(`攻撃ダメ+${BERSERK_BONUS}`)],
+    () => [
+      prefix,
+      seg.u(unit.name),
+      "が荒ぶる！",
+      seg.e("狂乱"),
+      seg.s(`攻撃ダメ+${BERSERK_BONUS}`),
+    ],
     "skill",
     { [unit.uid]: skillAction() },
   );
@@ -37,7 +43,7 @@ function applyInfectionPenalty(
   pushFrame(
     ctx,
     "defend",
-    [
+    () => [
       prefix,
       seg.u(unit.name),
       "の傷が膿む。",
@@ -60,7 +66,7 @@ function applyIronDefense(
   pushFrame(
     ctx,
     "defend",
-    [prefix, "刃が弾かれる。", seg.e("鉄の皮膚"), seg.s(`被ダメ-${IRON_REDUCTION}`)],
+    () => [prefix, "刃が弾かれる。", seg.e("鉄の皮膚"), seg.s(`被ダメ-${IRON_REDUCTION}`)],
     "defend",
     { [unit.uid]: defendAction() },
   );
@@ -78,7 +84,7 @@ function applyCorpseWaxDefense(
   pushFrame(
     ctx,
     "defend",
-    [
+    () => [
       prefix,
       seg.u(unit.name),
       "の",
@@ -105,7 +111,7 @@ function applyNumbnessDefense(
   pushFrame(
     ctx,
     "defend",
-    [
+    () => [
       prefix,
       seg.u(unit.name),
       "は怯まない。",

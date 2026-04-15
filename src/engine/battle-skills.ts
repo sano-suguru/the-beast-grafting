@@ -4,6 +4,7 @@ import { pushFrame, getMult, enemyPrefix, seg, skillAction, defendAction } from 
 import { mustGet } from "../shared/invariant";
 import { SUPPORT_IDX } from "./constants";
 import type { SkillContext, BeforeAttackArgs } from "./battle-skills-util";
+import { notifyEquipInfection } from "./battle-context";
 import {
   applyBatSkill,
   applyInquisitorSkill,
@@ -86,14 +87,12 @@ function applyCholeraSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   target.equip = "infection";
   const prefix = enemyPrefix(isPlayer);
   if (prevEquip && prevEquip !== "infection") {
-    pushFrame(ctx, "skill", [prefix, seg.u(target.name), "の装備が疫病に蝕まれた！"], "skill", {
-      [target.uid]: { type: "damage", value: "装備消去" },
-    });
+    notifyEquipInfection(ctx, prefix, target);
   }
   pushFrame(
     ctx,
     "skill",
-    [
+    () => [
       prefix,
       seg.u(u.name),
       "が疫病を撒き散らす！ ",

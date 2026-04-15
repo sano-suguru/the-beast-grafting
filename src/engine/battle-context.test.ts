@@ -78,7 +78,7 @@ describe("pushFrame", () => {
   it("sets opLimitExceeded when opCount exceeds MAX_OPS", () => {
     const ctx = makeContext();
     ctx.opCount = MAX_OPS;
-    pushFrame(ctx, "info", ["test"], "info");
+    pushFrame(ctx, "info", () => ["test"], "info");
     expect(ctx.opLimitExceeded).toBe(true);
     expect(ctx.frames).toHaveLength(0);
   });
@@ -86,7 +86,7 @@ describe("pushFrame", () => {
   it("adds frame normally at opCount = MAX_OPS - 1", () => {
     const ctx = makeContext();
     ctx.opCount = MAX_OPS - 1;
-    pushFrame(ctx, "info", ["boundary test"], "info");
+    pushFrame(ctx, "info", () => ["boundary test"], "info");
     expect(ctx.opLimitExceeded).toBe(false);
     expect(ctx.frames).toHaveLength(1);
     expect(segmentsToPlainText(ctx.frames[0]!.log.segments)).toBe("boundary test");

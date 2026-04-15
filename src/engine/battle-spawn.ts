@@ -23,7 +23,7 @@ type SpawnBase = {
   hp: number;
   isChurch: boolean;
   level?: number | undefined;
-  segments: LogSegment[];
+  segments: () => LogSegment[];
   isPlayer: boolean;
   ctx: BattleContext;
   delay?: number | undefined;
@@ -62,7 +62,7 @@ function applyFleshGranulationBuff(
       pushFrame(
         ctx,
         "skill",
-        [prefix, seg.u(u.name), "が脈動し、膨れ上がる。", seg.s(`+${b.atk}/+${b.hp}`)],
+        () => [prefix, seg.u(u.name), "が脈動し、膨れ上がる。", seg.s(`+${b.atk}/+${b.hp}`)],
         "skill",
         { [u.uid]: buffAction(b, u.uid) },
       );

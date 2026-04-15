@@ -8,7 +8,7 @@ import { runMatchup, runRandomTrials } from "./sim-runner";
 import { analyzePairSynergies, discoverArchetypes } from "./sim-archetype-discovery";
 import type { DiscoveredArchetype, PairSynergy } from "./sim-archetype-discovery";
 import { createUnit } from "../helpers";
-import { simulateBattle } from "../battle";
+import { simulateBattleResult } from "./sim-battle";
 import { buildProgressedUnit } from "./sim-progression";
 import { SimReportCollector, perfMapToRecord, perfToRecord } from "./sim-report-collect";
 import { writeSimReport } from "./sim-report-write";
@@ -115,7 +115,7 @@ describe("buildProgressedUnit", () => {
 // ── ポジション最適化の効果検証 ──
 
 describe("position optimization effectiveness", () => {
-  it("brute-force optimized positions win more than random", { timeout: 10_000 }, () => {
+  it("brute-force optimized positions win more than random", () => {
     const TEAMS = 5;
     const TRIALS_PER_TEAM = 100;
     let optimizedWins = 0;
@@ -133,21 +133,21 @@ describe("position optimization effectiveness", () => {
         const enemy = generateSimTeam(12, enemyRng);
         const battleSeed = (i + 1) * 10000 + t + 1;
 
-        const r1 = simulateBattle(
+        const r1 = simulateBattleResult(
           optimized.map((id) => createUnit(id)),
           makeSimEnemy(enemy.map((id) => createUnit(id))),
           12,
           battleSeed,
         );
-        const r2 = simulateBattle(
+        const r2 = simulateBattleResult(
           team.map((id) => createUnit(id)),
           makeSimEnemy(enemy.map((id) => createUnit(id))),
           12,
           battleSeed,
         );
 
-        if (r1.result === "WIN") optimizedWins++;
-        if (r2.result === "WIN") randomWins++;
+        if (r1 === "WIN") optimizedWins++;
+        if (r2 === "WIN") randomWins++;
         totalBattles++;
       }
     }
@@ -273,7 +273,7 @@ describe("archetype discovery pipeline", () => {
     }
   });
 
-  it("runs all-vs-all without crashing", { timeout: 15_000 }, () => {
+  it("runs all-vs-all without crashing", () => {
     const names = [...positioned.keys()];
     const TRIALS = 500;
 

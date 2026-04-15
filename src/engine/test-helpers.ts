@@ -1,4 +1,5 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
+import { createBattleContext } from "./battle-context";
 import type {
   UnitInstance,
   BattleUnitSnapshot,
@@ -61,19 +62,7 @@ export function makeContext(
   lastBattleResult: BattleResult = null,
   rng: Rng = createSeededRng(42),
 ): BattleContext {
-  return {
-    rng,
-    pBoard,
-    eBoard,
-    frames: [],
-    logCounter: 0,
-    pFlyCount: 0,
-    eFlyCount: 0,
-    lastBattleResult,
-    opCount: 0,
-    opLimitExceeded: false,
-    absorbedUnits: new Map(),
-  };
+  return createBattleContext(pBoard, eBoard, lastBattleResult, rng);
 }
 
 export function makeSnapshot(overrides: Partial<BattleUnitSnapshot> = {}): BattleUnitSnapshot {

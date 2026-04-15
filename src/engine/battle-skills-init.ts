@@ -22,7 +22,7 @@ function applyBloodFontBuffs(board: BattleUnit[], isPlayer: boolean, ctx: Battle
     pushFrame(
       ctx,
       "skill",
-      [
+      () => [
         enemyPrefix(isPlayer),
         seg.u(u.name),
         "の血が凝り、",

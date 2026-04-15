@@ -13,6 +13,7 @@ import type {
 } from "../shared/types";
 import type { Buff } from "../shared/skill-params";
 import type { Rng } from "./rng";
+import type { SimMetricsCollector } from "./sim/sim-types";
 import { TOKEN_TIER } from "../shared/data/tiers";
 import { generateUid } from "./helpers";
 import { MAX_OPS } from "./constants";
@@ -52,6 +53,8 @@ export interface BattleContext {
   opCount: number;
   opLimitExceeded: boolean;
   absorbedUnits: Map<string, AbsorbedData>;
+  simMode: boolean;
+  simCollector: SimMetricsCollector | null;
 }
 
 /** BattleUnit fields are all primitives — shallow copy is safe.
@@ -70,7 +73,7 @@ export const seg = {
 export function pushFrame(
   ctx: BattleContext,
   logType: LogType,
-  segments: LogSegment[],
+  segments: () => LogSegment[],
   iconType: IconType,
   actions: Record<string, BattleAction> = {},
   delay?: number,
@@ -81,13 +84,35 @@ export function pushFrame(
     return;
   }
   ctx.logCounter++;
+  if (ctx.simMode) {
+    if (ctx.simCollector) {
+      registerSimSummons(ctx.simCollector, actions, ctx.pBoard, ctx.eBoard);
+      ctx.simCollector.frameActions.push(actions);
+    }
+    return;
+  }
   ctx.frames.push({
     pBoard: ctx.pBoard.map(cloneBattleUnit),
     eBoard: ctx.eBoard.map(cloneBattleUnit),
-    log: { id: `log-${ctx.logCounter}`, type: logType, segments, icon: iconType },
+    log: { id: `log-${ctx.logCounter}`, type: logType, segments: segments(), icon: iconType },
     actions,
     ...(delay != null && { delay }),
   });
+}
+
+function registerSimSummons(
+  collector: SimMetricsCollector,
+  actions: Record<string, BattleAction>,
+  pBoard: readonly BattleUnit[],
+  eBoard: readonly BattleUnit[],
+) {
+  for (const [uid, action] of Object.entries(actions)) {
+    if (action.type !== "summon") continue;
+    let side: "player" | "enemy" | null = null;
+    if (pBoard.some((u) => u.uid === uid)) side = "player";
+    else if (eBoard.some((u) => u.uid === uid)) side = "enemy";
+    if (side) collector.unitRegistry.set(uid, { id: "token", side });
+  }
 }
 
 export function skillAction(): BattleAction {
@@ -248,4 +273,54 @@ export function createSummonedUnit(
     equipUses: 0,
     lastDamageSource: null,
   };
+}
+
+export function createBattleContext(
+  pBoard: BattleUnit[],
+  eBoard: BattleUnit[],
+  lastBattleResult: BattleResult,
+  rng: Rng,
+): BattleContext {
+  return {
+    rng,
+    pBoard,
+    eBoard,
+    frames: [],
+    logCounter: 0,
+    pFlyCount: 0,
+    eFlyCount: 0,
+    lastBattleResult,
+    opCount: 0,
+    opLimitExceeded: false,
+    absorbedUnits: new Map(),
+    simMode: false,
+    simCollector: null,
+  };
+}
+
+export function notifyEquipInfection(
+  ctx: BattleContext,
+  prefix: string,
+  target: BattleUnit,
+  delay?: number,
+) {
+  pushFrame(
+    ctx,
+    "skill",
+    () => [prefix, seg.u(target.name), "の装備が疫病に蝕まれた！"],
+    "skill",
+    { [target.uid]: { type: "damage", value: "装備消去" } },
+    delay,
+  );
+}
+
+export function buffAllAlive(board: BattleUnit[], buff: Buff): BattleUnit[] {
+  const buffed: BattleUnit[] = [];
+  for (const u of board) {
+    if (u.hp <= 0) continue;
+    u.atk += buff.atk;
+    u.hp += buff.hp;
+    buffed.push(u);
+  }
+  return buffed;
 }
