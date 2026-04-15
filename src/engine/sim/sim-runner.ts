@@ -1,24 +1,19 @@
+import type { BattleResult, RegularUnitId, UnitInstance, DataUnitId } from "../../shared/types";
 import type {
-  BattleResult,
-  RegularUnitId,
-  UnitInstance,
-  EnemyTeam,
-  DataUnitId,
-} from "../../shared/types";
-import type { BattleMetrics, MatchupResult, RandomTrialResult, UnitPerformance } from "./sim-types";
+  BattleMetrics,
+  MatchupResult,
+  RandomTrialResult,
+  TeamTrial,
+  UnitPerformance,
+} from "./sim-types";
 import { createSeededRng } from "../rng";
 import { createUnit } from "../helpers";
 import { simulateBattle } from "../battle";
 import { generateSimTeam } from "./sim-team-gen";
 import { buildProgressedUnit } from "./sim-progression";
-import { optimizePositions } from "./sim-position";
 import { extractBattleMetrics } from "./sim-metrics";
 import { type PerfMap, accumulatePerformance, finalizePerformance, percentile } from "./sim-perf";
-
-function deriveSeed(baseSeed: number, index: number): number {
-  const raw = Math.imul(baseSeed ^ index, 2654435761) >>> 0;
-  return raw || 1;
-}
+import { deriveSeed, makeSimEnemy } from "./sim-utils";
 
 function buildTeam(ids: readonly DataUnitId[]): UnitInstance[] {
   return ids.map((id) => createUnit(id));
@@ -30,10 +25,6 @@ function buildRealisticTeam(
   rng: { next(): number },
 ): UnitInstance[] {
   return ids.map((id) => buildProgressedUnit(id, night, rng));
-}
-
-function makeEnemy(units: UnitInstance[]): EnemyTeam {
-  return { teamName: "[SIM]", teamType: "同業者", units, night: null, life: null, trophy: null };
 }
 
 function accumulateTrialPerformance(
@@ -71,7 +62,7 @@ export function runMatchup(
     const eProgRng = realistic ? createSeededRng(deriveSeed(baseSeed, trials * 3 + i)) : null;
     const teamA = pProgRng ? buildRealisticTeam(teamAIds, night, pProgRng) : buildTeam(teamAIds);
     const teamB = eProgRng ? buildRealisticTeam(teamBIds, night, eProgRng) : buildTeam(teamBIds);
-    const enemy = makeEnemy(teamB);
+    const enemy = makeSimEnemy(teamB);
     const { frames, result } = simulateBattle(teamA, enemy, night, seed);
 
     const m = extractBattleMetrics(frames, result);
@@ -106,7 +97,7 @@ export function runMatchup(
   };
 }
 
-/** シナジー重み付きランダムチーム同士の N 試行 */
+/** 一様ランダムチーム同士の N 試行 */
 export function runRandomTrials(
   trials: number,
   night: number,
@@ -117,19 +108,20 @@ export function runRandomTrials(
   let draws = 0;
   let totalFrames = 0;
   const perfMap: PerfMap = new Map();
+  const teamTrials: TeamTrial[] = [];
 
   for (let i = 0; i < trials; i++) {
     const pRng = createSeededRng(deriveSeed(baseSeed, i * 2));
     const eRng = createSeededRng(deriveSeed(baseSeed, i * 2 + 1));
     const battleSeed = deriveSeed(baseSeed, trials + i);
 
-    const pIds = optimizePositions(generateSimTeam(night, pRng));
-    const eIds = optimizePositions(generateSimTeam(night, eRng));
+    const pIds = generateSimTeam(night, pRng);
+    const eIds = generateSimTeam(night, eRng);
     const pProgRng = createSeededRng(deriveSeed(baseSeed, trials * 3 + i));
     const eProgRng = createSeededRng(deriveSeed(baseSeed, trials * 4 + i));
     const { frames, result } = simulateBattle(
       buildRealisticTeam(pIds, night, pProgRng),
-      makeEnemy(buildRealisticTeam(eIds, night, eProgRng)),
+      makeSimEnemy(buildRealisticTeam(eIds, night, eProgRng)),
       night,
       battleSeed,
     );
@@ -137,6 +129,9 @@ export function runRandomTrials(
     const m = extractBattleMetrics(frames, result);
     totalFrames += m.frameCount;
     accumulateTrialPerformance(perfMap, m, result);
+
+    teamTrials.push({ teamIds: pIds, won: result === "WIN" });
+    teamTrials.push({ teamIds: eIds, won: result === "LOSE" });
 
     if (result === "WIN") wins++;
     else if (result === "LOSE") losses++;
@@ -151,5 +146,6 @@ export function runRandomTrials(
     winRate: wins / trials,
     avgFrameCount: totalFrames / trials,
     unitPerformance: finalizePerformance(perfMap) as ReadonlyMap<RegularUnitId, UnitPerformance>,
+    teamTrials,
   };
 }

@@ -176,6 +176,7 @@
     <nav id="tabs"></nav>
 
     <section id="s-overview" class="active"></section>
+    <section id="s-synergies"></section>
     <section id="s-matchups"></section>
     <section id="s-balance"></section>
     <section id="s-crossnight"></section>
@@ -235,6 +236,7 @@
 
         var TABS = [
           ["s-overview", "Overview"],
+          ["s-synergies", "Pair Synergies"],
           ["s-matchups", "Matchups"],
           ["s-balance", "Unit Balance"],
           ["s-crossnight", "Cross-Night"],
@@ -489,6 +491,16 @@
             });
           }).length;
           addCard("Archetype Matchups", totalMatchups + " (" + imbalanced + " imbalanced)");
+          if (data.pairSynergies && data.pairSynergies.length > 0) {
+            var topDelta = data.pairSynergies[0].synergyDelta;
+            addCard(
+              "Pair Synergies",
+              data.pairSynergies.length + " (top δ=" + num(topDelta * 100, 1) + "pp)",
+            );
+          }
+          if (data.discoveredCompositions && data.discoveredCompositions.length > 0) {
+            addCard("Discovered Compositions", data.discoveredCompositions.length);
+          }
           if (data.crossNight.length > 0) {
             var totalOutliers = data.crossNight.reduce(function (s, c) {
               return s + c.outliers.length;
@@ -502,7 +514,7 @@
 
         function renderMatchups(data) {
           var sec = document.getElementById("s-matchups");
-          sec.innerHTML = "<h2>Archetype Matchups</h2>";
+          sec.innerHTML = "<h2>Discovered Archetype Matchups</h2>";
           if (data.archetypeMatchups.length === 0) {
             sec.innerHTML += "<p>No data</p>";
             return;
@@ -671,6 +683,106 @@
           }
         }
 
+        // ── Pair Synergies & Discovered Compositions ──
+
+        function renderSynergies(data) {
+          var sec = document.getElementById("s-synergies");
+          sec.innerHTML = "<h2>Pair Synergies &amp; Discovered Compositions</h2>";
+
+          // Pair Synergies Table
+          if (!data.pairSynergies || data.pairSynergies.length === 0) {
+            sec.appendChild(el("p", { textContent: "No pair synergy data" }));
+          } else {
+            sec.appendChild(el("h3", { textContent: "Top Pair Synergies (by CI lower bound)" }));
+            var wrap = el("div", { className: "scroll-wrap" });
+            var table = el("table", { className: "sortable" });
+            var thead = el("thead");
+            var headRow = el("tr");
+            ["Unit A", "Unit B", "Co-Win%", "Expected%", "δ (pp)", "CI95 (pp)", "Samples"].forEach(
+              function (h) {
+                headRow.appendChild(el("th", { className: "num", textContent: h }));
+              },
+            );
+            thead.appendChild(headRow);
+            table.appendChild(thead);
+
+            var tbody = el("tbody");
+            data.pairSynergies.forEach(function (s) {
+              var tr = el("tr");
+              var delta = s.synergyDelta * 100;
+              var deltaColor = delta > 0 ? "#e74c3c" : delta < 0 ? "#3498db" : "#888";
+              tr.innerHTML =
+                "<td>" +
+                esc(s.unitA) +
+                "</td>" +
+                "<td>" +
+                esc(s.unitB) +
+                "</td>" +
+                '<td class="num">' +
+                wr(s.coWinRate) +
+                "%</td>" +
+                '<td class="num">' +
+                wr(s.expectedWinRate) +
+                "%</td>" +
+                '<td class="num" style="color:' +
+                deltaColor +
+                '">' +
+                (delta >= 0 ? "+" : "") +
+                num(delta, 1) +
+                "</td>" +
+                '<td class="num">' +
+                (s.ciLower != null
+                  ? "[" + num(s.ciLower * 100, 1) + ", " + num(s.ciUpper * 100, 1) + "]"
+                  : "—") +
+                "</td>" +
+                '<td class="num">' +
+                s.sampleCount +
+                "</td>";
+              tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            wrap.appendChild(table);
+            sec.appendChild(wrap);
+            makeSortable(table);
+          }
+
+          // Discovered Compositions
+          if (!data.discoveredCompositions || data.discoveredCompositions.length === 0) {
+            sec.appendChild(el("p", { textContent: "No discovered compositions" }));
+          } else {
+            sec.appendChild(el("h3", { textContent: "Discovered Compositions" }));
+            var cTable = el("table");
+            var cThead = el("thead");
+            var cHeadRow = el("tr");
+            ["#", "Name", "Members", "Total δ (pp)"].forEach(function (h) {
+              cHeadRow.appendChild(el("th", { className: "num", textContent: h }));
+            });
+            cThead.appendChild(cHeadRow);
+            cTable.appendChild(cThead);
+
+            var cTbody = el("tbody");
+            data.discoveredCompositions.forEach(function (c, i) {
+              var tr = el("tr");
+              tr.innerHTML =
+                '<td class="num">' +
+                (i + 1) +
+                "</td>" +
+                "<td>" +
+                esc(c.name) +
+                "</td>" +
+                "<td>" +
+                c.unitIds.map(esc).join(", ") +
+                "</td>" +
+                '<td class="num">' +
+                num(c.totalSynergyDelta * 100, 1) +
+                "</td>";
+              cTbody.appendChild(tr);
+            });
+            cTable.appendChild(cTbody);
+            sec.appendChild(cTable);
+          }
+        }
+
         // ── Scaling ──
 
         function renderRankingTable(container, title, units, metricFn) {
@@ -741,9 +853,16 @@
 
         var DATA = JSON.parse(document.getElementById("sim-data").textContent);
 
+        if (DATA._placeholder) {
+          document.getElementById("generated-at").textContent =
+            "This is the template file. Open sim-results/latest.html instead.";
+          return;
+        }
+
         document.getElementById("generated-at").textContent = "Generated: " + DATA.generatedAt;
         initTabs();
         renderOverview(DATA);
+        renderSynergies(DATA);
         renderMatchups(DATA);
         renderBalance(DATA);
         renderCrossNight(DATA);

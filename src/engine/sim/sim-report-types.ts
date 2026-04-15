@@ -59,6 +59,23 @@ export interface ScalingAnalysis {
   readonly topSpawners: readonly RankedUnit[];
 }
 
+export interface PairSynergyEntry {
+  readonly unitA: string;
+  readonly unitB: string;
+  readonly coWinRate: number;
+  readonly expectedWinRate: number;
+  readonly synergyDelta: number;
+  readonly sampleCount: number;
+  readonly ciLower: number;
+  readonly ciUpper: number;
+}
+
+export interface CompositionEntry {
+  readonly name: string;
+  readonly unitIds: readonly string[];
+  readonly totalSynergyDelta: number;
+}
+
 export interface SimReportData {
   readonly generatedAt: string;
   readonly positionOptimization: PositionOptResult | null;
@@ -66,4 +83,6 @@ export interface SimReportData {
   readonly randomBalance: readonly RandomBalanceEntry[];
   readonly crossNight: readonly CrossNightEntry[];
   readonly scalingAnalysis: ScalingAnalysis | null;
+  readonly pairSynergies: readonly PairSynergyEntry[];
+  readonly discoveredCompositions: readonly CompositionEntry[];
 }

@@ -3,7 +3,9 @@ import type { UnitPerformance } from "./sim-types";
 import type {
   CrossNightEntry,
   CrossNightOutlier,
+  CompositionEntry,
   MatchupEntry,
+  PairSynergyEntry,
   PositionOptResult,
   RandomBalanceEntry,
   ScalingAnalysis,
@@ -37,6 +39,8 @@ export class SimReportCollector {
   private readonly _randomBalance: RandomBalanceEntry[] = [];
   private readonly _crossNight = new Map<number, MutableCrossNight>();
   private _scaling: ScalingAnalysis | null = null;
+  private _pairSynergies: readonly PairSynergyEntry[] = [];
+  private _discoveredCompositions: readonly CompositionEntry[] = [];
 
   setPositionOpt(result: PositionOptResult): void {
     this._positionOpt = result;
@@ -79,6 +83,14 @@ export class SimReportCollector {
     this._scaling = analysis;
   }
 
+  setPairSynergies(synergies: readonly PairSynergyEntry[]): void {
+    this._pairSynergies = synergies;
+  }
+
+  setDiscoveredCompositions(compositions: readonly CompositionEntry[]): void {
+    this._discoveredCompositions = compositions;
+  }
+
   build(): SimReportData {
     const crossNight: CrossNightEntry[] = [...this._crossNight.values()]
       .sort((a, b) => a.night - b.night)
@@ -97,6 +109,8 @@ export class SimReportCollector {
       randomBalance: this._randomBalance,
       crossNight,
       scalingAnalysis: this._scaling,
+      pairSynergies: this._pairSynergies,
+      discoveredCompositions: this._discoveredCompositions,
     };
   }
 }

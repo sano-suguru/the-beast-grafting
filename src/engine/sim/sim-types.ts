@@ -1,23 +1,5 @@
 import type { BattleResult, DataUnitId, RegularUnitId, UnitId } from "../../shared/types";
 
-export type PositionRole = "front" | "support" | "flex";
-
-export type SynergyTag =
-  | "spawner"
-  | "spawn-reactor"
-  | "death-provider"
-  | "death-reactor"
-  | "avenge"
-  | "front-synergy"
-  | "multiplier"
-  | "stat-stick"
-  | "self-contained";
-
-export interface UnitSimProfile {
-  readonly role: PositionRole;
-  readonly tags: readonly SynergyTag[];
-}
-
 // ── 1戦闘のメトリクス ──
 
 export interface UnitActionTally {
@@ -100,4 +82,12 @@ export interface MatchupResult {
 export interface RandomTrialResult extends SimResult {
   readonly avgFrameCount: number;
   readonly unitPerformance: ReadonlyMap<RegularUnitId, UnitPerformance>;
+  readonly teamTrials: readonly TeamTrial[];
+}
+
+export const TEAM_SIZE = 5;
+
+export interface TeamTrial {
+  readonly teamIds: readonly RegularUnitId[];
+  readonly won: boolean;
 }

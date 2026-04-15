@@ -154,7 +154,7 @@ function applyTierNormalization(
 }
 
 /** Wilson score interval for binomial proportion (95% CI, z=1.96) */
-function wilsonCI(successes: number, n: number): readonly [number, number] {
+export function wilsonCI(successes: number, n: number): readonly [number, number] {
   if (n === 0) return [0, 0];
   const z = 1.96;
   const p = successes / n;

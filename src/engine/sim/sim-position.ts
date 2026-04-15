@@ -1,137 +1,104 @@
-import type { RegularUnitId } from "../../shared/types";
-import { UNIT_PROFILES } from "./sim-synergy";
-import { lookupUnitData } from "../../shared/data/unit-lookup";
+import type { RegularUnitId, UnitInstance, EnemyTeam } from "../../shared/types";
+import { createSeededRng } from "../rng";
+import { simulateBattle } from "../battle";
+import { generateSimTeam } from "./sim-team-gen";
+import { buildProgressedUnit } from "./sim-progression";
 import { invariant } from "../../shared/invariant";
+import { deriveSeed, makeSimEnemy } from "./sim-utils";
 
-/** HP重視の前衛適性スコア (HP × 10 + ATK) */
-function frontPriority(id: RegularUnitId): number {
-  const data = lookupUnitData(id);
-  invariant(data, `unknown unit: ${id}`);
-  return data.baseHp * 10 + data.baseAtk;
+const DEFAULT_TRIALS_PER_PERM = 50;
+const DEFAULT_NIGHT = 12;
+
+function* permutations<T>(arr: readonly T[]): Generator<T[]> {
+  if (arr.length <= 1) {
+    yield [...arr];
+    return;
+  }
+  for (let i = 0; i < arr.length; i++) {
+    const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
+    for (const perm of permutations(rest)) {
+      yield [arr[i]!, ...perm];
+    }
+  }
 }
 
-function getRole(id: RegularUnitId): string {
-  return UNIT_PROFILES[id].role;
+function buildTrialPlayerUnits(
+  teamIds: readonly RegularUnitId[],
+  night: number,
+  baseSeed: number,
+  trial: number,
+): Map<RegularUnitId, UnitInstance> {
+  const prebuilt = new Map<RegularUnitId, UnitInstance>();
+  for (let u = 0; u < teamIds.length; u++) {
+    // 個別RNGでユニットごとのRNG消費量差が他ユニットに波及しない
+    const unitRng = createSeededRng(deriveSeed(baseSeed, 1_000_000 + trial * teamIds.length + u));
+    prebuilt.set(teamIds[u]!, buildProgressedUnit(teamIds[u]!, night, unitRng));
+  }
+  return prebuilt;
 }
 
-function hasTag(id: RegularUnitId, tag: string): boolean {
-  return (UNIT_PROFILES[id].tags as readonly string[]).includes(tag);
+function buildTrialEnemy(night: number, baseSeed: number, trial: number): EnemyTeam {
+  const enemyRng = createSeededRng(deriveSeed(baseSeed, 500_000 + trial));
+  const enemyIds = generateSimTeam(night, enemyRng);
+  const eProgRng = createSeededRng(deriveSeed(baseSeed, 2_000_000 + trial));
+  const enemyUnits = enemyIds.map((id) => buildProgressedUnit(id, night, eProgRng));
+  return makeSimEnemy(enemyUnits);
 }
 
 /**
- * ユニット配列をバトル最適なポジションに並べ替える。
+ * 全 5!=120 順列を試行し、最高勝率の配置を返す。
  *
- * 返り値は simulateBattle の入力順序: index 0 = back, 末尾 = front。
- * (initContext が .reverse() するため)
- *
- * バトルポジション:
- *   0 = front (攻撃・被弾)
- *   1 = support (before-attack スキル発動)
- *   2-4 = back
+ * trial単位で先にユニットをビルドし、順列間でステータスを共有することで
+ * RNG消費順による汚染を排除する。
  */
-export function optimizePositions(ids: readonly RegularUnitId[]): RegularUnitId[] {
-  invariant(ids.length > 0 && ids.length <= 5, "optimizePositions: team size must be 1-5");
+export function findOptimalPositioning(
+  teamIds: readonly RegularUnitId[],
+  night = DEFAULT_NIGHT,
+  baseSeed = 1,
+  trialsPerPerm = DEFAULT_TRIALS_PER_PERM,
+): RegularUnitId[] {
+  invariant(teamIds.length > 0 && teamIds.length <= 5, "team size must be 1-5");
+  invariant(new Set(teamIds).size === teamIds.length, "duplicate unit IDs");
 
-  const battleSlots: (RegularUnitId | null)[] = Array.from({ length: ids.length }, () => null);
-  const remaining = new Set(ids);
+  const allPerms = [...permutations(teamIds)];
+  const wins = Array.from<number>({ length: allPerms.length }).fill(0);
 
-  assignKeyPositions(battleSlots, ids, remaining);
-  fillRemaining(battleSlots, remaining);
+  for (let t = 0; t < trialsPerPerm; t++) {
+    const prebuilt = buildTrialPlayerUnits(teamIds, night, baseSeed, t);
+    const enemy = buildTrialEnemy(night, baseSeed, t);
 
-  const result = battleSlots.filter((id): id is RegularUnitId => id !== null);
-  return result.toReversed();
-}
-
-function assignKeyPositions(
-  battleSlots: (RegularUnitId | null)[],
-  ids: readonly RegularUnitId[],
-  remaining: Set<RegularUnitId>,
-): void {
-  const supportUnits = ids.filter((id) => getRole(id) === "support");
-  const hasSupport = supportUnits.length > 0;
-
-  // brains + support → brains を position 2 (support の before-attack を 2 倍)
-  if (remaining.has("brains") && hasSupport && ids.length > 2) {
-    battleSlots[2] = "brains";
-    remaining.delete("brains");
-  }
-
-  // support → position 1
-  if (hasSupport && ids.length > 1) {
-    const best = pickBest(supportUnits.filter((id) => remaining.has(id)));
-    if (best) {
-      battleSlots[1] = best;
-      remaining.delete(best);
+    for (let p = 0; p < allPerms.length; p++) {
+      const playerUnits = allPerms[p]!.map((id) => prebuilt.get(id)!);
+      const trialSeed = deriveSeed(baseSeed, p * trialsPerPerm + t);
+      const { result } = simulateBattle(playerUnits, enemy, night, trialSeed);
+      if (result === "WIN") wins[p]!++;
     }
   }
 
-  // brains + support 無し → brains を position 1
-  if (remaining.has("brains") && ids.length > 1) {
-    battleSlots[1] = "brains";
-    remaining.delete("brains");
+  let bestIdx = 0;
+  for (let i = 1; i < wins.length; i++) {
+    if (wins[i]! > wins[bestIdx]!) bestIdx = i;
   }
-
-  assignFront(battleSlots, remaining);
-
-  // puppeteer → death-provider/spawner の 1 つ前
-  if (remaining.has("puppeteer")) {
-    placePuppeteer(battleSlots, ids, remaining);
-  }
+  return allPerms[bestIdx]!;
 }
 
-function assignFront(battleSlots: (RegularUnitId | null)[], remaining: Set<RegularUnitId>): void {
-  if (battleSlots[0] !== null || remaining.size === 0) return;
-  const all = [...remaining];
-  const frontCandidates = all.filter((id) => getRole(id) === "front");
-  const flexCandidates = all.filter((id) => getRole(id) !== "support");
-  const activeCandidates = flexCandidates.filter(
-    (id) => !hasTag(id, "death-reactor") && !hasTag(id, "avenge") && !hasTag(id, "spawn-reactor"),
-  );
-  let candidates = all;
-  if (frontCandidates.length > 0) candidates = frontCandidates;
-  else if (activeCandidates.length > 0) candidates = activeCandidates;
-  else if (flexCandidates.length > 0) candidates = flexCandidates;
-  const best = pickBest(candidates)!;
-  battleSlots[0] = best;
-  remaining.delete(best);
+interface NamedTeam {
+  readonly name: string;
+  readonly unitIds: readonly RegularUnitId[];
 }
 
-function fillRemaining(battleSlots: (RegularUnitId | null)[], remaining: Set<RegularUnitId>): void {
-  const rest = [...remaining];
-  const backPreferred = rest.filter((id) => hasTag(id, "death-reactor") || hasTag(id, "avenge"));
-  const others = rest.filter((id) => !hasTag(id, "death-reactor") && !hasTag(id, "avenge"));
-  const toPlace = [...others, ...backPreferred];
-
-  for (let i = battleSlots.length - 1; i >= 0; i--) {
-    if (battleSlots[i] === null && toPlace.length > 0) {
-      battleSlots[i] = toPlace.pop()!;
-    }
+/** 発見されたアーキタイプにブルートフォースポジション最適化を適用して返す */
+export function positionArchetypes(
+  discovered: readonly NamedTeam[],
+  night = DEFAULT_NIGHT,
+  baseSeed = 1,
+  trialsPerPerm = DEFAULT_TRIALS_PER_PERM,
+): ReadonlyMap<string, readonly RegularUnitId[]> {
+  const result = new Map<string, readonly RegularUnitId[]>();
+  for (let i = 0; i < discovered.length; i++) {
+    const arch = discovered[i]!;
+    const archSeed = deriveSeed(baseSeed, (i + 1) * 10_000);
+    result.set(arch.name, findOptimalPositioning(arch.unitIds, night, archSeed, trialsPerPerm));
   }
-}
-
-function pickBest(candidates: RegularUnitId[]): RegularUnitId | undefined {
-  if (candidates.length === 0) return undefined;
-  return candidates.reduce((a, b) => (frontPriority(a) >= frontPriority(b) ? a : b));
-}
-
-function placePuppeteer(
-  battleSlots: (RegularUnitId | null)[],
-  allIds: readonly RegularUnitId[],
-  remaining: Set<RegularUnitId>,
-): void {
-  if (!remaining.has("puppeteer")) return;
-
-  const deathUnits = allIds.filter(
-    (id) => id !== "puppeteer" && (hasTag(id, "death-provider") || hasTag(id, "spawner")),
-  );
-  if (deathUnits.length === 0) return;
-
-  const bestDeath = pickBest(deathUnits)!;
-  const deathIdx = battleSlots.indexOf(bestDeath);
-  if (deathIdx <= 0) return;
-
-  if (battleSlots[deathIdx - 1] === null) {
-    battleSlots[deathIdx - 1] = "puppeteer";
-    remaining.delete("puppeteer");
-  }
+  return result;
 }
