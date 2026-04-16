@@ -1,4 +1,5 @@
 import type { MatchupResult, UnitPerformance } from "./sim-types";
+import type { GaGenerationStats, GaRankedTeam } from "./sim-ga-types";
 
 /** UnitPerformance の JSON-safe 版（winRateCI95 を mutable tuple に） */
 export type UnitPerfRecord = Omit<UnitPerformance, "winRateCI95"> & {
@@ -84,19 +85,13 @@ export interface InsufficientSampleEntry {
 
 // ── GA Discovery ──
 
-export interface GaRankedTeamEntry {
+/** GaRankedTeam の JSON-safe 版（RegularUnitId → string, readonly tuple → mutable tuple） */
+export type GaRankedTeamEntry = Omit<GaRankedTeam, "teamIds" | "fitnessCI95"> & {
   readonly teamIds: readonly string[];
-  readonly fitness: number;
   readonly fitnessCI95: [number, number];
-  readonly novelty: boolean;
-}
+};
 
-export interface GaGenerationStatsEntry {
-  readonly generation: number;
-  readonly bestFitness: number;
-  readonly avgFitness: number;
-  readonly diversity: number;
-}
+export type GaGenerationStatsEntry = GaGenerationStats;
 
 export interface GaReportData {
   readonly topTeams: readonly GaRankedTeamEntry[];

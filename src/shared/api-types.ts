@@ -1,4 +1,4 @@
-import type { BattleFrame, EventData, ItemData } from "./types";
+import type { BattleFrame, EventData, ShopItemSlot } from "./types";
 import type { BoardUnit, PvpOpponent } from "./board-unit";
 
 export type ServerBattleResult = "WIN" | "LOSE" | "DRAW";
@@ -33,10 +33,7 @@ export interface ShopSlotResponse {
   eventSourced: boolean;
 }
 
-export interface ShopItemSlotResponse {
-  item: ItemData;
-  frozen: boolean;
-}
+export type ShopItemSlotResponse = ShopItemSlot;
 
 export type LoreResponse = Record<string, { mastered: boolean }>;
 

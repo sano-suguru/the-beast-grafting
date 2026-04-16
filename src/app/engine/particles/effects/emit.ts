@@ -3,34 +3,38 @@ import { acquire, finalize } from "../pool";
 
 let nextId = 0;
 
-interface ParticleSpec {
-  x: number;
-  y: number;
-  vx?: number;
-  vy?: number;
-  ax?: number;
-  ay?: number;
-  size: number;
-  sizeEnd: number;
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-  rEnd: number;
-  gEnd: number;
-  bEnd: number;
-  life: number;
-  composite?: GlobalCompositeOperation;
-  seed?: number;
-  wobble?: boolean;
-  shape?: Particle["shape"];
-  rotation?: number;
-  rotationSpeed?: number;
-  lineEndX?: number;
-  lineEndY?: number;
-  lineWidth?: number;
-  delay?: number;
-}
+type ParticleRequiredKeys =
+  | "x"
+  | "y"
+  | "size"
+  | "sizeEnd"
+  | "r"
+  | "g"
+  | "b"
+  | "a"
+  | "rEnd"
+  | "gEnd"
+  | "bEnd"
+  | "life";
+
+type ParticleOptionalKeys =
+  | "vx"
+  | "vy"
+  | "ax"
+  | "ay"
+  | "composite"
+  | "seed"
+  | "wobble"
+  | "shape"
+  | "rotation"
+  | "rotationSpeed"
+  | "lineEndX"
+  | "lineEndY"
+  | "lineWidth";
+
+/** Particle の初期化スペック — 省略フィールドはデフォルト値で補完 */
+type ParticleSpec = Pick<Particle, ParticleRequiredKeys> &
+  Partial<Pick<Particle, ParticleOptionalKeys>> & { delay?: number };
 
 function applyMotion(p: Particle, spec: ParticleSpec) {
   p.x = spec.x;
