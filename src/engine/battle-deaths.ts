@@ -137,7 +137,7 @@ function executeDeathEffects(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  executeOwnDeathSkills(dead, board, insertIdx, mult * deathMult, mult, isPlayer, ctx);
+  executeOwnDeathSkills(dead, board, insertIdx, mult * deathMult, 1, isPlayer, ctx);
   executeAllyReactions(dead, board, insertIdx, isPlayer, ctx);
 }
 

@@ -24,7 +24,7 @@ export interface BattleUnit extends UnitInstance {
   preDeathHp: number;
   battleBaseAtk: number;
   battleBaseHp: number;
-  altarBuffed?: boolean;
+  altarBuffed: boolean;
   avengeDeathCount: number;
   equipUses: number;
   skillUses: number;
@@ -47,8 +47,7 @@ export interface BattleContext {
   eBoard: BattleUnit[];
   frames: BattleFrame[];
   logCounter: number;
-  pFlyCount: number;
-  eFlyCount: number;
+
   lastBattleResult: BattleResult;
   opCount: number;
   opLimitExceeded: boolean;
@@ -222,6 +221,7 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
     equip: null,
     level: 1,
     isChurch,
+    altarBuffed: false,
     battleBaseAtk: atk,
     battleBaseHp: hp,
     baseAtk: atk,
@@ -267,6 +267,7 @@ export function createSummonedUnit(
     equip: null,
     level,
     isChurch,
+    altarBuffed: false,
     exp: 0,
     avengeDeathCount: 0,
     skillUses: 0,
@@ -287,8 +288,7 @@ export function createBattleContext(
     eBoard,
     frames: [],
     logCounter: 0,
-    pFlyCount: 0,
-    eFlyCount: 0,
+
     lastBattleResult,
     opCount: 0,
     opLimitExceeded: false,

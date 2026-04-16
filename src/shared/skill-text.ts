@@ -135,7 +135,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   templar: (lv) => `被弾: 自身に+${atLevel(TEMPLAR.atkBuff, lv)}/+0`,
   beelzebub: (lv) => {
     const b = atLevel(BEELZEBUB.token, lv);
-    return `味方死亡: ${b.atk}/${b.hp}の蠅を死亡位置に召喚(最大2回)`;
+    return `味方死亡: ${b.atk}/${b.hp}の蠅を死亡位置に召喚`;
   },
   eye: (lv) =>
     `直前の味方が攻撃: ランダム敵に${atLevel(EYE.damage, lv)}ダメ(${atLevel(EYE.uses, lv)}回/戦)`,

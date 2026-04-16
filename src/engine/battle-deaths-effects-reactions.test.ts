@@ -18,27 +18,16 @@ describe("handleBeelzebubSpawns", () => {
     expect(fly).toBeDefined();
     expect(fly!.atk).toBe(3);
     expect(fly!.hp).toBe(3);
-    expect(ctx.pFlyCount).toBe(1);
   });
 
-  it("does not spawn when flyCount is already 3", () => {
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
-    const ctx = makeContext([beelzebub]);
-    ctx.pFlyCount = 3;
-    const boardBefore = ctx.pBoard.length;
-    handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
-    expect(ctx.pBoard.length).toBe(boardBefore);
-    expect(ctx.pFlyCount).toBe(3);
-  });
-
-  it("player and enemy fly counters are independent", () => {
+  it("player and enemy fly spawns are independent", () => {
     const pBeelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", hp: 4 });
     const eBeelzebub = makeBattleUnit({ id: "beelzebub", name: "敵ベルゼブブ", hp: 4 });
     const ctx = makeContext([pBeelzebub], [eBeelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
     handleBeelzebubSpawns(ctx.eBoard, false, ctx, 0);
-    expect(ctx.pFlyCount).toBe(1);
-    expect(ctx.eFlyCount).toBe(1);
+    expect(ctx.pBoard.filter((u) => u.name === "腐肉の蠅")).toHaveLength(1);
+    expect(ctx.eBoard.filter((u) => u.name === "腐肉の蠅")).toHaveLength(1);
   });
 
   it("flies get zealot buff if zealot present", () => {
@@ -54,7 +43,7 @@ describe("handleBeelzebubSpawns", () => {
     const ally = makeBattleUnit({ id: "rat", hp: 5 });
     const ctx = makeContext([ally]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
-    expect(ctx.pFlyCount).toBe(0);
+    expect(ctx.pBoard.filter((u) => u.name === "腐肉の蠅")).toHaveLength(0);
   });
 });
 
@@ -77,7 +66,7 @@ describe("handleBeelzebubSpawns – board size guard", () => {
     const ctx = makeContext(board, []);
     handleBeelzebubSpawns(board, true, ctx, 0);
     expect(board).toHaveLength(MAX_BOARD_SIZE);
-    expect(ctx.pFlyCount).toBe(0);
+    expect(board.filter((u) => u.name === "腐肉の蠅")).toHaveLength(0);
   });
 
   it("spawns only until board is full", () => {
@@ -88,7 +77,7 @@ describe("handleBeelzebubSpawns – board size guard", () => {
     const ctx = makeContext(board, []);
     handleBeelzebubSpawns(board, true, ctx, 0);
     expect(board.length).toBe(MAX_BOARD_SIZE);
-    expect(ctx.pFlyCount).toBe(2);
+    expect(board.filter((u) => u.name === "腐肉の蠅")).toHaveLength(2);
   });
 });
 

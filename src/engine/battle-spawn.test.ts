@@ -19,6 +19,8 @@ describe("spawnTokenAndNotify – board size guard", () => {
     });
     expect(result).toBeNull();
     expect(units).toHaveLength(MAX_BOARD_SIZE);
+    expect(ctx.frames).toHaveLength(1);
+    expect(ctx.frames[0]!.log.type).toBe("info");
   });
 
   it("spawns when board has room", () => {

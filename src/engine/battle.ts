@@ -40,6 +40,7 @@ function initBattleUnit(u: UnitInstance): BattleUnit {
     buffAtk: 0,
     buffHp: 0,
     uid: generateUid(),
+    altarBuffed: false,
     avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
@@ -56,6 +57,7 @@ export function initBattleContext(
   lastBattleResult: BattleResult,
   rng: Rng,
 ): BattleContext {
+  // ショップ配列 [slot0…slotN] → 戦闘配列 [前衛…後衛]: index 0 が前線
   return createBattleContext(
     playerBoard
       .filter((u): u is UnitInstance => u !== null)
@@ -229,7 +231,7 @@ export function runBattle(
 
   const timedOut = loopSafety >= CLASH_LIMIT || ctx.opLimitExceeded;
   if (timedOut) {
-    pushFrame(ctx, "info", () => ["戦闘が長引きすぎた...引き分けとなる。"], "info");
+    pushFrame(ctx, "info", () => ["戦闘が長引きすぎた...残存する肉の量で決着がつく。"], "info");
   }
 
   const result = determineResult(ctx, timedOut);

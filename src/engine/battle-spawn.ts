@@ -30,6 +30,15 @@ type SpawnBase = {
   spawnerUid?: string | undefined;
 };
 
+function notifyBoardFull(ctx: BattleContext, name: string, isPlayer: boolean): void {
+  pushFrame(
+    ctx,
+    "info",
+    () => [enemyPrefix(isPlayer), seg.u(name), "が蠢くが、肉の壁に阻まれる。"],
+    "info",
+  );
+}
+
 function finalize(s: SpawnBase, unit: BattleUnit): BattleUnit {
   s.board.splice(s.idx, 0, unit);
   pushFrame(
@@ -71,14 +80,20 @@ function applyFleshGranulationBuff(
 }
 
 export function spawnTokenAndNotify(s: SpawnBase & { name: string }): BattleUnit | null {
-  if (s.board.length >= MAX_BOARD_SIZE) return null;
+  if (s.board.length >= MAX_BOARD_SIZE) {
+    notifyBoardFull(s.ctx, s.name, s.isPlayer);
+    return null;
+  }
   return finalize(s, createToken(s.name, s.atk, s.hp, s.isChurch));
 }
 
 export function spawnSummonedUnitAndNotify(
   s: SpawnBase & { unitData: UnitData },
 ): BattleUnit | null {
-  if (s.board.length >= MAX_BOARD_SIZE) return null;
+  if (s.board.length >= MAX_BOARD_SIZE) {
+    notifyBoardFull(s.ctx, s.unitData.name, s.isPlayer);
+    return null;
+  }
   const unit = createSummonedUnit(s.unitData, s.atk, s.hp, s.isChurch, s.level);
   getInitOverride(unit.id)?.(unit);
   return finalize(s, unit);

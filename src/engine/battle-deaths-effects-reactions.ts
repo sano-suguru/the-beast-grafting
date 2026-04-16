@@ -9,26 +9,21 @@ import {
   defendAction,
 } from "./battle-context";
 import { mustGet } from "../shared/invariant";
-import { FLY_SPAWN_CAP, FRAME_DELAY_DEATH_CHAIN } from "./constants";
+import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { atLevel, BEELZEBUB, EVANGELIST, CROW, SIN_EATER, CATHEDRAL } from "../shared/skill-params";
 import { notifyEquipInfection } from "./battle-context";
 import { spawnTokenAndNotify } from "./battle-spawn";
 
-function collectBeelzebubSpawns(
-  board: BattleUnit[],
-  flyCount: number,
-): { spawns: { beelzebub: BattleUnit; count: number }[] } {
+function collectBeelzebubSpawns(board: BattleUnit[]): {
+  spawns: { beelzebub: BattleUnit; count: number }[];
+} {
   const spawns: { beelzebub: BattleUnit; count: number }[] = [];
-  let remaining = FLY_SPAWN_CAP - flyCount;
   for (let i = 0; i < board.length; i++) {
     const u = board[i]!;
     if (u.id !== "beelzebub" || u.hp <= 0) continue;
     const mult = getMult(board, i);
-    const count = Math.min(mult, remaining);
-    if (count <= 0) continue;
-    spawns.push({ beelzebub: u, count });
-    remaining -= count;
-    if (remaining <= 0) break;
+    if (mult <= 0) continue;
+    spawns.push({ beelzebub: u, count: mult });
   }
   return { spawns };
 }
@@ -39,11 +34,9 @@ export function handleBeelzebubSpawns(
   ctx: BattleContext,
   deathIdx: number,
 ) {
-  const flyCount = isPlayer ? ctx.pFlyCount : ctx.eFlyCount;
   const prefix = enemyPrefix(isPlayer);
-  const { spawns } = collectBeelzebubSpawns(board, flyCount);
+  const { spawns } = collectBeelzebubSpawns(board);
 
-  let actualSpawned = 0;
   for (const { beelzebub, count } of spawns) {
     const ft = atLevel(BEELZEBUB.token, beelzebub.level);
     for (let m = 0; m < count; m++) {
@@ -66,11 +59,8 @@ export function handleBeelzebubSpawns(
         spawnerUid: beelzebub.uid,
       });
       if (!token) break;
-      actualSpawned++;
     }
   }
-  if (isPlayer) ctx.pFlyCount += actualSpawned;
-  else ctx.eFlyCount += actualSpawned;
 }
 
 export function handleCrowBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {

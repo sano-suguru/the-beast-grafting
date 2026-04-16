@@ -4,7 +4,6 @@ export const DEATH_CASCADE_LIMIT = 20;
 export const CLASH_LIMIT = 500;
 /** 無限ループ防止用安全上限。死亡アニメフレーム等の視覚フレームを含め余裕を持たせる */
 export const MAX_OPS = 15_000;
-export const FLY_SPAWN_CAP = 2;
 export const HUNDRED_ARMS_SAFETY = 10;
 /** SAP準拠: 攻撃前スキルは前衛の直後（support位置）のみ発動 */
 export const SUPPORT_IDX = 1;

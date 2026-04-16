@@ -189,21 +189,21 @@ describe("resolveDeaths – beelzebub", () => {
     expect(fly!.hp).toBe(3);
   });
 
-  it("fly spawn is capped at 3", () => {
+  it("fly spawn limited by board size", () => {
     const units = [
-      makeBattleUnit({ hp: 0 }),
-      makeBattleUnit({ hp: 0 }),
-      makeBattleUnit({ hp: 0 }),
-      makeBattleUnit({ hp: 0 }),
+      makeBattleUnit({ id: "eye", hp: 0 }),
+      makeBattleUnit({ id: "eye", hp: 0 }),
+      makeBattleUnit({ id: "eye", hp: 0 }),
+      makeBattleUnit({ id: "eye", hp: 0 }),
       makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 }),
     ];
     const ctx = makeContext(units, []);
     resolveDeaths(ctx);
     const flies = ctx.pBoard.filter((u) => u.name === "腐肉の蠅");
-    expect(flies.length).toBeLessThanOrEqual(3);
+    expect(flies.length).toBe(4);
   });
 
-  it("two beelzebubs share fly counter (capped at 3 total)", () => {
+  it("two beelzebubs spawn independently, limited by board size", () => {
     const units = [
       makeBattleUnit({ hp: 0 }),
       makeBattleUnit({ hp: 0 }),
@@ -213,7 +213,6 @@ describe("resolveDeaths – beelzebub", () => {
     ];
     const ctx = makeContext(units, []);
     resolveDeaths(ctx);
-    expect(ctx.pFlyCount).toBeLessThanOrEqual(3);
     const flies = ctx.pBoard.filter((u) => u.name === "腐肉の蠅");
     expect(flies.length).toBeLessThanOrEqual(3);
   });
@@ -226,17 +225,17 @@ describe("resolveDeaths – beelzebub", () => {
     resolveDeaths(ctx);
     const flies = ctx.pBoard.filter((u) => u.name === "腐肉の蠅");
     expect(flies.length).toBe(2);
-    expect(ctx.pFlyCount).toBe(2);
   });
 
-  it("fly counter persists across multiple death resolutions", () => {
+  it("spawns one fly per ally death without cap", () => {
     const d1 = makeBattleUnit({ id: "eye", hp: 0, atk: 5 });
     const d2 = makeBattleUnit({ id: "eye", hp: 0, atk: 3 });
     const d3 = makeBattleUnit({ id: "eye", hp: 0, atk: 1 });
     const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
     const ctx = makeContext([d1, d2, d3, beelzebub], []);
     resolveDeaths(ctx);
-    expect(ctx.pFlyCount).toBe(2);
+    const flies = ctx.pBoard.filter((u) => u.name === "腐肉の蠅");
+    expect(flies.length).toBe(3);
   });
 
   it("token (zombie fly) death does not trigger beelzebub spawns (SAP準拠)", () => {
@@ -244,7 +243,6 @@ describe("resolveDeaths – beelzebub", () => {
     const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
     const ctx = makeContext([token, beelzebub], []);
     resolveDeaths(ctx);
-    expect(ctx.pFlyCount).toBe(0);
     expect(ctx.pBoard.filter((u) => u.name === "腐肉の蠅")).toHaveLength(0);
   });
 
@@ -255,8 +253,8 @@ describe("resolveDeaths – beelzebub", () => {
     const eBeelzebub = makeBattleUnit({ id: "beelzebub", name: "敵ベルゼブブ", atk: 4, hp: 4 });
     const ctx = makeContext([pDead, pBeelzebub], [eDead, eBeelzebub]);
     resolveDeaths(ctx);
-    expect(ctx.pFlyCount).toBeGreaterThanOrEqual(1);
-    expect(ctx.eFlyCount).toBeGreaterThanOrEqual(1);
+    expect(ctx.pBoard.filter((u) => u.name === "腐肉の蠅").length).toBeGreaterThanOrEqual(1);
+    expect(ctx.eBoard.filter((u) => u.name === "腐肉の蠅").length).toBeGreaterThanOrEqual(1);
   });
 
   it("beelzebub does not spawn fly when it is the one dying", () => {
@@ -264,7 +262,6 @@ describe("resolveDeaths – beelzebub", () => {
     const ctx = makeContext([beelzebub], []);
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(0);
-    expect(ctx.pFlyCount).toBe(0);
   });
 
   it("does not spawn fly when beelzebub has hp <= 0 but is not yet spliced", () => {
@@ -273,7 +270,6 @@ describe("resolveDeaths – beelzebub", () => {
     const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 2, hp: 0 });
     const ctx = makeContext([unitA, beelzebub], []);
     resolveDeaths(ctx);
-    expect(ctx.pFlyCount).toBe(0);
     expect(ctx.pBoard.filter((u) => u.name === "腐肉の蠅")).toHaveLength(0);
   });
 });

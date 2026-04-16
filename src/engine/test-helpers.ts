@@ -55,6 +55,7 @@ export function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit 
     skillUses: 0,
     equipUses: 0,
     ...overrides,
+    altarBuffed: overrides.altarBuffed ?? false,
     lastDamageSource: overrides.lastDamageSource ?? null,
   };
 }

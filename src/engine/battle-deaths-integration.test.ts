@@ -124,6 +124,25 @@ describe("puppeteer doubles unit skill only, not equip death", () => {
   });
 });
 
+describe("brains does not double equip death effect (SAP準拠)", () => {
+  it("brains + hound with maggot_nest: 2 heads (skill×2) + 1 maggot (equip×1)", () => {
+    const hound = makeBattleUnit({
+      id: "hound",
+      name: "猟犬",
+      atk: 3,
+      hp: 0,
+      equip: "maggot_nest",
+    });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
+    const ctx = makeContext([hound, brains], [makeBattleUnit({ hp: 10 })]);
+    resolveDeaths(ctx);
+    const heads = ctx.pBoard.filter((u) => u.name === "噛み付く頭部");
+    const maggots = ctx.pBoard.filter((u) => u.name === "巨大蛆虫");
+    expect(heads).toHaveLength(2);
+    expect(maggots).toHaveLength(1);
+  });
+});
+
 describe("resolveDeaths – token deaths do not increment avenge", () => {
   it("token death does not increment charnel_pit avenge counter", () => {
     const pit = makeBattleUnit({ id: "charnel_pit", atk: 0, hp: 6 });
