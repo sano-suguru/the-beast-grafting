@@ -27,13 +27,15 @@ export function handleCrawlingCordBuff(board: BattleUnit[], isPlayer: boolean, c
     if (u.id !== "crawling_cord" || u.hp <= 0) continue;
     const mult = getMult(board, i);
     const b = atLevel(CRAWLING_CORD.buff, u.level);
-    const candidates = board.filter((a) => a.hp > 0 && a.uid !== u.uid);
-    if (candidates.length === 0) continue;
+    const adjacent = [board[i - 1], board[i + 1]].filter(
+      (a): a is BattleUnit => a != null && a.hp > 0,
+    );
+    if (adjacent.length === 0) continue;
     for (let m = 0; m < mult && u.skillUses > 0; m++) {
       u.skillUses -= 1;
       const target = mustGet(
-        candidates,
-        Math.floor(ctx.rng.next() * candidates.length),
+        adjacent,
+        Math.floor(ctx.rng.next() * adjacent.length),
         "cord buff target",
       );
       buffAlly(ctx, u, target, b, () => [

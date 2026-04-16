@@ -15,7 +15,7 @@ import { SimReportCollector, perfMapToRecord, perfToRecord } from "./sim-report-
 import { writeSimReport } from "./sim-report-write";
 import { makeSimEnemy } from "./sim-utils";
 import { runGeneticAlgorithm } from "./sim-ga";
-import type { GaResult } from "./sim-ga-types";
+import type { GaRankedTeam, GaResult } from "./sim-ga-types";
 
 const collector = new SimReportCollector();
 
@@ -500,7 +500,7 @@ describe("GA composition discovery", () => {
   it("top team fitness has reasonable CI width", () => {
     for (const team of gaResult.topTeams) {
       const ciWidth = team.fitnessCI95[1] - team.fitnessCI95[0];
-      expect(ciWidth, `CI too wide for ${team.teamIds.join(",")}`).toBeLessThan(0.12);
+      expect(ciWidth, `CI too wide for ${team.teamIds.join(",")}`).toBeLessThan(0.08);
     }
   });
 
@@ -536,18 +536,35 @@ describe("cross-night GA", () => {
   it("discovers strongest compositions at each night checkpoint", () => {
     for (const night of NIGHT_CHECKPOINTS) {
       const poolSize = new Set(getShopPool(night)).size;
-      const result = runGeneticAlgorithm({
-        populationSize: 100,
-        generations: 50,
-        trialsPerEval: 30,
-        eliteCount: 10,
-        mutationRate: 0.15,
-        tournamentSize: 5,
-        refinementTrials: 200,
-        refinementTopK: 5,
-        night,
-        baseSeed: night * 1000 + 42,
-      });
+      const seeds = [night * 1000 + 42, night * 1000 + 137];
+      const allTeams: GaRankedTeam[] = [];
+
+      for (const seed of seeds) {
+        const result = runGeneticAlgorithm({
+          populationSize: 100,
+          generations: 50,
+          trialsPerEval: 50,
+          eliteCount: 10,
+          mutationRate: 0.15,
+          tournamentSize: 5,
+          refinementTrials: 500,
+          refinementTopK: 5,
+          night,
+          baseSeed: seed,
+        });
+        allTeams.push(...result.topTeams);
+      }
+
+      // 重複除去: teamIds (sorted) が同じものを統合（最高fitnessを採用）
+      const seen = new Map<string, GaRankedTeam>();
+      for (const t of allTeams) {
+        const key = [...t.teamIds].sort().join(",");
+        const existing = seen.get(key);
+        if (!existing || t.fitness > existing.fitness) seen.set(key, t);
+      }
+      const uniqueTeams = [...seen.values()].sort((a, b) => b.fitness - a.fitness).slice(0, 5);
+
+      const result = { topTeams: uniqueTeams };
 
       const breakageAlerts: string[] = [];
       for (const team of result.topTeams) {

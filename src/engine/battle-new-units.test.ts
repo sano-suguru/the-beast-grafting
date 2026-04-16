@@ -59,6 +59,7 @@ import {
   STELLAR_COCOON,
   FLESH_GRANULATION,
   CHOLERA,
+  FAMINE_CORPSE,
 } from "../shared/skill-params";
 
 describe("processAvenge – charnel_pit (independent counters)", () => {
@@ -808,14 +809,15 @@ describe("runStartSkills – holy_fire", () => {
 // ── famine_corpse (before-attack: debuff enemy front atk) ──
 
 describe("applyBeforeAttackSkills – famine_corpse", () => {
-  it("debuffs enemy front unit atk by own atk", () => {
+  it("debuffs enemy front unit atk by fixed skill parameter", () => {
     const front = makeBattleUnit({ atk: 5, hp: 10 });
     const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 3, hp: 3 });
     const ctx = makeContext([front, famine], [makeBattleUnit({ hp: 10, atk: 4 })]);
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const debuff = atLevel(FAMINE_CORPSE.debuff, 1);
     expect(front.atk).toBe(5);
     expect(famine.atk).toBe(3);
-    expect(ctx.eBoard[0]!.atk).toBe(Math.max(1, 4 - 3)); // debuff = famine.atk
+    expect(ctx.eBoard[0]!.atk).toBe(Math.max(1, 4 - debuff));
   });
 
   it("floors atk at 1", () => {
@@ -825,6 +827,17 @@ describe("applyBeforeAttackSkills – famine_corpse", () => {
     const ctx = makeContext([front, famine], [weakEnemy]);
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(weakEnemy.atk).toBe(1);
+  });
+
+  it("debuff does not scale with ATK buffs", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 20, hp: 3 });
+    const enemy = makeBattleUnit({ hp: 10, atk: 10 });
+    const ctx = makeContext([front, famine], [enemy]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const debuff = atLevel(FAMINE_CORPSE.debuff, 1);
+    // ATK 20 でも debuff は固定パラメータ (level 1 = 2)
+    expect(enemy.atk).toBe(10 - debuff);
   });
 });
 
@@ -1369,7 +1382,7 @@ describe("processAvenge – wailing_cursechild", () => {
 // ── 味方死亡リアクション: crawling_cord, insatiable_maw ──
 
 describe("handleCrawlingCordBuff", () => {
-  it("buffs a random living ally on ally death", () => {
+  it("buffs adjacent ally on ally death", () => {
     const cord = makeBattleUnit({
       id: "crawling_cord",
       name: "這い回る臍帯",
@@ -1399,6 +1412,28 @@ describe("handleCrawlingCordBuff", () => {
     const ctx = makeContext(board, []);
     handleCrawlingCordBuff(board, true, ctx);
     expect(ctx.frames).toHaveLength(0);
+  });
+
+  it("only buffs adjacent units, not distant ones", () => {
+    const far = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 4 });
+    const mid = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 4 });
+    const cord = makeBattleUnit({
+      id: "crawling_cord",
+      name: "這い回る臍帯",
+      atk: 2,
+      hp: 3,
+      skillUses: 3,
+    });
+    // board: [far, mid, cord] → cord at index 2, adjacent is mid (index 1)
+    const board = [far, mid, cord];
+    const ctx = makeContext(board, []);
+    handleCrawlingCordBuff(board, true, ctx);
+    const b = atLevel(CRAWLING_CORD.buff, 1);
+    expect(mid.atk).toBe(3 + b.atk);
+    expect(mid.hp).toBe(4 + b.hp);
+    // far (index 0) is NOT adjacent to cord (index 2)
+    expect(far.atk).toBe(3);
+    expect(far.hp).toBe(4);
   });
 });
 

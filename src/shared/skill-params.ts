@@ -70,6 +70,10 @@ export const EYE = {
   uses: [4, 6, 8] as SN,
 };
 
+export const FAMINE_CORPSE = {
+  debuff: [2, 3, 4] as SN,
+};
+
 export const RELIC_SWORD = {
   atkBuff: [2, 4, 6] as SN,
 };

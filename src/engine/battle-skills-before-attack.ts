@@ -11,7 +11,15 @@ import {
 } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
-import { atLevel, PARASITE, EYE, RELIC_SWORD, PLAGUE_BELL, MACHINE } from "../shared/skill-params";
+import {
+  atLevel,
+  PARASITE,
+  EYE,
+  FAMINE_CORPSE,
+  RELIC_SWORD,
+  PLAGUE_BELL,
+  MACHINE,
+} from "../shared/skill-params";
 
 export function applyParasiteBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {
   const b = atLevel(PARASITE.buff, u.level);
@@ -63,7 +71,7 @@ export function applyFamineDebuff(
 ) {
   if (enemyBoard.length === 0) return;
   const front = mustGet(enemyBoard, 0, "famine front");
-  const debuff = u.atk;
+  const debuff = atLevel(FAMINE_CORPSE.debuff, u.level);
   front.atk = Math.max(1, front.atk - debuff);
   pushFrame(
     ctx,
