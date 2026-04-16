@@ -1,4 +1,4 @@
-import type { RegularUnitId, BattleResult } from "../../shared/types";
+import type { RegularUnitId, BattleResult, EnemyTeam } from "../../shared/types";
 import type { Rng } from "../rng";
 import type {
   GaConfig,
@@ -25,33 +25,54 @@ function randomLastBattleResult(seed: number): BattleResult {
   return createSeededRng(seed).next() < 0.5 ? "LOSE" : null;
 }
 
+// ── Pre-built enemy scenarios ──
+
+interface PreparedTrial {
+  enemy: EnemyTeam;
+  playerBuildSeed: number;
+  playerShopSeed: number;
+  battleSeed: number;
+  lastResult: BattleResult;
+}
+
+function prepareTrials(night: number, trials: number, baseSeed: number): PreparedTrial[] {
+  const prepared: PreparedTrial[] = [];
+  for (let i = 0; i < trials; i++) {
+    const enemyRng = createSeededRng(deriveSeed(baseSeed, i));
+    const enemyIds = generateSimTeam(night, enemyRng);
+
+    const eRng = createSeededRng(deriveSeed(baseSeed, trials * 2 + i));
+    const eTeam = enemyIds.map((id) => buildProgressedUnit(id, night, eRng));
+    applySimShopEffects(eTeam, night, createSeededRng(deriveSeed(baseSeed, trials * 4 + i)));
+
+    prepared.push({
+      enemy: makeSimEnemy(eTeam),
+      playerBuildSeed: deriveSeed(baseSeed, trials + i),
+      playerShopSeed: deriveSeed(baseSeed, trials * 3 + i),
+      battleSeed: deriveSeed(baseSeed, trials * 5 + i),
+      lastResult: randomLastBattleResult(deriveSeed(baseSeed, trials * 6 + i)),
+    });
+  }
+  return prepared;
+}
+
 // ── Fitness Evaluation ──
 
 function evaluateFitness(
   teamIds: readonly RegularUnitId[],
   night: number,
-  trials: number,
-  baseSeed: number,
+  prepared: readonly PreparedTrial[],
 ): { winRate: number; battles: number } {
   let wins = 0;
-  for (let i = 0; i < trials; i++) {
-    const enemyRng = createSeededRng(deriveSeed(baseSeed, i));
-    const enemyIds = generateSimTeam(night, enemyRng);
-
-    const pRng = createSeededRng(deriveSeed(baseSeed, trials + i));
-    const eRng = createSeededRng(deriveSeed(baseSeed, trials * 2 + i));
+  for (const t of prepared) {
+    const pRng = createSeededRng(t.playerBuildSeed);
     const pTeam = teamIds.map((id) => buildProgressedUnit(id, night, pRng));
-    const eTeam = enemyIds.map((id) => buildProgressedUnit(id, night, eRng));
+    applySimShopEffects(pTeam, night, createSeededRng(t.playerShopSeed));
 
-    applySimShopEffects(pTeam, night, createSeededRng(deriveSeed(baseSeed, trials * 3 + i)));
-    applySimShopEffects(eTeam, night, createSeededRng(deriveSeed(baseSeed, trials * 4 + i)));
-
-    const battleSeed = deriveSeed(baseSeed, trials * 5 + i);
-    const lastResult = randomLastBattleResult(deriveSeed(baseSeed, trials * 6 + i));
-    const result = simulateBattleResult(pTeam, makeSimEnemy(eTeam), night, battleSeed, lastResult);
+    const result = simulateBattleResult(pTeam, t.enemy, night, t.battleSeed, t.lastResult);
     if (result === "WIN") wins++;
   }
-  return { winRate: wins / trials, battles: trials };
+  return { winRate: wins / prepared.length, battles: prepared.length };
 }
 
 // ── Population Initialization ──
@@ -133,11 +154,19 @@ function mutate(
   rng: Rng,
 ): RegularUnitId[] {
   const result = [...team];
+  const used = new Set(result);
   for (let i = 0; i < result.length; i++) {
     if (rng.next() < rate) {
-      const available = pool.filter((id) => !result.includes(id));
+      const available: RegularUnitId[] = [];
+      for (const id of pool) {
+        if (!used.has(id)) available.push(id);
+      }
       if (available.length > 0) {
-        result[i] = available[Math.floor(rng.next() * available.length)]!;
+        const old = result[i]!;
+        const picked = available[Math.floor(rng.next() * available.length)]!;
+        result[i] = picked;
+        used.delete(old);
+        used.add(picked);
       }
     }
   }
@@ -169,19 +198,19 @@ function evolveGeneration(
   const rng = createSeededRng(genSeed);
   let battles = 0;
 
+  const prepared = prepareTrials(
+    config.night,
+    config.trialsPerEval,
+    deriveSeed(genSeed, 7_000_000),
+  );
+
   while (offspring.length < config.populationSize - config.eliteCount) {
     const parentA = tournamentSelect(pop, config.tournamentSize, rng);
     const parentB = tournamentSelect(pop, config.tournamentSize, rng);
     let childIds = crossover(parentA.teamIds, parentB.teamIds, pool, rng);
     childIds = mutate(childIds, pool, config.mutationRate, rng);
 
-    const evalSeed = deriveSeed(genSeed, offspring.length * 1000);
-    const { winRate, battles: b } = evaluateFitness(
-      childIds,
-      config.night,
-      config.trialsPerEval,
-      evalSeed,
-    );
+    const { winRate, battles: b } = evaluateFitness(childIds, config.night, prepared);
     offspring.push({ teamIds: childIds, fitness: winRate });
     battles += b;
   }
@@ -207,17 +236,16 @@ function refineTopTeams(
     }
   }
 
+  const prepared = prepareTrials(
+    config.night,
+    config.refinementTrials,
+    deriveSeed(config.baseSeed, 9_000_000),
+  );
+
   const teams: GaRankedTeam[] = [];
   let battles = 0;
-  for (let i = 0; i < unique.length; i++) {
-    const ind = unique[i]!;
-    const refineSeed = deriveSeed(config.baseSeed, 9_000_000 + i * 10_000);
-    const { winRate, battles: b } = evaluateFitness(
-      ind.teamIds,
-      config.night,
-      config.refinementTrials,
-      refineSeed,
-    );
+  for (const ind of unique) {
+    const { winRate, battles: b } = evaluateFitness(ind.teamIds, config.night, prepared);
     const wins = Math.round(winRate * config.refinementTrials);
     const ci = wilsonCI(wins, config.refinementTrials);
     teams.push({ teamIds: [...ind.teamIds], fitness: winRate, fitnessCI95: ci, novelty: false });
@@ -236,15 +264,14 @@ export function runGeneticAlgorithm(config: GaConfig): GaResult {
   let pop = initPopulation(config.populationSize, config.night, config.baseSeed);
   let totalBattles = 0;
 
-  // Evaluate initial population
+  // Evaluate initial population with shared enemy set
+  const initPrepared = prepareTrials(
+    config.night,
+    config.trialsPerEval,
+    deriveSeed(config.baseSeed, 8_000_000),
+  );
   for (let i = 0; i < pop.length; i++) {
-    const evalSeed = deriveSeed(config.baseSeed, 8_000_000 + i);
-    const { winRate, battles } = evaluateFitness(
-      pop[i]!.teamIds,
-      config.night,
-      config.trialsPerEval,
-      evalSeed,
-    );
+    const { winRate, battles } = evaluateFitness(pop[i]!.teamIds, config.night, initPrepared);
     pop[i]!.fitness = winRate;
     totalBattles += battles;
   }
