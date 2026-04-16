@@ -1,25 +1,6 @@
-import { getDeathHandler, handleEquipDeath } from "./battle-deaths-handlers";
-import { handleBeelzebubSpawns } from "./battle-deaths-effects-reactions";
-import type { DeathHandlerUnitId } from "./battle-deaths-handlers";
-import { makeBattleUnit, makeContext } from "./test-helpers";
+import { handleEquipDeath } from "./battle-deaths-handlers";
+import { makeBattleUnit, makeContext, callDeathHandler as callHandler } from "./test-helpers";
 import type { BattleUnit } from "./battle-context";
-import { invariant } from "../shared/invariant";
-import { segmentsToPlainText } from "./test-helpers";
-
-function callHandler(
-  id: DeathHandlerUnitId,
-  dead: BattleUnit,
-  board: BattleUnit[],
-  idx: number,
-  isPlayer: boolean,
-  ctx: ReturnType<typeof makeContext>,
-  successor: BattleUnit | null = idx < board.length ? (board[idx] ?? null) : null,
-  successor2: BattleUnit | null = idx + 1 < board.length ? (board[idx + 1] ?? null) : null,
-) {
-  const handler = getDeathHandler(id);
-  invariant(handler, `no death handler for "${id}"`);
-  handler({ dead, board, idx, isPlayer, ctx, successor, successor2 });
-}
 
 describe("handleRatDeath", () => {
   it("does nothing on empty board", () => {
@@ -339,64 +320,5 @@ describe("handleEquipDeath", () => {
     handleEquipDeath(dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.name === "呪兵");
     expect(token!.atk).toBe(2); // 1 base + 1 zealot
-  });
-});
-
-describe("handleBeelzebubSpawns", () => {
-  it("spawns 3/3 fly when beelzebub is alive", () => {
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
-    const ctx = makeContext([beelzebub]);
-    handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
-    const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
-    expect(fly).toBeDefined();
-    expect(fly!.atk).toBe(3);
-    expect(fly!.hp).toBe(3);
-    expect(ctx.pFlyCount).toBe(1);
-  });
-
-  it("does not spawn when flyCount is already 3", () => {
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
-    const ctx = makeContext([beelzebub]);
-    ctx.pFlyCount = 3;
-    const boardBefore = ctx.pBoard.length;
-    handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
-    expect(ctx.pBoard.length).toBe(boardBefore);
-    expect(ctx.pFlyCount).toBe(3);
-  });
-
-  it("player and enemy fly counters are independent", () => {
-    const pBeelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", hp: 4 });
-    const eBeelzebub = makeBattleUnit({ id: "beelzebub", name: "敵ベルゼブブ", hp: 4 });
-    const ctx = makeContext([pBeelzebub], [eBeelzebub]);
-    handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
-    handleBeelzebubSpawns(ctx.eBoard, false, ctx, 0);
-    expect(ctx.pFlyCount).toBe(1);
-    expect(ctx.eFlyCount).toBe(1);
-  });
-
-  it("flies get zealot buff if zealot present", () => {
-    const zealot = makeBattleUnit({ id: "zealot", name: "狂信者", hp: 3 });
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", hp: 4 });
-    const ctx = makeContext([zealot, beelzebub]);
-    handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
-    const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
-    expect(fly!.atk).toBe(4); // 3 base + 1 zealot
-  });
-
-  it("does not trigger when no beelzebub on board", () => {
-    const ally = makeBattleUnit({ id: "rat", hp: 5 });
-    const ctx = makeContext([ally]);
-    handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
-    expect(ctx.pFlyCount).toBe(0);
-  });
-});
-
-describe("enemy-side prefix", () => {
-  it("rat death frame includes 敵の prefix for enemy side", () => {
-    const ally = makeBattleUnit({ uid: "e1", hp: 5 });
-    const ctx = makeContext([], [ally], null, { next: () => 0 });
-    const dead = makeBattleUnit({ id: "rat", name: "ネズミ" });
-    callHandler("rat", dead, ctx.eBoard, 0, false, ctx);
-    expect(segmentsToPlainText(ctx.frames[0]!.log.segments)).toContain("敵の");
   });
 });

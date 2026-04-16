@@ -1,5 +1,17 @@
-import { applyAcidSplash, processHundredArmsKnockout } from "./battle-skills-combat";
+import {
+  applyAcidSplash,
+  processHundredArmsKnockout,
+  processKnockoutEffects,
+} from "./battle-skills-combat";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
+import {
+  atLevel,
+  ORGAN_GRINDER,
+  RISEN_POPE,
+  DEAD_HAND,
+  DEVOURING_WOUND,
+} from "../shared/skill-params";
+import { RAT } from "../shared/skill-params-death";
 
 describe("applyAcidSplash", () => {
   it("deals 5 damage to second enemy unit", () => {
@@ -99,5 +111,83 @@ describe("processHundredArmsKnockout", () => {
     expect(defenderBoard.some((u) => u.uid === "e2")).toBe(false);
     const e3Remaining = defenderBoard.find((u) => u.uid === "e3");
     expect(e3Remaining!.hp).toBe(17);
+  });
+});
+
+describe("processKnockoutEffects – organ_grinder", () => {
+  it("deals AoE damage to all enemies on knockout", () => {
+    const grinder = makeBattleUnit({ id: "organ_grinder", name: "臓腑挽き", atk: 5, hp: 5 });
+    const enemy1 = makeBattleUnit({ hp: 10 });
+    const enemy2 = makeBattleUnit({ hp: 10 });
+    const attackerBoard = [grinder];
+    const defenderBoard = [enemy1, enemy2];
+    const ctx = makeContext(attackerBoard, defenderBoard);
+    processKnockoutEffects(grinder, defenderBoard, attackerBoard, true, ctx);
+    const dmg = atLevel(ORGAN_GRINDER.damage, 1);
+    expect(enemy1.hp).toBe(10 - dmg);
+    expect(enemy2.hp).toBe(10 - dmg);
+  });
+
+  it("AoE kill triggers enemy death handler via resolveDeaths", () => {
+    const grinder = makeBattleUnit({ id: "organ_grinder", name: "臓腑挽き", atk: 5, hp: 5 });
+    const dmg = atLevel(ORGAN_GRINDER.damage, 1);
+    const rat = makeBattleUnit({ id: "rat", name: "鼠", atk: 1, hp: dmg });
+    const survivor = makeBattleUnit({ atk: 3, hp: 10 });
+    const attackerBoard = [grinder];
+    const defenderBoard = [rat, survivor];
+    const ctx = makeContext(attackerBoard, defenderBoard, null, { next: () => 0 });
+    processKnockoutEffects(grinder, defenderBoard, attackerBoard, true, ctx);
+    const b = atLevel(RAT.deathBuff, 1);
+    expect(survivor.atk).toBe(3 + b.atk);
+    expect(survivor.hp).toBe(10 - dmg + b.hp);
+  });
+});
+
+describe("processKnockoutEffects – risen_pope", () => {
+  it("buffs all allies on knockout", () => {
+    const inq = makeBattleUnit({ id: "risen_pope", name: "教皇", atk: 4, hp: 6 });
+    const ally = makeBattleUnit({ atk: 3, hp: 4 });
+    const attackerBoard = [inq, ally];
+    const defender = makeBattleUnit({ hp: 5 });
+    const ctx = makeContext(attackerBoard, [defender]);
+    processKnockoutEffects(inq, [defender], attackerBoard, true, ctx);
+    const b = atLevel(RISEN_POPE.buff, 1);
+    expect(ally.atk).toBe(3 + b.atk);
+    expect(ally.hp).toBe(4 + b.hp);
+  });
+});
+
+describe("processKnockoutEffects – dead_hand", () => {
+  it("heals self on knockout", () => {
+    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 3 });
+    const board = [unit];
+    const enemy = makeBattleUnit({ hp: 0 });
+    const ctx = makeContext(board, [enemy]);
+    processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
+    const heal = atLevel(DEAD_HAND.hpHeal, 1);
+    expect(unit.hp).toBe(3 + heal);
+    expect(ctx.frames).toHaveLength(1);
+  });
+
+  it("does nothing when dead", () => {
+    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 0 });
+    const board = [unit];
+    const ctx = makeContext(board, []);
+    processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
+    expect(unit.hp).toBe(0);
+    expect(ctx.frames).toHaveLength(0);
+  });
+});
+
+describe("processKnockoutEffects – devouring_wound", () => {
+  it("heals self on knockout", () => {
+    const unit = makeBattleUnit({ id: "devouring_wound", name: "喰らう傷口", atk: 3, hp: 4 });
+    const board = [unit];
+    const enemy = makeBattleUnit({ hp: 0 });
+    const ctx = makeContext(board, [enemy]);
+    processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
+    const heal = atLevel(DEVOURING_WOUND.hpHeal, 1);
+    expect(unit.hp).toBe(4 + heal);
+    expect(ctx.frames).toHaveLength(1);
   });
 });

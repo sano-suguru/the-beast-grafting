@@ -1,5 +1,8 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { createBattleContext } from "./battle-context";
+import { getDeathHandler } from "./battle-deaths-handlers";
+import type { DeathHandlerUnitId } from "./battle-deaths-handlers";
+import { invariant } from "../shared/invariant";
 import type {
   UnitInstance,
   BattleUnitSnapshot,
@@ -77,6 +80,21 @@ export function makeSnapshot(overrides: Partial<BattleUnitSnapshot> = {}): Battl
     battleBaseHp: hp,
     ...overrides,
   };
+}
+
+export function callDeathHandler(
+  id: DeathHandlerUnitId,
+  dead: BattleUnit,
+  board: BattleUnit[],
+  idx: number,
+  isPlayer: boolean,
+  ctx: BattleContext,
+  successor: BattleUnit | null = idx < board.length ? (board[idx] ?? null) : null,
+  successor2: BattleUnit | null = idx + 1 < board.length ? (board[idx + 1] ?? null) : null,
+) {
+  const handler = getDeathHandler(id);
+  invariant(handler, `no death handler for "${id}"`);
+  handler({ dead, board, idx, isPlayer, ctx, successor, successor2 });
 }
 
 export function makeEnemyTeam(units: UnitInstance[]): EnemyTeam {

@@ -1,7 +1,7 @@
 import type { RegularUnitId, RawUnitData } from "../types";
 
 /** Tier 5-6 ユニット定義 */
-export const UNITS_HIGH_TIER = {
+export const UNITS_TIER56 = {
   // Tier 5
   shrieking_throat: {
     id: "shrieking_throat",

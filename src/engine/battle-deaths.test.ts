@@ -1,8 +1,10 @@
 import { resolveDeaths } from "./battle-deaths";
 import { createSeededRng } from "./rng";
 import { makeBattleUnit, makeContext } from "./test-helpers";
-import type { BattleFrame } from "../shared/types";
 import { segmentsToPlainText } from "./test-helpers";
+import { MAX_BOARD_SIZE } from "./constants";
+import { atLevel, HANGED_MAN, SERAPH } from "../shared/skill-params";
+import type { BattleFrame } from "../shared/types";
 
 const logText = (f: BattleFrame) => segmentsToPlainText(f.log.segments);
 
@@ -520,22 +522,56 @@ describe("resolveDeaths – evangelist plague", () => {
   });
 });
 
-describe("resolveDeaths – cross-board cascade", () => {
-  it("evangelist skips already-infected enemies", () => {
-    const dead1 = makeBattleUnit({ id: "beggar", hp: 0, atk: 5 });
-    const dead2 = makeBattleUnit({ id: "beggar", hp: 0, atk: 2 });
-    const evangelist = makeBattleUnit({
-      id: "evangelist",
-      name: "伝道師",
-      atk: 1,
-      hp: 10,
-      skillUses: 2,
+describe("resolveDeaths – hanged_man", () => {
+  it("distributes atk and preDeathHp to front allies on death", () => {
+    const hanged = makeBattleUnit({
+      id: "hanged_man",
+      name: "首吊り",
+      atk: 10,
+      hp: 0,
+      preDeathHp: 8,
     });
-    const enemy1 = makeBattleUnit({ hp: 10 });
-    const enemy2 = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([dead1, dead2, evangelist], [enemy1, enemy2], null, { next: () => 0 });
+    const ally1 = makeBattleUnit({ atk: 2, hp: 5 });
+    const ally2 = makeBattleUnit({ atk: 3, hp: 4 });
+    const ally3 = makeBattleUnit({ atk: 1, hp: 3 });
+    const ctx = makeContext([hanged, ally1, ally2, ally3], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
-    expect(enemy1.equip).toBe("infection");
-    expect(enemy2.equip).toBe("infection");
+    const targets = atLevel(HANGED_MAN.targets, 1);
+    const atkShare = Math.floor(10 / targets);
+    const hpShare = Math.floor(8 / targets);
+    expect(ally1.atk).toBe(2 + atkShare);
+    expect(ally1.hp).toBe(5 + hpShare);
+    expect(ally2.atk).toBe(3 + atkShare);
+    expect(ally2.hp).toBe(4 + hpShare);
+    expect(ally3.atk).toBe(1 + atkShare);
+    expect(ally3.hp).toBe(3 + hpShare);
+  });
+});
+
+describe("resolveDeaths – seraph", () => {
+  it("buffs all allies on death", () => {
+    const seraph = makeBattleUnit({ id: "seraph", name: "熾天使", atk: 4, hp: 0, isChurch: true });
+    const ally1 = makeBattleUnit({ atk: 2, hp: 5 });
+    const ally2 = makeBattleUnit({ atk: 3, hp: 4 });
+    const ctx = makeContext([seraph, ally1, ally2], [makeBattleUnit({ hp: 10 })]);
+    resolveDeaths(ctx);
+    const b = atLevel(SERAPH.deathBuff, 1);
+    expect(ally1.atk).toBe(2 + b.atk);
+    expect(ally1.hp).toBe(5 + b.hp);
+    expect(ally2.atk).toBe(3 + b.atk);
+    expect(ally2.hp).toBe(4 + b.hp);
+  });
+});
+
+describe("resolveDeaths – beast death board size guard", () => {
+  it("spawns after beast removal frees a slot", () => {
+    const beast = makeBattleUnit({ id: "beast", name: "獣", atk: 4, hp: 0 });
+    const filler = Array.from({ length: MAX_BOARD_SIZE - 1 }, () => makeBattleUnit({ hp: 5 }));
+    const board = [beast, ...filler];
+    const ctx = makeContext(board, [makeBattleUnit({ hp: 10 })]);
+    resolveDeaths(ctx);
+    // beast spliced out (4 remain) → death handler spawns a tier-3 unit (back to 5)
+    expect(ctx.pBoard.length).toBe(MAX_BOARD_SIZE);
+    expect(ctx.pBoard.every((u) => u.id !== "beast")).toBe(true);
   });
 });

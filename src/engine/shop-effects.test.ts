@@ -18,26 +18,7 @@ import {
   TAINTED_PLACENTA,
   CORPSE_BROKER,
 } from "../shared/skill-params";
-
-function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
-  return {
-    id: "rat",
-    name: "疫病ネズミ",
-    baseAtk: 2,
-    baseHp: 1,
-    buffAtk: 0,
-    buffHp: 0,
-    tier: 1,
-    skillText: "",
-    lore: "",
-    level: 1,
-    exp: 0,
-    equip: null,
-    uid: "test-uid-1",
-    isChurch: false,
-    ...overrides,
-  };
-}
+import { makeUnit } from "./test-helpers";
 
 describe("graftUnits", () => {
   it("takes higher stats and adds +1/+1", () => {

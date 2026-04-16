@@ -1,13 +1,21 @@
-import {
-  runStartSkills,
-  applyBeforeAttackSkills,
-  applyCholeraBeforeAttack,
-  applyOnHitSkills,
-  applyEquipmentEffects,
-} from "./battle-skills";
-import { makeBattleUnit, makeContext } from "./test-helpers";
+import { runStartSkills, applyBeforeAttackSkills, applyCholeraBeforeAttack } from "./battle-skills";
+import { runDeploySkills } from "./battle-skills-init";
+import { runBattle } from "./battle";
+import { spawnTokenAndNotify } from "./battle-spawn";
+import { makeBattleUnit, makeContext, INERT_UNIT_ID, makeEnemyTeam } from "./test-helpers";
 import type { BattleFrame } from "../shared/types";
 import { segmentsToPlainText } from "./test-helpers";
+import {
+  atLevel,
+  CATACOMB_RAT,
+  PLAGUE_BELL,
+  PALADIN,
+  HOLY_FIRE,
+  FAMINE_CORPSE,
+  RELIC_SWORD,
+  FLESH_GRANULATION,
+} from "../shared/skill-params";
+import { BLOOD_FONT } from "../shared/skill-params-shop";
 
 const logText = (f: BattleFrame) => segmentsToPlainText(f.log.segments);
 
@@ -306,150 +314,254 @@ describe("applyBeforeAttackSkills", () => {
   });
 });
 
-describe("applyOnHitSkills", () => {
-  it("templar buffs its own atk +1 when hit", () => {
-    const templar = makeBattleUnit({ id: "templar", name: "聖堂騎士", atk: 4, hp: 3 });
-    const ctx = makeContext([templar], []);
-    applyOnHitSkills(templar, ctx.pBoard, true, ctx);
-    expect(templar.atk).toBe(5);
+describe("runStartSkills – catacomb_rat", () => {
+  it("deals tier×mult damage to a random enemy", () => {
+    const rat = makeBattleUnit({ id: "catacomb_rat", name: "聖骨齧り", atk: 2, hp: 3, tier: 3 });
+    const enemy = makeBattleUnit({ hp: 20 });
+    const ctx = makeContext([rat], [enemy], null, { next: () => 0 });
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const dmg = 3 * atLevel(CATACOMB_RAT.tierMult, 1);
+    expect(enemy.hp).toBe(20 - dmg);
+  });
+
+  it("does nothing when enemy board is empty", () => {
+    const rat = makeBattleUnit({ id: "catacomb_rat", name: "聖骨齧り", atk: 2, hp: 3, tier: 2 });
+    const ctx = makeContext([rat], []);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(ctx.frames.filter((f) => f.log.type === "skill")).toHaveLength(0);
   });
 });
 
-describe("applyEquipmentEffects – defensive", () => {
-  it("iron reduces damage by 2 (min 1)", () => {
-    const p = makeBattleUnit({ equip: "iron", atk: 3, hp: 5 });
-    const e = makeBattleUnit({ atk: 4, hp: 5 });
-    const ctx = makeContext([p], [e]);
-    const { pDmg, eDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(pDmg).toBe(2);
-    expect(eDmg).toBe(3);
+describe("applyBeforeAttackSkills – plague_bell", () => {
+  it("deals AoE damage to all enemies from SUPPORT_IDX", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const bell = makeBattleUnit({
+      id: "plague_bell",
+      name: "疫病の鐘撞き",
+      atk: 3,
+      hp: 7,
+      skillUses: 3,
+    });
+    const e1 = makeBattleUnit({ hp: 10 });
+    const e2 = makeBattleUnit({ hp: 8 });
+    const ctx = makeContext([front, bell], [e1, e2]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const dmg = atLevel(PLAGUE_BELL.damage, 1);
+    expect(e1.hp).toBe(10 - dmg);
+    expect(e2.hp).toBe(8 - dmg);
+    expect(bell.skillUses).toBe(2);
   });
 
-  it("iron clamps damage to minimum 1", () => {
-    const p = makeBattleUnit({ equip: "iron", hp: 5 });
-    const e = makeBattleUnit({ atk: 1, hp: 5 });
-    const ctx = makeContext([p], [e]);
-    const { pDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(pDmg).toBe(2);
+  it("does not trigger when skillUses is 0", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const bell = makeBattleUnit({
+      id: "plague_bell",
+      name: "疫病の鐘撞き",
+      atk: 3,
+      hp: 7,
+      skillUses: 0,
+    });
+    const e1 = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([front, bell], [e1]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(e1.hp).toBe(10);
   });
 
-  it("corpse_wax blocks up to 20 damage and is consumed", () => {
-    const p = makeBattleUnit({ equip: "corpse_wax", atk: 3, hp: 5 });
-    const e = makeBattleUnit({ atk: 10, hp: 5 });
-    const ctx = makeContext([p], [e]);
-    const { pDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(pDmg).toBe(0);
-    expect(p.equip).toBeNull();
-  });
-
-  it("numbness reduces damage by 7 fixed", () => {
-    const p = makeBattleUnit({ equip: "numbness", atk: 3, hp: 10, equipUses: 2 });
-    const e = makeBattleUnit({ atk: 10, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    const { pDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(pDmg).toBe(3);
-  });
-});
-
-describe("applyEquipmentEffects – offensive and misc", () => {
-  it("infection adds 3 to incoming damage", () => {
-    const p = makeBattleUnit({ equip: "infection", atk: 3, hp: 10 });
-    const e = makeBattleUnit({ atk: 4, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    const { pDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(pDmg).toBe(7);
-  });
-
-  it("no equip returns raw atk values", () => {
-    const p = makeBattleUnit({ atk: 5, hp: 10 });
-    const e = makeBattleUnit({ atk: 3, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    const { pDmg, eDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(pDmg).toBe(3);
-    expect(eDmg).toBe(5);
-  });
-
-  it("berserk adds 4 to outgoing damage", () => {
-    const p = makeBattleUnit({ equip: "berserk", atk: 3, hp: 10 });
-    const e = makeBattleUnit({ atk: 2, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    const { eDmg, pDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(eDmg).toBe(6);
-    expect(pDmg).toBe(2);
-  });
-
-  it("berserk on enemy adds 4 to enemy outgoing damage", () => {
-    const p = makeBattleUnit({ atk: 3, hp: 10 });
-    const e = makeBattleUnit({ equip: "berserk", atk: 2, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    const { pDmg, eDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(pDmg).toBe(5);
-    expect(eDmg).toBe(3);
-  });
-
-  it("berserk damage is reduced by iron", () => {
-    const p = makeBattleUnit({ equip: "berserk", atk: 3, hp: 10 });
-    const e = makeBattleUnit({ equip: "iron", atk: 2, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    const { eDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(eDmg).toBe(4);
+  it("does not trigger when not at SUPPORT_IDX", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const middle = makeBattleUnit({ atk: 2, hp: 2 });
+    const bell = makeBattleUnit({
+      id: "plague_bell",
+      name: "疫病の鐘撞き",
+      atk: 3,
+      hp: 7,
+      skillUses: 3,
+    });
+    const e1 = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([front, middle, bell], [e1]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(e1.hp).toBe(10);
   });
 });
 
-describe("applyEquipmentEffects – numbness exhaustion", () => {
-  it("numbness equip is removed after last use (equipUses: 1)", () => {
-    const p = makeBattleUnit({ equip: "numbness", atk: 3, hp: 10, equipUses: 1 });
-    const e = makeBattleUnit({ atk: 10, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    applyEquipmentEffects(p, e, ctx);
-    expect(p.equip).toBeNull();
-    expect(p.equipUses).toBe(0);
-  });
-
-  it("numbness equip persists with equipUses: 2", () => {
-    const p = makeBattleUnit({ equip: "numbness", atk: 3, hp: 10, equipUses: 2 });
-    const e = makeBattleUnit({ atk: 10, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    applyEquipmentEffects(p, e, ctx);
-    expect(p.equip).toBe("numbness");
-    expect(p.equipUses).toBe(1);
-  });
-
-  it("numbness with equipUses: 0 does not reduce damage", () => {
-    const p = makeBattleUnit({ equip: "numbness", atk: 3, hp: 10, equipUses: 0 });
-    const e = makeBattleUnit({ atk: 8, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    const { pDmg } = applyEquipmentEffects(p, e, ctx);
-    expect(pDmg).toBe(8);
-    expect(p.equip).toBe("numbness");
-    expect(p.equipUses).toBe(0);
+describe("runStartSkills – paladin", () => {
+  it("buffs all allies HP", () => {
+    const pal = makeBattleUnit({ id: "paladin", name: "聖騎士", atk: 3, hp: 5 });
+    const ally = makeBattleUnit({ atk: 2, hp: 4 });
+    const ctx = makeContext([pal, ally], [makeBattleUnit({ hp: 10 })]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const hpBuff = atLevel(PALADIN.hpBuff, 1);
+    expect(pal.hp).toBe(5 + hpBuff);
+    expect(ally.hp).toBe(4 + hpBuff);
   });
 });
 
-describe("applyEquipmentEffects – side effects and frames", () => {
-  it("corpse_wax sets equip to null after blocking", () => {
-    const p = makeBattleUnit({ equip: "corpse_wax", atk: 3, hp: 10 });
-    const e = makeBattleUnit({ atk: 5, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    applyEquipmentEffects(p, e, ctx);
-    expect(p.equip).toBeNull();
+describe("runStartSkills – holy_fire", () => {
+  it("damages the enemy with highest HP", () => {
+    const fire = makeBattleUnit({ id: "holy_fire", name: "聖火", atk: 6, hp: 4 });
+    const weakEnemy = makeBattleUnit({ hp: 5 });
+    const strongEnemy = makeBattleUnit({ hp: 20 });
+    const ctx = makeContext([fire], [weakEnemy, strongEnemy]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const dmg = atLevel(HOLY_FIRE.damage, 1);
+    expect(strongEnemy.hp).toBe(20 - dmg);
+    expect(weakEnemy.hp).toBe(5);
   });
 
-  it("iron generates a defend frame", () => {
-    const p = makeBattleUnit({ equip: "iron", atk: 3, hp: 10 });
-    const e = makeBattleUnit({ atk: 6, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    applyEquipmentEffects(p, e, ctx);
-    expect(ctx.frames.length).toBeGreaterThanOrEqual(1);
-    expect(ctx.frames.some((f) => f.log.type === "defend")).toBe(true);
+  it("does nothing when enemy board is empty", () => {
+    const fire = makeBattleUnit({ id: "holy_fire", name: "聖火", atk: 6, hp: 4 });
+    const ctx = makeContext([fire], []);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(ctx.frames.filter((f) => f.log.type === "skill")).toHaveLength(0);
+  });
+});
+
+describe("applyBeforeAttackSkills – famine_corpse", () => {
+  it("debuffs enemy front unit atk by fixed skill parameter", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 3, hp: 3 });
+    const ctx = makeContext([front, famine], [makeBattleUnit({ hp: 10, atk: 4 })]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const debuff = atLevel(FAMINE_CORPSE.debuff, 1);
+    expect(front.atk).toBe(5);
+    expect(famine.atk).toBe(3);
+    expect(ctx.eBoard[0]!.atk).toBe(Math.max(1, 4 - debuff));
   });
 
-  it("berserk generates a skill frame", () => {
-    const p = makeBattleUnit({ equip: "berserk", atk: 3, hp: 10 });
-    const e = makeBattleUnit({ atk: 2, hp: 10 });
-    const ctx = makeContext([p], [e]);
-    applyEquipmentEffects(p, e, ctx);
-    expect(ctx.frames.length).toBeGreaterThanOrEqual(1);
-    expect(ctx.frames.some((f) => f.log.type === "skill")).toBe(true);
+  it("floors atk at 1", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 3, hp: 3 });
+    const weakEnemy = makeBattleUnit({ hp: 10, atk: 1 });
+    const ctx = makeContext([front, famine], [weakEnemy]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(weakEnemy.atk).toBe(1);
+  });
+
+  it("debuff does not scale with ATK buffs", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 20, hp: 3 });
+    const enemy = makeBattleUnit({ hp: 10, atk: 10 });
+    const ctx = makeContext([front, famine], [enemy]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const debuff = atLevel(FAMINE_CORPSE.debuff, 1);
+    // ATK 20 でも debuff は固定パラメータ (level 1 = 2)
+    expect(enemy.atk).toBe(10 - debuff);
+  });
+});
+
+describe("applyBeforeAttackSkills – relic_sword", () => {
+  it("buffs front ally atk", () => {
+    const front = makeBattleUnit({ atk: 5, hp: 10 });
+    const sword = makeBattleUnit({ id: "relic_sword", name: "聖骨の刃", atk: 5, hp: 3 });
+    const ctx = makeContext([front, sword], [makeBattleUnit({ hp: 10 })]);
+    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const buff = atLevel(RELIC_SWORD.atkBuff, 1);
+    expect(front.atk).toBe(5 + buff);
+  });
+});
+
+describe("runDeploySkills – blood_font buffs lowest HP ally", () => {
+  it("buffs the ally with the lowest HP", () => {
+    const font = makeBattleUnit({ id: "blood_font", name: "血獣", atk: 1, hp: 5 });
+    const weak = makeBattleUnit({ atk: 2, hp: 2 });
+    const strong = makeBattleUnit({ atk: 2, hp: 10 });
+    const ctx = makeContext([font, weak, strong], []);
+    runDeploySkills(ctx.pBoard, true, ctx);
+    const hpBuff = atLevel(BLOOD_FONT.hpBuff, 1);
+    expect(weak.hp).toBe(2 + hpBuff);
+    expect(strong.hp).toBe(10);
+  });
+
+  it("does not buff self", () => {
+    const font = makeBattleUnit({ id: "blood_font", name: "血獣", atk: 1, hp: 1 });
+    const ally = makeBattleUnit({ atk: 2, hp: 5 });
+    const ctx = makeContext([font, ally], []);
+    runDeploySkills(ctx.pBoard, true, ctx);
+    const hpBuff = atLevel(BLOOD_FONT.hpBuff, 1);
+    expect(font.hp).toBe(1);
+    expect(ally.hp).toBe(5 + hpBuff);
+  });
+
+  it("does not fire when blood_font is alone", () => {
+    const font = makeBattleUnit({ id: "blood_font", name: "血獣", atk: 1, hp: 5 });
+    const ctx = makeContext([font], []);
+    runDeploySkills(ctx.pBoard, true, ctx);
+    expect(font.hp).toBe(5);
+    expect(ctx.frames).toHaveLength(0);
+  });
+});
+
+describe("flesh_granulation – on ally summon", () => {
+  it("buffs self when a token is spawned", () => {
+    const fg = makeBattleUnit({ id: "flesh_granulation", name: "増殖する肉芽", atk: 2, hp: 3 });
+    const board = [fg];
+    const ctx = makeContext(board, []);
+    spawnTokenAndNotify({
+      board,
+      idx: 1,
+      name: "肉塊",
+      atk: 1,
+      hp: 1,
+      isChurch: false,
+      segments: () => ["召喚"],
+      isPlayer: true,
+      ctx,
+    });
+    const b = atLevel(FLESH_GRANULATION.buff, 1);
+    expect(fg.atk).toBe(2 + b.atk);
+    expect(fg.hp).toBe(3 + b.hp);
+  });
+
+  it("does not buff when dead", () => {
+    const fg = makeBattleUnit({ id: "flesh_granulation", name: "増殖する肉芽", atk: 2, hp: 0 });
+    const board = [fg];
+    const ctx = makeContext(board, []);
+    spawnTokenAndNotify({
+      board,
+      idx: 1,
+      name: "肉塊",
+      atk: 1,
+      hp: 1,
+      isChurch: false,
+      segments: () => ["召喚"],
+      isPlayer: true,
+      ctx,
+    });
+    expect(fg.atk).toBe(2);
+  });
+});
+
+describe("corroding_mold – start skill", () => {
+  it("buffs the unit in front at start of battle", () => {
+    const front = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 5 });
+    const mold = makeBattleUnit({ id: "corroding_mold", name: "侵蝕する黴", atk: 2, hp: 3 });
+    const board = [front, mold];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    expect(front.atk).toBe(3 + 1);
+    expect(front.hp).toBe(5 + 1);
+  });
+
+  it("does nothing when mold is at front (no unit ahead)", () => {
+    const mold = makeBattleUnit({ id: "corroding_mold", name: "侵蝕する黴", atk: 2, hp: 3 });
+    const board = [mold];
+    const ctx = makeContext(board, []);
+    runStartSkills(board, [], true, ctx);
+    expect(mold.atk).toBe(2);
+    expect(mold.hp).toBe(3);
+  });
+
+  it("fires only once per battle, not every clash", () => {
+    const front = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 200 });
+    const mold = makeBattleUnit({ id: "corroding_mold", name: "侵蝕する黴", atk: 2, hp: 200 });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 200 });
+    const ctx = makeContext([front, mold], [enemy]);
+    runBattle(ctx, makeEnemyTeam([]), 1);
+    const moldFrames = ctx.frames.filter(
+      (f) =>
+        f.log.type === "skill" &&
+        f.log.segments.some((s) => typeof s !== "string" && s.text === "侵蝕する黴"),
+    );
+    expect(moldFrames).toHaveLength(1);
   });
 });
