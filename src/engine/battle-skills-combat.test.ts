@@ -4,13 +4,7 @@ import {
   processKnockoutEffects,
 } from "./battle-skills-combat";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
-import {
-  atLevel,
-  ORGAN_GRINDER,
-  RISEN_POPE,
-  DEAD_HAND,
-  DEVOURING_WOUND,
-} from "../shared/skill-params";
+import { atLevel, ORGAN_GRINDER, RISEN_POPE, DEVOURING_WOUND } from "../shared/skill-params";
 import { RAT } from "../shared/skill-params-death";
 
 describe("applyAcidSplash", () => {
@@ -157,24 +151,14 @@ describe("processKnockoutEffects – risen_pope", () => {
   });
 });
 
-describe("processKnockoutEffects – dead_hand", () => {
-  it("heals self on knockout", () => {
+describe("processKnockoutEffects – dead_hand removed", () => {
+  it("no longer triggers on knockout (moved to on-hit)", () => {
     const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 3 });
     const board = [unit];
     const enemy = makeBattleUnit({ hp: 0 });
     const ctx = makeContext(board, [enemy]);
     processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
-    const heal = atLevel(DEAD_HAND.hpHeal, 1);
-    expect(unit.hp).toBe(3 + heal);
-    expect(ctx.frames).toHaveLength(1);
-  });
-
-  it("does nothing when dead", () => {
-    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 0 });
-    const board = [unit];
-    const ctx = makeContext(board, []);
-    processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
-    expect(unit.hp).toBe(0);
+    expect(unit.hp).toBe(3);
     expect(ctx.frames).toHaveLength(0);
   });
 });

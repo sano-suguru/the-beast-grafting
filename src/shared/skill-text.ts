@@ -65,6 +65,7 @@ import {
   WAILING_CURSECHILD,
   AMNIOTIC_ARMOR,
   OMEN_WOMB,
+  DEVOURING_GRAFT,
 } from "./skill-params";
 
 const houndDeathText = (lv: number) => {
@@ -77,7 +78,7 @@ type SkillTemplate = (lv: number) => string;
 const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   rat: (lv) => {
     const b = atLevel(RAT.deathBuff, lv);
-    return `死亡: 味方1体に+${b.atk}/+${b.hp}`;
+    return `死亡: 味方全体に+${b.atk}/+${b.hp}`;
   },
   hound: houndDeathText,
   church_hound: houndDeathText,
@@ -135,14 +136,14 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   templar: (lv) => `被弾: 自身に+${atLevel(TEMPLAR.atkBuff, lv)}/+0`,
   beelzebub: (lv) => {
     const b = atLevel(BEELZEBUB.token, lv);
-    return `味方死亡: ${b.atk}/${b.hp}の蠅を死亡位置に召喚`;
+    return `味方死亡: ${b.atk}/${b.hp}の蠅を死亡位置に召喚(${atLevel(BEELZEBUB.uses, lv)}回/戦)`;
   },
   eye: (lv) =>
     `直前の味方が攻撃: ランダム敵に${atLevel(EYE.damage, lv)}ダメ(${atLevel(EYE.uses, lv)}回/戦)`,
   rot_ring: (lv) => `Tier1購入: 味方全体に+1/+1(${atLevel(ROT_RING.uses, lv)}回/夜)`,
   grave_worm: (lv) => {
     const b = atLevel(GRAVE_WORM.sellBuff, lv);
-    return `解体: ランダムな味方1体に+${b.atk}/+${b.hp}`;
+    return `味方解体: ランダムな味方1体に+${b.atk}/+${b.hp}`;
   },
   leech: (lv) => `被弾: 自身のHP+${atLevel(LEECH.hpBuff, lv)}`,
   crow: (lv) => {
@@ -151,10 +152,11 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   catacomb_rat: (lv) => `開戦: ランダムな敵にTier×${atLevel(CATACOMB_RAT.tierMult, lv)}ダメージ`,
   stitched_twin: (lv) =>
-    `被弾: 自身の攻撃+${atLevel(STITCHED_TWIN.atkBuff, lv)}、後方味方にも同ダメージ`,
+    `被弾: 自身の攻撃+${atLevel(STITCHED_TWIN.atkBuff, lv)}、後方味方に1ダメージ`,
   market_vulture: (lv) => {
     const b = atLevel(MARKET_VULTURE.shopBuff, lv);
-    return `味方解体: 闇市場の全素体に+${b.atk}/+${b.hp}`;
+    const s = atLevel(MARKET_VULTURE.selfBuff, lv);
+    return `味方解体: 闇市場の全素体に+${b.atk}/+${b.hp}、自身に+${s.atk}/+${s.hp}`;
   },
   tainted_placenta: (lv) => {
     const b = atLevel(TAINTED_PLACENTA.shopBuff, lv);
@@ -176,7 +178,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   organ_grinder: (lv) => `撃破: 敵全体に${atLevel(ORGAN_GRINDER.damage, lv)}ダメージ`,
   grinning_skull: (lv) => {
     const b = atLevel(GRINNING_SKULL.buff, lv);
-    return `味方${GRINNING_SKULL.threshold}体死亡ごと: 味方全体に+${b.atk}/+${b.hp}`;
+    return `味方${GRINNING_SKULL.threshold}体死亡ごと: 味方全体に+${b.atk}/+${b.hp}(${atLevel(GRINNING_SKULL.uses, lv)}回/戦)`;
   },
   budding_hydra: (lv) => {
     const d = atLevel(BUDDING_HYDRA.divisor, lv);
@@ -219,7 +221,8 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(RISEN_POPE.buff, lv);
     return `撃破: 味方全体に+${b.atk}/+${b.hp}`;
   },
-  dead_hand: (lv) => `撃破: 自身にHP+${atLevel(DEAD_HAND.hpHeal, lv)}`,
+  dead_hand: (lv) =>
+    `被弾: 自身に+${atLevel(DEAD_HAND.atkBuff, lv)}/+${atLevel(DEAD_HAND.hpBuff, lv)}`,
   devouring_wound: (lv) => `撃破: 自身にHP+${atLevel(DEVOURING_WOUND.hpHeal, lv)}`,
   crawling_cord: (lv) => {
     const b = atLevel(CRAWLING_CORD.buff, lv);
@@ -258,7 +261,8 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   maiden: () => "死亡: 後ろに【屍蝋の盾】",
   famine_corpse: () => "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
   graft_scion: () => "死亡: 前の味方に自身ATK分のATKバフ",
-  devouring_graft: () => "開戦: 前の味方を吸収(+ATK/HP)。死亡: 吸収先を半減して再召喚",
+  devouring_graft: (lv) =>
+    `開戦: 前の味方を${atLevel(DEVOURING_GRAFT.absorbPercent, lv)}%吸収(+ATK/HP)。死亡: 吸収先の${atLevel(DEVOURING_GRAFT.decayPercent, lv)}%で再召喚`,
   chalice: () => "購入: 闇市場の薬を2つの無料【純血】(+1/+2)に",
   necrotic_finger: () => "常時: 攻撃で対象を即死させる。内蔵: 屍蝋の盾",
   mimicking_flesh: () => "開戦: 前の味方のスキルをコピー(戦闘中のみ)",

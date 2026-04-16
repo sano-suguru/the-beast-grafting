@@ -2,8 +2,15 @@ import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
 
-import { atLevel } from "../../shared/skill-params";
-import { BONE_TREE, GHOUL_INFANT, ASH_FUNGUS, CORPSE_BROKER } from "../../shared/skill-params-shop";
+import { atLevel, type Buff } from "../../shared/skill-params";
+import {
+  BONE_TREE,
+  GHOUL_INFANT,
+  ASH_FUNGUS,
+  CORPSE_BROKER,
+  GRAVE_WORM,
+  MARKET_VULTURE,
+} from "../../shared/skill-params-shop";
 
 /**
  * ゲーム経済モデルに基づくショップスキル累積効果の近似。
@@ -83,6 +90,12 @@ export function applySimShopEffects(team: UnitInstance[], night: number, rng: Rn
       case "corpse_broker":
         applyCorpseBrokerAccumulation(unit, night);
         break;
+      case "grave_worm":
+        applyGraveWormAccumulation(unit, team, night, rng);
+        break;
+      case "market_vulture":
+        applyMarketVultureAccumulation(unit, night);
+        break;
     }
   }
 }
@@ -118,6 +131,15 @@ function applyBoneTreeAccumulation(
   }
 }
 
+function estimateTotalPurchases(tier: Tier, night: number): number {
+  const appearNight = TIER_APPEAR_NIGHT[tier];
+  let total = 0;
+  for (let n = appearNight; n <= night; n++) {
+    total += estimateNightActions(n, n === appearNight).purchases;
+  }
+  return total;
+}
+
 function applyGhoulInfantAccumulation(
   ghoulInfant: UnitInstance,
   team: UnitInstance[],
@@ -128,13 +150,7 @@ function applyGhoulInfantAccumulation(
   if (nights <= 0) return;
 
   const atkBuff = atLevel(GHOUL_INFANT.atkBuff, ghoulInfant.level);
-  let rawTriggers = 0;
-
-  const appearNight = TIER_APPEAR_NIGHT[ghoulInfant.tier as Tier];
-  for (let n = appearNight; n <= night; n++) {
-    rawTriggers += estimateNightActions(n, n === appearNight).purchases;
-  }
-
+  const rawTriggers = estimateTotalPurchases(ghoulInfant.tier as Tier, night);
   const totalAtk = Math.floor(atkBuff * rawTriggers);
   distributeBuffRandomly(team, totalAtk, 0, rng);
 }
@@ -164,20 +180,25 @@ function applyAshFungusAccumulation(
   distributeBuffRandomly(team, totalBuff - half, half, rng);
 }
 
-function applyCorpseBrokerAccumulation(broker: UnitInstance, night: number): void {
-  const nights = activeNights(broker.tier as Tier, night);
-  if (nights <= 0) return;
-
-  const buff = atLevel(CORPSE_BROKER.sellBuff, broker.level);
-  let rawSells = 0;
-
-  const appearNight = TIER_APPEAR_NIGHT[broker.tier as Tier];
+function estimateTotalSells(tier: Tier, night: number): number {
+  const appearNight = TIER_APPEAR_NIGHT[tier];
+  let total = 0;
   for (let n = appearNight; n <= night; n++) {
-    rawSells += estimateNightActions(n, n === appearNight).sells;
+    total += estimateNightActions(n, n === appearNight).sells;
   }
+  return total;
+}
 
-  broker.buffAtk += Math.floor(buff.atk * rawSells);
-  broker.buffHp += Math.floor(buff.hp * rawSells);
+function applySelfBuffFromSells(unit: UnitInstance, buff: Buff, night: number): void {
+  const nights = activeNights(unit.tier as Tier, night);
+  if (nights <= 0) return;
+  const rawSells = estimateTotalSells(unit.tier as Tier, night);
+  unit.buffAtk += Math.floor(buff.atk * rawSells);
+  unit.buffHp += Math.floor(buff.hp * rawSells);
+}
+
+function applyCorpseBrokerAccumulation(broker: UnitInstance, night: number): void {
+  applySelfBuffFromSells(broker, atLevel(CORPSE_BROKER.sellBuff, broker.level), night);
 }
 
 /** ランダムに味方1体ずつバフを分配（合計値を等分） */
@@ -197,4 +218,32 @@ function distributeBuffRandomly(team: UnitInstance[], atk: number, hp: number, r
     target.buffAtk += remainder.atk;
     target.buffHp += remainder.hp;
   }
+}
+
+function applyTeamBuffFromSells(
+  unit: UnitInstance,
+  buff: Buff,
+  team: UnitInstance[],
+  night: number,
+  rng: Rng,
+): void {
+  const nights = activeNights(unit.tier as Tier, night);
+  if (nights <= 0) return;
+  const rawSells = estimateTotalSells(unit.tier as Tier, night);
+  const totalAtk = Math.floor(buff.atk * rawSells);
+  const totalHp = Math.floor(buff.hp * rawSells);
+  distributeBuffRandomly(team, totalAtk, totalHp, rng);
+}
+
+function applyGraveWormAccumulation(
+  worm: UnitInstance,
+  team: UnitInstance[],
+  night: number,
+  rng: Rng,
+): void {
+  applyTeamBuffFromSells(worm, atLevel(GRAVE_WORM.sellBuff, worm.level), team, night, rng);
+}
+
+function applyMarketVultureAccumulation(vulture: UnitInstance, night: number): void {
+  applySelfBuffFromSells(vulture, atLevel(MARKET_VULTURE.selfBuff, vulture.level), night);
 }

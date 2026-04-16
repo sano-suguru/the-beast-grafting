@@ -10,8 +10,8 @@ describe("devouring_graft – start skill", () => {
     const board = [pred, graft];
     const ctx = makeContext(board, []);
     runStartSkills(board, [], true, ctx);
-    expect(graft.atk).toBe(3 + 5);
-    expect(graft.hp).toBe(6 + 3);
+    expect(graft.atk).toBe(3 + Math.floor(5 * 0.7));
+    expect(graft.hp).toBe(6 + Math.floor(3 * 0.7));
     expect(board).toHaveLength(1);
     expect(board[0]).toBe(graft);
     expect(ctx.absorbedUnits.has(graft.uid)).toBe(true);
@@ -23,8 +23,8 @@ describe("devouring_graft – start skill", () => {
     const board = [token, graft];
     const ctx = makeContext(board, []);
     runStartSkills(board, [], true, ctx);
-    expect(graft.atk).toBe(3 + 2);
-    expect(graft.hp).toBe(6 + 2);
+    expect(graft.atk).toBe(3 + Math.floor(2 * 0.7));
+    expect(graft.hp).toBe(6 + Math.floor(2 * 0.7));
     expect(board).toHaveLength(1);
     expect(ctx.absorbedUnits.has(graft.uid)).toBe(true);
   });
@@ -70,12 +70,14 @@ describe("mimicking_flesh + devouring_graft – interaction edge cases", () => {
     const board = [rat, graft, mimic];
     const ctx = makeContext(board, []);
     runStartSkills(board, [], true, ctx);
-    // graft absorbs rat, then mimic copies graft and absorbs graft
+    // graft absorbs rat (70%), then mimic copies graft and absorbs graft (70%)
+    // graft after rat: 3+floor(2*0.7)=4, 6+floor(1*0.7)=6
+    // mimic after graft: 4+floor(4*0.7)=6, 3+floor(6*0.7)=7
     expect(board).toHaveLength(1);
     expect(board[0]).toBe(mimic);
     expect(mimic.id).toBe("devouring_graft");
-    expect(mimic.atk).toBe(4 + (3 + 2));
-    expect(mimic.hp).toBe(3 + (6 + 1));
+    expect(mimic.atk).toBe(6);
+    expect(mimic.hp).toBe(7);
     expect(ctx.absorbedUnits.has(mimic.uid)).toBe(true);
     const absorbed = ctx.absorbedUnits.get(mimic.uid)!;
     expect(absorbed.id).toBe("devouring_graft");
@@ -97,20 +99,20 @@ describe("mimicking_flesh + devouring_graft – interaction edge cases", () => {
     const board = [mimic, graft];
     const ctx = makeContext(board, []);
     runStartSkills(board, [], true, ctx);
-    // mimic at pos 0 does nothing; graft absorbs mimic
+    // mimic at pos 0 does nothing; graft absorbs mimic (70%)
     expect(board).toHaveLength(1);
     expect(board[0]).toBe(graft);
-    expect(graft.atk).toBe(3 + 4);
-    expect(graft.hp).toBe(6 + 3);
+    expect(graft.atk).toBe(3 + Math.floor(4 * 0.7));
+    expect(graft.hp).toBe(6 + Math.floor(3 * 0.7));
     const absorbed = ctx.absorbedUnits.get(graft.uid)!;
     expect(absorbed.id).toBe("mimicking_flesh");
-    // Kill graft → re-spawns mimicking_flesh
+    // Kill graft → re-spawns mimicking_flesh with 30% decay
     graft.hp = 0;
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("模倣する粘肉");
-    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(4 * 0.5));
-    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.5)));
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(4 * 0.3));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.3)));
   });
 
   it("multiple grafts chain: B absorbs A after A absorbs rat", () => {
@@ -120,21 +122,22 @@ describe("mimicking_flesh + devouring_graft – interaction edge cases", () => {
     const board = [rat, graftA, graftB];
     const ctx = makeContext(board, []);
     runStartSkills(board, [], true, ctx);
-    // A absorbs rat → board = [A, B] → B absorbs A
+    // A absorbs rat (70%): A = 3+floor(2*0.7)=4, 6+floor(1*0.7)=6
+    // B absorbs A (70%): B = 5+floor(4*0.7)=7, 4+floor(6*0.7)=8
     expect(board).toHaveLength(1);
     expect(board[0]).toBe(graftB);
-    expect(graftB.atk).toBe(5 + (3 + 2));
-    expect(graftB.hp).toBe(4 + (6 + 1));
-    // B stored A's data; A stored rat's data (orphaned but harmless)
+    expect(graftB.atk).toBe(7);
+    expect(graftB.hp).toBe(8);
+    // B stored A's stats at absorption time (A was 4/6)
     const absorbedByB = ctx.absorbedUnits.get(graftB.uid)!;
     expect(absorbedByB.id).toBe("devouring_graft");
-    expect(absorbedByB.atk).toBe(3 + 2);
-    // Kill B → A is re-spawned with 50% decayed stats
+    expect(absorbedByB.atk).toBe(4);
+    // Kill B → A is re-spawned with 30% decayed stats: floor(4*0.3)=1, max(1,floor(6*0.3))=1
     graftB.hp = 0;
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("貪る接合体");
-    expect(ctx.pBoard[0]!.atk).toBe(Math.floor((3 + 2) * 0.5));
-    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor((6 + 1) * 0.5)));
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(4 * 0.3));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(6 * 0.3)));
   });
 });

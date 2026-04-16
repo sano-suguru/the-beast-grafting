@@ -5,9 +5,9 @@ type SB = Scaled<Buff>;
 
 export const RAT = {
   deathBuff: [
+    { atk: 1, hp: 0 },
     { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
+    { atk: 2, hp: 1 },
   ] as SB,
 };
 
@@ -72,7 +72,7 @@ export const SERAPH = {
 };
 
 export const EVANGELIST = {
-  targets: [1, 2, 3] as SN,
+  targets: [1, 1, 2] as SN,
   uses: [1, 2, 3] as SN,
 };
 
@@ -101,10 +101,11 @@ export const CATHEDRAL = {
 
 export const BEELZEBUB = {
   token: [
-    { atk: 3, hp: 3 },
+    { atk: 2, hp: 2 },
+    { atk: 4, hp: 4 },
     { atk: 6, hp: 6 },
-    { atk: 9, hp: 9 },
   ] as SB,
+  uses: [2, 3, 4] as SN,
 };
 
 export const OMEN_WOMB = {
@@ -124,5 +125,6 @@ export const STELLAR_COCOON = {
 };
 
 export const DEVOURING_GRAFT = {
-  decayPercent: 50,
+  absorbPercent: [70, 85, 100] as SN,
+  decayPercent: [30, 40, 50] as SN,
 };

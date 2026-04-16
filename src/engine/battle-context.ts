@@ -28,6 +28,7 @@ export interface BattleUnit extends UnitInstance {
   avengeDeathCount: number;
   equipUses: number;
   skillUses: number;
+  infectionLevel: number;
   lastDamageSource: string | null;
 }
 
@@ -235,6 +236,7 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
     avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
+    infectionLevel: 0,
     lastDamageSource: null,
   };
 }
@@ -272,6 +274,7 @@ export function createSummonedUnit(
     avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
+    infectionLevel: 0,
     lastDamageSource: null,
   };
 }

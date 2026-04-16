@@ -1,6 +1,6 @@
-import type { BattleAction } from "../shared/types";
+import type { BattleAction, LogSegment } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { invariant, mustGet } from "../shared/invariant";
+import { invariant } from "../shared/invariant";
 import { pushFrame, enemyPrefix, seg, buffAction, defendAction } from "./battle-context";
 import { UNITS } from "../shared/data/units";
 import { getUnitsByTier } from "./helpers";
@@ -32,29 +32,37 @@ export type DeathContext = {
 
 export type DeathHandler = (context: DeathContext) => void;
 
-export function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
+function deathBuffAllAllies(
+  dead: BattleUnit,
+  board: BattleUnit[],
+  b: Buff,
+  segments: () => LogSegment[],
+  ctx: BattleContext,
+) {
   if (board.length === 0) return;
-  const target = mustGet(board, Math.floor(ctx.rng.next() * board.length), "rat death target");
+  const actionMap: Record<string, BattleAction> = {};
+  for (const u of board) {
+    u.atk += b.atk;
+    u.hp += b.hp;
+    actionMap[u.uid] = buffAction(b, dead.uid);
+  }
+  pushFrame(ctx, "skill", segments, "skill", actionMap, FRAME_DELAY_DEATH_CHAIN);
+}
+
+export function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
   const b = atLevel(RAT.deathBuff, dead.level);
-  target.atk += b.atk;
-  target.hp += b.hp;
   const prefix = enemyPrefix(isPlayer);
-  pushFrame(
-    ctx,
-    "skill",
+  deathBuffAllAllies(
+    dead,
+    board,
+    b,
     () => [
       prefix,
       seg.u(dead.name),
-      "の汚染された血が",
-      seg.u(target.name),
-      "に変異を促す！ ",
+      "の汚染された血が味方全体に変異を促す！ ",
       seg.s(`+${b.atk}/+${b.hp}`),
     ],
-    "skill",
-    {
-      [target.uid]: buffAction(b, dead.uid),
-    },
-    FRAME_DELAY_DEATH_CHAIN,
+    ctx,
   );
 }
 
@@ -254,21 +262,13 @@ export function handleHangedManDeath({ dead, board, isPlayer, ctx }: DeathContex
 }
 
 export function handleSeraphDeath({ dead, board, isPlayer, ctx }: DeathContext) {
-  if (board.length === 0) return;
   const b = atLevel(SERAPH.deathBuff, dead.level);
-  const actionMap: Record<string, BattleAction> = {};
-  for (const u of board) {
-    u.atk += b.atk;
-    u.hp += b.hp;
-    actionMap[u.uid] = buffAction(b, dead.uid);
-  }
   const prefix = enemyPrefix(isPlayer);
-  pushFrame(
-    ctx,
-    "skill",
+  deathBuffAllAllies(
+    dead,
+    board,
+    b,
     () => [prefix, seg.u(dead.name), "の光が味方全体を包む。", seg.s(`+${b.atk}/+${b.hp}`)],
-    "skill",
-    actionMap,
-    FRAME_DELAY_DEATH_CHAIN,
+    ctx,
   );
 }

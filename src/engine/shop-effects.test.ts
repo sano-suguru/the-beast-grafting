@@ -13,6 +13,7 @@ import { createSeededRng } from "./rng";
 import {
   atLevel,
   BONE_TREE,
+  GRAVE_WORM,
   MARKET_VULTURE,
   GHOUL_INFANT,
   TAINTED_PLACENTA,
@@ -316,19 +317,21 @@ describe("applySellEffects – determinism", () => {
   it("grave_worm sell buff is deterministic with seeded rng", () => {
     const worm = makeUnit({ id: "grave_worm", uid: "worm-1" });
     const ally = makeUnit({ uid: "ally-1" });
-    const board: (UnitInstance | null)[] = [null, ally, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const board: (UnitInstance | null)[] = [worm, ally, null];
 
     const rng1 = createSeededRng(99);
-    const result1 = applySellEffects(worm, board, rng1);
+    const result1 = applySellEffects(sold, board, rng1);
 
     const rng2 = createSeededRng(99);
-    const result2 = applySellEffects(worm, board, rng2);
+    const result2 = applySellEffects(sold, board, rng2);
 
     const buffed1 = result1.board.find((u) => u?.uid === "ally-1");
     const buffed2 = result2.board.find((u) => u?.uid === "ally-1");
     expect(buffed1!.buffAtk).toBe(buffed2!.buffAtk);
     expect(buffed1!.buffHp).toBe(buffed2!.buffHp);
-    expect(buffed1!.buffAtk).toBeGreaterThan(0);
+    // Lv1: +0/+1
+    expect(buffed1!.buffHp).toBeGreaterThan(0);
   });
 
   it("ash_fungus sell buff is deterministic with seeded rng", () => {
@@ -483,5 +486,55 @@ describe("applySellEffects – corpse_broker", () => {
     const unchanged = result.board.find((u): u is UnitInstance => u !== null && u.uid === "ally-1");
     expect(unchanged!.buffAtk).toBe(0);
     expect(unchanged!.buffHp).toBe(0);
+  });
+});
+
+// ── market_vulture: 解体時に自身にバフ ──
+
+describe("applySellEffects – market_vulture selfBuff", () => {
+  it("buffs market_vulture itself on ally sell", () => {
+    const vulture = makeUnit({ id: "market_vulture", uid: "mv-1" });
+    const board: (UnitInstance | null)[] = [vulture, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const rng = createSeededRng(1);
+    const result = applySellEffects(sold, board, rng);
+    const b = atLevel(MARKET_VULTURE.selfBuff, 1);
+    const updated = result.board.find((u): u is UnitInstance => u !== null && u.uid === "mv-1");
+    expect(updated!.buffAtk).toBe(b.atk);
+    expect(updated!.buffHp).toBe(b.hp);
+  });
+
+  it("returns shopBuff and applies selfBuff simultaneously", () => {
+    const vulture = makeUnit({ id: "market_vulture", uid: "mv-1" });
+    const board: (UnitInstance | null)[] = [vulture, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const rng = createSeededRng(1);
+    const result = applySellEffects(sold, board, rng);
+    const sb = atLevel(MARKET_VULTURE.shopBuff, 1);
+    expect(result.shopBuff).toEqual({ atk: sb.atk, hp: sb.hp });
+    const selfB = atLevel(MARKET_VULTURE.selfBuff, 1);
+    const updated = result.board.find((u): u is UnitInstance => u !== null && u.uid === "mv-1");
+    expect(updated!.buffAtk).toBe(selfB.atk);
+    expect(updated!.buffHp).toBe(selfB.hp);
+  });
+});
+
+// ── grave_worm: ボード上にいれば他ユニット解体時にバフ ──
+
+describe("applySellEffects – grave_worm", () => {
+  it("does not buff the worm itself (excludeIdx)", () => {
+    const worm = makeUnit({ id: "grave_worm", uid: "worm-1" });
+    const board: (UnitInstance | null)[] = [worm, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const rng = createSeededRng(1);
+    const result = applySellEffects(sold, board, rng);
+    const b = atLevel(GRAVE_WORM.sellBuff, 1);
+    const updatedWorm = result.board.find(
+      (u): u is UnitInstance => u !== null && u.uid === "worm-1",
+    );
+    expect(updatedWorm!.buffAtk).toBe(0);
+    expect(updatedWorm!.buffHp).toBe(0);
+    // バフの合計値も0（バフできる対象がいない）
+    expect(b.atk + b.hp).toBeGreaterThan(0);
   });
 });

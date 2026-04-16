@@ -117,6 +117,7 @@ describe("processAvenge – grinning_skull (independent counters)", () => {
       atk: 2,
       hp: 8,
       avengeDeathCount: 3,
+      skillUses: 2,
     });
     const ally = makeBattleUnit({ atk: 3, hp: 5 });
     const board = [rel, ally];
@@ -151,6 +152,7 @@ describe("processAvenge – grinning_skull (independent counters)", () => {
       atk: 2,
       hp: 8,
       avengeDeathCount: 6,
+      skillUses: 2,
     });
     const board = [rel];
     const ctx = makeContext(board, []);
@@ -238,7 +240,13 @@ describe("incrementAvengeCounters – independent per-unit", () => {
       avengeDeathCount: 1,
       skillUses: 1,
     });
-    const rel = makeBattleUnit({ id: "grinning_skull", atk: 2, hp: 8, avengeDeathCount: 2 });
+    const rel = makeBattleUnit({
+      id: "grinning_skull",
+      atk: 2,
+      hp: 8,
+      avengeDeathCount: 2,
+      skillUses: 2,
+    });
     const board = [pit, rel];
     const ctx = makeContext(board, []);
     // Simulate 1 more death → pit reaches 2 (threshold), rel reaches 3 (threshold)
@@ -269,6 +277,7 @@ describe("processAvenge snapshot – spawn does not skip later avenge units", ()
       atk: 2,
       hp: 8,
       avengeDeathCount: 3,
+      skillUses: 2,
     });
     const board = [pit, skull];
     const ctx = makeContext(board, []);

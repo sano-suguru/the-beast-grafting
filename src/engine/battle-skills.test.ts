@@ -225,8 +225,8 @@ describe("runStartSkills – brains and edge cases", () => {
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
     const ctx = makeContext([fodder, graft, brains], [makeBattleUnit({ hp: 10 })]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(graft.atk).toBe(3 + 2);
-    expect(graft.hp).toBe(6 + 3);
+    expect(graft.atk).toBe(3 + Math.floor(2 * 0.7));
+    expect(graft.hp).toBe(6 + Math.floor(3 * 0.7));
     expect(ctx.pBoard).toHaveLength(2);
   });
 

@@ -38,8 +38,16 @@ describe("applyEquipmentEffects – defensive", () => {
 });
 
 describe("applyEquipmentEffects – offensive and misc", () => {
-  it("infection adds 3 to incoming damage", () => {
-    const p = makeBattleUnit({ equip: "infection", atk: 3, hp: 10 });
+  it("infection Lv1 adds 1 to incoming damage", () => {
+    const p = makeBattleUnit({ equip: "infection", infectionLevel: 1, atk: 3, hp: 10 });
+    const e = makeBattleUnit({ atk: 4, hp: 10 });
+    const ctx = makeContext([p], [e]);
+    const { pDmg } = applyEquipmentEffects(p, e, ctx);
+    expect(pDmg).toBe(5);
+  });
+
+  it("infection Lv3 adds 3 to incoming damage", () => {
+    const p = makeBattleUnit({ equip: "infection", infectionLevel: 3, atk: 3, hp: 10 });
     const e = makeBattleUnit({ atk: 4, hp: 10 });
     const ctx = makeContext([p], [e]);
     const { pDmg } = applyEquipmentEffects(p, e, ctx);

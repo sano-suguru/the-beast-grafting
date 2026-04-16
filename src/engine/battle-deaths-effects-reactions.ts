@@ -38,8 +38,10 @@ export function handleBeelzebubSpawns(
   const { spawns } = collectBeelzebubSpawns(board);
 
   for (const { beelzebub, count } of spawns) {
+    if (beelzebub.skillUses <= 0) continue;
     const ft = atLevel(BEELZEBUB.token, beelzebub.level);
-    for (let m = 0; m < count; m++) {
+    for (let m = 0; m < count && beelzebub.skillUses > 0; m++) {
+      beelzebub.skillUses -= 1;
       const token = spawnTokenAndNotify({
         board,
         idx: deathIdx,
@@ -174,6 +176,7 @@ function infectTargets(
     );
     const prevEquip = target.equip;
     target.equip = "infection";
+    target.infectionLevel = u.level;
     infected++;
     if (prevEquip && prevEquip !== "infection") {
       notifyEquipInfection(ctx, prefix, target, FRAME_DELAY_DEATH_CHAIN);

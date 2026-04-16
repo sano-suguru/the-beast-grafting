@@ -4,7 +4,7 @@ import {
   BERSERK_BONUS,
   IRON_REDUCTION,
   CORPSE_WAX_REDUCTION,
-  INFECTION_EXTRA_DAMAGE,
+  INFECTION_DAMAGE,
   NUMBNESS_REDUCTION,
   MIN_EQUIPMENT_DAMAGE,
 } from "./constants";
@@ -40,20 +40,16 @@ function applyInfectionPenalty(
   prefix: string,
   ctx: BattleContext,
 ): DefenseResult {
+  const lvl = Math.max(0, Math.min(unit.infectionLevel - 1, 2));
+  const extra = INFECTION_DAMAGE[lvl] ?? INFECTION_DAMAGE[0]!;
   pushFrame(
     ctx,
     "defend",
-    () => [
-      prefix,
-      seg.u(unit.name),
-      "の傷が膿む。",
-      seg.e("感染"),
-      seg.s(`被ダメ+${INFECTION_EXTRA_DAMAGE}`),
-    ],
+    () => [prefix, seg.u(unit.name), "の傷が膿む。", seg.e("感染"), seg.s(`被ダメ+${extra}`)],
     "defend",
     { [unit.uid]: { type: "damage" } },
   );
-  return { dmg: baseDmg + INFECTION_EXTRA_DAMAGE, action: "damage" };
+  return { dmg: baseDmg + extra, action: "damage" };
 }
 
 function applyIronDefense(

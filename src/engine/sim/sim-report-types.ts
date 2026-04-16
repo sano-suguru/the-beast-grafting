@@ -83,6 +83,41 @@ export interface InsufficientSampleEntry {
   readonly ciWidth: number;
 }
 
+// ── Meta Analysis ──
+
+export interface PayoffCell {
+  readonly winRate: number;
+  readonly wins: number;
+  readonly losses: number;
+  readonly draws: number;
+}
+
+export interface DominantTeam {
+  readonly team: string;
+  readonly type: "weak" | "strong";
+  readonly minWinRate: number;
+}
+
+export interface NashEntry {
+  readonly team: string;
+  readonly probability: number;
+}
+
+export type MetaHealthVerdict = "healthy" | "slightly_skewed" | "dominant_meta" | "degenerate";
+
+export interface MetaAnalysis {
+  readonly teamLabels: readonly string[];
+  readonly payoffMatrix: readonly (readonly PayoffCell[])[];
+  readonly dominantTeams: readonly DominantTeam[];
+  readonly nashEquilibrium: readonly NashEntry[];
+  readonly nashConverged: boolean;
+  readonly equilibriumEntropy: number;
+  readonly maxEntropy: number;
+  readonly cyclicityScore: number;
+  readonly healthVerdict: MetaHealthVerdict;
+  readonly verdictReasons: readonly string[];
+}
+
 // ── GA Discovery ──
 
 /** GaRankedTeam の JSON-safe 版（RegularUnitId → string, readonly tuple → mutable tuple） */
@@ -125,4 +160,5 @@ export interface SimReportData {
   readonly insufficientSamples: readonly InsufficientSampleEntry[];
   readonly gaDiscovery: GaReportData | null;
   readonly nightGaResults: readonly NightGaEntry[];
+  readonly metaAnalysis: MetaAnalysis | null;
 }

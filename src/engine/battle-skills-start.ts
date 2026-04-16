@@ -23,6 +23,7 @@ import {
   HOLY_FIRE,
   CORRODING_MOLD,
 } from "../shared/skill-params";
+import { DEVOURING_GRAFT } from "../shared/skill-params-death";
 import { getInitOverride } from "./battle-init-overrides";
 
 export function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
@@ -232,8 +233,11 @@ export function applyDevouringGraftSkill({ u, isPlayer, ctx }: SkillContext) {
     isChurch: pred.isChurch,
     equip: pred.equip,
   });
-  u.atk += pred.atk;
-  u.hp += pred.hp;
+  const absorbRate = atLevel(DEVOURING_GRAFT.absorbPercent, u.level) / 100;
+  const gainedAtk = Math.floor(pred.atk * absorbRate);
+  const gainedHp = Math.floor(pred.hp * absorbRate);
+  u.atk += gainedAtk;
+  u.hp += gainedHp;
   allyBoard.splice(idx - 1, 1);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
@@ -245,10 +249,10 @@ export function applyDevouringGraftSkill({ u, isPlayer, ctx }: SkillContext) {
       "が",
       seg.u(pred.name),
       "を丸呑みにした！ ",
-      seg.s(`+${pred.atk}/+${pred.hp}`),
+      seg.s(`+${gainedAtk}/+${gainedHp}`),
     ],
     "skill",
-    { [u.uid]: buffAction({ atk: pred.atk, hp: pred.hp }, u.uid) },
+    { [u.uid]: buffAction({ atk: gainedAtk, hp: gainedHp }, u.uid) },
   );
 }
 

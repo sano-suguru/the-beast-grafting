@@ -12,12 +12,15 @@ import { createUnit } from "../helpers";
 import { simulateBattleResult } from "./sim-battle";
 import { buildProgressedUnit } from "./sim-progression";
 import { SimReportCollector, perfMapToRecord, perfToRecord } from "./sim-report-collect";
+import type { MatchupEntry } from "./sim-report-types";
 import { writeSimReport } from "./sim-report-write";
 import { makeSimEnemy } from "./sim-utils";
 import { runGeneticAlgorithm } from "./sim-ga";
 import type { GaRankedTeam, GaResult } from "./sim-ga-types";
+import { analyzeMetaHealth } from "./sim-meta-analysis";
 
 const collector = new SimReportCollector();
+const allMatchupEntries: MatchupEntry[] = [];
 
 afterAll(() => {
   writeSimReport(collector.build());
@@ -315,7 +318,7 @@ describe("archetype discovery pipeline", () => {
         if (r.avgFrameCount < 5) warnings.push("STOMP: battles too short");
         if (r.avgFrameCount > 80) warnings.push("STALL: battles too long");
 
-        collector.addMatchup({
+        const entry: MatchupEntry = {
           teamA: a,
           teamB: b,
           aWins: r.aWins,
@@ -329,7 +332,9 @@ describe("archetype discovery pipeline", () => {
           frameCountP75: r.frameCountP75,
           unitPerformance: perfMapToRecord(r.unitPerformance),
           warnings,
-        });
+        };
+        collector.addMatchup(entry);
+        allMatchupEntries.push(entry);
       }
     }
   });
@@ -598,4 +603,36 @@ describe("cross-night GA", () => {
       expect(result.topTeams.length).toBeGreaterThan(0);
     }
   }, 300_000);
+});
+
+// ── メタ健全性分析 ──
+
+describe("meta health analysis", () => {
+  it("produces valid meta analysis from archetype matchups", () => {
+    expect(allMatchupEntries.length).toBeGreaterThan(0);
+
+    const meta = analyzeMetaHealth(allMatchupEntries);
+    collector.setMetaAnalysis(meta);
+
+    expect(meta.teamLabels.length).toBeGreaterThan(0);
+    expect(meta.payoffMatrix.length).toBe(meta.teamLabels.length);
+    for (const row of meta.payoffMatrix) {
+      expect(row.length).toBe(meta.teamLabels.length);
+    }
+
+    expect(meta.nashEquilibrium.length).toBe(meta.teamLabels.length);
+    const probSum = meta.nashEquilibrium.reduce((s, e) => s + e.probability, 0);
+    expect(probSum).toBeCloseTo(1, 2);
+
+    expect(meta.cyclicityScore).toBeGreaterThanOrEqual(0);
+    expect(meta.cyclicityScore).toBeLessThanOrEqual(1);
+
+    expect(meta.equilibriumEntropy).toBeGreaterThanOrEqual(0);
+    expect(meta.equilibriumEntropy).toBeLessThanOrEqual(meta.maxEntropy + 0.01);
+
+    expect(["healthy", "slightly_skewed", "dominant_meta", "degenerate"]).toContain(
+      meta.healthVerdict,
+    );
+    expect(meta.verdictReasons.length).toBeGreaterThan(0);
+  });
 });

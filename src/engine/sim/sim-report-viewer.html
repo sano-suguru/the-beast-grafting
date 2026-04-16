@@ -182,6 +182,7 @@
     <section id="s-crossnight"></section>
     <section id="s-scaling"></section>
     <section id="s-ga"></section>
+    <section id="s-meta"></section>
 
     <script type="application/json" id="sim-data">
       { "_placeholder": true }
@@ -243,6 +244,7 @@
           ["s-crossnight", "Cross-Night"],
           ["s-scaling", "Scaling"],
           ["s-ga", "GA Discovery"],
+          ["s-meta", "Meta Health"],
         ];
 
         function initTabs() {
@@ -1105,6 +1107,172 @@
           }
         }
 
+        // ── Meta Health ──
+
+        function verdictBadge(verdict) {
+          var colors = {
+            healthy: "#2ecc71",
+            slightly_skewed: "#e67e22",
+            dominant_meta: "#e74c3c",
+            degenerate: "#ff0000",
+          };
+          var labels = {
+            healthy: "✓ Healthy",
+            slightly_skewed: "⚠ Slightly Skewed",
+            dominant_meta: "✗ Dominant Meta",
+            degenerate: "✗✗ Degenerate",
+          };
+          return el("span", {
+            textContent: labels[verdict] || verdict,
+            style:
+              "color:" +
+              (colors[verdict] || "#888") +
+              ";font-weight:bold;font-size:1.2em;padding:4px 12px;border:2px solid " +
+              (colors[verdict] || "#888") +
+              ";border-radius:6px",
+          });
+        }
+
+        function payoffColor(rate) {
+          if (rate >= 0.6) return "rgba(231,76,60," + Math.min((rate - 0.5) * 2, 1) * 0.6 + ")";
+          if (rate <= 0.4) return "rgba(52,152,219," + Math.min((0.5 - rate) * 2, 1) * 0.6 + ")";
+          return "transparent";
+        }
+
+        function renderMeta(data) {
+          var sec = document.getElementById("s-meta");
+          var meta = data.metaAnalysis;
+          if (!meta) {
+            sec.innerHTML = "<h2>Meta Health</h2><p>No meta analysis data available.</p>";
+            return;
+          }
+          sec.innerHTML = "<h2>Meta Health Analysis</h2>";
+
+          // Verdict badge
+          var verdictDiv = el("div", { style: "margin-bottom:16px" });
+          verdictDiv.appendChild(verdictBadge(meta.healthVerdict));
+          sec.appendChild(verdictDiv);
+
+          // Reasons
+          if (meta.verdictReasons.length > 0) {
+            var reasons = el("ul", { style: "margin-bottom:16px;padding-left:20px" });
+            meta.verdictReasons.forEach(function (r) {
+              reasons.appendChild(el("li", { textContent: r }));
+            });
+            sec.appendChild(reasons);
+          }
+
+          // Summary cards
+          var grid = el("div", { className: "overview-grid" });
+          function addCard(label, value) {
+            grid.appendChild(
+              el("div", {
+                className: "stat-card",
+                innerHTML:
+                  '<div class="label">' +
+                  esc(label) +
+                  '</div><div class="value">' +
+                  esc(String(value)) +
+                  "</div>",
+              }),
+            );
+          }
+          addCard("Cyclicity", pct(meta.cyclicityScore) + "%");
+          addCard("Entropy", num(meta.equilibriumEntropy, 2) + " / " + num(meta.maxEntropy, 2));
+          addCard("Nash Converged", meta.nashConverged ? "Yes" : "No");
+          addCard("Dominant Teams", meta.dominantTeams.length);
+          sec.appendChild(grid);
+
+          // Payoff matrix heatmap
+          sec.appendChild(el("h2", { textContent: "Payoff Matrix (Win Rate)" }));
+          var table = el("table", { className: "sortable" });
+          var thead = el("thead");
+          var headRow = el("tr");
+          headRow.appendChild(el("th", { textContent: "" }));
+          meta.teamLabels.forEach(function (l) {
+            headRow.appendChild(el("th", { textContent: l, style: "font-size:0.8em" }));
+          });
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+
+          var tbody = el("tbody");
+          meta.payoffMatrix.forEach(function (row, i) {
+            var tr = el("tr");
+            tr.appendChild(
+              el("td", { textContent: meta.teamLabels[i], style: "font-weight:bold" }),
+            );
+            row.forEach(function (cell, j) {
+              var td = el("td", {
+                className: "num",
+                textContent: i === j ? "—" : wr(cell.winRate) + "%",
+                style: i === j ? "color:#666" : "background:" + payoffColor(cell.winRate),
+              });
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          sec.appendChild(table);
+
+          // Nash equilibrium
+          sec.appendChild(el("h2", { textContent: "Nash Equilibrium (Mixed Strategy)" }));
+          var nashDiv = el("div", { style: "margin-bottom:16px" });
+          var sorted = meta.nashEquilibrium.slice().sort(function (a, b) {
+            return b.probability - a.probability;
+          });
+          sorted.forEach(function (entry) {
+            var barWidth = Math.max(entry.probability * 400, 2);
+            var bar = el("div", {
+              style: "display:flex;align-items:center;margin:4px 0",
+            });
+            bar.appendChild(
+              el("span", {
+                textContent: entry.team,
+                style: "width:80px;font-size:0.85em",
+              }),
+            );
+            bar.appendChild(
+              el("div", {
+                style:
+                  "width:" +
+                  barWidth +
+                  "px;height:20px;background:#3498db;border-radius:3px;margin-right:8px",
+              }),
+            );
+            bar.appendChild(
+              el("span", {
+                textContent: pct(entry.probability) + "%",
+                style: "font-size:0.85em;color:#aaa",
+              }),
+            );
+            nashDiv.appendChild(bar);
+          });
+          sec.appendChild(nashDiv);
+
+          // Dominance alerts
+          if (meta.dominantTeams.length > 0) {
+            var alertBox = el("div", {
+              style:
+                "background:#4a1a1a;border:1px solid #ff4444;padding:12px;border-radius:6px;margin-top:16px",
+            });
+            alertBox.appendChild(
+              el("strong", { style: "color:#ff4444", textContent: "⚠ Dominant Strategies" }),
+            );
+            var alertList = el("ul", { style: "margin-top:8px;padding-left:20px" });
+            meta.dominantTeams.forEach(function (d) {
+              alertList.appendChild(
+                el("li", {
+                  style: "color:#ffaaaa",
+                  textContent:
+                    d.team + " (" + d.type + " dominant, min WR: " + wr(d.minWinRate) + "%)",
+                }),
+              );
+            });
+            alertBox.appendChild(alertList);
+            sec.appendChild(alertBox);
+          }
+        }
+
         // ── Init ──
 
         var DATA = JSON.parse(document.getElementById("sim-data").textContent);
@@ -1124,6 +1292,7 @@
         renderCrossNight(DATA);
         renderScaling(DATA);
         renderGA(DATA);
+        renderMeta(DATA);
       })();
     </script>
   </body>

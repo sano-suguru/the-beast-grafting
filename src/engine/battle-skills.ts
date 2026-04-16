@@ -85,6 +85,7 @@ function applyCholeraSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   const target = mustGet(targetArr, targetIdx, "cholera target");
   const prevEquip = target.equip;
   target.equip = "infection";
+  target.infectionLevel = u.level;
   const prefix = enemyPrefix(isPlayer);
   if (prevEquip && prevEquip !== "infection") {
     notifyEquipInfection(ctx, prefix, target);

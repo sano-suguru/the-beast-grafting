@@ -7,6 +7,7 @@ import type {
   GaReportData,
   InsufficientSampleEntry,
   MatchupEntry,
+  MetaAnalysis,
   NightGaEntry,
   PairSynergyEntry,
   PositionOptResult,
@@ -47,6 +48,7 @@ export class SimReportCollector {
   private readonly _insufficientSamples: InsufficientSampleEntry[] = [];
   private _gaDiscovery: GaReportData | null = null;
   private readonly _nightGaResults: NightGaEntry[] = [];
+  private _metaAnalysis: MetaAnalysis | null = null;
 
   setPositionOpt(result: PositionOptResult): void {
     this._positionOpt = result;
@@ -109,6 +111,10 @@ export class SimReportCollector {
     this._nightGaResults.push(entry);
   }
 
+  setMetaAnalysis(analysis: MetaAnalysis): void {
+    this._metaAnalysis = analysis;
+  }
+
   build(): SimReportData {
     const crossNight: CrossNightEntry[] = [...this._crossNight.values()]
       .sort((a, b) => a.night - b.night)
@@ -132,6 +138,7 @@ export class SimReportCollector {
       insufficientSamples: this._insufficientSamples,
       gaDiscovery: this._gaDiscovery,
       nightGaResults: [...this._nightGaResults].sort((a, b) => a.night - b.night),
+      metaAnalysis: this._metaAnalysis,
     };
   }
 }

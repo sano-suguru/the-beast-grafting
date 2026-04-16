@@ -43,9 +43,9 @@ export const BONE_TREE = {
 
 export const GRAVE_WORM = {
   sellBuff: [
+    { atk: 0, hp: 1 },
     { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
+    { atk: 1, hp: 2 },
   ] as SB,
 };
 
@@ -54,6 +54,11 @@ export const MARKET_VULTURE = {
     { atk: 1, hp: 1 },
     { atk: 2, hp: 1 },
     { atk: 2, hp: 2 },
+  ] as SB,
+  selfBuff: [
+    { atk: 0, hp: 1 },
+    { atk: 1, hp: 1 },
+    { atk: 1, hp: 1 },
   ] as SB,
 };
 
@@ -75,9 +80,9 @@ export const TAINTED_PLACENTA = {
 
 export const CORPSE_BROKER = {
   sellBuff: [
+    { atk: 1, hp: 0 },
     { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
+    { atk: 2, hp: 1 },
   ] as SB,
 };
 

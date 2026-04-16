@@ -21,7 +21,6 @@ import {
   BUDDING_HYDRA,
   DEVOURING_GRAFT,
 } from "../shared/skill-params";
-import { SPAWN_ONLY_UNITS } from "../shared/data/spawn-only-units";
 
 export function handleGraftScionDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
   if (!successor) return;
@@ -66,29 +65,32 @@ export function handleOmenWombDeath({ dead, board, idx, isPlayer, ctx }: DeathCo
 export function handleStellarCocoonDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const t = atLevel(STELLAR_COCOON.summon, dead.level);
   const stat = `${t.atk}/${t.hp}`;
-  const segments = () => [
-    enemyPrefix(isPlayer),
-    seg.u(dead.name),
-    "の殻が砕ける。中から何かが…… ",
-    seg.s(`${stat} 召喚`),
-  ];
-  spawnSummonedUnitAndNotify({
+  const token = spawnTokenAndNotify({
     board,
     idx,
-    unitData: SPAWN_ONLY_UNITS.star_child,
+    name: "星の落とし子",
     atk: t.atk,
     hp: t.hp,
     isChurch: dead.isChurch,
-    level: dead.level,
-    segments,
+    segments: () => [
+      enemyPrefix(isPlayer),
+      seg.u(dead.name),
+      "の殻が砕ける。中から何かが…… ",
+      seg.s(`${stat} 召喚`),
+    ],
     isPlayer,
     ctx,
     delay: FRAME_DELAY_DEATH_CHAIN,
     spawnerUid: dead.uid,
   });
+  if (token) token.equip = "star_frenzy";
 }
 
-export function handleStarChildDeath({ dead, isPlayer, ctx }: DeathContext) {
+export function applyStarFrenzyDeath(
+  dead: DeathContext["dead"],
+  isPlayer: boolean,
+  ctx: DeathContext["ctx"],
+) {
   const killerUid = dead.lastDamageSource;
   if (!killerUid) return;
 
@@ -123,7 +125,7 @@ export function handleDevouringGraftDeath({ dead, board, idx, isPlayer, ctx }: D
   if (!absorbed) return;
   ctx.absorbedUnits.delete(dead.uid);
   const prefix = enemyPrefix(isPlayer);
-  const decay = DEVOURING_GRAFT.decayPercent / 100;
+  const decay = atLevel(DEVOURING_GRAFT.decayPercent, dead.level) / 100;
   const decayedAtk = Math.floor(absorbed.atk * decay);
   const decayedHp = Math.max(1, Math.floor(absorbed.hp * decay));
   const segments = () => [

@@ -67,7 +67,7 @@ export const PARASITE = {
 
 export const EYE = {
   damage: [4, 8, 12] as SN,
-  uses: [4, 6, 8] as SN,
+  uses: [3, 4, 6] as SN,
 };
 
 export const FAMINE_CORPSE = {
@@ -137,7 +137,8 @@ export const MACHINE = {
 // ── 戦闘スキル（撃破） ──
 
 export const DEAD_HAND = {
-  hpHeal: [1, 2, 3] as SN,
+  hpBuff: [1, 2, 3] as SN,
+  atkBuff: [1, 1, 2] as SN,
 };
 
 export const DEVOURING_WOUND = {
@@ -201,6 +202,7 @@ export const GRINNING_SKULL = {
     { atk: 3, hp: 3 },
     { atk: 5, hp: 5 },
   ] as SB,
+  uses: [2, 3, 4] as SN,
 };
 
 export const ARCHANGEL = {

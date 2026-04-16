@@ -22,6 +22,7 @@ import {
   FLAGELLANT,
   HOWLING_GIANT,
   TUMOR_GUARDIAN,
+  DEAD_HAND,
 } from "../shared/skill-params";
 
 type HitCtx = {
@@ -44,6 +45,7 @@ const HIT_HANDLERS = {
   howling_giant: applyHowlingGiantHit,
   tumor_guardian: applyTumorGuardianHit,
   amniotic_armor: applyAmnioticArmorHit,
+  dead_hand: applyDeadHandHit,
 } satisfies Partial<Record<UnitId, HitHandler>>;
 
 type HitHandlerUnitId = keyof typeof HIT_HANDLERS;
@@ -112,7 +114,7 @@ function applyStitchedTwinHit({ defender: u, board, idx, prefix, ctx }: HitCtx) 
   );
   const behind = board[idx + 1];
   if (behind && behind.hp > 0) {
-    const dmg = b;
+    const dmg = 1;
     takeDamage(behind, dmg, u.uid);
     pushFrame(
       ctx,
@@ -233,5 +235,19 @@ function applyAmnioticArmorHit({ defender: u, prefix, ctx }: HitCtx) {
     () => [prefix, seg.u(u.name), "の膜が硬化し、", seg.e("屍蝋"), "が纏う。"],
     "skill",
     { [u.uid]: { type: "buff", value: "屍蝋" } },
+  );
+}
+
+function applyDeadHandHit({ defender: u, prefix, ctx }: HitCtx) {
+  const hpGain = atLevel(DEAD_HAND.hpBuff, u.level);
+  const atkGain = atLevel(DEAD_HAND.atkBuff, u.level);
+  u.hp += hpGain;
+  u.atk += atkGain;
+  pushFrame(
+    ctx,
+    "skill",
+    () => [prefix, seg.u(u.name), "が噛みつき返す。肉が膨れる。", seg.s(`+${atkGain}/+${hpGain}`)],
+    "skill",
+    { [u.uid]: buffAction({ atk: atkGain, hp: hpGain }, u.uid) },
   );
 }

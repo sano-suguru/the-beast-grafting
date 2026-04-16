@@ -147,7 +147,7 @@ export const UNITS_TIER12 = {
   market_vulture: {
     id: "market_vulture",
     name: "闇市の禿鷹",
-    baseAtk: 1,
+    baseAtk: 2,
     baseHp: 3,
     tier: 2,
     lore: "市場の梁に止まる太った禿鷹。こいつがいる日は、なぜか素体の血色がいい。",

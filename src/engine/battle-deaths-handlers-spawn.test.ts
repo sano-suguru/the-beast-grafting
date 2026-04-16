@@ -1,5 +1,6 @@
 import { getDeathHandler } from "./battle-deaths-handlers";
 import type { DeathHandlerUnitId } from "./battle-deaths-handlers";
+import { applyStarFrenzyDeath } from "./battle-deaths-handlers-spawn";
 import {
   INERT_UNIT_ID,
   makeBattleUnit,
@@ -134,23 +135,23 @@ describe("handleOmenWombDeath", () => {
 });
 
 describe("handleStellarCocoonDeath", () => {
-  it("spawns star_child unit with correct stats", () => {
+  it("spawns token with star_frenzy equip and correct stats", () => {
     const board: BattleUnit[] = [];
     const dead = makeBattleUnit({ id: "stellar_cocoon", name: "星辰の繭", atk: 4, hp: 0 });
     const ctx = makeContext(board, []);
     callHandler("stellar_cocoon", dead, board, 0, true, ctx);
     const t = atLevel(STELLAR_COCOON.summon, 1);
-    const children = board.filter((u) => u.id === "star_child");
+    const children = board.filter((u) => u.id === "token" && u.equip === "star_frenzy");
     expect(children).toHaveLength(1);
     expect(children[0]!.atk).toBe(t.atk);
     expect(children[0]!.hp).toBe(t.hp);
   });
 });
 
-describe("handleStarChildDeath – frenzy", () => {
-  it("killer attacks a random ally on star_child death", () => {
-    const child = makeBattleUnit({
-      id: "star_child",
+describe("star_frenzy equip – frenzy effect", () => {
+  it("killer attacks a random ally on star_frenzy token death", () => {
+    const dead = makeBattleUnit({
+      id: "token",
       name: "星の落とし子",
       hp: 0,
       lastDamageSource: "killer-uid",
@@ -158,13 +159,13 @@ describe("handleStarChildDeath – frenzy", () => {
     const killer = makeBattleUnit({ uid: "killer-uid", atk: 5, hp: 10 });
     const ally = makeBattleUnit({ uid: "ally-uid", atk: 3, hp: 8 });
     const ctx = makeContext([], [killer, ally], null, { next: () => 0 });
-    callHandler("star_child", child, ctx.pBoard, 0, true, ctx);
+    applyStarFrenzyDeath(dead, true, ctx);
     expect(ally.hp).toBe(3); // 8 - 5 killer ATK
   });
 
   it("does nothing when killer is dead", () => {
-    const child = makeBattleUnit({
-      id: "star_child",
+    const dead = makeBattleUnit({
+      id: "token",
       name: "星の落とし子",
       hp: 0,
       lastDamageSource: "killer-uid",
@@ -172,28 +173,28 @@ describe("handleStarChildDeath – frenzy", () => {
     const killer = makeBattleUnit({ uid: "killer-uid", atk: 5, hp: 0 });
     const ally = makeBattleUnit({ uid: "ally-uid", atk: 3, hp: 8 });
     const ctx = makeContext([], [killer, ally], null, { next: () => 0 });
-    callHandler("star_child", child, ctx.pBoard, 0, true, ctx);
+    applyStarFrenzyDeath(dead, true, ctx);
     expect(ally.hp).toBe(8);
   });
 
   it("does nothing when killer has no allies", () => {
-    const child = makeBattleUnit({
-      id: "star_child",
+    const dead = makeBattleUnit({
+      id: "token",
       name: "星の落とし子",
       hp: 0,
       lastDamageSource: "killer-uid",
     });
     const killer = makeBattleUnit({ uid: "killer-uid", atk: 5, hp: 10 });
     const ctx = makeContext([], [killer], null, { next: () => 0 });
-    callHandler("star_child", child, ctx.pBoard, 0, true, ctx);
+    applyStarFrenzyDeath(dead, true, ctx);
     expect(ctx.frames).toHaveLength(0);
   });
 
   it("does nothing when no lastDamageSource", () => {
-    const child = makeBattleUnit({ id: "star_child", name: "星の落とし子", hp: 0 });
+    const dead = makeBattleUnit({ id: "token", name: "星の落とし子", hp: 0 });
     const enemy = makeBattleUnit({ uid: "e1", atk: 5, hp: 10 });
     const ctx = makeContext([], [enemy], null, { next: () => 0 });
-    callHandler("star_child", child, ctx.pBoard, 0, true, ctx);
+    applyStarFrenzyDeath(dead, true, ctx);
     expect(ctx.frames).toHaveLength(0);
   });
 });
@@ -206,15 +207,15 @@ describe("devouring_graft – death re-summon", () => {
     const ctx = makeContext(pBoard, []);
     runStartSkills(ctx.pBoard, [], true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
-    expect(ctx.pBoard[0]!.atk).toBe(3 + 5);
+    expect(ctx.pBoard[0]!.atk).toBe(3 + Math.floor(5 * 0.7));
     // Kill graft
     ctx.pBoard[0]!.hp = 0;
     resolveDeaths(ctx);
     // Absorbed unit should be re-spawned
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("疫病ネズミ");
-    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(5 * 0.5));
-    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.5)));
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(5 * 0.3));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.3)));
   });
 
   it("re-spawns absorbed church unit on death", () => {
@@ -230,13 +231,13 @@ describe("devouring_graft – death re-summon", () => {
     const ctx = makeContext(pBoard, []);
     runStartSkills(ctx.pBoard, [], true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
-    expect(ctx.pBoard[0]!.atk).toBe(3 + 2);
+    expect(ctx.pBoard[0]!.atk).toBe(3 + Math.floor(2 * 0.7));
     ctx.pBoard[0]!.hp = 0;
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("見習い従騎士");
-    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(2 * 0.5));
-    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.5)));
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(2 * 0.3));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.3)));
   });
 
   it("re-spawns absorbed token on death", () => {
@@ -246,14 +247,14 @@ describe("devouring_graft – death re-summon", () => {
     const ctx = makeContext(pBoard, []);
     runStartSkills(ctx.pBoard, [], true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
-    expect(ctx.pBoard[0]!.atk).toBe(3 + 4);
+    expect(ctx.pBoard[0]!.atk).toBe(3 + Math.floor(4 * 0.7));
     ctx.pBoard[0]!.hp = 0;
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.id).toBe("token");
     expect(ctx.pBoard[0]!.name).toBe("肉塊");
-    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(4 * 0.5));
-    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.5)));
+    expect(ctx.pBoard[0]!.atk).toBe(Math.floor(4 * 0.3));
+    expect(ctx.pBoard[0]!.hp).toBe(Math.max(1, Math.floor(3 * 0.3)));
   });
 
   it("does nothing if no absorbed data", () => {

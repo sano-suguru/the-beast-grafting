@@ -83,6 +83,8 @@ function avengeAoeBuff(
 }
 
 function handleGrinningSkull(c: AvengeCtx) {
+  if (c.u.skillUses <= 0) return;
+  c.u.skillUses -= 1;
   avengeAoeBuff(c, GRINNING_SKULL, "が開く…味方全体に");
 }
 

@@ -212,10 +212,13 @@ export function buffRandomUnit(
   board[idx] = { ...target, buffAtk: target.buffAtk + atkBuff, buffHp: target.buffHp + hpBuff };
 }
 
-function applyGraveWormSell(soldUnit: UnitInstance, nextBoard: (UnitInstance | null)[], rng: Rng) {
-  if (soldUnit.id !== "grave_worm") return;
-  const b = atLevel(GRAVE_WORM.sellBuff, soldUnit.level);
-  buffRandomUnit(nextBoard, b.atk, b.hp, rng);
+function applyGraveWormSell(nextBoard: (UnitInstance | null)[], rng: Rng) {
+  for (let i = 0; i < nextBoard.length; i++) {
+    const u = nextBoard[i];
+    if (!u || u.id !== "grave_worm") continue;
+    const b = atLevel(GRAVE_WORM.sellBuff, u.level);
+    buffRandomUnit(nextBoard, b.atk, b.hp, rng, i);
+  }
 }
 
 function collectMarketVultureShopBuff(
@@ -245,14 +248,24 @@ function applyCorpseBrokerSell(nextBoard: (UnitInstance | null)[]): void {
   }
 }
 
+function applyMarketVultureSelfBuff(nextBoard: (UnitInstance | null)[]): void {
+  for (let i = 0; i < nextBoard.length; i++) {
+    const u = nextBoard[i];
+    if (!u || u.id !== "market_vulture") continue;
+    const b = atLevel(MARKET_VULTURE.selfBuff, u.level);
+    nextBoard[i] = { ...u, buffAtk: u.buffAtk + b.atk, buffHp: u.buffHp + b.hp };
+  }
+}
+
 export const applySellEffects = (
   soldUnit: UnitInstance,
   currentBoard: (UnitInstance | null)[],
   rng: Rng,
 ): SellResult => {
   const nextBoard = [...currentBoard];
-  applyGraveWormSell(soldUnit, nextBoard, rng);
+  applyGraveWormSell(nextBoard, rng);
   const shopBuff = collectMarketVultureShopBuff(nextBoard);
+  applyMarketVultureSelfBuff(nextBoard);
   applyAshFungusSell(soldUnit, nextBoard, rng);
   applyCorpseBrokerSell(nextBoard);
   return { board: nextBoard, shopBuff };

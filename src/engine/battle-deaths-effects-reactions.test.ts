@@ -10,19 +10,35 @@ import { MAX_BOARD_SIZE } from "./constants";
 import { atLevel, CROW, SIN_EATER, CATHEDRAL } from "../shared/skill-params";
 
 describe("handleBeelzebubSpawns", () => {
-  it("spawns 3/3 fly when beelzebub is alive", () => {
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
+  it("spawns 2/2 fly when beelzebub is alive (Lv1)", () => {
+    const beelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "ベルゼブブ",
+      atk: 4,
+      hp: 4,
+      skillUses: 2,
+    });
     const ctx = makeContext([beelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
     expect(fly).toBeDefined();
-    expect(fly!.atk).toBe(3);
-    expect(fly!.hp).toBe(3);
+    expect(fly!.atk).toBe(2);
+    expect(fly!.hp).toBe(2);
   });
 
   it("player and enemy fly spawns are independent", () => {
-    const pBeelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", hp: 4 });
-    const eBeelzebub = makeBattleUnit({ id: "beelzebub", name: "敵ベルゼブブ", hp: 4 });
+    const pBeelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "ベルゼブブ",
+      hp: 4,
+      skillUses: 2,
+    });
+    const eBeelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "敵ベルゼブブ",
+      hp: 4,
+      skillUses: 2,
+    });
     const ctx = makeContext([pBeelzebub], [eBeelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
     handleBeelzebubSpawns(ctx.eBoard, false, ctx, 0);
@@ -32,11 +48,16 @@ describe("handleBeelzebubSpawns", () => {
 
   it("flies get zealot buff if zealot present", () => {
     const zealot = makeBattleUnit({ id: "zealot", name: "狂信者", hp: 3 });
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", hp: 4 });
+    const beelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "ベルゼブブ",
+      hp: 4,
+      skillUses: 2,
+    });
     const ctx = makeContext([zealot, beelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
-    expect(fly!.atk).toBe(4); // 3 base + 1 zealot
+    expect(fly!.atk).toBe(3); // 2 base + 1 zealot
   });
 
   it("does not trigger when no beelzebub on board", () => {
@@ -70,7 +91,13 @@ describe("handleBeelzebubSpawns – board size guard", () => {
   });
 
   it("spawns only until board is full", () => {
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
+    const beelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "ベルゼブブ",
+      atk: 4,
+      hp: 4,
+      skillUses: 4,
+    });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     // board = 3 units, MAX_BOARD_SIZE = 5, brains doubles → wants 2 flies, room for 2
     const board = [beelzebub, brains, makeBattleUnit({ hp: 5 })];

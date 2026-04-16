@@ -44,6 +44,7 @@ function initBattleUnit(u: UnitInstance): BattleUnit {
     avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
+    infectionLevel: 0,
     lastDamageSource: null,
   };
   getInitOverride(bu.id)?.(bu);

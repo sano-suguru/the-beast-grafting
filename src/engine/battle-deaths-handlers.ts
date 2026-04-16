@@ -16,7 +16,6 @@ import {
   handleGraftScionDeath,
   handleOmenWombDeath,
   handleStellarCocoonDeath,
-  handleStarChildDeath,
   handleDevouringGraftDeath,
   handleBuddingHydraDeath,
 } from "./battle-deaths-handlers-spawn";
@@ -37,7 +36,6 @@ export const UNIT_DEATH_HANDLERS = {
   graft_scion: handleGraftScionDeath,
   omen_womb: handleOmenWombDeath,
   stellar_cocoon: handleStellarCocoonDeath,
-  star_child: handleStarChildDeath,
   devouring_graft: handleDevouringGraftDeath,
   budding_hydra: handleBuddingHydraDeath,
   ash_fungus: handleAshFungusDeath,

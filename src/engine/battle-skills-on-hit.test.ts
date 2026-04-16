@@ -3,6 +3,7 @@ import { resolveDeaths } from "./battle-deaths";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
 import {
   atLevel,
+  DEAD_HAND,
   FLAYED_SAINT,
   RAT,
   STITCHED_TWIN,
@@ -58,7 +59,7 @@ describe("on-hit kill → resolveDeaths cascade", () => {
 });
 
 describe("applyOnHitSkills – stitched_twin", () => {
-  it("buffs self atk and damages unit behind", () => {
+  it("buffs self atk and damages unit behind with fixed 1 damage", () => {
     const twin = makeBattleUnit({ id: "stitched_twin", name: "継ぎ接ぎ", atk: 2, hp: 4 });
     const behind = makeBattleUnit({ atk: 3, hp: 10 });
     const board = [twin, behind];
@@ -66,7 +67,7 @@ describe("applyOnHitSkills – stitched_twin", () => {
     applyOnHitSkills(twin, board, true, ctx);
     const b = atLevel(STITCHED_TWIN.atkBuff, 1);
     expect(twin.atk).toBe(2 + b);
-    expect(behind.hp).toBe(10 - b);
+    expect(behind.hp).toBe(10 - 1);
   });
 
   it("does not crash when no unit behind", () => {
@@ -77,7 +78,7 @@ describe("applyOnHitSkills – stitched_twin", () => {
     expect(twin.atk).toBe(2 + atLevel(STITCHED_TWIN.atkBuff, 1));
   });
 
-  it("damages puppeteer behind like any other unit", () => {
+  it("damages puppeteer behind with fixed 1 damage", () => {
     const twin = makeBattleUnit({ id: "stitched_twin", name: "継ぎ接ぎ", atk: 2, hp: 4 });
     const puppet = makeBattleUnit({ id: "puppeteer", name: "操り糸", atk: 4, hp: 6 });
     const board = [twin, puppet];
@@ -85,7 +86,7 @@ describe("applyOnHitSkills – stitched_twin", () => {
     applyOnHitSkills(twin, board, true, ctx);
     const dmg = atLevel(STITCHED_TWIN.atkBuff, 1);
     expect(twin.atk).toBe(2 + dmg);
-    expect(puppet.hp).toBe(6 - dmg);
+    expect(puppet.hp).toBe(6 - 1);
   });
 });
 
@@ -209,5 +210,25 @@ describe("applyOnHitSkills – amniotic_armor", () => {
     applyOnHitSkills(armor, board, true, ctx);
     expect(armor.equip).toBe("iron");
     expect(armor.skillUses).toBe(1);
+  });
+});
+
+describe("applyOnHitSkills – dead_hand", () => {
+  it("buffs self atk and hp when hit", () => {
+    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 5, level: 1 });
+    const board = [unit];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(unit, board, true, ctx);
+    expect(unit.atk).toBe(2 + atLevel(DEAD_HAND.atkBuff, 1));
+    expect(unit.hp).toBe(5 + atLevel(DEAD_HAND.hpBuff, 1));
+  });
+
+  it("does not trigger when hp <= 0", () => {
+    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 0 });
+    const board = [unit];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(unit, board, true, ctx);
+    expect(unit.atk).toBe(2);
+    expect(unit.hp).toBe(0);
   });
 });

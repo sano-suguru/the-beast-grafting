@@ -54,6 +54,7 @@ export function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit 
     avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
+    infectionLevel: 0,
     ...overrides,
     altarBuffed: overrides.altarBuffed ?? false,
     lastDamageSource: overrides.lastDamageSource ?? null,

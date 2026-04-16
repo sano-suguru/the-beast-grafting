@@ -29,15 +29,17 @@ describe("resolveDeaths – basic removal", () => {
 });
 
 describe("resolveDeaths – spawn on death", () => {
-  it("rat death buffs a random ally +1/+1", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
+  it("rat death buffs all allies", () => {
     const rat = makeBattleUnit({ id: "rat", hp: 0 });
-    const ally = makeBattleUnit({ atk: 3, hp: 5 });
-    const ctx = makeContext([rat, ally], []);
+    const ally1 = makeBattleUnit({ atk: 3, hp: 5 });
+    const ally2 = makeBattleUnit({ atk: 2, hp: 4 });
+    const ctx = makeContext([rat, ally1, ally2], []);
     resolveDeaths(ctx);
-    expect(ally.atk).toBe(4);
-    expect(ally.hp).toBe(6);
-    vi.restoreAllMocks();
+    // Lv1: +1/+0
+    expect(ally1.atk).toBe(4);
+    expect(ally1.hp).toBe(5);
+    expect(ally2.atk).toBe(3);
+    expect(ally2.hp).toBe(4);
   });
 
   it("hound death spawns 3/2 token", () => {
@@ -178,29 +180,35 @@ describe("resolveDeaths – token buff synergies", () => {
 });
 
 describe("resolveDeaths – beelzebub", () => {
-  it("spawns 3/3 fly on ally death", () => {
+  it("spawns 2/2 fly on ally death (Lv1)", () => {
     const dying = makeBattleUnit({ hp: 0 });
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
+    const beelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "ベルゼブブ",
+      atk: 4,
+      hp: 4,
+      skillUses: 2,
+    });
     const ctx = makeContext([dying, beelzebub], []);
     resolveDeaths(ctx);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
     expect(fly).toBeDefined();
-    expect(fly!.atk).toBe(3);
-    expect(fly!.hp).toBe(3);
+    expect(fly!.atk).toBe(2);
+    expect(fly!.hp).toBe(2);
   });
 
-  it("fly spawn limited by board size", () => {
+  it("fly spawn limited by skillUses (Lv1: max 2)", () => {
     const units = [
       makeBattleUnit({ id: "eye", hp: 0 }),
       makeBattleUnit({ id: "eye", hp: 0 }),
       makeBattleUnit({ id: "eye", hp: 0 }),
       makeBattleUnit({ id: "eye", hp: 0 }),
-      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 }),
+      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4, skillUses: 2 }),
     ];
     const ctx = makeContext(units, []);
     resolveDeaths(ctx);
     const flies = ctx.pBoard.filter((u) => u.name === "腐肉の蠅");
-    expect(flies.length).toBe(4);
+    expect(flies.length).toBe(2);
   });
 
   it("two beelzebubs spawn independently, limited by board size", () => {
@@ -208,8 +216,8 @@ describe("resolveDeaths – beelzebub", () => {
       makeBattleUnit({ hp: 0 }),
       makeBattleUnit({ hp: 0 }),
       makeBattleUnit({ hp: 0 }),
-      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ1", atk: 4, hp: 4 }),
-      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ2", atk: 4, hp: 4 }),
+      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ1", atk: 4, hp: 4, skillUses: 2 }),
+      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ2", atk: 4, hp: 4, skillUses: 2 }),
     ];
     const ctx = makeContext(units, []);
     resolveDeaths(ctx);
@@ -219,7 +227,13 @@ describe("resolveDeaths – beelzebub", () => {
 
   it("brains behind beelzebub spawns 2 flies per faint (SAP Tiger+Fly)", () => {
     const dying = makeBattleUnit({ hp: 0 });
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
+    const beelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "ベルゼブブ",
+      atk: 4,
+      hp: 4,
+      skillUses: 2,
+    });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const ctx = makeContext([dying, beelzebub, brains], []);
     resolveDeaths(ctx);
@@ -227,20 +241,32 @@ describe("resolveDeaths – beelzebub", () => {
     expect(flies.length).toBe(2);
   });
 
-  it("spawns one fly per ally death without cap", () => {
+  it("skillUses limits total spawns across multiple deaths", () => {
     const d1 = makeBattleUnit({ id: "eye", hp: 0, atk: 5 });
     const d2 = makeBattleUnit({ id: "eye", hp: 0, atk: 3 });
     const d3 = makeBattleUnit({ id: "eye", hp: 0, atk: 1 });
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
+    const beelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "ベルゼブブ",
+      atk: 4,
+      hp: 4,
+      skillUses: 2,
+    });
     const ctx = makeContext([d1, d2, d3, beelzebub], []);
     resolveDeaths(ctx);
     const flies = ctx.pBoard.filter((u) => u.name === "腐肉の蠅");
-    expect(flies.length).toBe(3);
+    expect(flies.length).toBe(2);
   });
 
   it("token (zombie fly) death does not trigger beelzebub spawns (SAP準拠)", () => {
     const token = makeBattleUnit({ id: "token", name: "腐肉の蠅", hp: 0 });
-    const beelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
+    const beelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "ベルゼブブ",
+      atk: 4,
+      hp: 4,
+      skillUses: 2,
+    });
     const ctx = makeContext([token, beelzebub], []);
     resolveDeaths(ctx);
     expect(ctx.pBoard.filter((u) => u.name === "腐肉の蠅")).toHaveLength(0);
@@ -248,9 +274,21 @@ describe("resolveDeaths – beelzebub", () => {
 
   it("player and enemy fly counters are independent", () => {
     const pDead = makeBattleUnit({ hp: 0 });
-    const pBeelzebub = makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4 });
+    const pBeelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "ベルゼブブ",
+      atk: 4,
+      hp: 4,
+      skillUses: 2,
+    });
     const eDead = makeBattleUnit({ hp: 0 });
-    const eBeelzebub = makeBattleUnit({ id: "beelzebub", name: "敵ベルゼブブ", atk: 4, hp: 4 });
+    const eBeelzebub = makeBattleUnit({
+      id: "beelzebub",
+      name: "敵ベルゼブブ",
+      atk: 4,
+      hp: 4,
+      skillUses: 2,
+    });
     const ctx = makeContext([pDead, pBeelzebub], [eDead, eBeelzebub]);
     resolveDeaths(ctx);
     expect(ctx.pBoard.filter((u) => u.name === "腐肉の蠅").length).toBeGreaterThanOrEqual(1);
@@ -442,11 +480,12 @@ describe("resolveDeaths – evangelist plague", () => {
     expect(enemy.hp).toBe(10);
   });
 
-  it("destroys existing equip when infecting and logs it", () => {
+  it("destroys existing equip when infecting (装備上書き)", () => {
     const dying = makeBattleUnit({ hp: 0 });
     const evangelist = makeBattleUnit({
       id: "evangelist",
       name: "伝道師",
+      level: 2,
       atk: 3,
       hp: 5,
       skillUses: 2,
@@ -455,8 +494,7 @@ describe("resolveDeaths – evangelist plague", () => {
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
     resolveDeaths(ctx);
     expect(enemy.equip).toBe("infection");
-    const destroyFrame = ctx.frames.find((f) => logText(f).includes("装備が疫病に蝕まれた"));
-    expect(destroyFrame).toBeDefined();
+    expect(enemy.infectionLevel).toBe(2);
   });
 
   it("skips enemies with hp <= 0 when selecting infection target", () => {

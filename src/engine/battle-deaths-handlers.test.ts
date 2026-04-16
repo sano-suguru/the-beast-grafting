@@ -10,35 +10,35 @@ describe("handleRatDeath", () => {
     expect(ctx.frames).toHaveLength(0);
   });
 
-  it("buffs the only remaining ally +1/+1", () => {
+  it("buffs all remaining allies (Lv1: +1/+0)", () => {
     const ally = makeBattleUnit({ atk: 3, hp: 5, uid: "ally-1" });
     const ctx = makeContext([ally], [], null, { next: () => 0 });
     const dead = makeBattleUnit({ id: "rat", name: "ネズミ" });
     callHandler("rat", dead, ctx.pBoard, 0, true, ctx);
     expect(ally.atk).toBe(4);
-    expect(ally.hp).toBe(6);
+    expect(ally.hp).toBe(5);
   });
 
-  it("selects last ally when random is 0.99", () => {
+  it("buffs every ally on the board", () => {
     const a = makeBattleUnit({ atk: 1, hp: 1, uid: "a" });
     const b = makeBattleUnit({ atk: 2, hp: 2, uid: "b" });
     const c = makeBattleUnit({ atk: 3, hp: 3, uid: "c" });
-    const ctx = makeContext([a, b, c], [], null, { next: () => 0.99 });
+    const ctx = makeContext([a, b, c]);
     const dead = makeBattleUnit({ id: "rat", name: "ネズミ" });
     callHandler("rat", dead, ctx.pBoard, 0, true, ctx);
-    // Math.floor(0.99 * 3) = 2, so c is targeted
+    expect(a.atk).toBe(2);
+    expect(b.atk).toBe(3);
     expect(c.atk).toBe(4);
-    expect(c.hp).toBe(4);
   });
 
-  it("frame action value matches actual buff (+1/+1)", () => {
+  it("frame action value matches actual buff (+1/+0)", () => {
     const ally = makeBattleUnit({ atk: 3, hp: 5, uid: "ally-1" });
-    const ctx = makeContext([ally], [], null, { next: () => 0 });
+    const ctx = makeContext([ally]);
     const dead = makeBattleUnit({ id: "rat", name: "ネズミ" });
     callHandler("rat", dead, ctx.pBoard, 0, true, ctx);
     const action = ctx.frames[0]?.actions["ally-1"];
     expect(action).toBeDefined();
-    expect(action!.value).toBe("+1/+1");
+    expect(action!.value).toBe("+1/+0");
   });
 });
 

@@ -18,7 +18,6 @@ import { mustGet } from "../shared/invariant";
 import { HUNDRED_ARMS_SAFETY, ACID_SPLASH_DAMAGE } from "./constants";
 import {
   atLevel,
-  DEAD_HAND,
   DEVOURING_WOUND,
   HUNDRED_ARMS,
   ORGAN_GRINDER,
@@ -69,7 +68,6 @@ type KnockoutContext = {
 type KnockoutHandler = (k: KnockoutContext) => void;
 
 const KNOCKOUT_HANDLERS = {
-  dead_hand: (k) => processDeadHandKnockout(k.attacker, k.attackerBoard, k.isPlayer, k.ctx),
   devouring_wound: (k) =>
     processDevouringWoundKnockout(k.attacker, k.attackerBoard, k.isPlayer, k.ctx),
   hundred_arms: (k) =>
@@ -100,28 +98,6 @@ function getKnockoutMult(unit: BattleUnit, id: UnitId, board: BattleUnit[]): num
   if (unit.id !== id || unit.hp <= 0) return 0;
   const idx = board.indexOf(unit);
   return idx === -1 ? 0 : getMult(board, idx);
-}
-
-function processDeadHandKnockout(
-  attacker: BattleUnit,
-  attackerBoard: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  const mult = getKnockoutMult(attacker, "dead_hand", attackerBoard);
-  if (mult === 0) return;
-  const prefix = enemyPrefix(isPlayer);
-  for (let m = 0; m < mult; m++) {
-    const heal = atLevel(DEAD_HAND.hpHeal, attacker.level);
-    attacker.hp += heal;
-    pushFrame(
-      ctx,
-      "skill",
-      () => [prefix, seg.u(attacker.name), "が死肉を掴む。少し膨れる。", seg.s(`+0/+${heal}`)],
-      "skill",
-      { [attacker.uid]: healAction(heal, attacker.uid) },
-    );
-  }
 }
 
 function processDevouringWoundKnockout(
