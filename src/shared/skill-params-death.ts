@@ -45,9 +45,9 @@ export const HOUND = {
 
 export const BEAST = {
   summon: [
+    { atk: 3, hp: 3 },
     { atk: 4, hp: 4 },
     { atk: 6, hp: 6 },
-    { atk: 9, hp: 9 },
   ] as SB,
 };
 
@@ -74,6 +74,7 @@ export const SERAPH = {
 export const EVANGELIST = {
   targets: [1, 2, 3] as SN,
   selfDamage: [2, 2, 2] as SN,
+  uses: [2, 3, 4] as SN,
 };
 
 export const CROW = {

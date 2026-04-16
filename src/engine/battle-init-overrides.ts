@@ -10,7 +10,9 @@ import {
   AMNIOTIC_ARMOR,
   MACHINE,
   CRAWLING_CORD,
+  WAILING_CURSECHILD,
 } from "../shared/skill-params";
+import { EVANGELIST } from "../shared/skill-params-death";
 
 const INIT_OVERRIDES = {
   cholera: (bu: BattleUnit) => {
@@ -36,6 +38,12 @@ const INIT_OVERRIDES = {
   },
   crawling_cord: (bu: BattleUnit) => {
     bu.skillUses = atLevel(CRAWLING_CORD.uses, bu.level);
+  },
+  evangelist: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(EVANGELIST.uses, bu.level);
+  },
+  wailing_cursechild: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(WAILING_CURSECHILD.uses, bu.level);
   },
   necrotic_finger: (bu: BattleUnit) => {
     if (!bu.equip) bu.equip = "corpse_wax";

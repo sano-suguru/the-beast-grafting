@@ -1365,6 +1365,7 @@ describe("processAvenge – wailing_cursechild", () => {
       atk: 3,
       hp: 7,
       avengeDeathCount: 3,
+      skillUses: 1,
     });
     const ally = makeBattleUnit({ id: INERT_UNIT_ID, atk: 2, hp: 3 });
     const board = [child, ally];
@@ -1377,6 +1378,26 @@ describe("processAvenge – wailing_cursechild", () => {
     expect(ally.hp).toBe(3 + b.hp);
     expect(child.avengeDeathCount).toBe(0);
   });
+
+  it("stops buffing after skillUses exhausted", () => {
+    const child = makeBattleUnit({
+      id: "wailing_cursechild",
+      name: "啼き喚く呪い児",
+      atk: 3,
+      hp: 20,
+      avengeDeathCount: 6,
+      skillUses: 1,
+    });
+    const ally = makeBattleUnit({ id: INERT_UNIT_ID, atk: 2, hp: 3 });
+    const board = [child, ally];
+    const ctx = makeContext(board, []);
+    processAvenge(board, true, ctx);
+    const b = atLevel(WAILING_CURSECHILD.buff, 1);
+    // skillUses=1 → 1回分のバフのみ（threshold 3を2回分消費しても1回だけ発動）
+    expect(child.atk).toBe(3 + b.atk);
+    expect(ally.atk).toBe(2 + b.atk);
+    expect(child.skillUses).toBe(0);
+  });
 });
 
 // ── 味方死亡リアクション: crawling_cord, insatiable_maw ──
@@ -1388,7 +1409,7 @@ describe("handleCrawlingCordBuff", () => {
       name: "這い回る臍帯",
       atk: 2,
       hp: 3,
-      skillUses: 3,
+      skillUses: 1,
     });
     const ally = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 4 });
     const board = [cord, ally];
@@ -1406,7 +1427,7 @@ describe("handleCrawlingCordBuff", () => {
       name: "這い回る臍帯",
       atk: 2,
       hp: 3,
-      skillUses: 3,
+      skillUses: 1,
     });
     const board = [cord];
     const ctx = makeContext(board, []);
@@ -1422,7 +1443,7 @@ describe("handleCrawlingCordBuff", () => {
       name: "這い回る臍帯",
       atk: 2,
       hp: 3,
-      skillUses: 3,
+      skillUses: 1,
     });
     // board: [far, mid, cord] → cord at index 2, adjacent is mid (index 1)
     const board = [far, mid, cord];

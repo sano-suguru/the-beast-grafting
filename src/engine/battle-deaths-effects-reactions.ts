@@ -219,10 +219,11 @@ export function handleEvangelistPlague(
   const prefix = enemyPrefix(isPlayer);
   for (let i = 0; i < board.length; i++) {
     const u = board[i]!;
-    if (u.id !== "evangelist" || u.hp <= 0) continue;
+    if (u.id !== "evangelist" || u.hp <= 0 || u.skillUses <= 0) continue;
     const mult = getMult(board, i);
     const targets = atLevel(EVANGELIST.targets, u.level);
-    for (let m = 0; m < mult; m++) {
+    for (let m = 0; m < mult && u.skillUses > 0; m++) {
+      u.skillUses -= 1;
       infectTargets(u, enemyBoard, targets, prefix, ctx);
     }
     const selfDmg = atLevel(EVANGELIST.selfDamage, u.level);

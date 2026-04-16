@@ -131,6 +131,8 @@ function handleGroaningCoffin({ u, isPlayer, ctx }: AvengeCtx) {
 }
 
 function handleWailingCursechild(c: AvengeCtx) {
+  if (c.u.skillUses <= 0) return;
+  c.u.skillUses -= 1;
   avengeAoeBuff(c, WAILING_CURSECHILD, "が泣き叫ぶ。味方全体に");
 }
 

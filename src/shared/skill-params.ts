@@ -223,6 +223,7 @@ export const WAILING_CURSECHILD = {
     { atk: 3, hp: 3 },
     { atk: 4, hp: 4 },
   ] as SB,
+  uses: [1, 1, 2] as SN,
 };
 
 // ── 味方召喚時 ──
@@ -253,7 +254,7 @@ export const CRAWLING_CORD = {
     { atk: 2, hp: 3 },
     { atk: 3, hp: 4 },
   ] as SB,
-  uses: [3, 4, 5] as SN,
+  uses: [1, 2, 3] as SN,
 };
 
 export const INSATIABLE_MAW = {

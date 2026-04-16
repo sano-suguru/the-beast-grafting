@@ -48,13 +48,13 @@ describe("resolveDeaths – spawn on death", () => {
     expect(ctx.pBoard[0]!.hp).toBe(2);
   });
 
-  it("beast death spawns 4/4 unit", () => {
+  it("beast death spawns 3/3 unit", () => {
     const beast = makeBattleUnit({ id: "beast", name: "腐肉獣", hp: 0 });
     const ctx = makeContext([beast], []);
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
-    expect(ctx.pBoard[0]!.atk).toBe(4);
-    expect(ctx.pBoard[0]!.hp).toBe(4);
+    expect(ctx.pBoard[0]!.atk).toBe(3);
+    expect(ctx.pBoard[0]!.hp).toBe(3);
   });
 
   it("church_beast death spawns 3/3 token with isChurch", () => {
@@ -319,6 +319,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
+      skillUses: 2,
     });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
@@ -333,6 +334,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
+      skillUses: 2,
     });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const enemy1 = makeBattleUnit({ hp: 20 });
@@ -363,6 +365,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
+      skillUses: 2,
     });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([token, evangelist], [enemy], null, { next: () => 0 });
@@ -377,6 +380,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
+      skillUses: 2,
     });
     const ctx = makeContext([dying, evangelist], []);
     resolveDeaths(ctx);
@@ -391,6 +395,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
+      skillUses: 2,
     });
     const bystander = makeBattleUnit({ hp: 20 });
     const eEvangelist = makeBattleUnit({
@@ -415,6 +420,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 1,
       hp: 10,
+      skillUses: 2,
     });
     const enemy = makeBattleUnit({ hp: 20 });
     const ctx = makeContext([dead1, dead2, evangelist], [enemy], null, { next: () => 0 });
@@ -445,6 +451,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
+      skillUses: 2,
     });
     const enemy = makeBattleUnit({ hp: 10, equip: "iron" });
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
@@ -461,6 +468,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
+      skillUses: 2,
     });
     const deadEnemy = makeBattleUnit({ id: "token", hp: -2 });
     const aliveEnemy = makeBattleUnit({ hp: 10 });
@@ -477,6 +485,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
+      skillUses: 2,
     });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
@@ -494,6 +503,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 2,
+      skillUses: 2,
     });
     const e1 = makeBattleUnit({ hp: 10 });
     const e2 = makeBattleUnit({ hp: 10 });
@@ -506,6 +516,31 @@ describe("resolveDeaths – evangelist plague", () => {
     expect(e1.equip).toBe("infection");
     expect(e2.equip).not.toBe("infection");
   });
+
+  it("stops infecting after skillUses exhausted", () => {
+    const dead1 = makeBattleUnit({ id: "token", hp: 0 });
+    const dead2 = makeBattleUnit({ id: "token", hp: 0 });
+    const dead3 = makeBattleUnit({ id: "token", hp: 0 });
+    const evangelist = makeBattleUnit({
+      id: "evangelist",
+      name: "伝道師",
+      atk: 1,
+      hp: 20,
+      skillUses: 2,
+    });
+    const e1 = makeBattleUnit({ hp: 10 });
+    const e2 = makeBattleUnit({ hp: 10 });
+    const e3 = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([dead1, dead2, dead3, evangelist], [e1, e2, e3], null, {
+      next: () => 0,
+    });
+    resolveDeaths(ctx);
+    // skillUses=2 → 2回発動後stop。3体目の死亡には反応しない
+    expect(e1.equip).toBe("infection");
+    expect(e2.equip).toBe("infection");
+    expect(e3.equip).not.toBe("infection");
+    expect(evangelist.skillUses).toBe(0);
+  });
 });
 
 describe("resolveDeaths – cross-board cascade", () => {
@@ -517,6 +552,7 @@ describe("resolveDeaths – cross-board cascade", () => {
       name: "伝道師",
       atk: 1,
       hp: 10,
+      skillUses: 2,
     });
     const enemy1 = makeBattleUnit({ hp: 10 });
     const enemy2 = makeBattleUnit({ hp: 10 });

@@ -76,8 +76,8 @@ export const TAINTED_PLACENTA = {
 export const CORPSE_BROKER = {
   sellBuff: [
     { atk: 1, hp: 1 },
+    { atk: 1, hp: 2 },
     { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
   ] as SB,
 };
 
