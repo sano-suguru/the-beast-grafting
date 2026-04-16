@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { eq, and } from "drizzle-orm";
-import { getTestDb, type TestDb } from "../auth/test-db";
+import { getTestDb, type TestDb } from "../test-db";
 import { boardSnapshots } from "../../db/schema";
 import shopRoutes from "./routes";
 import { TEST_ENV } from "../auth/test-helpers";

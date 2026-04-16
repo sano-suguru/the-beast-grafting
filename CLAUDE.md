@@ -90,7 +90,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 外部依存（audio 等）は `vi.mock()` でモック
 - テストファイルは行数制限免除
 - カバレッジ対象: `engine/`, `shared/data/`, `app/state/`, `worker/`
-- Worker テストの命名規則: D1（Miniflare）を使うテストは `*.d1.test.ts`、使わないテストは `*.test.ts`。Vitest の project 振り分けに使用。
+- Worker テストの命名規則: DB依存テストは `*.d1.test.ts`、DB不要テストは `*.test.ts`。Vitest の project 振り分けに使用。
+- `*.d1.test.ts` はデフォルトで `@libsql/client`（インプロセス SQLite）で高速実行。`pnpm test:d1-compat` で Miniflare/D1 互換性検証が可能（`USE_MINIFLARE=1`）。
 
 ## Game Design Reference
 

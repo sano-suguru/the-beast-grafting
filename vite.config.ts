@@ -132,12 +132,17 @@ export default defineConfig({
           name: "worker-db",
           include: ["src/worker/**/*.d1.test.ts"],
           environment: "node",
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "worker-db-compat",
+          include: ["src/worker/**/*.d1.test.ts"],
+          environment: "node",
           pool: "forks",
-          globalSetup: ["src/worker/test-global-setup.ts"],
-          // pool:"forks" — each process gets its own Miniflare instance.
-          // maxWorkers:1 keeps a single process so startup cost is paid once.
           maxWorkers: 1,
-          sequence: { groupOrder: 1 },
+          env: { USE_MINIFLARE: "1" },
         },
       },
     ],

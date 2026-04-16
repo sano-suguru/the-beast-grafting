@@ -1,5 +1,5 @@
 import { buildAuthorizeUrl, exchangeCode, fetchUserInfo, findOrCreateByProvider } from "./oauth";
-import { getTestDb, type TestDb } from "./test-db";
+import { getTestDb, type TestDb } from "../test-db";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { players } from "../../db/schema";
 

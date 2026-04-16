@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { getTestDb, type TestDb } from "../auth/test-db";
+import { getTestDb, type TestDb } from "../test-db";
 import { TEST_ENV } from "../auth/test-helpers";
 import { createTestPlayer } from "../test-helpers";
 import type { AuthEnv } from "../auth/types";

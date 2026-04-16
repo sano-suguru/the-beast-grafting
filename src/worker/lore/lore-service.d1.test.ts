@@ -1,5 +1,5 @@
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { getTestDb, type TestDb } from "../auth/test-db";
+import { getTestDb, type TestDb } from "../test-db";
 import { createTestPlayer } from "../test-helpers";
 import { getLore, markSeen, markMastered } from "./lore-service";
 

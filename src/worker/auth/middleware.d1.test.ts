@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { MiddlewareHandler } from "hono";
-import { getTestDb, type TestDb } from "./test-db";
+import { getTestDb, type TestDb } from "../test-db";
 import { createSession } from "./session";
 import { requireAuth, optionalAuth, csrfGuard } from "./middleware";
 import { sessions } from "../../db/schema";

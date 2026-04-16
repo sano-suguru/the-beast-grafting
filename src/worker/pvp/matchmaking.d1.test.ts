@@ -1,6 +1,6 @@
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
-import { getTestDb, type TestDb } from "../auth/test-db";
+import { getTestDb, type TestDb } from "../test-db";
 import { createTestPlayer, createTestRun, makeValidUnit } from "../test-helpers";
 import { boardSnapshots, runs } from "../../db/schema";
 import { findOpponent } from "./matchmaking";

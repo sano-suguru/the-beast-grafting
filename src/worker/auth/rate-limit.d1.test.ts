@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { getTestDb, type TestDb } from "./test-db";
+import { getTestDb, type TestDb } from "../test-db";
 import { rateLimit, cleanExpiredRateLimits } from "./rate-limit";
 import { rateLimits } from "../../db/schema";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
