@@ -14,7 +14,7 @@
     "fmt": "vp fmt",
     "depcruise": "depcruise src --validate .dependency-cruiser.cjs",
     "similarity": "similarity-ts src/app src/shared src/engine --fail-on-duplicates --rename-cost 0.5 && similarity-ts src/worker src/db --fail-on-duplicates --rename-cost 0.5",
-    "check": "vp check && vp test run && knip && jscpd src && similarity-ts src/app src/shared src/engine --fail-on-duplicates --rename-cost 0.5 && similarity-ts src/worker src/db --fail-on-duplicates --rename-cost 0.5 && depcruise src --validate .dependency-cruiser.cjs",
+    "check": "vp check && vp test run --project default --project worker-unit --project worker-db && knip && jscpd src && similarity-ts src/app src/shared src/engine --fail-on-duplicates --rename-cost 0.5 && similarity-ts src/worker src/db --fail-on-duplicates --rename-cost 0.5 && depcruise src --validate .dependency-cruiser.cjs",
     "cpd": "jscpd src",
     "sim": "vp test run --project sim",
     "test": "vp test",
