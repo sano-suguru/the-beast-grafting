@@ -58,6 +58,8 @@ type AvengeCtx = {
 };
 
 function handleCharnelPit({ u, board, idx, isPlayer, ctx }: AvengeCtx) {
+  if (u.skillUses <= 0) return;
+  u.skillUses -= 1;
   const t = atLevel(CHARNEL_PIT.token, u.level);
   spawnAvengeToken(u, board, idx, "肉塊", t.atk, t.hp, "から肉塊が溢れ出す！ ", isPlayer, ctx);
 }

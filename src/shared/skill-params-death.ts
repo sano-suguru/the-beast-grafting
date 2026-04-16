@@ -74,7 +74,7 @@ export const SERAPH = {
 export const EVANGELIST = {
   targets: [1, 2, 3] as SN,
   selfDamage: [2, 2, 2] as SN,
-  uses: [2, 3, 4] as SN,
+  uses: [1, 2, 3] as SN,
 };
 
 export const CROW = {
@@ -117,9 +117,9 @@ export const OMEN_WOMB = {
 
 export const STELLAR_COCOON = {
   summon: [
+    { atk: 2, hp: 2 },
     { atk: 3, hp: 3 },
-    { atk: 5, hp: 5 },
-    { atk: 7, hp: 7 },
+    { atk: 4, hp: 4 },
   ] as SB,
 };
 

@@ -70,6 +70,7 @@ describe("processAvenge – charnel_pit (independent counters)", () => {
       atk: 0,
       hp: 6,
       avengeDeathCount: 2,
+      skillUses: 1,
     });
     const board = [pit];
     const ctx = makeContext(board, []);
@@ -90,6 +91,7 @@ describe("processAvenge – charnel_pit (independent counters)", () => {
       atk: 0,
       hp: 6,
       avengeDeathCount: 4,
+      skillUses: 2,
     });
     const board = [pit];
     const ctx = makeContext(board, []);
@@ -106,6 +108,7 @@ describe("processAvenge – charnel_pit (independent counters)", () => {
       atk: 0,
       hp: 6,
       avengeDeathCount: 3,
+      skillUses: 1,
     });
     const board = [pit];
     const ctx = makeContext(board, []);
@@ -121,6 +124,7 @@ describe("processAvenge – charnel_pit (independent counters)", () => {
       atk: 0,
       hp: 6,
       avengeDeathCount: 2,
+      skillUses: 1,
     });
     const pit2 = makeBattleUnit({
       id: "charnel_pit",
@@ -128,6 +132,7 @@ describe("processAvenge – charnel_pit (independent counters)", () => {
       atk: 0,
       hp: 6,
       avengeDeathCount: 2,
+      skillUses: 1,
     });
     const board = [pit1, pit2];
     const ctx = makeContext(board, []);
@@ -136,6 +141,24 @@ describe("processAvenge – charnel_pit (independent counters)", () => {
     expect(tokens.length).toBe(2);
     expect(pit1.avengeDeathCount).toBe(0);
     expect(pit2.avengeDeathCount).toBe(0);
+  });
+
+  it("stops spawning after skillUses exhausted", () => {
+    const pit = makeBattleUnit({
+      id: "charnel_pit",
+      name: "肉溜",
+      atk: 0,
+      hp: 6,
+      avengeDeathCount: 4,
+      skillUses: 1,
+    });
+    const board = [pit];
+    const ctx = makeContext(board, []);
+    processAvenge(board, true, ctx);
+    // skillUses=1 → 1回スポーン後stop。avengeDeathCount 4で閾値2×2回到達するがusesが足りない
+    expect(board.filter((u) => u.name === "肉塊").length).toBe(1);
+    expect(pit.skillUses).toBe(0);
+    expect(pit.avengeDeathCount).toBe(0);
   });
 });
 
@@ -261,7 +284,13 @@ describe("incrementAvengeCounters – independent per-unit", () => {
   });
 
   it("charnel_pit and grinning_skull trigger independently on same death count", () => {
-    const pit = makeBattleUnit({ id: "charnel_pit", atk: 0, hp: 6, avengeDeathCount: 1 });
+    const pit = makeBattleUnit({
+      id: "charnel_pit",
+      atk: 0,
+      hp: 6,
+      avengeDeathCount: 1,
+      skillUses: 1,
+    });
     const rel = makeBattleUnit({ id: "grinning_skull", atk: 2, hp: 8, avengeDeathCount: 2 });
     const board = [pit, rel];
     const ctx = makeContext(board, []);
@@ -1075,6 +1104,7 @@ describe("processAvenge snapshot – spawn does not skip later avenge units", ()
       atk: 0,
       hp: 6,
       avengeDeathCount: 2,
+      skillUses: 1,
     });
     const skull = makeBattleUnit({
       id: "grinning_skull",
@@ -1912,7 +1942,7 @@ describe("resolveDeaths – token deaths do not increment avenge", () => {
   });
 
   it("mixed real+token deaths only count real for avenge", () => {
-    const pit = makeBattleUnit({ id: "charnel_pit", atk: 0, hp: 6 });
+    const pit = makeBattleUnit({ id: "charnel_pit", atk: 0, hp: 6, skillUses: 1 });
     const real1 = makeBattleUnit({ id: "beggar" as UnitId, atk: 2, hp: 0 });
     const real2 = makeBattleUnit({ id: "beggar" as UnitId, atk: 1, hp: 0 });
     const token: BattleUnit = {

@@ -191,6 +191,7 @@ export const CHARNEL_PIT = {
     { atk: 5, hp: 5 },
     { atk: 7, hp: 7 },
   ] as SB,
+  uses: [1, 2, 3] as SN,
 };
 
 export const GRINNING_SKULL = {
@@ -223,7 +224,7 @@ export const WAILING_CURSECHILD = {
     { atk: 3, hp: 3 },
     { atk: 4, hp: 4 },
   ] as SB,
-  uses: [1, 1, 2] as SN,
+  uses: [1, 2, 3] as SN,
 };
 
 // ── 味方召喚時 ──

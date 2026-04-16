@@ -10,6 +10,7 @@ import {
   AMNIOTIC_ARMOR,
   MACHINE,
   CRAWLING_CORD,
+  CHARNEL_PIT,
   WAILING_CURSECHILD,
 } from "../shared/skill-params";
 import { EVANGELIST } from "../shared/skill-params-death";
@@ -44,6 +45,9 @@ const INIT_OVERRIDES = {
   },
   wailing_cursechild: (bu: BattleUnit) => {
     bu.skillUses = atLevel(WAILING_CURSECHILD.uses, bu.level);
+  },
+  charnel_pit: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(CHARNEL_PIT.uses, bu.level);
   },
   necrotic_finger: (bu: BattleUnit) => {
     if (!bu.equip) bu.equip = "corpse_wax";
