@@ -166,7 +166,11 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   board.splice(bestIdx, 1);
   executeDeathEffects(dead, board, bestIdx, mult, deathMult, isPlayer, ctx);
 
-  incrementAndProcessAvenge(isPlayer, ctx);
+  // トークン（スポーンユニット）の死亡ではavengeカウンタを加算しない。
+  // 実ユニットの死亡のみがavengeを起動し、正帰還ループを防ぐ。
+  if (dead.id !== "token") {
+    incrementAndProcessAvenge(isPlayer, ctx);
+  }
 
   return true;
 }

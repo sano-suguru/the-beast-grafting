@@ -1827,3 +1827,49 @@ describe("devouring_graft – resummon inherits graft level", () => {
     expect(ctx.pBoard[0]!.level).toBe(1);
   });
 });
+
+// ── トークン死亡のavenge除外 ──
+
+describe("resolveDeaths – token deaths do not increment avenge", () => {
+  it("token death does not increment charnel_pit avenge counter", () => {
+    const pit = makeBattleUnit({ id: "charnel_pit", atk: 0, hp: 6 });
+    const token: BattleUnit = {
+      ...makeBattleUnit({ id: "token" as UnitId, atk: 3, hp: 0, name: "肉塊" }),
+      id: "token",
+    };
+    const pBoard = [token, pit];
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 99 });
+    const ctx = makeContext(pBoard, [enemy]);
+    resolveDeaths(ctx);
+    expect(pit.avengeDeathCount).toBe(0);
+  });
+
+  it("real unit death increments avenge counter (regression)", () => {
+    const pit = makeBattleUnit({ id: "charnel_pit", atk: 0, hp: 6 });
+    // beggar has no death handler → pure avenge test
+    const fodder = makeBattleUnit({ id: "beggar" as UnitId, atk: 1, hp: 0 });
+    const pBoard = [fodder, pit];
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 99 });
+    const ctx = makeContext(pBoard, [enemy]);
+    resolveDeaths(ctx);
+    expect(pit.avengeDeathCount).toBe(1);
+  });
+
+  it("mixed real+token deaths only count real for avenge", () => {
+    const pit = makeBattleUnit({ id: "charnel_pit", atk: 0, hp: 6 });
+    const real1 = makeBattleUnit({ id: "beggar" as UnitId, atk: 2, hp: 0 });
+    const real2 = makeBattleUnit({ id: "beggar" as UnitId, atk: 1, hp: 0 });
+    const token: BattleUnit = {
+      ...makeBattleUnit({ id: "token" as UnitId, atk: 3, hp: 0, name: "肉塊" }),
+      id: "token",
+    };
+    const pBoard = [real1, token, real2, pit];
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 99 });
+    const ctx = makeContext(pBoard, [enemy]);
+    resolveDeaths(ctx);
+    // 2 real deaths → charnel_pit threshold(2) reached → triggered once, counter reset to 0
+    expect(pit.avengeDeathCount).toBe(0);
+    // charnel_pit spawned a token (肉塊)
+    expect(ctx.pBoard.some((u) => u.name === "肉塊")).toBe(true);
+  });
+});
