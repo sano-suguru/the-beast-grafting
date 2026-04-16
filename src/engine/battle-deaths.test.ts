@@ -358,7 +358,7 @@ describe("resolveDeaths – evangelist plague", () => {
     expect(enemy.hp).toBe(10);
   });
 
-  it("triggers on token death (unlike beelzebub)", () => {
+  it("does NOT trigger on token death (tokens are excluded from persistent reactions)", () => {
     const token = makeBattleUnit({ id: "token", name: "頭部", hp: 0 });
     const evangelist = makeBattleUnit({
       id: "evangelist",
@@ -370,7 +370,7 @@ describe("resolveDeaths – evangelist plague", () => {
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([token, evangelist], [enemy], null, { next: () => 0 });
     resolveDeaths(ctx);
-    expect(enemy.equip).toBe("infection");
+    expect(enemy.equip).not.toBe("infection");
   });
 
   it("does nothing when enemy board is empty", () => {
@@ -413,8 +413,8 @@ describe("resolveDeaths – evangelist plague", () => {
 
   it("does not re-infect already-infected enemy when only one target exists", () => {
     // 2体死亡 → 2回発動するが、感染候補が1体のみ → 2回目はスキップ
-    const dead1 = makeBattleUnit({ id: "token", hp: 0, atk: 5 });
-    const dead2 = makeBattleUnit({ id: "token", hp: 0, atk: 2 });
+    const dead1 = makeBattleUnit({ id: "beggar", hp: 0, atk: 5 });
+    const dead2 = makeBattleUnit({ id: "beggar", hp: 0, atk: 2 });
     const evangelist = makeBattleUnit({
       id: "evangelist",
       name: "伝道師",
@@ -431,7 +431,7 @@ describe("resolveDeaths – evangelist plague", () => {
   });
 
   it("does not fire when evangelist has hp <= 0 but is not yet spliced", () => {
-    const unitA = makeBattleUnit({ id: "token", atk: 5, hp: 0 });
+    const unitA = makeBattleUnit({ id: "beggar", atk: 5, hp: 0 });
     const evangelist = makeBattleUnit({
       id: "evangelist",
       name: "伝道師",
@@ -462,7 +462,7 @@ describe("resolveDeaths – evangelist plague", () => {
   });
 
   it("skips enemies with hp <= 0 when selecting infection target", () => {
-    const dying = makeBattleUnit({ id: "token", hp: 0 });
+    const dying = makeBattleUnit({ id: "beggar", hp: 0 });
     const evangelist = makeBattleUnit({
       id: "evangelist",
       name: "伝道師",
@@ -470,7 +470,7 @@ describe("resolveDeaths – evangelist plague", () => {
       hp: 5,
       skillUses: 2,
     });
-    const deadEnemy = makeBattleUnit({ id: "token", hp: -2 });
+    const deadEnemy = makeBattleUnit({ hp: -2 });
     const aliveEnemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([dying, evangelist], [deadEnemy, aliveEnemy], null, { next: () => 0 });
     resolveDeaths(ctx);
@@ -478,8 +478,8 @@ describe("resolveDeaths – evangelist plague", () => {
     expect(aliveEnemy.equip).toBe("infection");
   });
 
-  it("takes self-damage on each activation", () => {
-    const dying = makeBattleUnit({ id: "token", hp: 0 });
+  it("does not take self-damage (removed in Phase 5)", () => {
+    const dying = makeBattleUnit({ id: "beggar", hp: 0 });
     const evangelist = makeBattleUnit({
       id: "evangelist",
       name: "伝道師",
@@ -491,36 +491,13 @@ describe("resolveDeaths – evangelist plague", () => {
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
     resolveDeaths(ctx);
     expect(enemy.equip).toBe("infection");
-    expect(evangelist.hp).toBe(3); // 5 - 2 selfDamage
-  });
-
-  it("stops triggering when self-damage kills evangelist", () => {
-    const dead1 = makeBattleUnit({ id: "token", hp: 0 });
-    const dead2 = makeBattleUnit({ id: "token", hp: 0 });
-    const dead3 = makeBattleUnit({ id: "token", hp: 0 });
-    const evangelist = makeBattleUnit({
-      id: "evangelist",
-      name: "伝道師",
-      atk: 3,
-      hp: 2,
-      skillUses: 2,
-    });
-    const e1 = makeBattleUnit({ hp: 10 });
-    const e2 = makeBattleUnit({ hp: 10 });
-    const e3 = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([dead1, dead2, dead3, evangelist], [e1, e2, e3], null, {
-      next: () => 0,
-    });
-    resolveDeaths(ctx);
-    // HP 2 → 自傷2で0 → 1回目は発動、2回目以降はhp<=0で不発
-    expect(e1.equip).toBe("infection");
-    expect(e2.equip).not.toBe("infection");
+    expect(evangelist.hp).toBe(5);
   });
 
   it("stops infecting after skillUses exhausted", () => {
-    const dead1 = makeBattleUnit({ id: "token", hp: 0 });
-    const dead2 = makeBattleUnit({ id: "token", hp: 0 });
-    const dead3 = makeBattleUnit({ id: "token", hp: 0 });
+    const dead1 = makeBattleUnit({ id: "beggar", hp: 0 });
+    const dead2 = makeBattleUnit({ id: "beggar", hp: 0 });
+    const dead3 = makeBattleUnit({ id: "beggar", hp: 0 });
     const evangelist = makeBattleUnit({
       id: "evangelist",
       name: "伝道師",
@@ -545,8 +522,8 @@ describe("resolveDeaths – evangelist plague", () => {
 
 describe("resolveDeaths – cross-board cascade", () => {
   it("evangelist skips already-infected enemies", () => {
-    const dead1 = makeBattleUnit({ id: "token", hp: 0, atk: 5 });
-    const dead2 = makeBattleUnit({ id: "token", hp: 0, atk: 2 });
+    const dead1 = makeBattleUnit({ id: "beggar", hp: 0, atk: 5 });
+    const dead2 = makeBattleUnit({ id: "beggar", hp: 0, atk: 2 });
     const evangelist = makeBattleUnit({
       id: "evangelist",
       name: "伝道師",

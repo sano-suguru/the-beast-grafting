@@ -12,8 +12,9 @@ import {
   CRAWLING_CORD,
   CHARNEL_PIT,
   WAILING_CURSECHILD,
+  INSATIABLE_MAW,
 } from "../shared/skill-params";
-import { EVANGELIST } from "../shared/skill-params-death";
+import { EVANGELIST, CROW } from "../shared/skill-params-death";
 
 const INIT_OVERRIDES = {
   cholera: (bu: BattleUnit) => {
@@ -48,6 +49,12 @@ const INIT_OVERRIDES = {
   },
   charnel_pit: (bu: BattleUnit) => {
     bu.skillUses = atLevel(CHARNEL_PIT.uses, bu.level);
+  },
+  crow: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(CROW.uses, bu.level);
+  },
+  insatiable_maw: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(INSATIABLE_MAW.uses, bu.level);
   },
   necrotic_finger: (bu: BattleUnit) => {
     if (!bu.equip) bu.equip = "corpse_wax";

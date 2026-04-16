@@ -115,7 +115,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `開戦: 前方${atLevel(REVENANT.targets, lv)}体の攻撃+${b} (前夜敗北なら+${b * REVENANT.lossBonusMult})`;
   },
   evangelist: (lv) =>
-    `味方死亡: ランダムな敵${atLevel(EVANGELIST.targets, lv)}体を感染させる(自身に${atLevel(EVANGELIST.selfDamage, lv)}ダメ)`,
+    `味方死亡: ランダムな敵${atLevel(EVANGELIST.targets, lv)}体を感染させる(${atLevel(EVANGELIST.uses, lv)}回/戦)`,
   altar: (lv) => {
     const b = atLevel(ALTAR.buff, lv);
     return `味方配置/召喚: その味方に+${b.atk}/+${b.hp}`;
@@ -147,7 +147,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   leech: (lv) => `被弾: 自身のHP+${atLevel(LEECH.hpBuff, lv)}`,
   crow: (lv) => {
     const b = atLevel(CROW.buff, lv);
-    return `味方死亡: 自身に+${b.atk}/+${b.hp}`;
+    return `味方死亡: 自身に+${b.atk}/+${b.hp}(${atLevel(CROW.uses, lv)}回/戦)`;
   },
   catacomb_rat: (lv) => `開戦: ランダムな敵にTier×${atLevel(CATACOMB_RAT.tierMult, lv)}ダメージ`,
   stitched_twin: (lv) =>
@@ -242,7 +242,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     `味方${GROANING_COFFIN.threshold}体死亡ごと: ランダム敵に${atLevel(GROANING_COFFIN.damage, lv)}ダメージ`,
   insatiable_maw: (lv) => {
     const b = atLevel(INSATIABLE_MAW.buff, lv);
-    return `味方死亡: 自身に+${b.atk}/+${b.hp}`;
+    return `味方死亡: 自身に+${b.atk}/+${b.hp}(${atLevel(INSATIABLE_MAW.uses, lv)}回/戦)`;
   },
   wailing_cursechild: (lv) => {
     const b = atLevel(WAILING_CURSECHILD.buff, lv);

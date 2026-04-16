@@ -317,7 +317,8 @@ describe("resolveDeaths – hanged_man", () => {
     });
     const ally1 = makeBattleUnit({ atk: 2, hp: 5 });
     const ally2 = makeBattleUnit({ atk: 3, hp: 4 });
-    const ctx = makeContext([hanged, ally1, ally2], [makeBattleUnit({ hp: 10 })]);
+    const ally3 = makeBattleUnit({ atk: 1, hp: 3 });
+    const ctx = makeContext([hanged, ally1, ally2, ally3], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
     const targets = atLevel(HANGED_MAN.targets, 1);
     const atkShare = Math.floor(10 / targets);
@@ -326,6 +327,8 @@ describe("resolveDeaths – hanged_man", () => {
     expect(ally1.hp).toBe(5 + hpShare);
     expect(ally2.atk).toBe(3 + atkShare);
     expect(ally2.hp).toBe(4 + hpShare);
+    expect(ally3.atk).toBe(1 + atkShare);
+    expect(ally3.hp).toBe(3 + hpShare);
   });
 });
 
@@ -392,15 +395,17 @@ describe("resolveDeaths – puppeteer doubles death skill", () => {
       hp: 0,
       preDeathHp: 8,
     });
-    const ally = makeBattleUnit({ atk: 2, hp: 5 });
-    const ctx = makeContext([puppeteer, hanged, ally], [makeBattleUnit({ hp: 10 })]);
+    const ally1 = makeBattleUnit({ atk: 2, hp: 5 });
+    const ally2 = makeBattleUnit({ atk: 1, hp: 3 });
+    const ctx = makeContext([puppeteer, hanged, ally1, ally2], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
     const targets = atLevel(HANGED_MAN.targets, 1);
     const atkShare = Math.floor(10 / targets);
     const hpShare = Math.floor(8 / targets);
-    // 2回発動 → 2倍バフ
-    expect(ally.atk).toBe(2 + atkShare * 2);
-    expect(ally.hp).toBe(5 + hpShare * 2);
+    // 2回発動 → 2倍バフ（前方targets体=3体: puppeteer, ally1, ally2）
+    expect(puppeteer.atk).toBe(4 + atkShare * 2);
+    expect(ally1.atk).toBe(2 + atkShare * 2);
+    expect(ally1.hp).toBe(5 + hpShare * 2);
   });
 
   it("does not double when puppeteer is not at deathIdx-1", () => {
@@ -413,14 +418,16 @@ describe("resolveDeaths – puppeteer doubles death skill", () => {
       preDeathHp: 8,
     });
     const puppeteer = makeBattleUnit({ id: "puppeteer", name: "操り糸", atk: 4, hp: 6 });
-    const ally = makeBattleUnit({ atk: 2, hp: 5 });
-    const ctx = makeContext([hanged, puppeteer, ally], [makeBattleUnit({ hp: 10 })]);
+    const ally1 = makeBattleUnit({ atk: 2, hp: 5 });
+    const ally2 = makeBattleUnit({ atk: 1, hp: 3 });
+    const ctx = makeContext([hanged, puppeteer, ally1, ally2], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
     const targets = atLevel(HANGED_MAN.targets, 1);
     const atkShare = Math.floor(10 / targets);
-    // Only 1x, distributes to front 2: puppeteer and ally
+    // Only 1x, distributes to front targets体: puppeteer, ally1, ally2
     expect(puppeteer.atk).toBe(4 + atkShare);
-    expect(ally.atk).toBe(2 + atkShare);
+    expect(ally1.atk).toBe(2 + atkShare);
+    expect(ally2.atk).toBe(1 + atkShare);
   });
 });
 
@@ -548,13 +555,14 @@ describe("applyOnHitSkills – stitched_twin", () => {
 
 describe("resolveDeaths – crow gains stats on ally death", () => {
   it("buffs crow when an ally dies", () => {
-    const dying = makeBattleUnit({ id: "token", hp: 0 });
-    const crow = makeBattleUnit({ id: "crow", name: "鴉", atk: 2, hp: 1 });
+    const dying = makeBattleUnit({ id: "beggar", hp: 0 });
+    const crow = makeBattleUnit({ id: "crow", name: "鴉", atk: 2, hp: 1, skillUses: 2 });
     const ctx = makeContext([dying, crow], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
     const b = atLevel(CROW.buff, 1);
     expect(crow.atk).toBe(2 + b.atk);
     expect(crow.hp).toBe(1 + b.hp);
+    expect(crow.skillUses).toBe(1);
   });
 });
 
@@ -564,7 +572,7 @@ describe("resolveDeaths – sin_eater absorbs dead atk", () => {
   const uses = atLevel(SIN_EATER.uses, 1);
 
   it("absorbs dead unit atk up to cap", () => {
-    const dying = makeBattleUnit({ id: "token", atk: 10, hp: 0 });
+    const dying = makeBattleUnit({ id: "beggar", atk: 10, hp: 0 });
     const eater = makeBattleUnit({ id: "sin_eater", name: "黒蟲", atk: 3, hp: 4, skillUses: uses });
     const ctx = makeContext([dying, eater], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
@@ -573,7 +581,7 @@ describe("resolveDeaths – sin_eater absorbs dead atk", () => {
   });
 
   it("caps absorption at level-based limit", () => {
-    const dying = makeBattleUnit({ id: "token", atk: 100, hp: 0 });
+    const dying = makeBattleUnit({ id: "beggar", atk: 100, hp: 0 });
     const eater = makeBattleUnit({ id: "sin_eater", name: "黒蟲", atk: 3, hp: 4, skillUses: uses });
     const ctx = makeContext([dying, eater], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
@@ -592,7 +600,7 @@ describe("resolveDeaths – sin_eater absorbs dead atk", () => {
     });
     // uses 回 + 1 回死亡させる → uses 回目まで吸収、それ以降は吸収しない
     const dying = Array.from({ length: uses + 1 }, () =>
-      makeBattleUnit({ id: "token", atk: 10, hp: 0 }),
+      makeBattleUnit({ id: "beggar", atk: 10, hp: 0 }),
     );
     const ctx = makeContext([...dying, eater], [makeBattleUnit({ hp: 50 })]);
     resolveDeaths(ctx);
@@ -1020,7 +1028,7 @@ describe("puppeteer does NOT double ally reactions (getMult only checks brains)"
   it("puppeteer in front of crow does not double crow death buff", () => {
     const dying = makeBattleUnit({ id: "beggar", hp: 0 });
     const puppeteer = makeBattleUnit({ id: "puppeteer", name: "操り糸", atk: 4, hp: 6 });
-    const crow = makeBattleUnit({ id: "crow", name: "鴉", atk: 2, hp: 1 });
+    const crow = makeBattleUnit({ id: "crow", name: "鴉", atk: 2, hp: 1, skillUses: 2 });
     const ctx = makeContext([dying, puppeteer, crow], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
     const b = atLevel(CROW.buff, 1);
@@ -1031,7 +1039,7 @@ describe("puppeteer does NOT double ally reactions (getMult only checks brains)"
 
   it("brains behind crow DOES double crow death buff", () => {
     const dying = makeBattleUnit({ id: "beggar", hp: 0 });
-    const crow = makeBattleUnit({ id: "crow", name: "鴉", atk: 2, hp: 1 });
+    const crow = makeBattleUnit({ id: "crow", name: "鴉", atk: 2, hp: 1, skillUses: 4 });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const ctx = makeContext([dying, crow, brains], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
@@ -1490,13 +1498,20 @@ describe("handleCrawlingCordBuff", () => {
 
 describe("handleInsatiableMawBuff", () => {
   it("buffs self on ally death", () => {
-    const maw = makeBattleUnit({ id: "insatiable_maw", name: "飽くなき咢", atk: 4, hp: 4 });
+    const maw = makeBattleUnit({
+      id: "insatiable_maw",
+      name: "飽くなき咢",
+      atk: 4,
+      hp: 4,
+      skillUses: 2,
+    });
     const board = [maw];
     const ctx = makeContext(board, []);
     handleInsatiableMawBuff(board, true, ctx);
     const b = atLevel(INSATIABLE_MAW.buff, 1);
     expect(maw.atk).toBe(4 + b.atk);
     expect(maw.hp).toBe(4 + b.hp);
+    expect(maw.skillUses).toBe(1);
     expect(ctx.frames).toHaveLength(1);
   });
 });

@@ -262,8 +262,9 @@ export const INSATIABLE_MAW = {
   buff: [
     { atk: 2, hp: 1 },
     { atk: 3, hp: 2 },
-    { atk: 4, hp: 2 },
+    { atk: 4, hp: 3 },
   ] as SB,
+  uses: [2, 3, 4] as SN,
 };
 
 // ── ショップスキル ──

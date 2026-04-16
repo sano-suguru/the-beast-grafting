@@ -16,7 +16,10 @@ function applyAllyDeathReaction(
     const u = board[i]!;
     if (u.id !== unitId || u.hp <= 0) continue;
     const mult = getMult(board, i);
-    for (let m = 0; m < mult; m++) apply(u, prefix);
+    for (let m = 0; m < mult && u.skillUses > 0; m++) {
+      u.skillUses -= 1;
+      apply(u, prefix);
+    }
   }
 }
 

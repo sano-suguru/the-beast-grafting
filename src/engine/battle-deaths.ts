@@ -121,11 +121,10 @@ function executeAllyReactions(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
+  if (dead.id === "token") return;
   const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
   const r: AllyReactionCtx = { dead, board, enemyBoard, deathIdx, isPlayer, ctx };
-  if (dead.id !== "token") {
-    for (const react of SPAWN_ALLY_REACTIONS) react(r);
-  }
+  for (const react of SPAWN_ALLY_REACTIONS) react(r);
   for (const react of PERSISTENT_ALLY_REACTIONS) react(r);
 }
 

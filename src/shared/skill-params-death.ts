@@ -60,7 +60,7 @@ export const CHURCH_BEAST = {
 };
 
 export const HANGED_MAN = {
-  targets: [2, 3, 5] as SN, // Lv3 = 5 is "全体" (board max size)
+  targets: [3, 4, 5] as SN,
 };
 
 export const SERAPH = {
@@ -73,7 +73,6 @@ export const SERAPH = {
 
 export const EVANGELIST = {
   targets: [1, 2, 3] as SN,
-  selfDamage: [2, 2, 2] as SN,
   uses: [1, 2, 3] as SN,
 };
 
@@ -81,12 +80,13 @@ export const CROW = {
   buff: [
     { atk: 1, hp: 0 },
     { atk: 1, hp: 1 },
-    { atk: 2, hp: 1 },
+    { atk: 1, hp: 2 },
   ] as SB,
+  uses: [2, 3, 4] as SN,
 };
 
 export const SIN_EATER = {
-  atkCap: [5, 8, 12] as SN,
+  atkCap: [4, 8, 12] as SN,
   uses: [3, 4, 5] as SN,
 };
 

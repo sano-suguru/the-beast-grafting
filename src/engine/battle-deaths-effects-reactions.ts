@@ -1,14 +1,12 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
 import {
   pushFrame,
-  takeDamage,
   getMult,
   enemyPrefix,
   seg,
   buffAction,
   skillAction,
   defendAction,
-  damageAction,
 } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { FLY_SPAWN_CAP, FRAME_DELAY_DEATH_CHAIN } from "./constants";
@@ -81,7 +79,8 @@ export function handleCrowBuffs(board: BattleUnit[], isPlayer: boolean, ctx: Bat
     const u = board[i]!;
     if (u.id !== "crow" || u.hp <= 0) continue;
     const mult = getMult(board, i);
-    for (let m = 0; m < mult; m++) {
+    for (let m = 0; m < mult && u.skillUses > 0; m++) {
+      u.skillUses -= 1;
       const b = atLevel(CROW.buff, u.level);
       u.atk += b.atk;
       u.hp += b.hp;
@@ -216,25 +215,15 @@ export function handleEvangelistPlague(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  const prefix = enemyPrefix(isPlayer);
   for (let i = 0; i < board.length; i++) {
     const u = board[i]!;
     if (u.id !== "evangelist" || u.hp <= 0 || u.skillUses <= 0) continue;
     const mult = getMult(board, i);
     const targets = atLevel(EVANGELIST.targets, u.level);
+    const prefix = enemyPrefix(isPlayer);
     for (let m = 0; m < mult && u.skillUses > 0; m++) {
       u.skillUses -= 1;
       infectTargets(u, enemyBoard, targets, prefix, ctx);
     }
-    const selfDmg = atLevel(EVANGELIST.selfDamage, u.level);
-    takeDamage(u, selfDmg);
-    pushFrame(
-      ctx,
-      "skill",
-      () => [prefix, seg.u(u.name), "の肉体が瘴気に蝕まれる。", seg.s(`-${selfDmg}HP`)],
-      "skill",
-      { [u.uid]: damageAction(selfDmg) },
-      FRAME_DELAY_DEATH_CHAIN,
-    );
   }
 }
