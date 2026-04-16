@@ -30,7 +30,7 @@ function sumBuffByUnitId(
   unitId: UnitId,
   param: Scaled<Buff>,
   multiplier = 1,
-): { atk: number; hp: number } {
+): Buff {
   let atk = 0;
   let hp = 0;
   for (const u of board) {

@@ -2,22 +2,10 @@ import type { UnitId } from "../../shared/types";
 import type { Buff } from "../../shared/skill-params";
 import type { BattleMetrics, SimBattleResult, UnitActionTally } from "./sim-types";
 
-interface MutableTally {
-  unitId: UnitId;
-  side: "player" | "enemy";
-  damageDealt: number;
-  damageReceived: number;
-  buffAtk: number;
-  buffHp: number;
-  buffAtkGiven: number;
-  buffHpGiven: number;
-  healingDone: number;
-  healingReceived: number;
-  skillCount: number;
-  kills: number;
-  spawnsProduced: number;
-  deathFrame: number | null;
-}
+/** UnitActionTally の mutable 作業用コピー（survived は freeze 時に付与） */
+type MutableTally = {
+  -readonly [K in keyof Omit<UnitActionTally, "survived">]: UnitActionTally[K];
+};
 
 const EMPTY_METRICS: BattleMetrics = {
   frameCount: 0,

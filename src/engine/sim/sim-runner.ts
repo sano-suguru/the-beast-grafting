@@ -6,6 +6,7 @@ import type {
   TeamTrial,
   UnitPerformance,
 } from "./sim-types";
+import type { Rng } from "../rng";
 import { createSeededRng } from "../rng";
 import { createUnit } from "../helpers";
 import { simulateBattleSim } from "./sim-battle";
@@ -20,11 +21,7 @@ function buildTeam(ids: readonly DataUnitId[]): UnitInstance[] {
   return ids.map((id) => createUnit(id));
 }
 
-function buildRealisticTeam(
-  ids: readonly DataUnitId[],
-  night: number,
-  rng: { next(): number },
-): UnitInstance[] {
+function buildRealisticTeam(ids: readonly DataUnitId[], night: number, rng: Rng): UnitInstance[] {
   return ids.map((id) => buildProgressedUnit(id, night, rng));
 }
 
