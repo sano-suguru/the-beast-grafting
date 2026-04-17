@@ -43,14 +43,14 @@ describe("handleRatDeath", () => {
 });
 
 describe("handleHoundDeath", () => {
-  it("spawns 3/2 token at idx 0", () => {
+  it("spawns 2/1 token at idx 0", () => {
     const ctx = makeContext();
     const dead = makeBattleUnit({ id: "hound", name: "猟犬" });
     callHandler("hound", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.id).toBe("token");
-    expect(ctx.pBoard[0]!.atk).toBe(3);
-    expect(ctx.pBoard[0]!.hp).toBe(2);
+    expect(ctx.pBoard[0]!.atk).toBe(2);
+    expect(ctx.pBoard[0]!.hp).toBe(1);
   });
 
   it("spawns token at correct middle position", () => {
@@ -77,18 +77,18 @@ describe("handleHoundDeath", () => {
     const dead = makeBattleUnit({ id: "hound", name: "猟犬" });
     callHandler("hound", dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
-    expect(token!.atk).toBe(4); // 3 base + 1 zealot
+    expect(token!.atk).toBe(3); // 2 base + 1 zealot
   });
 });
 
 describe("handleBeastDeath", () => {
-  it("spawns a tier-3 unit as 3/3", () => {
+  it("spawns a tier-3 unit as 2/2", () => {
     const ctx = makeContext([], [], null, { next: () => 0 });
     const dead = makeBattleUnit({ id: "beast", name: "腐肉獣" });
     callHandler("beast", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
-    expect(ctx.pBoard[0]!.atk).toBe(3);
-    expect(ctx.pBoard[0]!.hp).toBe(3);
+    expect(ctx.pBoard[0]!.atk).toBe(2);
+    expect(ctx.pBoard[0]!.hp).toBe(2);
     // Should be a real unit, not a token
     expect(ctx.pBoard[0]!.id).not.toBe("token");
   });
@@ -106,7 +106,7 @@ describe("handleBeastDeath", () => {
     const dead = makeBattleUnit({ id: "beast", name: "腐肉獣" });
     callHandler("beast", dead, ctx.pBoard, 0, true, ctx);
     const summoned = ctx.pBoard.find((u) => u.id !== "zealot");
-    expect(summoned!.atk).toBe(4); // 3 base + 1 zealot
+    expect(summoned!.atk).toBe(3); // 2 base + 1 zealot
   });
 });
 

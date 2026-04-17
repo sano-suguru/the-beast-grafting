@@ -37,17 +37,17 @@ export const PRIEST = {
 
 export const HOUND = {
   token: [
+    { atk: 2, hp: 1 },
     { atk: 3, hp: 2 },
     { atk: 4, hp: 3 },
-    { atk: 6, hp: 4 },
   ] as SB,
 };
 
 export const BEAST = {
   summon: [
+    { atk: 2, hp: 2 },
     { atk: 3, hp: 3 },
     { atk: 4, hp: 4 },
-    { atk: 6, hp: 6 },
   ] as SB,
 };
 
