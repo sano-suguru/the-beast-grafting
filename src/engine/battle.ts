@@ -39,6 +39,7 @@ function initBattleUnit(u: UnitInstance): BattleUnit {
     battleBaseHp: hp,
     buffAtk: 0,
     buffHp: 0,
+    tempBuffAtk: 0,
     uid: generateUid(),
     altarBuffed: false,
     avengeDeathCount: 0,

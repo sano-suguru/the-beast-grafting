@@ -66,6 +66,7 @@ export const graftUnits = (base: UnitInstance, material: UnitInstance): GraftRes
       baseHp: maxHp + 1,
       buffAtk: 0,
       buffHp: 0,
+      tempBuffAtk: 0,
       exp: newExp,
       level: newLevel,
       skillText: getSkillText(base.id, newLevel),
@@ -136,7 +137,7 @@ function applyGhoulInfantBuyBuff(board: (UnitInstance | null)[], rng: Rng): void
   for (let i = 0; i < board.length; i++) {
     const u = board[i];
     if (!u || u.id !== "ghoul_infant") continue;
-    buffRandomUnit(board, atLevel(GHOUL_INFANT.atkBuff, u.level), 0, rng, i);
+    tempBuffRandomUnit(board, atLevel(GHOUL_INFANT.atkBuff, u.level), rng, i);
   }
 }
 
@@ -185,7 +186,7 @@ export const applySummonEffects = (
     const current = nextBoard[summonedUnitIndex] ?? target;
     nextBoard[summonedUnitIndex] = {
       ...current,
-      buffAtk: current.buffAtk + zealotCount,
+      tempBuffAtk: current.tempBuffAtk + zealotCount,
     };
     modified = true;
   }
@@ -198,6 +199,42 @@ interface SellResult {
   shopBuff?: { atk: number; hp: number } | undefined;
 }
 
+function pickRandomTarget(
+  board: (UnitInstance | null)[],
+  rng: Rng,
+  excludeIdx?: number,
+): number | null {
+  const active = getActiveIndices(board).filter((i) => i !== excludeIdx);
+  if (active.length === 0) return null;
+  return active[Math.floor(rng.next() * active.length)]!;
+}
+
+function applyRandomBuff(
+  board: (UnitInstance | null)[],
+  atkBuff: number,
+  hpBuff: number,
+  rng: Rng,
+  excludeIdx?: number,
+  temp?: true,
+): void {
+  const idx = pickRandomTarget(board, rng, excludeIdx);
+  if (idx === null) return;
+  const target = board[idx]!;
+  board[idx] = temp
+    ? { ...target, tempBuffAtk: target.tempBuffAtk + atkBuff }
+    : { ...target, buffAtk: target.buffAtk + atkBuff, buffHp: target.buffHp + hpBuff };
+}
+
+/** ghoul_infant 用: tempBuffAtk にATKバフを加算（夜開始時にリセットされる） */
+function tempBuffRandomUnit(
+  board: (UnitInstance | null)[],
+  atkBuff: number,
+  rng: Rng,
+  excludeIdx?: number,
+): void {
+  applyRandomBuff(board, atkBuff, 0, rng, excludeIdx, true);
+}
+
 export function buffRandomUnit(
   board: (UnitInstance | null)[],
   atkBuff: number,
@@ -205,11 +242,7 @@ export function buffRandomUnit(
   rng: Rng,
   excludeIdx?: number,
 ): void {
-  const active = getActiveIndices(board).filter((i) => i !== excludeIdx);
-  if (active.length === 0) return;
-  const idx = active[Math.floor(rng.next() * active.length)]!;
-  const target = board[idx]!;
-  board[idx] = { ...target, buffAtk: target.buffAtk + atkBuff, buffHp: target.buffHp + hpBuff };
+  applyRandomBuff(board, atkBuff, hpBuff, rng, excludeIdx);
 }
 
 function applyGraveWormSell(nextBoard: (UnitInstance | null)[], rng: Rng) {

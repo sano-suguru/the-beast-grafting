@@ -400,7 +400,7 @@ describe("applySellEffects – market_vulture shopBuff", () => {
 // ── ghoul_infant: 購入時に味方にATKバフ ──
 
 describe("applyBuyEffects – ghoul_infant", () => {
-  it("buffs a random ally ATK when ghoul_infant is on board", () => {
+  it("buffs a random ally tempBuffAtk when ghoul_infant is on board", () => {
     const ghoul = makeUnit({ id: "ghoul_infant", uid: "gi-1" });
     const ally = makeUnit({ id: "rat", uid: "ally-1" });
     const board: (UnitInstance | null)[] = [ghoul, ally];
@@ -408,10 +408,10 @@ describe("applyBuyEffects – ghoul_infant", () => {
     const rng = createSeededRng(42);
     const result = applyBuyEffects(bought, board, 0, rng);
     const b = atLevel(GHOUL_INFANT.atkBuff, 1);
-    const totalBuffAtk = result.board
+    const totalTempBuff = result.board
       .filter((u): u is UnitInstance => u !== null)
-      .reduce((sum, u) => sum + u.buffAtk, 0);
-    expect(totalBuffAtk).toBe(b);
+      .reduce((sum, u) => sum + u.tempBuffAtk, 0);
+    expect(totalTempBuff).toBe(b);
   });
 
   it("does not buff when no ghoul_infant on board", () => {
@@ -420,10 +420,10 @@ describe("applyBuyEffects – ghoul_infant", () => {
     const bought = makeUnit({ uid: "bought-1" });
     const rng = createSeededRng(42);
     const result = applyBuyEffects(bought, board, 0, rng);
-    const totalBuffAtk = result.board
+    const totalTempBuff = result.board
       .filter((u): u is UnitInstance => u !== null)
-      .reduce((sum, u) => sum + u.buffAtk, 0);
-    expect(totalBuffAtk).toBe(0);
+      .reduce((sum, u) => sum + u.tempBuffAtk, 0);
+    expect(totalTempBuff).toBe(0);
   });
 
   it("excludes ghoul_infant itself from buff targets", () => {
@@ -435,8 +435,8 @@ describe("applyBuyEffects – ghoul_infant", () => {
       const result = applyBuyEffects(bought, [...board], 0, createSeededRng(seed));
       const ghoulResult = result.board[0] as UnitInstance;
       const allyResult = result.board[1] as UnitInstance;
-      expect(ghoulResult.buffAtk).toBe(0);
-      expect(allyResult.buffAtk).toBe(atLevel(GHOUL_INFANT.atkBuff, 1));
+      expect(ghoulResult.tempBuffAtk).toBe(0);
+      expect(allyResult.tempBuffAtk).toBe(atLevel(GHOUL_INFANT.atkBuff, 1));
     }
   });
 });

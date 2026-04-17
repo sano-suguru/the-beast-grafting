@@ -52,6 +52,7 @@ export function makeValidUnit(overrides: Record<string, unknown> = {}): BoardUni
     baseHp: 2,
     buffAtk: 0,
     buffHp: 0,
+    tempBuffAtk: 0,
     tier: 1,
     level: 1,
     exp: 0,

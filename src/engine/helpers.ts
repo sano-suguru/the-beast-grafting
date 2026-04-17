@@ -25,6 +25,7 @@ export const createUnit = (id: DataUnitId): UnitInstance => {
     ...data,
     buffAtk: 0,
     buffHp: 0,
+    tempBuffAtk: 0,
     level: 1,
     exp: 0,
     equip: null,

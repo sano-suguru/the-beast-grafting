@@ -460,6 +460,7 @@ describe("POST /advance", () => {
       baseHp: 2,
       buffAtk: 3,
       buffHp: 3,
+      tempBuffAtk: 0,
       tier: 1,
       level: 2,
       exp: 2,

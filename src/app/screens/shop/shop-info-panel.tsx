@@ -113,12 +113,17 @@ function UnitStatDisplay({ sel }: { sel: Selection }) {
       <span className="text-tarnished-gold text-body-sm flex items-center gap-0.5 font-bold md:text-xs">
         <Swords size={12} />
         {effectiveAtk(sel.item)}
-        {sel.item.buffAtk !== 0 && (
-          <span className={buffColor(sel.item.buffAtk)}>
-            {buffPrefix(sel.item.buffAtk)}
-            {sel.item.buffAtk}
-          </span>
-        )}
+        {(() => {
+          const totalBuff = sel.item.buffAtk + sel.item.tempBuffAtk;
+          return (
+            totalBuff !== 0 && (
+              <span className={buffColor(totalBuff)}>
+                {buffPrefix(totalBuff)}
+                {totalBuff}
+              </span>
+            )
+          );
+        })()}
       </span>
       <span className="text-blood-bright text-body-sm flex items-center gap-0.5 font-bold md:text-xs">
         <Shield size={12} />

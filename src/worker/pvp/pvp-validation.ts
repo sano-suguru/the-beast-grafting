@@ -15,6 +15,7 @@ function hasNumericFields(o: Record<string, unknown>): boolean {
     typeof o["baseHp"] === "number" &&
     typeof o["buffAtk"] === "number" &&
     typeof o["buffHp"] === "number" &&
+    typeof o["tempBuffAtk"] === "number" &&
     typeof o["tier"] === "number" &&
     typeof o["level"] === "number" &&
     typeof o["exp"] === "number"
@@ -52,11 +53,14 @@ function validateMasterMatch(
 function validateStatCeilings(o: Record<string, unknown>, master: UnitData): boolean {
   const buffAtk = o["buffAtk"] as number;
   const buffHp = o["buffHp"] as number;
-  if (buffAtk < 0 || buffHp < 0) return false;
+  const tempBuffAtk = o["tempBuffAtk"] as number;
+  if (buffAtk < 0 || buffHp < 0 || tempBuffAtk < 0) return false;
 
   const atkCeiling = master.baseAtk * STAT_CEILING_MULTIPLIER + STAT_CEILING_BASE;
   const hpCeiling = master.baseHp * STAT_CEILING_MULTIPLIER + STAT_CEILING_BASE;
-  return master.baseAtk + buffAtk <= atkCeiling && master.baseHp + buffHp <= hpCeiling;
+  return (
+    master.baseAtk + buffAtk + tempBuffAtk <= atkCeiling && master.baseHp + buffHp <= hpCeiling
+  );
 }
 
 function validateAgainstMaster(o: Record<string, unknown>): boolean {

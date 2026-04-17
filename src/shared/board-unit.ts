@@ -19,6 +19,7 @@ export interface BoardUnit {
   baseHp: number;
   buffAtk: number;
   buffHp: number;
+  tempBuffAtk: number;
   tier: Tier;
   level: number;
   exp: number;
@@ -51,6 +52,7 @@ export function unitInstanceToBoardUnit(u: UnitInstance): BoardUnit {
     baseHp: u.baseHp,
     buffAtk: u.buffAtk,
     buffHp: u.buffHp,
+    tempBuffAtk: u.tempBuffAtk,
     tier: u.tier,
     level: u.level,
     exp: u.exp,
@@ -72,6 +74,7 @@ export function boardUnitToUnitInstance(bu: BoardUnit): UnitInstance {
     baseHp: bu.baseHp,
     buffAtk: bu.buffAtk,
     buffHp: bu.buffHp,
+    tempBuffAtk: bu.tempBuffAtk ?? 0,
     tier: bu.tier,
     level: bu.level,
     exp: bu.exp,

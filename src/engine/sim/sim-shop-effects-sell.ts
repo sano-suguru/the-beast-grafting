@@ -8,10 +8,9 @@ import {
   GRAVE_WORM,
   MARKET_VULTURE,
 } from "../../shared/skill-params-shop";
-import { TIER_APPEAR_NIGHT } from "./sim-types";
 import {
   activeNights,
-  estimateNightActions,
+  estimateWeightedActions,
   distributeBuffRandomly,
 } from "./sim-shop-effects-util";
 
@@ -20,11 +19,10 @@ function avgSoldUnitTotalStats(night: number): number {
   return 5 + Math.floor(night * 0.5);
 }
 
-function estimateTotalSells(tier: Tier, night: number): number {
-  const appearNight = TIER_APPEAR_NIGHT[tier];
+function totalWeightedSells(tier: Tier, night: number): number {
   let total = 0;
-  for (let n = appearNight; n <= night; n++) {
-    total += estimateNightActions(n, n === appearNight).sells;
+  for (const action of estimateWeightedActions(tier, night)) {
+    total += action.sells;
   }
   return total;
 }
@@ -32,7 +30,7 @@ function estimateTotalSells(tier: Tier, night: number): number {
 function applySelfBuffFromSells(unit: UnitInstance, buff: Buff, night: number): void {
   const nights = activeNights(unit.tier as Tier, night);
   if (nights <= 0) return;
-  const rawSells = estimateTotalSells(unit.tier as Tier, night);
+  const rawSells = totalWeightedSells(unit.tier as Tier, night);
   unit.buffAtk += Math.floor(buff.atk * rawSells);
   unit.buffHp += Math.floor(buff.hp * rawSells);
 }
@@ -46,7 +44,7 @@ function applyTeamBuffFromSells(
 ): void {
   const nights = activeNights(unit.tier as Tier, night);
   if (nights <= 0) return;
-  const rawSells = estimateTotalSells(unit.tier as Tier, night);
+  const rawSells = totalWeightedSells(unit.tier as Tier, night);
   const totalAtk = Math.floor(buff.atk * rawSells);
   const totalHp = Math.floor(buff.hp * rawSells);
   distributeBuffRandomly(team, totalAtk, totalHp, rng);
@@ -64,11 +62,9 @@ export function applyAshFungusAccumulation(
   const percent = atLevel(ASH_FUNGUS.percent, ashFungus.level);
   let rawBuff = 0;
 
-  const appearNight = TIER_APPEAR_NIGHT[ashFungus.tier as Tier];
-  for (let n = appearNight; n <= night; n++) {
-    const { sells } = estimateNightActions(n, n === appearNight);
-    const avgStats = avgSoldUnitTotalStats(n);
-    rawBuff += avgStats * (percent / 100) * sells;
+  for (const action of estimateWeightedActions(ashFungus.tier as Tier, night)) {
+    const avgStats = avgSoldUnitTotalStats(action.night);
+    rawBuff += avgStats * (percent / 100) * action.sells;
   }
 
   const totalBuff = Math.floor(rawBuff);
@@ -106,7 +102,7 @@ export function applyMarketVultureAccumulation(
 
   const nights = activeNights(vulture.tier as Tier, night);
   if (nights <= 0) return;
-  const rawSells = estimateTotalSells(vulture.tier as Tier, night);
+  const rawSells = totalWeightedSells(vulture.tier as Tier, night);
   const shopBuff = atLevel(MARKET_VULTURE.shopBuff, vulture.level);
   const totalAtk = Math.floor(shopBuff.atk * rawSells * 0.5);
   const totalHp = Math.floor(shopBuff.hp * rawSells * 0.5);

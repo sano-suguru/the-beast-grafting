@@ -84,6 +84,7 @@ export function buildProgressedUnit(id: DataUnitId, night: number, rng: Rng): Un
     baseHp: newHp,
     buffAtk,
     buffHp,
+    tempBuffAtk: 0,
     level,
     exp,
     equip,

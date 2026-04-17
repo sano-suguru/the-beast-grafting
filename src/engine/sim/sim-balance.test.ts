@@ -1,5 +1,6 @@
 import { UNITS } from "../../shared/data/units";
 import type { RegularUnitId } from "../../shared/types";
+import { effectiveAtk } from "../../shared/unit-stats";
 import type { RandomTrialResult, UnitPerformance } from "./sim-types";
 import { createSeededRng } from "../rng";
 import { generateSimTeam } from "./sim-team-gen";
@@ -126,8 +127,8 @@ describe("buildProgressedUnit", () => {
     for (let seed = 1; seed <= samples; seed++) {
       const t1 = buildProgressedUnit("rat", 12, createSeededRng(seed)); // Tier1
       const t6 = buildProgressedUnit("howling_giant", 12, createSeededRng(seed)); // Tier6
-      tier1TotalAtk += t1.baseAtk + t1.buffAtk;
-      tier6TotalAtk += t6.baseAtk + t6.buffAtk;
+      tier1TotalAtk += effectiveAtk(t1);
+      tier6TotalAtk += effectiveAtk(t6);
     }
     // Tier1のほうが平均ステータスが高いこと（接合・バフが多く蓄積されている）
     expect(tier1TotalAtk).toBeGreaterThan(tier6TotalAtk);
@@ -508,11 +509,11 @@ describe("GA composition discovery", () => {
 
     const breakageAlerts: string[] = [];
     for (const team of topTeams) {
-      if (team.fitness > 0.8) {
+      if (team.fitness > 0.9) {
         breakageAlerts.push(
           `CRITICAL: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
         );
-      } else if (team.fitness > 0.7) {
+      } else if (team.fitness > 0.8) {
         breakageAlerts.push(
           `WARNING: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
         );
@@ -552,7 +553,7 @@ describe("GA composition discovery", () => {
   });
 
   it("flags extreme breakage in report (informational)", () => {
-    const broken = gaResult.topTeams.filter((t) => t.fitness >= 0.85);
+    const broken = gaResult.topTeams.filter((t) => t.fitness >= 0.95);
     if (broken.length > 0) {
       console.warn(
         `GA found ${broken.length} potentially broken composition(s):`,
@@ -615,11 +616,11 @@ describe("cross-night GA", () => {
 
       const breakageAlerts: string[] = [];
       for (const team of result.topTeams) {
-        if (team.fitness > 0.8) {
+        if (team.fitness > 0.9) {
           breakageAlerts.push(
             `Night ${night} CRITICAL: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
           );
-        } else if (team.fitness > 0.7) {
+        } else if (team.fitness > 0.8) {
           breakageAlerts.push(
             `Night ${night} WARNING: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
           );

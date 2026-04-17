@@ -12,6 +12,7 @@ import type {
 } from "../shared/types";
 import type { Rng } from "./rng";
 import { createSeededRng } from "./rng";
+import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 
 export function segmentsToPlainText(segments: LogSegment[]): string {
   return segments.map((s) => (typeof s === "string" ? s : s.text)).join("");
@@ -28,6 +29,7 @@ export function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
     baseHp: 1,
     buffAtk: 0,
     buffHp: 0,
+    tempBuffAtk: 0,
     tier: 1,
     skillText: "",
     lore: "",
@@ -42,8 +44,8 @@ export function makeUnit(overrides: Partial<UnitInstance> = {}): UnitInstance {
 
 export function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit {
   const unit = makeUnit(overrides);
-  const atk = unit.baseAtk + unit.buffAtk;
-  const hp = unit.baseHp + unit.buffHp;
+  const atk = effectiveAtk(unit);
+  const hp = effectiveHp(unit);
   return {
     ...unit,
     atk,
@@ -72,8 +74,8 @@ export function makeContext(
 
 export function makeSnapshot(overrides: Partial<BattleUnitSnapshot> = {}): BattleUnitSnapshot {
   const unit = makeUnit(overrides as Partial<UnitInstance>);
-  const atk = unit.baseAtk + unit.buffAtk;
-  const hp = unit.baseHp + unit.buffHp;
+  const atk = effectiveAtk(unit);
+  const hp = effectiveHp(unit);
   return {
     ...unit,
     atk,

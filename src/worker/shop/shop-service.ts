@@ -83,9 +83,10 @@ export function executeSetup(
     : buildNormalShop(night, event, originId, prevUnits, prevItems, rng);
 
   const rngState = rng.getState();
+  const resetBoard = prevBoard.map((bu) => (bu && bu.tempBuffAtk ? { ...bu, tempBuffAtk: 0 } : bu));
   return {
     blood: 10 + (event?.bloodBonus ?? 0),
-    board: prevBoard,
+    board: resetBoard,
     shopUnits: slotsToJson(shop.units),
     shopItems: itemSlotsToJson(shop.items),
     freeRoll: (event?.freeRoll ?? false) || originId === "thief",

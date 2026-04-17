@@ -94,6 +94,13 @@ describe("executeSetup", () => {
     const result = executeSetup(1, 5, null, 42, [null, null, null, null, null], true, [], []);
     expect(result.blood).toBe(10);
   });
+
+  test("resets tempBuffAtk on prevBoard units", () => {
+    const bu = unitInstanceToBoardUnit(makeUnit({ id: "rat", tempBuffAtk: 3 }));
+    const result = executeSetup(2, 5, null, 42, [bu, null, null, null, null], false, [], []);
+    const unit = result.board[0] as BoardUnit;
+    expect(unit.tempBuffAtk).toBe(0);
+  });
 });
 
 describe("executeRoll", () => {

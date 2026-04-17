@@ -43,13 +43,13 @@ describe("handleRatDeath", () => {
 });
 
 describe("handleHoundDeath", () => {
-  it("spawns 2/1 token at idx 0", () => {
+  it("spawns 1/1 token at idx 0", () => {
     const ctx = makeContext();
     const dead = makeBattleUnit({ id: "hound", name: "猟犬" });
     callHandler("hound", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.id).toBe("token");
-    expect(ctx.pBoard[0]!.atk).toBe(2);
+    expect(ctx.pBoard[0]!.atk).toBe(1);
     expect(ctx.pBoard[0]!.hp).toBe(1);
   });
 
@@ -77,7 +77,7 @@ describe("handleHoundDeath", () => {
     const dead = makeBattleUnit({ id: "hound", name: "猟犬" });
     callHandler("hound", dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
-    expect(token!.atk).toBe(3); // 2 base + 1 zealot
+    expect(token!.atk).toBe(2); // 1 base + 1 zealot
   });
 });
 

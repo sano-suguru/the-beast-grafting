@@ -3,23 +3,12 @@ import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
 import { atLevel } from "../../shared/skill-params";
 import { BONE_TREE, GHOUL_INFANT, ROT_RING } from "../../shared/skill-params-shop";
-import { TIER_APPEAR_NIGHT } from "./sim-types";
+import { invariant } from "../../shared/invariant";
 import {
-  PURCHASES_PER_NIGHT,
-  FIRST_NIGHT_FRACTION,
   activeNights,
-  estimateNightActions,
-  distributeBuffRandomly,
+  estimateWeightedActions,
+  distributeTempBuffRandomly,
 } from "./sim-shop-effects-util";
-
-function estimateTotalPurchases(tier: Tier, night: number): number {
-  const appearNight = TIER_APPEAR_NIGHT[tier];
-  let total = 0;
-  for (let n = appearNight; n <= night; n++) {
-    total += estimateNightActions(n, n === appearNight).purchases;
-  }
-  return total;
-}
 
 /** Night N のショッププール内でTier 1が占める割合 (全Tier 10体ずつ均等) */
 function tier1FractionAtNight(night: number): number {
@@ -43,11 +32,9 @@ export function applyBoneTreeAccumulation(
   let rawAtk = 0;
   let rawHp = 0;
 
-  const appearNight = TIER_APPEAR_NIGHT[boneTree.tier as Tier];
-  for (let n = appearNight; n <= night; n++) {
-    const { purchases } = estimateNightActions(n, n === appearNight);
-    rawAtk += buff.atk * purchases;
-    rawHp += buff.hp * purchases;
+  for (const action of estimateWeightedActions(boneTree.tier as Tier, night)) {
+    rawAtk += buff.atk * action.purchases;
+    rawHp += buff.hp * action.purchases;
   }
 
   const totalAtk = Math.floor(rawAtk);
@@ -68,16 +55,19 @@ export function applyGhoulInfantAccumulation(
   if (nights <= 0) return;
 
   const atkBuff = atLevel(GHOUL_INFANT.atkBuff, ghoulInfant.level);
-  const rawTriggers = estimateTotalPurchases(ghoulInfant.tier as Tier, night);
-  const totalAtk = Math.floor(atkBuff * rawTriggers);
-  distributeBuffRandomly(team, totalAtk, 0, rng);
+  // tempBuffAtk は夜ごとにリセットされるため、バトル直前の1夜分のみ反映
+  const actions = estimateWeightedActions(ghoulInfant.tier as Tier, night);
+  const lastNight = actions[actions.length - 1];
+  invariant(lastNight, "estimateWeightedActions returned empty for activeNights > 0");
+  const totalAtk = Math.floor(atkBuff * lastNight.purchases);
+  distributeTempBuffRandomly(team, totalAtk, rng);
 }
 
 /**
  * rot_ring: Tier1ユニット購入時に盤面全体へ +buff/+buff（上限: uses回/夜）。
  *
  * maxUses は夜あたり上限（rotRingUses は夜ごとにサーバーでリセット）。
- * Tier1購入頻度 = PURCHASES_PER_NIGHT × tier1FractionAtNight を夜ごとに推定し、
+ * Tier1購入頻度 = weighted purchases × tier1FractionAtNight を夜ごとに推定し、
  * 夜ごとに maxUses でキャップしてから累積する。
  */
 export function applyRotRingAccumulation(
@@ -89,11 +79,9 @@ export function applyRotRingAccumulation(
   if (nights <= 0) return;
 
   const maxUses = atLevel(ROT_RING.uses, rotRing.level);
-  const appearNight = TIER_APPEAR_NIGHT[rotRing.tier as Tier];
   let potentialTriggers = 0;
-  for (let n = appearNight; n <= night; n++) {
-    const fraction = n === appearNight ? FIRST_NIGHT_FRACTION : 1.0;
-    const nightTriggers = PURCHASES_PER_NIGHT * fraction * tier1FractionAtNight(n);
+  for (const action of estimateWeightedActions(rotRing.tier as Tier, night)) {
+    const nightTriggers = action.purchases * tier1FractionAtNight(action.night);
     potentialTriggers += Math.min(nightTriggers, maxUses);
   }
 

@@ -42,13 +42,13 @@ describe("resolveDeaths – spawn on death", () => {
     expect(ally2.hp).toBe(4);
   });
 
-  it("hound death spawns 2/1 token", () => {
+  it("hound death spawns 1/1 token", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const ctx = makeContext([hound], []);
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.id).toBe("token");
-    expect(ctx.pBoard[0]!.atk).toBe(2);
+    expect(ctx.pBoard[0]!.atk).toBe(1);
     expect(ctx.pBoard[0]!.hp).toBe(1);
   });
 
@@ -129,7 +129,7 @@ describe("resolveDeaths – token buff synergies", () => {
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(3); // 2 base + 1 zealot buff
+    expect(token!.atk).toBe(2); // 1 base + 1 zealot buff
   });
 
   it("altar buffs spawned tokens +2/+1", () => {
@@ -139,7 +139,7 @@ describe("resolveDeaths – token buff synergies", () => {
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(4); // 2 base + 2 altar
+    expect(token!.atk).toBe(3); // 1 base + 2 altar
     expect(token!.hp).toBe(2); // 1 base + 1 altar
   });
 
@@ -151,7 +151,7 @@ describe("resolveDeaths – token buff synergies", () => {
     const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
     expect(logText(altarLog!)).toContain("+2/+1");
-    expect(logText(altarLog!)).toContain("→ 4/2");
+    expect(logText(altarLog!)).toContain("→ 3/2");
   });
 
   it("altar buff doubles with brains behind it", () => {
@@ -162,7 +162,7 @@ describe("resolveDeaths – token buff synergies", () => {
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(6); // 2 base + 2*2 altar
+    expect(token!.atk).toBe(5); // 1 base + 2*2 altar
     expect(token!.hp).toBe(3); // 1 base + 1*2 altar
   });
 
@@ -175,7 +175,7 @@ describe("resolveDeaths – token buff synergies", () => {
     const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
     expect(logText(altarLog!)).toContain("+4/+2");
-    expect(logText(altarLog!)).toContain("→ 6/3");
+    expect(logText(altarLog!)).toContain("→ 5/3");
   });
 });
 

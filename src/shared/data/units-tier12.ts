@@ -47,7 +47,7 @@ export const UNITS_TIER12 = {
     id: "zealot",
     name: "狂信者の生首",
     baseAtk: 2,
-    baseHp: 3,
+    baseHp: 1,
     tier: 1,
     lore: "異端としてギロチンにかけられた男の頭部。口を太い糸で縫い合わせても、未だに悍ましい呪詛を唱え続けている。",
     secretLore: "その口が唱え続けた冒涜の言葉は、ついに空を割り、街に血の雨を降らせた。",

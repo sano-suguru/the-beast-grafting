@@ -37,9 +37,9 @@ export const PRIEST = {
 
 export const HOUND = {
   token: [
-    { atk: 2, hp: 1 },
-    { atk: 3, hp: 2 },
-    { atk: 4, hp: 3 },
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
   ] as SB,
 };
 

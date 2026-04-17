@@ -119,6 +119,8 @@ export interface UnitInstance {
   baseHp: number;
   buffAtk: number;
   buffHp: number;
+  /** 夜開始時にリセットされる一時ATKバフ（zealot/ghoul_infantショップバフ用） */
+  tempBuffAtk: number;
   tier: Tier;
   skillText: string;
   lore: string;

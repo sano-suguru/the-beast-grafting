@@ -253,9 +253,9 @@ export const CORRODING_MOLD = {
 
 export const CRAWLING_CORD = {
   buff: [
-    { atk: 1, hp: 2 },
-    { atk: 2, hp: 3 },
-    { atk: 3, hp: 4 },
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
   ] as SB,
   uses: [1, 2, 3] as SN,
 };

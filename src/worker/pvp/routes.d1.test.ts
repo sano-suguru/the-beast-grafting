@@ -270,6 +270,22 @@ describe("POST /snapshot – stat validation", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects negative tempBuffAtk", async () => {
+    const { token, playerId } = await createTestPlayer(testDb);
+    const runId = await createTestRun(testDb, playerId);
+    const unit = makeValidUnit({ tempBuffAtk: -1 });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects tempBuffAtk that would push effective atk over ceiling", async () => {
+    const { token, playerId } = await createTestPlayer(testDb);
+    const runId = await createTestRun(testDb, playerId);
+    const unit = makeValidUnit({ tempBuffAtk: 9999 });
+    const res = await postSnapshot(app, token, { runId, night: 1, board: [unit] });
+    expect(res.status).toBe(400);
+  });
+
   it("rejects night > MAX_NIGHT", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
