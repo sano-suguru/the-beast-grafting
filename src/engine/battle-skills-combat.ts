@@ -30,7 +30,7 @@ export function applyAcidSplash(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  if (attacker.equip !== "acid" || targetBoard.length <= 1) return;
+  if (attacker.equip !== "acid_blood" || targetBoard.length <= 1) return;
   const splashTarget = mustGet(targetBoard, 1, "acid splash target");
   const hpBefore = splashTarget.hp;
   takeDamage(splashTarget, ACID_SPLASH_DAMAGE, attacker.uid);

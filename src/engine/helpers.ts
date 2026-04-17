@@ -88,12 +88,12 @@ const generateTeamName = (faction: EnemyFaction, rng: Rng): string => {
 const generateCultTeam = (night: number, rng: Rng): UnitInstance[] => {
   if (night === 1) return [createUnit("squire"), createUnit("church_hound")];
   if (night <= 3)
-    return [createUnit("priest"), createUnit("inquisitor"), createUnit("church_hound")];
+    return [createUnit("priest"), createUnit("church_inquisitor"), createUnit("church_hound")];
   if (night <= 6)
     return [
       createUnit("templar"),
       createUnit("priest"),
-      createUnit("inquisitor"),
+      createUnit("church_inquisitor"),
       createUnit("church_beast"),
       createUnit("church_hound"),
     ];

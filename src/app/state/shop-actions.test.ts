@@ -205,7 +205,7 @@ describe("handleFreezeClick", () => {
       cost: 3,
       atk: 0,
       hp: 2,
-      equip: "iron" as const,
+      equip: "iron_plate" as const,
       skillText: "",
       lore: "",
     };

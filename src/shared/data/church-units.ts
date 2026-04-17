@@ -10,8 +10,8 @@ export const CHURCH_UNITS = resolveSkillTexts({
     tier: 1,
     lore: "異端を知らぬ瞳が、最も深く剣を突き立てる。",
   },
-  inquisitor: {
-    id: "inquisitor",
+  church_inquisitor: {
+    id: "church_inquisitor",
     name: "異端審問官",
     baseAtk: 3,
     baseHp: 1,

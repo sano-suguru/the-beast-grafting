@@ -10,17 +10,17 @@ describe("EquipIcon", () => {
   });
 
   it("renders an SVG for valid equipId", () => {
-    const { container } = render(<EquipIcon equipId="iron" />);
+    const { container } = render(<EquipIcon equipId="iron_plate" />);
     expect(container.querySelector("svg")).not.toBeNull();
   });
 
   it("renders correct color class for iron", () => {
-    const { container } = render(<EquipIcon equipId="iron" />);
+    const { container } = render(<EquipIcon equipId="iron_plate" />);
     expect(container.innerHTML).toContain("text-iron-light");
   });
 
   it("renders correct color class for acid", () => {
-    const { container } = render(<EquipIcon equipId="acid" />);
+    const { container } = render(<EquipIcon equipId="acid_blood" />);
     expect(container.innerHTML).toContain("text-rot-acid");
   });
 });

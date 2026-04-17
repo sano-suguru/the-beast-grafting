@@ -102,7 +102,7 @@ describe("resolveDeaths – buff and equip on death", () => {
 
 describe("resolveDeaths – equipment death effects", () => {
   it("maggot_nest equip spawns 1/1 token on death", () => {
-    const unit = makeBattleUnit({ equip: "maggot_nest", hp: 0 });
+    const unit = makeBattleUnit({ equip: "maggot", hp: 0 });
     const ctx = makeContext([unit], []);
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
@@ -490,7 +490,7 @@ describe("resolveDeaths – evangelist plague", () => {
       hp: 5,
       skillUses: 2,
     });
-    const enemy = makeBattleUnit({ hp: 10, equip: "iron" });
+    const enemy = makeBattleUnit({ hp: 10, equip: "iron_plate" });
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
     resolveDeaths(ctx);
     expect(enemy.equip).toBe("infection");

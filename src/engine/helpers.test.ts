@@ -112,7 +112,7 @@ describe("getItemPool", () => {
 
 describe("getEquipInfo", () => {
   it("returns info for iron", () => {
-    expect(getEquipInfo("iron").name).toBe("縫合された鉄板");
+    expect(getEquipInfo("iron_plate").name).toBe("縫合された鉄板");
   });
 
   it("returns info for all valid equip ids", () => {

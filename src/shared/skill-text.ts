@@ -87,7 +87,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const d = atLevel(BAT.damage, lv);
     return `開戦: ランダムな敵${n}体に${d}ダメージ`;
   },
-  inquisitor: (lv) => `開戦: 敵前衛に${atLevel(INQUISITOR.damage, lv)}ダメージ`,
+  church_inquisitor: (lv) => `開戦: 敵前衛に${atLevel(INQUISITOR.damage, lv)}ダメージ`,
   zealot: (lv) => `味方召喚時: 現れた味方の攻撃+${atLevel(ZEALOT.summonBuff, lv)}`,
   squire: (lv) => {
     const b = atLevel(SQUIRE.deathBuff, lv);

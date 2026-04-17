@@ -211,7 +211,7 @@ describe("handleMaidenDeath", () => {
   });
 
   it("overwrites existing equip on target", () => {
-    const next = makeBattleUnit({ equip: "iron", uid: "next" });
+    const next = makeBattleUnit({ equip: "iron_plate", uid: "next" });
     const ctx = makeContext([next]);
     const dead = makeBattleUnit({ id: "maiden", name: "処女" });
     callHandler("maiden", dead, ctx.pBoard, 0, true, ctx);
@@ -269,7 +269,7 @@ describe("handleEquipDeath", () => {
     const ally = makeBattleUnit({ uid: "ally" });
     const board = [ally];
     const ctx = makeContext(board);
-    const dead = makeBattleUnit({ equip: "maggot_nest", name: "ユニット" });
+    const dead = makeBattleUnit({ equip: "maggot", name: "ユニット" });
     handleEquipDeath(dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(2);
     expect(ctx.pBoard[0]!.name).toBe("巨大蛆虫");
@@ -298,7 +298,7 @@ describe("handleEquipDeath", () => {
 
   it("does nothing for non-death equips like iron", () => {
     const ctx = makeContext();
-    const dead = makeBattleUnit({ equip: "iron" });
+    const dead = makeBattleUnit({ equip: "iron_plate" });
     handleEquipDeath(dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.pBoard).toHaveLength(0);
     expect(ctx.frames).toHaveLength(0);
@@ -307,7 +307,7 @@ describe("handleEquipDeath", () => {
   it("maggot_nest token receives zealot buff", () => {
     const zealot = makeBattleUnit({ id: "zealot", name: "狂信者", hp: 3 });
     const ctx = makeContext([zealot]);
-    const dead = makeBattleUnit({ equip: "maggot_nest", name: "ユニット" });
+    const dead = makeBattleUnit({ equip: "maggot", name: "ユニット" });
     handleEquipDeath(dead, ctx.pBoard, 0, true, ctx);
     const token = ctx.pBoard.find((u) => u.name === "巨大蛆虫");
     expect(token!.atk).toBe(2); // 1 base + 1 zealot

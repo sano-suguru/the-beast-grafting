@@ -69,7 +69,7 @@ export type RegularUnitId =
 
 export type ChurchUnitId =
   | "squire"
-  | "inquisitor"
+  | "church_inquisitor"
   | "church_hound"
   | "priest"
   | "templar"

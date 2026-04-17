@@ -22,7 +22,7 @@ function makeItem(overrides: Partial<ItemData> = {}): ItemData {
     cost: 3,
     atk: 0,
     hp: 2,
-    equip: "iron",
+    equip: "iron_plate",
     skillText: "",
     lore: "",
     ...overrides,
@@ -207,10 +207,10 @@ describe("handleCardClick – graft shop unit onto board unit", () => {
 
 describe("handleCardClick – equip item onto board unit", () => {
   it("calls API and applies equip response", async () => {
-    const item = makeItem({ cost: 2, atk: 1, hp: 3, equip: "iron" });
+    const item = makeItem({ cost: 2, atk: 1, hp: 3, equip: "iron_plate" });
     const unit = makeUnit({ baseAtk: 5, baseHp: 5, equip: null });
     board.value = [unit, null, null, null, null];
-    shopItems.value = [makeShopItemSlot({ cost: 2, atk: 1, hp: 3, equip: "iron" })];
+    shopItems.value = [makeShopItemSlot({ cost: 2, atk: 1, hp: 3, equip: "iron_plate" })];
     selection.value = { type: "SHOP_ITEM", index: 0, item };
 
     const equippedUnit = makeUnit({
@@ -218,7 +218,7 @@ describe("handleCardClick – equip item onto board unit", () => {
       baseHp: 5,
       buffAtk: 1,
       buffHp: 3,
-      equip: "iron",
+      equip: "iron_plate",
     });
     stubFetch(
       shopRoute(
@@ -235,7 +235,7 @@ describe("handleCardClick – equip item onto board unit", () => {
     expect(blood.value).toBe(8);
     expect(board.value[0]!.baseAtk + board.value[0]!.buffAtk).toBe(6);
     expect(board.value[0]!.baseHp + board.value[0]!.buffHp).toBe(8);
-    expect(board.value[0]!.equip).toBe("iron");
+    expect(board.value[0]!.equip).toBe("iron_plate");
     expect(shopItems.value[0]).toBeNull();
     expect(selection.value).toBeNull();
     expect(se).toBe("graft");

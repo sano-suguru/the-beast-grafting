@@ -9,7 +9,7 @@ import { RAT } from "../shared/skill-params-death";
 
 describe("applyAcidSplash", () => {
   it("deals 5 damage to second enemy unit", () => {
-    const attacker = makeBattleUnit({ equip: "acid", atk: 3, hp: 3 });
+    const attacker = makeBattleUnit({ equip: "acid_blood", atk: 3, hp: 3 });
     const front = makeBattleUnit({ hp: 10 });
     const second = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([attacker], [front, second]);
@@ -26,7 +26,7 @@ describe("applyAcidSplash", () => {
   });
 
   it("does nothing if only one enemy", () => {
-    const attacker = makeBattleUnit({ equip: "acid" });
+    const attacker = makeBattleUnit({ equip: "acid_blood" });
     const single = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([attacker], [single]);
     applyAcidSplash(attacker, ctx.eBoard, true, ctx);

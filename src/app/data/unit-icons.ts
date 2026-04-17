@@ -127,7 +127,7 @@ const UNIT_ICONS: Record<UnitId, typeof Rat> = {
   howling_giant: Mountain,
   // Church
   squire: Sword,
-  inquisitor: Crosshair,
+  church_inquisitor: Crosshair,
   church_hound: Zap,
   priest: Cross,
   templar: Shield,

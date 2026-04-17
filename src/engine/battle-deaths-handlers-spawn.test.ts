@@ -269,7 +269,13 @@ describe("devouring_graft – death re-summon", () => {
   });
 
   it("preserves absorbed unit equipment on re-summon", () => {
-    const pred = makeBattleUnit({ id: "rat", name: "疫病ネズミ", atk: 5, hp: 3, equip: "iron" });
+    const pred = makeBattleUnit({
+      id: "rat",
+      name: "疫病ネズミ",
+      atk: 5,
+      hp: 3,
+      equip: "iron_plate",
+    });
     const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
     const pBoard = [pred, graft];
     const ctx = makeContext(pBoard, []);
@@ -279,7 +285,7 @@ describe("devouring_graft – death re-summon", () => {
     resolveDeaths(ctx);
     expect(ctx.pBoard).toHaveLength(1);
     expect(ctx.pBoard[0]!.name).toBe("疫病ネズミ");
-    expect(ctx.pBoard[0]!.equip).toBe("iron");
+    expect(ctx.pBoard[0]!.equip).toBe("iron_plate");
   });
 
   it("re-summons with null equip when absorbed had no equipment", () => {

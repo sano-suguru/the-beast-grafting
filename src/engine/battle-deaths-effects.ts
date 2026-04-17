@@ -73,7 +73,7 @@ export function handleEquipDeath(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  if (dead.equip === "maggot_nest") spawnMaggotNest(dead, board, idx, isPlayer, ctx);
+  if (dead.equip === "maggot") spawnMaggotNest(dead, board, idx, isPlayer, ctx);
   if (dead.equip === "death_curse") spawnDeathCurse(dead, board, idx, isPlayer, ctx);
   if (dead.equip === "star_frenzy") applyStarFrenzyDeath(dead, isPlayer, ctx);
 }

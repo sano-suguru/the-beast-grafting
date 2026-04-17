@@ -20,7 +20,7 @@ function makeItem(overrides: Partial<ItemData> = {}): ItemData {
     cost: 3,
     atk: 0,
     hp: 2,
-    equip: "iron",
+    equip: "iron_plate",
     skillText: "",
     lore: "",
     ...overrides,

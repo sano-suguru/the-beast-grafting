@@ -1,11 +1,11 @@
 export const EQUIP_TYPES = [
-  "iron",
-  "berserk",
+  "iron_plate",
+  "bile",
   "corpse_wax",
   "infection",
-  "maggot_nest",
+  "maggot",
   "numbness",
-  "acid",
+  "acid_blood",
   "death_curse",
   "star_frenzy",
 ] as const;

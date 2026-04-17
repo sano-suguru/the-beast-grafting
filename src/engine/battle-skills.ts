@@ -32,7 +32,7 @@ type StartSkillHandler = (context: SkillContext) => void;
 
 const START_SKILL_HANDLERS = {
   bat: applyBatSkill,
-  inquisitor: applyInquisitorSkill,
+  church_inquisitor: applyInquisitorSkill,
   shrieking_throat: applyBansheeSkill,
   revenant: applyRevenantSkill,
   catacomb_rat: applyCatacombRatSkill,

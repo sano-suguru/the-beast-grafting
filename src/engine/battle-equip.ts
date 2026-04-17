@@ -16,7 +16,7 @@ interface DefenseResult {
 }
 
 function applyBerserkBonus(unit: BattleUnit, ctx: BattleContext, isPlayer: boolean): number {
-  if (unit.equip !== "berserk") return 0;
+  if (unit.equip !== "bile") return 0;
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
@@ -128,7 +128,7 @@ function applyDefensiveEquip(
   isPlayer: boolean,
 ): DefenseResult {
   const prefix = enemyPrefix(isPlayer);
-  if (unit.equip === "iron") return applyIronDefense(unit, baseDmg, prefix, ctx);
+  if (unit.equip === "iron_plate") return applyIronDefense(unit, baseDmg, prefix, ctx);
   if (unit.equip === "corpse_wax") return applyCorpseWaxDefense(unit, baseDmg, prefix, ctx);
   if (unit.equip === "infection") return applyInfectionPenalty(unit, baseDmg, prefix, ctx);
   if (unit.equip === "numbness") return applyNumbnessDefense(unit, baseDmg, prefix, ctx);

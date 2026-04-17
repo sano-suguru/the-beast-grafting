@@ -113,7 +113,7 @@ describe("puppeteer doubles unit skill only, not equip death", () => {
       name: "猟犬",
       atk: 3,
       hp: 0,
-      equip: "maggot_nest",
+      equip: "maggot",
     });
     const ctx = makeContext([puppeteer, hound], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
@@ -131,7 +131,7 @@ describe("brains does not double equip death effect (SAP準拠)", () => {
       name: "猟犬",
       atk: 3,
       hp: 0,
-      equip: "maggot_nest",
+      equip: "maggot",
     });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const ctx = makeContext([hound, brains], [makeBattleUnit({ hp: 10 })]);

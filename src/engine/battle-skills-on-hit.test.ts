@@ -203,12 +203,12 @@ describe("applyOnHitSkills – amniotic_armor", () => {
       atk: 2,
       hp: 8,
       skillUses: 1,
-      equip: "iron",
+      equip: "iron_plate",
     });
     const board = [armor];
     const ctx = makeContext(board, []);
     applyOnHitSkills(armor, board, true, ctx);
-    expect(armor.equip).toBe("iron");
+    expect(armor.equip).toBe("iron_plate");
     expect(armor.skillUses).toBe(1);
   });
 });

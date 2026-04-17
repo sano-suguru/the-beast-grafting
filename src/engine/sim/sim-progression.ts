@@ -13,12 +13,12 @@ import { TIER_APPEAR_NIGHT } from "./sim-types";
  * star_frenzy は stellar_cocoon のトークン専用のため除外。
  */
 const EQUIP_WEIGHTS: readonly { type: EquipType; weight: number }[] = [
-  { type: "iron", weight: 20 },
-  { type: "berserk", weight: 20 },
+  { type: "iron_plate", weight: 20 },
+  { type: "bile", weight: 20 },
   { type: "corpse_wax", weight: 12 },
-  { type: "acid", weight: 12 },
+  { type: "acid_blood", weight: 12 },
   { type: "numbness", weight: 8 },
-  { type: "maggot_nest", weight: 8 },
+  { type: "maggot", weight: 8 },
   { type: "death_curse", weight: 8 },
 ];
 

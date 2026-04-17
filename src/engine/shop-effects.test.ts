@@ -83,10 +83,10 @@ describe("graftUnits", () => {
   });
 
   it("preserves base unit properties", () => {
-    const base = makeUnit({ id: "beast", equip: "iron", uid: "base-uid" });
+    const base = makeUnit({ id: "beast", equip: "iron_plate", uid: "base-uid" });
     const { unit } = graftUnits(base, makeUnit());
     expect(unit.id).toBe("beast");
-    expect(unit.equip).toBe("iron");
+    expect(unit.equip).toBe("iron_plate");
     expect(unit.uid).toBe("base-uid");
   });
 

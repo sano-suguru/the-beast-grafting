@@ -3,7 +3,7 @@ import { makeBattleUnit, makeContext } from "./test-helpers";
 
 describe("applyEquipmentEffects – defensive", () => {
   it("iron reduces damage by 2 (min 1)", () => {
-    const p = makeBattleUnit({ equip: "iron", atk: 3, hp: 5 });
+    const p = makeBattleUnit({ equip: "iron_plate", atk: 3, hp: 5 });
     const e = makeBattleUnit({ atk: 4, hp: 5 });
     const ctx = makeContext([p], [e]);
     const { pDmg, eDmg } = applyEquipmentEffects(p, e, ctx);
@@ -12,7 +12,7 @@ describe("applyEquipmentEffects – defensive", () => {
   });
 
   it("iron clamps damage to minimum 1", () => {
-    const p = makeBattleUnit({ equip: "iron", hp: 5 });
+    const p = makeBattleUnit({ equip: "iron_plate", hp: 5 });
     const e = makeBattleUnit({ atk: 1, hp: 5 });
     const ctx = makeContext([p], [e]);
     const { pDmg } = applyEquipmentEffects(p, e, ctx);
@@ -64,7 +64,7 @@ describe("applyEquipmentEffects – offensive and misc", () => {
   });
 
   it("berserk adds 4 to outgoing damage", () => {
-    const p = makeBattleUnit({ equip: "berserk", atk: 3, hp: 10 });
+    const p = makeBattleUnit({ equip: "bile", atk: 3, hp: 10 });
     const e = makeBattleUnit({ atk: 2, hp: 10 });
     const ctx = makeContext([p], [e]);
     const { eDmg, pDmg } = applyEquipmentEffects(p, e, ctx);
@@ -74,7 +74,7 @@ describe("applyEquipmentEffects – offensive and misc", () => {
 
   it("berserk on enemy adds 4 to enemy outgoing damage", () => {
     const p = makeBattleUnit({ atk: 3, hp: 10 });
-    const e = makeBattleUnit({ equip: "berserk", atk: 2, hp: 10 });
+    const e = makeBattleUnit({ equip: "bile", atk: 2, hp: 10 });
     const ctx = makeContext([p], [e]);
     const { pDmg, eDmg } = applyEquipmentEffects(p, e, ctx);
     expect(pDmg).toBe(5);
@@ -82,8 +82,8 @@ describe("applyEquipmentEffects – offensive and misc", () => {
   });
 
   it("berserk damage is reduced by iron", () => {
-    const p = makeBattleUnit({ equip: "berserk", atk: 3, hp: 10 });
-    const e = makeBattleUnit({ equip: "iron", atk: 2, hp: 10 });
+    const p = makeBattleUnit({ equip: "bile", atk: 3, hp: 10 });
+    const e = makeBattleUnit({ equip: "iron_plate", atk: 2, hp: 10 });
     const ctx = makeContext([p], [e]);
     const { eDmg } = applyEquipmentEffects(p, e, ctx);
     expect(eDmg).toBe(4);
@@ -130,7 +130,7 @@ describe("applyEquipmentEffects – side effects and frames", () => {
   });
 
   it("iron generates a defend frame", () => {
-    const p = makeBattleUnit({ equip: "iron", atk: 3, hp: 10 });
+    const p = makeBattleUnit({ equip: "iron_plate", atk: 3, hp: 10 });
     const e = makeBattleUnit({ atk: 6, hp: 10 });
     const ctx = makeContext([p], [e]);
     applyEquipmentEffects(p, e, ctx);
@@ -139,7 +139,7 @@ describe("applyEquipmentEffects – side effects and frames", () => {
   });
 
   it("berserk generates a skill frame", () => {
-    const p = makeBattleUnit({ equip: "berserk", atk: 3, hp: 10 });
+    const p = makeBattleUnit({ equip: "bile", atk: 3, hp: 10 });
     const e = makeBattleUnit({ atk: 2, hp: 10 });
     const ctx = makeContext([p], [e]);
     applyEquipmentEffects(p, e, ctx);

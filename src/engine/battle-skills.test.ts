@@ -29,7 +29,7 @@ describe("runStartSkills – damage skills", () => {
   });
 
   it("inquisitor deals 1 damage to enemy front", () => {
-    const inq = makeBattleUnit({ id: "inquisitor", name: "審問官", atk: 3, hp: 1 });
+    const inq = makeBattleUnit({ id: "church_inquisitor", name: "審問官", atk: 3, hp: 1 });
     const target = makeBattleUnit({ hp: 5 });
     const ctx = makeContext([inq], [target]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
@@ -67,7 +67,13 @@ describe("runStartSkills – damage skills", () => {
   });
 
   it("Lv2 inquisitor deals 2 damage to enemy front only", () => {
-    const inq = makeBattleUnit({ id: "inquisitor", name: "審問官", atk: 3, hp: 1, level: 2 });
+    const inq = makeBattleUnit({
+      id: "church_inquisitor",
+      name: "審問官",
+      atk: 3,
+      hp: 1,
+      level: 2,
+    });
     const front = makeBattleUnit({ hp: 10 });
     const back = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([inq], [front, back]);
@@ -182,7 +188,7 @@ describe("runStartSkills – cholera infection", () => {
 
   it("cholera logs overwrite when target has equipment", () => {
     const cholera = makeBattleUnit({ id: "cholera", name: "コレラ", atk: 1, hp: 2, skillUses: 1 });
-    const target = makeBattleUnit({ equip: "iron", hp: 5 });
+    const target = makeBattleUnit({ equip: "iron_plate", hp: 5 });
     const ctx = makeContext([cholera], [target], null, { next: () => 0 });
     applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(target.equip).toBe("infection");

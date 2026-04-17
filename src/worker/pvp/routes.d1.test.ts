@@ -149,7 +149,7 @@ describe("POST /snapshot", () => {
   it("accepts unit with valid equip value", async () => {
     const { token, playerId } = await createTestPlayer(testDb);
     const runId = await createTestRun(testDb, playerId);
-    const unit = makeValidUnit({ equip: "iron" });
+    const unit = makeValidUnit({ equip: "iron_plate" });
     const res = await postSnapshot(app, token, { runId, night: 2, board: [unit] });
     expect(res.status).toBe(200);
   });
