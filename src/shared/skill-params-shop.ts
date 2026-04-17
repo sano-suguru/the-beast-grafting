@@ -18,6 +18,7 @@ export const ZEALOT = {
 
 export const ROT_RING = {
   uses: [4, 5, 6] as SN,
+  buff: { atk: 1, hp: 1 } satisfies Buff,
 };
 
 export const BLOOD_FONT = {

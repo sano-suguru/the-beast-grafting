@@ -116,6 +116,48 @@ describe("buildProgressedUnit", () => {
     expect(a.level).toBe(b.level);
     expect(a.equip).toBe(b.equip);
   });
+
+  it("Tier6 unit at Night 12 is weaker than Tier1 unit at Night 12 (tier-aware progression)", () => {
+    // Tier6(Night11〜)はnightsSinceAvailable=2、Tier1(Night1〜)は12
+    // 多数サンプルで平均ステータスを比較
+    let tier1TotalAtk = 0;
+    let tier6TotalAtk = 0;
+    const samples = 200;
+    for (let seed = 1; seed <= samples; seed++) {
+      const t1 = buildProgressedUnit("rat", 12, createSeededRng(seed)); // Tier1
+      const t6 = buildProgressedUnit("howling_giant", 12, createSeededRng(seed)); // Tier6
+      tier1TotalAtk += t1.baseAtk + t1.buffAtk;
+      tier6TotalAtk += t6.baseAtk + t6.buffAtk;
+    }
+    // Tier1のほうが平均ステータスが高いこと（接合・バフが多く蓄積されている）
+    expect(tier1TotalAtk).toBeGreaterThan(tier6TotalAtk);
+  });
+
+  it("Tier3 unit on its first available night (Night 5) returns exact base stats", () => {
+    // nightsSinceAvailable=1 → ベースそのまま返す
+    const base = createUnit("parasite"); // Tier3
+    for (let seed = 1; seed <= 20; seed++) {
+      const u = buildProgressedUnit("parasite", 5, createSeededRng(seed));
+      expect(u.level).toBe(1);
+      expect(u.exp).toBe(0);
+      expect(u.equip).toBeNull();
+      expect(u.buffAtk).toBe(0);
+      expect(u.buffHp).toBe(0);
+      expect(u.baseAtk).toBe(base.baseAtk);
+      expect(u.baseHp).toBe(base.baseHp);
+    }
+  });
+
+  it("Tier6 unit at Night 12 mostly stays at level 1 (few grafts)", () => {
+    // nightsSinceAvailable=2 → lambda=(2-1)/3≈0.33 → ほぼLv1
+    let lv1Count = 0;
+    for (let seed = 1; seed <= 100; seed++) {
+      const u = buildProgressedUnit("howling_giant", 12, createSeededRng(seed)); // Tier6
+      if (u.level === 1) lv1Count++;
+    }
+    // 70%以上がLv1のはず（lambda≈0.33）
+    expect(lv1Count).toBeGreaterThan(70);
+  });
 });
 
 // ── ポジション最適化の効果検証 ──
@@ -343,7 +385,7 @@ describe("archetype discovery pipeline", () => {
 // ── Night-varying バランス ──
 
 describe("cross-night balance", () => {
-  const NIGHT_CHECKPOINTS = [3, 5, 7, 9, 12] as const;
+  const NIGHT_CHECKPOINTS = [3, 5, 7, 9, 12, 15, 18] as const;
   const TRIALS_PER_NIGHT = 2_000;
 
   it("mirror win rate stays balanced across nights", () => {
@@ -536,7 +578,7 @@ describe("GA composition discovery", () => {
 // ── Night横断GA ──
 
 describe("cross-night GA", () => {
-  const NIGHT_CHECKPOINTS = [3, 5, 7, 9, 12] as const;
+  const NIGHT_CHECKPOINTS = [3, 5, 7, 9, 12, 15, 18] as const;
 
   it("discovers strongest compositions at each night checkpoint", () => {
     for (const night of NIGHT_CHECKPOINTS) {

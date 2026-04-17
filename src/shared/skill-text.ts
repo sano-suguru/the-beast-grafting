@@ -140,7 +140,8 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   eye: (lv) =>
     `直前の味方が攻撃: ランダム敵に${atLevel(EYE.damage, lv)}ダメ(${atLevel(EYE.uses, lv)}回/戦)`,
-  rot_ring: (lv) => `Tier1購入: 味方全体に+1/+1(${atLevel(ROT_RING.uses, lv)}回/夜)`,
+  rot_ring: (lv) =>
+    `Tier1購入: 味方全体に+${ROT_RING.buff.atk}/+${ROT_RING.buff.hp}(${atLevel(ROT_RING.uses, lv)}回/夜)`,
   grave_worm: (lv) => {
     const b = atLevel(GRAVE_WORM.sellBuff, lv);
     return `味方解体: ランダムな味方1体に+${b.atk}/+${b.hp}`;

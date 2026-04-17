@@ -95,8 +95,8 @@ function applyRotRingBuff(
       bu
         ? {
             ...bu,
-            buffAtk: bu.buffAtk + rotRingCount,
-            buffHp: bu.buffHp + rotRingCount,
+            buffAtk: bu.buffAtk + rotRingCount * ROT_RING.buff.atk,
+            buffHp: bu.buffHp + rotRingCount * ROT_RING.buff.hp,
           }
         : null,
     ),

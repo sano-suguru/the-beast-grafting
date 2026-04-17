@@ -5,6 +5,17 @@ import type {
   RegularUnitId,
   UnitId,
 } from "../../shared/types";
+import type { Tier } from "../../shared/data/tiers";
+
+/** Tier → 最速出現Night。sim-progression と sim-shop-effects で共用。 */
+export const TIER_APPEAR_NIGHT: Record<Tier, number> = {
+  1: 1,
+  2: 3,
+  3: 5,
+  4: 7,
+  5: 9,
+  6: 11,
+};
 
 export interface SimUnitEntry {
   readonly id: UnitId;
