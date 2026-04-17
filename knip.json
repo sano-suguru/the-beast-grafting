@@ -1,5 +1,12 @@
 {
-  "entry": ["src/app/main.tsx", "src/app/env.d.ts", "vite.config.ts", "src/test-setup.ts"],
+  "entry": [
+    "src/app/main.tsx",
+    "src/app/env.d.ts",
+    "vite.config.ts",
+    "src/test-setup.ts",
+    "src/engine/sim/sim-ga-worker.ts",
+    "src/engine/sim/sim-ga-worker-boot.cjs"
+  ],
   "project": ["src/**/*.{ts,tsx}", "e2e/**/*.{ts,tsx}"],
   "ignoreDependencies": ["tailwindcss", "@vitest/coverage-v8", "oxlint-plugin-eslint"],
   "ignoreBinaries": ["similarity-ts", "wait", "trap"],

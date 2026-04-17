@@ -1,4 +1,4 @@
-import type { RegularUnitId } from "../../shared/types";
+import type { RegularUnitId, BattleResult, EnemyTeam } from "../../shared/types";
 
 export interface GaConfig {
   readonly populationSize: number;
@@ -37,4 +37,24 @@ export interface GaResult {
   readonly generationStats: readonly GaGenerationStats[];
   readonly totalBattles: number;
   readonly config: GaConfig;
+}
+
+export interface PreparedTrial {
+  enemy: EnemyTeam;
+  playerBuildSeed: number;
+  playerShopSeed: number;
+  battleSeed: number;
+  lastResult: BattleResult;
+}
+
+export interface WorkerTask {
+  teams: readonly (readonly RegularUnitId[])[];
+  night: number;
+  trialCount: number;
+  trialBaseSeed: number;
+}
+
+export interface WorkerResult {
+  winRates: number[];
+  battles: number;
 }

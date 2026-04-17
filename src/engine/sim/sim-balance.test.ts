@@ -16,14 +16,21 @@ import { SimReportCollector, perfMapToRecord, perfToRecord } from "./sim-report-
 import type { MatchupEntry } from "./sim-report-types";
 import { writeSimReport } from "./sim-report-write";
 import { makeSimEnemy } from "./sim-utils";
-import { runGeneticAlgorithm } from "./sim-ga";
+import type { Worker } from "node:worker_threads";
+import { createGaWorkerPool, runGeneticAlgorithm, terminateGaWorkerPool } from "./sim-ga";
 import type { GaRankedTeam, GaResult } from "./sim-ga-types";
 import { analyzeMetaHealth } from "./sim-meta-analysis";
 
 const collector = new SimReportCollector();
 const allMatchupEntries: MatchupEntry[] = [];
 
+const workerCount = process.env["SIM_WORKERS"] ? Number(process.env["SIM_WORKERS"]) : undefined;
+let gaWorkerPool: Worker[];
+beforeAll(() => {
+  gaWorkerPool = createGaWorkerPool(workerCount);
+});
 afterAll(() => {
+  terminateGaWorkerPool(gaWorkerPool);
   writeSimReport(collector.build());
 });
 
@@ -478,19 +485,22 @@ describe("GA composition discovery", () => {
   let gaResult: GaResult;
   let greedyArchetypes: readonly DiscoveredArchetype[];
 
-  beforeAll(() => {
-    gaResult = runGeneticAlgorithm({
-      populationSize: 200,
-      generations: 100,
-      trialsPerEval: 50,
-      eliteCount: 20,
-      mutationRate: 0.15,
-      tournamentSize: 5,
-      refinementTrials: 500,
-      refinementTopK: 10,
-      night: 12,
-      baseSeed: 777,
-    });
+  beforeAll(async () => {
+    gaResult = await runGeneticAlgorithm(
+      {
+        populationSize: 200,
+        generations: 100,
+        trialsPerEval: 50,
+        eliteCount: 20,
+        mutationRate: 0.15,
+        tournamentSize: 5,
+        refinementTrials: 500,
+        refinementTopK: 10,
+        night: 12,
+        baseSeed: 777,
+      },
+      gaWorkerPool,
+    );
 
     // グリーディ発見（比較用に軽量実行）
     const trials = runRandomTrials(10_000, 12, 500);
@@ -581,25 +591,28 @@ describe("GA composition discovery", () => {
 describe("cross-night GA", () => {
   const NIGHT_CHECKPOINTS = [3, 5, 7, 9, 12, 15, 18] as const;
 
-  it("discovers strongest compositions at each night checkpoint", () => {
+  it("discovers strongest compositions at each night checkpoint", async () => {
     for (const night of NIGHT_CHECKPOINTS) {
       const poolSize = new Set(getShopPool(night)).size;
       const seeds = [night * 1000 + 42, night * 1000 + 137];
       const allTeams: GaRankedTeam[] = [];
 
       for (const seed of seeds) {
-        const result = runGeneticAlgorithm({
-          populationSize: 100,
-          generations: 50,
-          trialsPerEval: 50,
-          eliteCount: 10,
-          mutationRate: 0.15,
-          tournamentSize: 5,
-          refinementTrials: 500,
-          refinementTopK: 5,
-          night,
-          baseSeed: seed,
-        });
+        const result = await runGeneticAlgorithm(
+          {
+            populationSize: 100,
+            generations: 50,
+            trialsPerEval: 50,
+            eliteCount: 10,
+            mutationRate: 0.15,
+            tournamentSize: 5,
+            refinementTrials: 500,
+            refinementTopK: 5,
+            night,
+            baseSeed: seed,
+          },
+          gaWorkerPool,
+        );
         allTeams.push(...result.topTeams);
       }
 
