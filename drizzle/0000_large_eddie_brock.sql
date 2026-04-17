@@ -105,6 +105,7 @@ CREATE TABLE `shop_states` (
 	`free_roll` integer DEFAULT false NOT NULL,
 	`cultist_used` integer DEFAULT false NOT NULL,
 	`rot_ring_uses` integer DEFAULT 0 NOT NULL,
+	`bone_tree_uses` integer DEFAULT 0 NOT NULL,
 	`shop_units` text NOT NULL,
 	`shop_items` text NOT NULL,
 	`board` text NOT NULL,

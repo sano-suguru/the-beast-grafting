@@ -92,6 +92,7 @@ export function executeSetup(
     freeRoll: (event?.freeRoll ?? false) || originId === "thief",
     cultistUsed: false,
     rotRingUses: 0,
+    boneTreeUses: 0,
     activeEvent: event,
     rngS0: rngState.s0,
     rngS1: rngState.s1,

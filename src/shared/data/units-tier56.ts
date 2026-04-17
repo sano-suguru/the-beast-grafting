@@ -89,7 +89,7 @@ export const UNITS_TIER56 = {
     id: "mimicking_flesh",
     name: "模倣する粘肉",
     baseAtk: 4,
-    baseHp: 3,
+    baseHp: 5,
     tier: 5,
     lore: "銀色の肉塊。隣の素体の動きを完璧に模倣し、戦いが終わると粘液に戻る。模倣は本物を超えられない。だが、二つあれば十分だ。",
   },

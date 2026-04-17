@@ -87,7 +87,7 @@ export function applyGraveWormAccumulation(
 }
 
 /**
- * market_vulture: selfBuff（売却時に自身バフ）+ shopBuff（売却時にショップにバフ）を近似。
+ * market_vulture: shopBuff（売却時にショップにバフ）を近似。
  *
  * shopBuff は本来ショップ内ユニットに付与→購入でチーム合流。vulture 自身を含む全体分配で近似。
  * 売却後に購入が続く確率を 0.5 と推定。
@@ -98,8 +98,6 @@ export function applyMarketVultureAccumulation(
   night: number,
   rng: Rng,
 ): void {
-  applySelfBuffFromSells(vulture, atLevel(MARKET_VULTURE.selfBuff, vulture.level), night);
-
   const nights = activeNights(vulture.tier as Tier, night);
   if (nights <= 0) return;
   const rawSells = totalWeightedSells(vulture.tier as Tier, night);

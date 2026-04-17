@@ -45,6 +45,7 @@ export interface ShopStateResponse {
   freeRoll: boolean;
   cultistUsed: boolean;
   rotRingUses: number;
+  boneTreeUses: number;
   activeEvent: EventData | null;
   rewardSlots: (ShopSlotResponse | null)[];
   canUndo: boolean;

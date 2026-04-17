@@ -27,7 +27,7 @@ export const UNITS_TIER12 = {
     id: "hound",
     name: "猟犬の骸",
     baseAtk: 2,
-    baseHp: 4,
+    baseHp: 3,
     tier: 1,
     lore: "主人の亡骸を守り、騎士たちに最後まで牙を剥いた忠犬。首を落とされてなお、顎の力は衰えていない。",
     secretLore:

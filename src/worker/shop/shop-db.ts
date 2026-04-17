@@ -51,6 +51,7 @@ export function toResponse(state: ShopStateRow, trophy: number): ShopStateRespon
     freeRoll: state.freeRoll,
     cultistUsed: state.cultistUsed,
     rotRingUses: state.rotRingUses,
+    boneTreeUses: state.boneTreeUses,
     rewardSlots: state.rewardSlots.map((s) =>
       s ? { unit: s.unit, frozen: s.frozen, eventSourced: s.eventSourced } : null,
     ),
@@ -75,6 +76,7 @@ function dbRowToState(
     freeRoll: boolean;
     cultistUsed: boolean;
     rotRingUses: number;
+    boneTreeUses: number;
     shopUnits: (ShopSlotJson | null)[];
     shopItems: (ShopItemSlotJson | null)[];
     board: (BoardUnit | null)[];
@@ -94,6 +96,7 @@ function dbRowToState(
     freeRoll: row.freeRoll,
     cultistUsed: row.cultistUsed,
     rotRingUses: row.rotRingUses,
+    boneTreeUses: row.boneTreeUses,
     activeEvent: row.activeEvent ?? null,
     rngS0: row.rngS0,
     rngS1: row.rngS1,
@@ -123,6 +126,7 @@ function stateToColumns(state: ShopStateRow) {
     freeRoll: state.freeRoll,
     cultistUsed: state.cultistUsed,
     rotRingUses: state.rotRingUses,
+    boneTreeUses: state.boneTreeUses,
     shopUnits: state.shopUnits,
     shopItems: state.shopItems,
     board: state.board,

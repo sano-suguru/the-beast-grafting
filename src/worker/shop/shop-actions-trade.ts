@@ -9,6 +9,7 @@ import {
   applyChaliceEffect,
   applySellEffects,
   applyBoneTreeBuyEffects,
+  applyTaintedPlacentaBuyEffects,
   buffRandomUnit,
 } from "../../engine/shop-effects";
 import type { ShopStateRow } from "./shop-state-row";
@@ -126,22 +127,24 @@ function finalizeBuy(
 
   const { rng, saveRng } = withRng(state);
   const buyResult = applyBuyEffects(unit, newBoard, state.rotRingUses, rng);
-  const throneBoard = applyBoneTreeBuyEffects(buyResult.board);
+  const boneTreeResult = applyBoneTreeBuyEffects(unit, buyResult.board, state.boneTreeUses);
   const rewards = generateLevelUpRewards(leveledUp, state.night, rng);
 
   let shopUnits = opts.shopUnits ?? state.shopUnits;
-  if (buyResult.shopBuff) shopUnits = applyShopBuffToRandom(shopUnits, buyResult.shopBuff, rng);
+  const placentaBuff = applyTaintedPlacentaBuyEffects(boneTreeResult.board);
+  if (placentaBuff) shopUnits = applyShopBuffToRandom(shopUnits, placentaBuff, rng);
 
   return ok({
     ...state,
     blood: state.blood - cost,
-    board: instancesToBoard(throneBoard),
+    board: instancesToBoard(boneTreeResult.board),
     shopUnits,
     shopItems: buyResult.chaliceTriggered
       ? itemSlotsToJson(applyChaliceEffect(itemSlotsFromJson(state.shopItems)))
       : state.shopItems,
     rewardSlots: opts.rewardMode === "append" ? [...state.rewardSlots, ...rewards] : rewards,
     rotRingUses: buyResult.rotRingUses,
+    boneTreeUses: boneTreeResult.boneTreeUses,
     undoSnapshot: captureUndo(state),
     ...saveRng(),
   });

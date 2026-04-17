@@ -222,9 +222,9 @@ export const GROANING_COFFIN = {
 export const WAILING_CURSECHILD = {
   threshold: 3,
   buff: [
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-    { atk: 4, hp: 4 },
+    { atk: 1, hp: 2 },
+    { atk: 2, hp: 3 },
+    { atk: 3, hp: 4 },
   ] as SB,
   uses: [1, 2, 3] as SN,
 };

@@ -109,7 +109,6 @@ interface BuyResult {
   board: (UnitInstance | null)[];
   chaliceTriggered: boolean;
   rotRingUses: number;
-  shopBuff?: Buff | undefined;
 }
 
 export const applyBuyEffects = (
@@ -121,17 +120,19 @@ export const applyBuyEffects = (
   const rotRing = applyRotRingBuff(boughtUnit, currentBoard, rotRingUses);
   const board = rotRing.board;
   applyGhoulInfantBuyBuff(board, rng);
-  const shopBuff =
-    boughtUnit.id === "tainted_placenta"
-      ? atLevel(TAINTED_PLACENTA.shopBuff, boughtUnit.level)
-      : undefined;
   return {
     board,
     chaliceTriggered: boughtUnit.id === "chalice",
     rotRingUses: rotRing.rotRingUses,
-    shopBuff,
   };
 };
+
+export function applyTaintedPlacentaBuyEffects(
+  currentBoard: (UnitInstance | null)[],
+): Buff | undefined {
+  const { atk, hp } = sumBuffByUnitId(currentBoard, "tainted_placenta", TAINTED_PLACENTA.shopBuff);
+  return atk > 0 || hp > 0 ? { atk, hp } : undefined;
+}
 
 function applyGhoulInfantBuyBuff(board: (UnitInstance | null)[], rng: Rng): void {
   for (let i = 0; i < board.length; i++) {
@@ -281,15 +282,6 @@ function applyCorpseBrokerSell(nextBoard: (UnitInstance | null)[]): void {
   }
 }
 
-function applyMarketVultureSelfBuff(nextBoard: (UnitInstance | null)[]): void {
-  for (let i = 0; i < nextBoard.length; i++) {
-    const u = nextBoard[i];
-    if (!u || u.id !== "market_vulture") continue;
-    const b = atLevel(MARKET_VULTURE.selfBuff, u.level);
-    nextBoard[i] = { ...u, buffAtk: u.buffAtk + b.atk, buffHp: u.buffHp + b.hp };
-  }
-}
-
 export const applySellEffects = (
   soldUnit: UnitInstance,
   currentBoard: (UnitInstance | null)[],
@@ -298,18 +290,33 @@ export const applySellEffects = (
   const nextBoard = [...currentBoard];
   applyGraveWormSell(nextBoard, rng);
   const shopBuff = collectMarketVultureShopBuff(nextBoard);
-  applyMarketVultureSelfBuff(nextBoard);
   applyAshFungusSell(soldUnit, nextBoard, rng);
   applyCorpseBrokerSell(nextBoard);
   return { board: nextBoard, shopBuff };
 };
 
-export const applyBoneTreeBuyEffects = (
+function sumBoneTreeMaxUses(board: (UnitInstance | null)[]): number {
+  let total = 0;
+  for (const u of board) {
+    if (u?.id === "bone_tree") total += atLevel(BONE_TREE.uses, u.level);
+  }
+  return total;
+}
+
+export function applyBoneTreeBuyEffects(
+  boughtUnit: UnitInstance,
   currentBoard: (UnitInstance | null)[],
-): (UnitInstance | null)[] => {
+  boneTreeUses: number,
+): { board: (UnitInstance | null)[]; boneTreeUses: number } {
+  if (boughtUnit.tier > BONE_TREE.maxTriggerTier) return { board: currentBoard, boneTreeUses };
+  const maxUses = sumBoneTreeMaxUses(currentBoard);
+  if (maxUses === 0 || boneTreeUses >= maxUses) return { board: currentBoard, boneTreeUses };
   const { atk, hp } = sumBuffByUnitId(currentBoard, "bone_tree", BONE_TREE.buff);
-  if (atk === 0 && hp === 0) return currentBoard;
-  return currentBoard.map((u) =>
-    u ? { ...u, buffAtk: u.buffAtk + atk, buffHp: u.buffHp + hp } : null,
-  );
-};
+  if (atk === 0 && hp === 0) return { board: currentBoard, boneTreeUses };
+  return {
+    board: currentBoard.map((u) =>
+      u ? { ...u, buffAtk: u.buffAtk + atk, buffHp: u.buffHp + hp } : null,
+    ),
+    boneTreeUses: boneTreeUses + 1,
+  };
+}

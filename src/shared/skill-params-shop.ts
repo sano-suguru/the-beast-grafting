@@ -35,11 +35,13 @@ export const BUDDING_HYDRA = {
 };
 
 export const BONE_TREE = {
+  maxTriggerTier: 2 as const,
   buff: [
     { atk: 0, hp: 1 },
-    { atk: 0, hp: 1 },
-    { atk: 1, hp: 1 },
+    { atk: 1, hp: 2 },
+    { atk: 2, hp: 3 },
   ] as SB,
+  uses: [3, 4, 5] as SN,
 };
 
 export const GRAVE_WORM = {
@@ -53,11 +55,6 @@ export const GRAVE_WORM = {
 export const MARKET_VULTURE = {
   shopBuff: [
     { atk: 1, hp: 0 },
-    { atk: 1, hp: 1 },
-    { atk: 1, hp: 1 },
-  ] as SB,
-  selfBuff: [
-    { atk: 0, hp: 1 },
     { atk: 1, hp: 1 },
     { atk: 1, hp: 1 },
   ] as SB,

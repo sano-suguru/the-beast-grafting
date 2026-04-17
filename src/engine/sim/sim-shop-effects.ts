@@ -4,6 +4,7 @@ import {
   applyBoneTreeAccumulation,
   applyGhoulInfantAccumulation,
   applyRotRingAccumulation,
+  applyTaintedPlacentaAccumulation,
 } from "./sim-shop-effects-buy";
 import {
   applyAshFungusAccumulation,
@@ -39,6 +40,9 @@ export function applySimShopEffects(team: UnitInstance[], night: number, rng: Rn
         break;
       case "rot_ring":
         applyRotRingAccumulation(unit, team, night);
+        break;
+      case "tainted_placenta":
+        applyTaintedPlacentaAccumulation(unit, team, night, rng);
         break;
     }
   }

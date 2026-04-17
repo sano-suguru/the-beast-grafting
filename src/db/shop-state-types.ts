@@ -21,6 +21,7 @@ export interface ShopUndoSnapshot {
   freeRoll: boolean;
   cultistUsed: boolean;
   rotRingUses: number;
+  boneTreeUses: number;
   activeEvent: EventData | null;
   rngS0: number;
   rngS1: number;

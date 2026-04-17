@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "042b9309-8b96-4537-9c75-930f221f0735",
+  "id": "80684c34-69e0-49ef-9f92-6539a41b34db",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_providers": {
@@ -60,12 +60,17 @@
       "indexes": {
         "idx_auth_providers_unique": {
           "name": "idx_auth_providers_unique",
-          "columns": ["provider", "provider_id"],
+          "columns": [
+            "provider",
+            "provider_id"
+          ],
           "isUnique": true
         },
         "idx_auth_providers_player_id": {
           "name": "idx_auth_providers_player_id",
-          "columns": ["player_id"],
+          "columns": [
+            "player_id"
+          ],
           "isUnique": false
         }
       },
@@ -74,8 +79,12 @@
           "name": "auth_providers_player_id_players_id_fk",
           "tableFrom": "auth_providers",
           "tableTo": "players",
-          "columnsFrom": ["player_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -162,17 +171,24 @@
       "indexes": {
         "idx_battles_run_night": {
           "name": "idx_battles_run_night",
-          "columns": ["run_id", "night"],
+          "columns": [
+            "run_id",
+            "night"
+          ],
           "isUnique": true
         },
         "idx_battles_player_id": {
           "name": "idx_battles_player_id",
-          "columns": ["player_id"],
+          "columns": [
+            "player_id"
+          ],
           "isUnique": false
         },
         "idx_battles_created_at": {
           "name": "idx_battles_created_at",
-          "columns": ["created_at"],
+          "columns": [
+            "created_at"
+          ],
           "isUnique": false
         }
       },
@@ -181,8 +197,12 @@
           "name": "battles_player_id_players_id_fk",
           "tableFrom": "battles",
           "tableTo": "players",
-          "columnsFrom": ["player_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -190,8 +210,12 @@
           "name": "battles_run_id_runs_id_fk",
           "tableFrom": "battles",
           "tableTo": "runs",
-          "columnsFrom": ["run_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "run_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -199,8 +223,12 @@
           "name": "battles_opponent_player_id_players_id_fk",
           "tableFrom": "battles",
           "tableTo": "players",
-          "columnsFrom": ["opponent_player_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "opponent_player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -272,22 +300,31 @@
       "indexes": {
         "idx_snapshots_run_night": {
           "name": "idx_snapshots_run_night",
-          "columns": ["run_id", "night"],
+          "columns": [
+            "run_id",
+            "night"
+          ],
           "isUnique": true
         },
         "idx_snapshots_night": {
           "name": "idx_snapshots_night",
-          "columns": ["night"],
+          "columns": [
+            "night"
+          ],
           "isUnique": false
         },
         "idx_snapshots_player_id": {
           "name": "idx_snapshots_player_id",
-          "columns": ["player_id"],
+          "columns": [
+            "player_id"
+          ],
           "isUnique": false
         },
         "idx_snapshots_created_at": {
           "name": "idx_snapshots_created_at",
-          "columns": ["created_at"],
+          "columns": [
+            "created_at"
+          ],
           "isUnique": false
         }
       },
@@ -296,8 +333,12 @@
           "name": "board_snapshots_player_id_players_id_fk",
           "tableFrom": "board_snapshots",
           "tableTo": "players",
-          "columnsFrom": ["player_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -305,8 +346,12 @@
           "name": "board_snapshots_run_id_runs_id_fk",
           "tableFrom": "board_snapshots",
           "tableTo": "runs",
-          "columnsFrom": ["run_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "run_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -350,7 +395,10 @@
       "indexes": {
         "idx_lore_entries_pk": {
           "name": "idx_lore_entries_pk",
-          "columns": ["player_id", "unit_id"],
+          "columns": [
+            "player_id",
+            "unit_id"
+          ],
           "isUnique": true
         }
       },
@@ -359,8 +407,12 @@
           "name": "lore_entries_player_id_players_id_fk",
           "tableFrom": "lore_entries",
           "tableTo": "players",
-          "columnsFrom": ["player_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -527,17 +579,23 @@
       "indexes": {
         "idx_runs_created_at": {
           "name": "idx_runs_created_at",
-          "columns": ["created_at"],
+          "columns": [
+            "created_at"
+          ],
           "isUnique": false
         },
         "idx_runs_player_id": {
           "name": "idx_runs_player_id",
-          "columns": ["player_id"],
+          "columns": [
+            "player_id"
+          ],
           "isUnique": false
         },
         "idx_runs_status": {
           "name": "idx_runs_status",
-          "columns": ["status"],
+          "columns": [
+            "status"
+          ],
           "isUnique": false
         }
       },
@@ -546,8 +604,12 @@
           "name": "runs_player_id_players_id_fk",
           "tableFrom": "runs",
           "tableTo": "players",
-          "columnsFrom": ["player_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -591,12 +653,16 @@
       "indexes": {
         "idx_sessions_player_id": {
           "name": "idx_sessions_player_id",
-          "columns": ["player_id"],
+          "columns": [
+            "player_id"
+          ],
           "isUnique": false
         },
         "idx_sessions_expires_at": {
           "name": "idx_sessions_expires_at",
-          "columns": ["expires_at"],
+          "columns": [
+            "expires_at"
+          ],
           "isUnique": false
         }
       },
@@ -605,8 +671,12 @@
           "name": "sessions_player_id_players_id_fk",
           "tableFrom": "sessions",
           "tableTo": "players",
-          "columnsFrom": ["player_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -665,6 +735,14 @@
         },
         "rot_ring_uses": {
           "name": "rot_ring_uses",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "bone_tree_uses": {
+          "name": "bone_tree_uses",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -754,12 +832,17 @@
       "indexes": {
         "idx_shop_states_run_night": {
           "name": "idx_shop_states_run_night",
-          "columns": ["run_id", "night"],
+          "columns": [
+            "run_id",
+            "night"
+          ],
           "isUnique": true
         },
         "idx_shop_states_run_id": {
           "name": "idx_shop_states_run_id",
-          "columns": ["run_id"],
+          "columns": [
+            "run_id"
+          ],
           "isUnique": false
         }
       },
@@ -768,8 +851,12 @@
           "name": "shop_states_run_id_runs_id_fk",
           "tableFrom": "shop_states",
           "tableTo": "runs",
-          "columnsFrom": ["run_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "run_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

@@ -5,6 +5,7 @@ import {
   applySummonEffects,
   applySellEffects,
   applyBoneTreeBuyEffects,
+  applyTaintedPlacentaBuyEffects,
 } from "./shop-effects";
 import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
@@ -354,25 +355,58 @@ describe("applySellEffects – determinism", () => {
 });
 
 describe("applyBoneTreeBuyEffects – bone_tree", () => {
-  it("buffs all allies by flat amount", () => {
+  it("buffs all allies by flat amount when within uses limit", () => {
     const throne = makeUnit({ id: "bone_tree", uid: "throne-1" });
     const ally = makeUnit({ uid: "ally-1" });
     const board: (UnitInstance | null)[] = [throne, ally, null];
-    const result = applyBoneTreeBuyEffects(board);
+    const boughtT1 = makeUnit({ uid: "bought-1", tier: 1 });
+    const result = applyBoneTreeBuyEffects(boughtT1, board, 0);
     const b = atLevel(BONE_TREE.buff, 1);
-    const throneResult = result.find((u) => u?.uid === "throne-1");
-    const allyResult = result.find((u) => u?.uid === "ally-1");
+    const throneResult = result.board.find((u) => u?.uid === "throne-1");
+    const allyResult = result.board.find((u) => u?.uid === "ally-1");
     expect(throneResult!.buffAtk).toBe(b.atk);
     expect(throneResult!.buffHp).toBe(b.hp);
     expect(allyResult!.buffAtk).toBe(b.atk);
     expect(allyResult!.buffHp).toBe(b.hp);
+    expect(result.boneTreeUses).toBe(1);
   });
 
-  it("returns original board when no throne on board", () => {
+  it("does not buff when uses limit reached", () => {
+    const throne = makeUnit({ id: "bone_tree", uid: "throne-1" });
+    const ally = makeUnit({ uid: "ally-1" });
+    const board: (UnitInstance | null)[] = [throne, ally, null];
+    const boughtT1 = makeUnit({ uid: "bought-1", tier: 1 });
+    const maxUses = atLevel(BONE_TREE.uses, 1);
+    const result = applyBoneTreeBuyEffects(boughtT1, board, maxUses);
+    expect(result.board).toBe(board);
+    expect(result.boneTreeUses).toBe(maxUses);
+  });
+
+  it("returns original board reference when no bone_tree on board", () => {
     const ally = makeUnit({ uid: "ally-1" });
     const board: (UnitInstance | null)[] = [ally, null];
-    const result = applyBoneTreeBuyEffects(board);
-    expect(result).toBe(board);
+    const boughtT1 = makeUnit({ uid: "bought-1", tier: 1 });
+    const result = applyBoneTreeBuyEffects(boughtT1, board, 0);
+    expect(result.board).toBe(board);
+    expect(result.boneTreeUses).toBe(0);
+  });
+
+  it("does not buff when bought unit is Tier 3+", () => {
+    const throne = makeUnit({ id: "bone_tree", uid: "throne-1" });
+    const ally = makeUnit({ uid: "ally-1" });
+    const board: (UnitInstance | null)[] = [throne, ally, null];
+    const boughtT3 = makeUnit({ uid: "bought-1", tier: 3 });
+    const result = applyBoneTreeBuyEffects(boughtT3, board, 0);
+    expect(result.board).toBe(board);
+    expect(result.boneTreeUses).toBe(0);
+  });
+
+  it("buffs when bought unit is Tier 2", () => {
+    const throne = makeUnit({ id: "bone_tree", uid: "throne-1" });
+    const board: (UnitInstance | null)[] = [throne, null];
+    const boughtT2 = makeUnit({ uid: "bought-1", tier: 2 });
+    const result = applyBoneTreeBuyEffects(boughtT2, board, 0);
+    expect(result.boneTreeUses).toBe(1);
   });
 });
 
@@ -441,22 +475,28 @@ describe("applyBuyEffects – ghoul_infant", () => {
   });
 });
 
-// ── tainted_placenta: 購入時にshopBuff返却 ──
+// ── tainted_placenta: ボード常駐で購入時にshopBuff返却 ──
 
-describe("applyBuyEffects – tainted_placenta", () => {
-  it("returns shopBuff when tainted_placenta is bought", () => {
-    const board: (UnitInstance | null)[] = [null, null];
-    const bought = makeUnit({ id: "tainted_placenta", uid: "tp-1" });
-    const result = applyBuyEffects(bought, board, 0, createSeededRng(1));
+describe("applyTaintedPlacentaBuyEffects", () => {
+  it("returns shopBuff when tainted_placenta is on board", () => {
+    const placenta = makeUnit({ id: "tainted_placenta", uid: "tp-1" });
+    const board: (UnitInstance | null)[] = [placenta, null];
     const b = atLevel(TAINTED_PLACENTA.shopBuff, 1);
-    expect(result.shopBuff).toEqual(b);
+    expect(applyTaintedPlacentaBuyEffects(board)).toEqual(b);
   });
 
-  it("returns no shopBuff when other unit is bought", () => {
-    const board: (UnitInstance | null)[] = [null, null];
-    const bought = makeUnit({ id: "rat", uid: "r-1" });
-    const result = applyBuyEffects(bought, board, 0, createSeededRng(1));
-    expect(result.shopBuff).toBeUndefined();
+  it("returns undefined when no tainted_placenta on board", () => {
+    const ally = makeUnit({ uid: "ally-1" });
+    const board: (UnitInstance | null)[] = [ally, null];
+    expect(applyTaintedPlacentaBuyEffects(board)).toBeUndefined();
+  });
+
+  it("stacks buff for multiple tainted_placentas", () => {
+    const tp1 = makeUnit({ id: "tainted_placenta", uid: "tp-1" });
+    const tp2 = makeUnit({ id: "tainted_placenta", uid: "tp-2" });
+    const board: (UnitInstance | null)[] = [tp1, tp2, null];
+    const b = atLevel(TAINTED_PLACENTA.shopBuff, 1);
+    expect(applyTaintedPlacentaBuyEffects(board)).toEqual({ atk: b.atk * 2, hp: b.hp * 2 });
   });
 });
 
@@ -489,22 +529,21 @@ describe("applySellEffects – corpse_broker", () => {
   });
 });
 
-// ── market_vulture: 解体時に自身にバフ ──
+// ── market_vulture: 解体時に自身バフなし ──
 
-describe("applySellEffects – market_vulture selfBuff", () => {
-  it("buffs market_vulture itself on ally sell", () => {
+describe("applySellEffects – market_vulture no selfBuff", () => {
+  it("does not buff market_vulture itself on ally sell", () => {
     const vulture = makeUnit({ id: "market_vulture", uid: "mv-1" });
     const board: (UnitInstance | null)[] = [vulture, null];
     const sold = makeUnit({ uid: "sold-1" });
     const rng = createSeededRng(1);
     const result = applySellEffects(sold, board, rng);
-    const b = atLevel(MARKET_VULTURE.selfBuff, 1);
     const updated = result.board.find((u): u is UnitInstance => u !== null && u.uid === "mv-1");
-    expect(updated!.buffAtk).toBe(b.atk);
-    expect(updated!.buffHp).toBe(b.hp);
+    expect(updated!.buffAtk).toBe(0);
+    expect(updated!.buffHp).toBe(0);
   });
 
-  it("returns shopBuff and applies selfBuff simultaneously", () => {
+  it("returns shopBuff without selfBuff", () => {
     const vulture = makeUnit({ id: "market_vulture", uid: "mv-1" });
     const board: (UnitInstance | null)[] = [vulture, null];
     const sold = makeUnit({ uid: "sold-1" });
@@ -512,10 +551,9 @@ describe("applySellEffects – market_vulture selfBuff", () => {
     const result = applySellEffects(sold, board, rng);
     const sb = atLevel(MARKET_VULTURE.shopBuff, 1);
     expect(result.shopBuff).toEqual({ atk: sb.atk, hp: sb.hp });
-    const selfB = atLevel(MARKET_VULTURE.selfBuff, 1);
     const updated = result.board.find((u): u is UnitInstance => u !== null && u.uid === "mv-1");
-    expect(updated!.buffAtk).toBe(selfB.atk);
-    expect(updated!.buffHp).toBe(selfB.hp);
+    expect(updated!.buffAtk).toBe(0);
+    expect(updated!.buffHp).toBe(0);
   });
 });
 
