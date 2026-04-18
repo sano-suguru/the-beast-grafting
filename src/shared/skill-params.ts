@@ -229,14 +229,10 @@ export const WAILING_CURSECHILD = {
   uses: [1, 2, 3] as SN,
 };
 
-// ── 味方召喚時 ──
+// ── 攻撃後スキル ──
 
-export const FLESH_GRANULATION = {
-  buff: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-  ] as SB,
+export const NEEDLESHELL_WORM = {
+  targets: [1, 2, 3] as SN,
 };
 
 // ── 開戦バフ ──

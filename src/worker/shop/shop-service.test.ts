@@ -102,6 +102,25 @@ describe("executeSetup", () => {
     const unit = result.board[0] as BoardUnit;
     expect(unit.tempBuffAtk).toBe(0);
   });
+
+  test("tainted_placenta on prevBoard buffs one shop unit at turn start", () => {
+    const placenta = unitInstanceToBoardUnit(makeUnit({ id: "tainted_placenta" as UnitId }));
+    const result = executeSetup(1, 5, null, 42, [placenta, null, null, null, null], true, [], []);
+    const totalAtk = result.shopUnits.reduce((sum, s) => sum + (s?.unit.buffAtk ?? 0), 0);
+    const totalHp = result.shopUnits.reduce((sum, s) => sum + (s?.unit.buffHp ?? 0), 0);
+    expect(totalAtk).toBe(1);
+    expect(totalHp).toBe(1);
+    const buffedCount = result.shopUnits.filter(
+      (s) => s && (s.unit.buffAtk > 0 || s.unit.buffHp > 0),
+    ).length;
+    expect(buffedCount).toBe(1);
+  });
+
+  test("no tainted_placenta on prevBoard does not buff shop units", () => {
+    const result = executeSetup(1, 5, null, 42, [null, null, null, null, null], true, [], []);
+    const anyBuffed = result.shopUnits.some((s) => s && (s.unit.buffAtk > 0 || s.unit.buffHp > 0));
+    expect(anyBuffed).toBe(false);
+  });
 });
 
 describe("executeRoll", () => {

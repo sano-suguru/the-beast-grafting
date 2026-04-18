@@ -21,6 +21,7 @@ import {
   applyCholeraBeforeAttack,
   applyOnHitSkills,
   applyEquipmentEffects,
+  applyAfterAttackSkills,
 } from "./battle-skills";
 import { applyAcidSplash, processKnockoutEffects } from "./battle-skills-combat";
 import { CLASH_LIMIT, NUMBNESS_INITIAL_USES } from "./constants";
@@ -98,11 +99,11 @@ function resolveNecroticInstantKill(
   );
 }
 
-function resolveClash(
+function resolveClashDamage(
   p: BattleUnit,
   e: BattleUnit,
   ctx: BattleContext,
-): { pKilledE: boolean; eKilledP: boolean } {
+): { pWaxBlocked: boolean; eWaxBlocked: boolean } {
   pushFrame(
     ctx,
     "clash",
@@ -110,7 +111,6 @@ function resolveClash(
     "clash",
     { [p.uid]: clashAction(), [e.uid]: clashAction() },
   );
-
   const { pDmg, eDmg, pAction, eAction, pWaxBlocked, eWaxBlocked } = applyEquipmentEffects(
     p,
     e,
@@ -120,7 +120,6 @@ function resolveClash(
   const eHpBefore = e.hp;
   takeDamage(p, pDmg, e.uid);
   takeDamage(e, eDmg, p.uid);
-
   pushFrame(
     ctx,
     "damage",
@@ -140,18 +139,25 @@ function resolveClash(
       [e.uid]: damageAction(eDmg, p.uid, eAction),
     },
   );
+  return { pWaxBlocked, eWaxBlocked };
+}
 
+function resolveClash(
+  p: BattleUnit,
+  e: BattleUnit,
+  ctx: BattleContext,
+): { pKilledE: boolean; eKilledP: boolean } {
+  const { pWaxBlocked, eWaxBlocked } = resolveClashDamage(p, e, ctx);
   resolveNecroticInstantKill(p, e, eWaxBlocked, true, ctx);
   resolveNecroticInstantKill(e, p, pWaxBlocked, false, ctx);
-
   applyOnHitSkills(p, ctx.pBoard, true, ctx);
   applyOnHitSkills(e, ctx.eBoard, false, ctx);
+  applyAfterAttackSkills(p, ctx.pBoard, ctx.eBoard, true, ctx);
+  applyAfterAttackSkills(e, ctx.eBoard, ctx.pBoard, false, ctx);
   // on-hitキルを酸散布前に確定させ、死亡ユニットが酸の対象にならないようにする
   resolveDeaths(ctx);
-
   applyAcidSplash(p, ctx.eBoard, true, ctx);
   applyAcidSplash(e, ctx.pBoard, false, ctx);
-
   return { pKilledE: e.hp <= 0, eKilledP: p.hp <= 0 };
 }
 

@@ -8,14 +8,11 @@ import type {
   IconType,
   LogSegment,
   UnitId,
-  DataUnitId,
   Tier,
 } from "../shared/types";
 import type { Buff } from "../shared/skill-params";
 import type { Rng } from "./rng";
 import type { SimMetricsCollector } from "./sim/sim-types";
-import { TOKEN_TIER } from "../shared/data/tiers";
-import { generateUid } from "./helpers";
 import { MAX_OPS } from "./constants";
 
 export interface BattleUnit extends UnitInstance {
@@ -57,8 +54,6 @@ export interface BattleContext {
   simCollector: SimMetricsCollector | null;
 }
 
-/** BattleUnit fields are all primitives — shallow copy is safe.
- *  If nested objects are added, switch to structuredClone. */
 function cloneBattleUnit(u: BattleUnit): BattleUnit {
   return { ...u };
 }
@@ -209,76 +204,6 @@ export function takeDamage(unit: BattleUnit, amount: number, source?: string): v
   if (unit.hp > 0) unit.preDeathHp = unit.hp;
   unit.hp -= amount;
   if (source) unit.lastDamageSource = source;
-}
-
-export function createToken(name: string, atk: number, hp: number, isChurch = false): BattleUnit {
-  return {
-    name,
-    atk,
-    hp,
-    preDeathHp: hp,
-    id: "token",
-    uid: generateUid(),
-    equip: null,
-    level: 1,
-    isChurch,
-    altarBuffed: false,
-    battleBaseAtk: atk,
-    battleBaseHp: hp,
-    baseAtk: atk,
-    baseHp: hp,
-    buffAtk: 0,
-    buffHp: 0,
-    tempBuffAtk: 0,
-    tier: TOKEN_TIER,
-    skillText: "",
-    lore: "",
-    exp: 0,
-    avengeDeathCount: 0,
-    skillUses: 0,
-    equipUses: 0,
-    infectionLevel: 0,
-    lastDamageSource: null,
-  };
-}
-
-export function createSummonedUnit(
-  unitData: {
-    id: DataUnitId;
-    name: string;
-    tier: Tier;
-    skillText: string;
-    lore: string;
-  },
-  atk: number,
-  hp: number,
-  isChurch = false,
-  level = 1,
-): BattleUnit {
-  return {
-    ...unitData,
-    atk,
-    hp,
-    preDeathHp: hp,
-    battleBaseAtk: atk,
-    battleBaseHp: hp,
-    baseAtk: atk,
-    baseHp: hp,
-    buffAtk: 0,
-    buffHp: 0,
-    tempBuffAtk: 0,
-    uid: generateUid(),
-    equip: null,
-    level,
-    isChurch,
-    altarBuffed: false,
-    exp: 0,
-    avengeDeathCount: 0,
-    skillUses: 0,
-    equipUses: 0,
-    infectionLevel: 0,
-    lastDamageSource: null,
-  };
 }
 
 export function createBattleContext(

@@ -1,7 +1,11 @@
-import { runStartSkills, applyBeforeAttackSkills, applyCholeraBeforeAttack } from "./battle-skills";
+import {
+  runStartSkills,
+  applyBeforeAttackSkills,
+  applyCholeraBeforeAttack,
+  applyAfterAttackSkills,
+} from "./battle-skills";
 import { runDeploySkills } from "./battle-skills-init";
 import { runBattle } from "./battle";
-import { spawnTokenAndNotify } from "./battle-spawn";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID, makeEnemyTeam } from "./test-helpers";
 import type { BattleFrame } from "../shared/types";
 import { segmentsToPlainText } from "./test-helpers";
@@ -13,7 +17,6 @@ import {
   HOLY_FIRE,
   FAMINE_CORPSE,
   RELIC_SWORD,
-  FLESH_GRANULATION,
 } from "../shared/skill-params";
 import { BLOOD_FONT } from "../shared/skill-params-shop";
 
@@ -497,46 +500,6 @@ describe("runDeploySkills – blood_font buffs lowest HP ally", () => {
   });
 });
 
-describe("flesh_granulation – on ally summon", () => {
-  it("buffs self when a token is spawned", () => {
-    const fg = makeBattleUnit({ id: "flesh_granulation", name: "増殖する肉芽", atk: 2, hp: 3 });
-    const board = [fg];
-    const ctx = makeContext(board, []);
-    spawnTokenAndNotify({
-      board,
-      idx: 1,
-      name: "肉塊",
-      atk: 1,
-      hp: 1,
-      isChurch: false,
-      segments: () => ["召喚"],
-      isPlayer: true,
-      ctx,
-    });
-    const b = atLevel(FLESH_GRANULATION.buff, 1);
-    expect(fg.atk).toBe(2 + b.atk);
-    expect(fg.hp).toBe(3 + b.hp);
-  });
-
-  it("does not buff when dead", () => {
-    const fg = makeBattleUnit({ id: "flesh_granulation", name: "増殖する肉芽", atk: 2, hp: 0 });
-    const board = [fg];
-    const ctx = makeContext(board, []);
-    spawnTokenAndNotify({
-      board,
-      idx: 1,
-      name: "肉塊",
-      atk: 1,
-      hp: 1,
-      isChurch: false,
-      segments: () => ["召喚"],
-      isPlayer: true,
-      ctx,
-    });
-    expect(fg.atk).toBe(2);
-  });
-});
-
 describe("corroding_mold – start skill", () => {
   it("buffs the unit in front at start of battle", () => {
     const front = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 5 });
@@ -569,5 +532,61 @@ describe("corroding_mold – start skill", () => {
         f.log.segments.some((s) => typeof s !== "string" && s.text === "侵蝕する黴"),
     );
     expect(moldFrames).toHaveLength(1);
+  });
+});
+
+describe("needleshell_worm – 攻撃後", () => {
+  it("攻撃後に後方1体に1ダメージ (L1)", () => {
+    const worm = makeBattleUnit({ id: "needleshell_worm", name: "針殻の蟲", atk: 3, hp: 7 });
+    const behind = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 5 });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 10 });
+    const board = [worm, behind];
+    const ctx = makeContext(board, [enemy]);
+    applyAfterAttackSkills(worm, board, [enemy], true, ctx);
+    expect(behind.hp).toBe(4);
+  });
+
+  it("L2では後方2体に1ダメージずつ", () => {
+    const worm = makeBattleUnit({
+      id: "needleshell_worm",
+      name: "針殻の蟲",
+      atk: 3,
+      hp: 7,
+      level: 2,
+    });
+    const b1 = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 5 });
+    const b2 = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 5 });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 10 });
+    const board = [worm, b1, b2];
+    const ctx = makeContext(board, [enemy]);
+    applyAfterAttackSkills(worm, board, [enemy], true, ctx);
+    expect(b1.hp).toBe(4);
+    expect(b2.hp).toBe(4);
+  });
+
+  it("後方の味方が被弾スキル持ちの場合チェーン発動", () => {
+    const worm = makeBattleUnit({ id: "needleshell_worm", name: "針殻の蟲", atk: 3, hp: 7 });
+    const twin = makeBattleUnit({
+      id: "stitched_twin",
+      name: "継ぎ接ぎの双子",
+      atk: 1,
+      hp: 10,
+    });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 10 });
+    const board = [worm, twin];
+    const ctx = makeContext(board, [enemy]);
+    applyAfterAttackSkills(worm, board, [enemy], true, ctx);
+    expect(twin.hp).toBe(9);
+    expect(twin.atk).toBeGreaterThan(1); // stitched_twin 被弾スキルが発動
+  });
+
+  it("後方に味方がいない場合は何も起きない", () => {
+    const worm = makeBattleUnit({ id: "needleshell_worm", name: "針殻の蟲", atk: 3, hp: 7 });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 10 });
+    const board = [worm];
+    const ctx = makeContext(board, [enemy]);
+    const framesBefore = ctx.frames.length;
+    applyAfterAttackSkills(worm, board, [enemy], true, ctx);
+    expect(ctx.frames.length).toBe(framesBefore);
   });
 });

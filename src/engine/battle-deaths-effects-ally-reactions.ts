@@ -1,9 +1,15 @@
 import type { LogSegment } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg, buffAction } from "./battle-context";
+import { pushFrame, getMult, enemyPrefix, seg, buffAction, aoeBuffActions } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import { atLevel, CRAWLING_CORD, INSATIABLE_MAW, type Buff } from "../shared/skill-params";
+import {
+  atLevel,
+  CRAWLING_CORD,
+  INSATIABLE_MAW,
+  BONE_TREE,
+  type Buff,
+} from "../shared/skill-params";
 
 function applyAllyDeathReaction(
   board: BattleUnit[],
@@ -67,6 +73,45 @@ export function handleInsatiableMawBuff(
       seg.s(`+${b.atk}/+${b.hp}`),
     ]);
   });
+}
+
+export function handleBoneTreeAllyDeath(
+  board: BattleUnit[],
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  const prefix = enemyPrefix(isPlayer);
+  for (let i = 0; i < board.length; i++) {
+    const u = board[i]!;
+    if (u.id !== "bone_tree" || u.hp <= 0) continue;
+    const mult = getMult(board, i);
+    const b = atLevel(BONE_TREE.buff, u.level);
+    const targets = board.slice(0, i).filter((t): t is BattleUnit => t.hp > 0);
+    if (targets.length === 0) continue;
+    for (let m = 0; m < mult && u.skillUses > 0; m++) {
+      u.skillUses -= 1;
+      for (const t of targets) {
+        t.atk += b.atk;
+        t.hp += b.hp;
+      }
+      pushFrame(
+        ctx,
+        "skill",
+        () => [
+          prefix,
+          seg.u(u.name),
+          "の根が震え、前方の味方を強化した。",
+          seg.s(`+${b.atk}/+${b.hp}`),
+        ],
+        "skill",
+        {
+          [u.uid]: { type: "skill" },
+          ...aoeBuffActions(u, targets, b),
+        },
+        FRAME_DELAY_DEATH_CHAIN,
+      );
+    }
+  }
 }
 
 function buffAlly(

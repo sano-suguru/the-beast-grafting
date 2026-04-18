@@ -53,7 +53,7 @@ export type RegularUnitId =
   | "crawling_cord"
   | "tainted_placenta"
   | "graft_scion"
-  | "flesh_granulation"
+  | "needleshell_worm"
   | "corroding_mold"
   | "omen_womb"
   | "corpse_broker"

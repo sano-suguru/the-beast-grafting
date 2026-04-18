@@ -2,18 +2,14 @@ import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
 import { atLevel } from "../../shared/skill-params";
-import {
-  BONE_TREE,
-  GHOUL_INFANT,
-  ROT_RING,
-  TAINTED_PLACENTA,
-} from "../../shared/skill-params-shop";
+import { GHOUL_INFANT, ROT_RING, TAINTED_PLACENTA } from "../../shared/skill-params-shop";
 import { invariant } from "../../shared/invariant";
 import {
   activeNights,
   estimateWeightedActions,
   distributeTempBuffRandomly,
   distributeBuffRandomly,
+  PLACENTA_START_CONVERSION,
 } from "./sim-shop-effects-util";
 
 /** Night N のショッププール内でTier 1が占める割合 (全Tier 10体ずつ均等) */
@@ -24,41 +20,6 @@ function tier1FractionAtNight(night: number): number {
   if (night >= 5) return 1 / 3;
   if (night >= 3) return 1 / 2;
   return 1;
-}
-
-/** Night N のショッププール内でTier 1~2が占める割合 (全Tier 10体ずつ均等) */
-function tier12FractionAtNight(night: number): number {
-  if (night >= 11) return 2 / 6;
-  if (night >= 9) return 2 / 5;
-  if (night >= 7) return 2 / 4;
-  if (night >= 5) return 2 / 3;
-  return 1;
-}
-
-export function applyBoneTreeAccumulation(
-  boneTree: UnitInstance,
-  team: UnitInstance[],
-  night: number,
-): void {
-  const nights = activeNights(boneTree.tier as Tier, night);
-  if (nights <= 0) return;
-
-  const buff = atLevel(BONE_TREE.buff, boneTree.level);
-  const maxUses = atLevel(BONE_TREE.uses, boneTree.level);
-  let potentialTriggers = 0;
-
-  for (const action of estimateWeightedActions(boneTree.tier as Tier, night)) {
-    const t12Purchases = action.purchases * tier12FractionAtNight(action.night);
-    potentialTriggers += Math.min(t12Purchases, maxUses);
-  }
-
-  const totalAtk = Math.floor(buff.atk * potentialTriggers);
-  const totalHp = Math.floor(buff.hp * potentialTriggers);
-  if (totalAtk === 0 && totalHp === 0) return;
-  for (const u of team) {
-    u.buffAtk += totalAtk;
-    u.buffHp += totalHp;
-  }
 }
 
 export function applyGhoulInfantAccumulation(
@@ -112,10 +73,10 @@ export function applyRotRingAccumulation(
 }
 
 /**
- * tainted_placenta: 購入時にショップランダム1体にバフ → 購入確率0.5でチームに還元。
+ * tainted_placenta: ターン開始でショップランダム1体にバフ → PLACENTA_START_CONVERSIONでチームに還元。
  *
- * shopBuff はショップ素体1体に付与され、その後購入されてチームに合流する確率を0.5と推定。
- * 各ナイトの購入回数に0.5を掛けてバフをチームに分配する。
+ * バフはターン開始時に視認可能なため、プレイヤーが意図的に購入できる。
+ * ナイトごとに1回発動 × PLACENTA_START_CONVERSION = 0.25 の購入確率で累積。
  */
 export function applyTaintedPlacentaAccumulation(
   placenta: UnitInstance,
@@ -127,16 +88,8 @@ export function applyTaintedPlacentaAccumulation(
   if (nights <= 0) return;
 
   const shopBuff = atLevel(TAINTED_PLACENTA.shopBuff, placenta.level);
-  let rawAtk = 0;
-  let rawHp = 0;
-
-  for (const action of estimateWeightedActions(placenta.tier as Tier, night)) {
-    rawAtk += shopBuff.atk * action.purchases * 0.5;
-    rawHp += shopBuff.hp * action.purchases * 0.5;
-  }
-
-  const totalAtk = Math.floor(rawAtk);
-  const totalHp = Math.floor(rawHp);
+  const totalAtk = Math.floor(shopBuff.atk * nights * PLACENTA_START_CONVERSION);
+  const totalHp = Math.floor(shopBuff.hp * nights * PLACENTA_START_CONVERSION);
   if (totalAtk === 0 && totalHp === 0) return;
   distributeBuffRandomly(team, totalAtk, totalHp, rng);
 }

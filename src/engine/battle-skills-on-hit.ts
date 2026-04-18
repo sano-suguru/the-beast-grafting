@@ -32,6 +32,7 @@ type HitCtx = {
   prefix: string;
   isPlayer: boolean;
   ctx: BattleContext;
+  depth: number;
 };
 
 type HitHandler = (h: HitCtx) => void;
@@ -60,6 +61,7 @@ export function applyOnHitSkills(
   board: BattleUnit[],
   isPlayer: boolean,
   ctx: BattleContext,
+  depth = 0,
 ) {
   if (defender.hp <= 0) return;
   const idx = board.indexOf(defender);
@@ -68,7 +70,7 @@ export function applyOnHitSkills(
   if (!handler) return;
   const prefix = enemyPrefix(isPlayer);
   const mult = getMult(board, idx);
-  const h: HitCtx = { defender, board, idx, prefix, isPlayer, ctx };
+  const h: HitCtx = { defender, board, idx, prefix, isPlayer, ctx, depth };
   for (let m = 0; m < mult; m++) handler(h);
 }
 
@@ -100,7 +102,7 @@ function applyLeechHit({ defender: u, prefix, ctx }: HitCtx) {
   );
 }
 
-function applyStitchedTwinHit({ defender: u, board, idx, prefix, ctx }: HitCtx) {
+function applyStitchedTwinHit({ defender: u, board, idx, prefix, isPlayer, ctx, depth }: HitCtx) {
   const b = atLevel(STITCHED_TWIN.atkBuff, u.level);
   u.atk += b;
   pushFrame(
@@ -132,6 +134,9 @@ function applyStitchedTwinHit({ defender: u, board, idx, prefix, ctx }: HitCtx) 
         [behind.uid]: damageAction(dmg, u.uid),
       },
     );
+    if (depth === 0) {
+      applyOnHitSkills(behind, board, isPlayer, ctx, depth + 1);
+    }
   }
 }
 

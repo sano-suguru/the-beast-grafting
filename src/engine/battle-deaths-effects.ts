@@ -13,6 +13,7 @@ import { applyStarFrenzyDeath } from "./battle-deaths-handlers-spawn";
 import {
   handleCrawlingCordBuff,
   handleInsatiableMawBuff,
+  handleBoneTreeAllyDeath,
 } from "./battle-deaths-effects-ally-reactions";
 
 function spawnMaggotNest(
@@ -100,4 +101,5 @@ export const PERSISTENT_ALLY_REACTIONS: AllyReaction[] = [
   (r) => handleSinEaterAbsorb(r.board, r.dead.atk, r.isPlayer, r.ctx),
   (r) => handleCrawlingCordBuff(r.board, r.isPlayer, r.ctx),
   (r) => handleInsatiableMawBuff(r.board, r.isPlayer, r.ctx),
+  (r) => handleBoneTreeAllyDeath(r.board, r.isPlayer, r.ctx),
 ];

@@ -1,20 +1,82 @@
-import type { LogSegment } from "../shared/types";
+import type { LogSegment, DataUnitId, Tier } from "../shared/types";
 import type { UnitData } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import {
-  createToken,
-  createSummonedUnit,
-  pushFrame,
-  getMult,
-  enemyPrefix,
-  seg,
-  buffAction,
-  summonAction,
-} from "./battle-context";
+import { pushFrame, enemyPrefix, seg, summonAction } from "./battle-context";
 import { applyZealotBuff } from "./battle-deaths-zealot";
 import { getInitOverride } from "./battle-init-overrides";
+import { generateUid } from "./helpers";
+import { TOKEN_TIER } from "../shared/data/tiers";
 import { MAX_BOARD_SIZE } from "./constants";
-import { atLevel, FLESH_GRANULATION } from "../shared/skill-params";
+
+export function createToken(name: string, atk: number, hp: number, isChurch = false): BattleUnit {
+  return {
+    name,
+    atk,
+    hp,
+    preDeathHp: hp,
+    id: "token",
+    uid: generateUid(),
+    equip: null,
+    level: 1,
+    isChurch,
+    altarBuffed: false,
+    battleBaseAtk: atk,
+    battleBaseHp: hp,
+    baseAtk: atk,
+    baseHp: hp,
+    buffAtk: 0,
+    buffHp: 0,
+    tempBuffAtk: 0,
+    tier: TOKEN_TIER,
+    skillText: "",
+    lore: "",
+    exp: 0,
+    avengeDeathCount: 0,
+    skillUses: 0,
+    equipUses: 0,
+    infectionLevel: 0,
+    lastDamageSource: null,
+  };
+}
+
+function createSummonedUnit(
+  unitData: {
+    id: DataUnitId;
+    name: string;
+    tier: Tier;
+    skillText: string;
+    lore: string;
+  },
+  atk: number,
+  hp: number,
+  isChurch = false,
+  level = 1,
+): BattleUnit {
+  return {
+    ...unitData,
+    atk,
+    hp,
+    preDeathHp: hp,
+    battleBaseAtk: atk,
+    battleBaseHp: hp,
+    baseAtk: atk,
+    baseHp: hp,
+    buffAtk: 0,
+    buffHp: 0,
+    tempBuffAtk: 0,
+    uid: generateUid(),
+    equip: null,
+    level,
+    isChurch,
+    altarBuffed: false,
+    exp: 0,
+    avengeDeathCount: 0,
+    skillUses: 0,
+    equipUses: 0,
+    infectionLevel: 0,
+    lastDamageSource: null,
+  };
+}
 
 type SpawnBase = {
   board: BattleUnit[];
@@ -50,33 +112,7 @@ function finalize(s: SpawnBase, unit: BattleUnit): BattleUnit {
     s.delay,
   );
   applyZealotBuff(s.board, unit.uid, s.isPlayer, s.ctx);
-  applyFleshGranulationBuff(s.board, s.isPlayer, s.ctx);
   return unit;
-}
-
-function applyFleshGranulationBuff(
-  board: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-): void {
-  const prefix = enemyPrefix(isPlayer);
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "flesh_granulation" || u.hp <= 0) continue;
-    const mult = getMult(board, i);
-    for (let m = 0; m < mult; m++) {
-      const b = atLevel(FLESH_GRANULATION.buff, u.level);
-      u.atk += b.atk;
-      u.hp += b.hp;
-      pushFrame(
-        ctx,
-        "skill",
-        () => [prefix, seg.u(u.name), "が脈動し、膨れ上がる。", seg.s(`+${b.atk}/+${b.hp}`)],
-        "skill",
-        { [u.uid]: buffAction(b, u.uid) },
-      );
-    }
-  }
 }
 
 export function spawnTokenAndNotify(s: SpawnBase & { name: string }): BattleUnit | null {

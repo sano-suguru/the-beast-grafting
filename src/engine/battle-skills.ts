@@ -4,6 +4,7 @@ import { pushFrame, getMult, enemyPrefix, seg, skillAction, defendAction } from 
 import { mustGet } from "../shared/invariant";
 import { SUPPORT_IDX } from "./constants";
 import type { SkillContext, BeforeAttackArgs } from "./battle-skills-util";
+import { applyNeedleshellWormAfterAttack } from "./battle-skills-after-attack";
 import { notifyEquipInfection } from "./battle-context";
 import {
   applyBatSkill,
@@ -172,3 +173,38 @@ export function applyBeforeAttackSkills(
 export { applyOnHitSkills } from "./battle-skills-on-hit";
 
 export { applyEquipmentEffects } from "./battle-equip";
+
+// ── 攻撃後スキルレジストリ ──
+
+type AfterAttackArgs = BeforeAttackArgs & { isPlayer: boolean };
+
+type AfterAttackHandler = (args: AfterAttackArgs) => void;
+
+const AFTER_ATTACK_HANDLERS = {
+  needleshell_worm: ({ u, board, isPlayer, prefix, ctx }: AfterAttackArgs) =>
+    applyNeedleshellWormAfterAttack(u, board, isPlayer, prefix, ctx),
+} satisfies Partial<Record<UnitId, AfterAttackHandler>>;
+
+type AfterAttackUnitId = keyof typeof AFTER_ATTACK_HANDLERS;
+
+function getAfterAttackHandler(id: UnitId): AfterAttackHandler | undefined {
+  return Object.hasOwn(AFTER_ATTACK_HANDLERS, id)
+    ? AFTER_ATTACK_HANDLERS[id as AfterAttackUnitId]
+    : undefined;
+}
+
+export function applyAfterAttackSkills(
+  attacker: BattleUnit,
+  board: BattleUnit[],
+  enemyBoard: BattleUnit[],
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  const handler = getAfterAttackHandler(attacker.id);
+  if (!handler) return;
+  const prefix = enemyPrefix(isPlayer);
+  const mult = getMult(board, 0);
+  for (let m = 0; m < mult; m++) {
+    handler({ u: attacker, board, enemyBoard, isPlayer, prefix, ctx });
+  }
+}

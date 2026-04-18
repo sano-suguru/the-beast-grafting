@@ -1,4 +1,5 @@
-import { getMult, createToken, pushFrame } from "./battle-context";
+import { getMult, pushFrame } from "./battle-context";
+import { createToken } from "./battle-spawn";
 import { makeBattleUnit, makeContext, segmentsToPlainText } from "./test-helpers";
 import { MAX_OPS } from "./constants";
 

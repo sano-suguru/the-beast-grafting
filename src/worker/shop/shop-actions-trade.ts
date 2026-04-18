@@ -8,8 +8,6 @@ import {
   applyBuyEffects,
   applyChaliceEffect,
   applySellEffects,
-  applyBoneTreeBuyEffects,
-  applyTaintedPlacentaBuyEffects,
   buffRandomUnit,
 } from "../../engine/shop-effects";
 import type { ShopStateRow } from "./shop-state-row";
@@ -23,7 +21,6 @@ import {
   itemSlotsFromJson,
 } from "./shop-serialization";
 import { buildShopForNight, generateLevelUpRewards } from "./shop-generation";
-import type { Rng } from "../../engine/rng";
 import { captureUndo, placeUnitOnBoard, withRng } from "./shop-helpers";
 
 export function executeRoll(
@@ -127,24 +124,20 @@ function finalizeBuy(
 
   const { rng, saveRng } = withRng(state);
   const buyResult = applyBuyEffects(unit, newBoard, state.rotRingUses, rng);
-  const boneTreeResult = applyBoneTreeBuyEffects(unit, buyResult.board, state.boneTreeUses);
   const rewards = generateLevelUpRewards(leveledUp, state.night, rng);
 
-  let shopUnits = opts.shopUnits ?? state.shopUnits;
-  const placentaBuff = applyTaintedPlacentaBuyEffects(boneTreeResult.board);
-  if (placentaBuff) shopUnits = applyShopBuffToRandom(shopUnits, placentaBuff, rng);
+  const shopUnits = opts.shopUnits ?? state.shopUnits;
 
   return ok({
     ...state,
     blood: state.blood - cost,
-    board: instancesToBoard(boneTreeResult.board),
+    board: instancesToBoard(buyResult.board),
     shopUnits,
     shopItems: buyResult.chaliceTriggered
       ? itemSlotsToJson(applyChaliceEffect(itemSlotsFromJson(state.shopItems)))
       : state.shopItems,
     rewardSlots: opts.rewardMode === "append" ? [...state.rewardSlots, ...rewards] : rewards,
     rotRingUses: buyResult.rotRingUses,
-    boneTreeUses: boneTreeResult.boneTreeUses,
     undoSnapshot: captureUndo(state),
     ...saveRng(),
   });
@@ -168,27 +161,6 @@ function applyShopBuffAll(
         : null,
     ),
   );
-}
-
-function applyShopBuffToRandom(
-  shopSlots: ShopStateRow["shopUnits"],
-  buff: Buff,
-  rng: Rng,
-): ShopStateRow["shopUnits"] {
-  const parsed = slotsFromJson(shopSlots);
-  const active = parsed.map((s, i) => (s ? i : -1)).filter((i) => i >= 0);
-  if (active.length === 0) return shopSlots;
-  const idx = active[Math.floor(rng.next() * active.length)]!;
-  const target = parsed[idx]!;
-  parsed[idx] = {
-    ...target,
-    unit: {
-      ...target.unit,
-      buffAtk: target.unit.buffAtk + buff.atk,
-      buffHp: target.unit.buffHp + buff.hp,
-    },
-  };
-  return slotsToJson(parsed);
 }
 
 export function executeSell(

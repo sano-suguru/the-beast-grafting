@@ -8,12 +8,10 @@ import {
   atLevel,
   ALTAR,
   ROT_RING,
-  BONE_TREE,
   GRAVE_WORM,
   MARKET_VULTURE,
   ASH_FUNGUS,
   GHOUL_INFANT,
-  TAINTED_PLACENTA,
   CORPSE_BROKER,
   type Buff,
   type Scaled,
@@ -126,13 +124,6 @@ export const applyBuyEffects = (
     rotRingUses: rotRing.rotRingUses,
   };
 };
-
-export function applyTaintedPlacentaBuyEffects(
-  currentBoard: (UnitInstance | null)[],
-): Buff | undefined {
-  const { atk, hp } = sumBuffByUnitId(currentBoard, "tainted_placenta", TAINTED_PLACENTA.shopBuff);
-  return atk > 0 || hp > 0 ? { atk, hp } : undefined;
-}
 
 function applyGhoulInfantBuyBuff(board: (UnitInstance | null)[], rng: Rng): void {
   for (let i = 0; i < board.length; i++) {
@@ -294,29 +285,3 @@ export const applySellEffects = (
   applyCorpseBrokerSell(nextBoard);
   return { board: nextBoard, shopBuff };
 };
-
-function sumBoneTreeMaxUses(board: (UnitInstance | null)[]): number {
-  let total = 0;
-  for (const u of board) {
-    if (u?.id === "bone_tree") total += atLevel(BONE_TREE.uses, u.level);
-  }
-  return total;
-}
-
-export function applyBoneTreeBuyEffects(
-  boughtUnit: UnitInstance,
-  currentBoard: (UnitInstance | null)[],
-  boneTreeUses: number,
-): { board: (UnitInstance | null)[]; boneTreeUses: number } {
-  if (boughtUnit.tier > BONE_TREE.maxTriggerTier) return { board: currentBoard, boneTreeUses };
-  const maxUses = sumBoneTreeMaxUses(currentBoard);
-  if (maxUses === 0 || boneTreeUses >= maxUses) return { board: currentBoard, boneTreeUses };
-  const { atk, hp } = sumBuffByUnitId(currentBoard, "bone_tree", BONE_TREE.buff);
-  if (atk === 0 && hp === 0) return { board: currentBoard, boneTreeUses };
-  return {
-    board: currentBoard.map((u) =>
-      u ? { ...u, buffAtk: u.buffAtk + atk, buffHp: u.buffHp + hp } : null,
-    ),
-    boneTreeUses: boneTreeUses + 1,
-  };
-}

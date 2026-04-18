@@ -35,11 +35,10 @@ export const BUDDING_HYDRA = {
 };
 
 export const BONE_TREE = {
-  maxTriggerTier: 2 as const,
   buff: [
-    { atk: 0, hp: 1 },
-    { atk: 1, hp: 2 },
-    { atk: 2, hp: 3 },
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
   ] as SB,
   uses: [3, 4, 5] as SN,
 };

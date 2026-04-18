@@ -60,13 +60,13 @@ export const UNITS_TIER34 = {
     lore: "群れが通った後の素体から、脂肪だけが消えている。",
     secretLore: "蝗が過ぎた村は三代先まで実らなかった。土が飢えていた。",
   },
-  flesh_granulation: {
-    id: "flesh_granulation",
-    name: "増殖する肉芽",
-    baseAtk: 2,
-    baseHp: 3,
+  needleshell_worm: {
+    id: "needleshell_worm",
+    name: "針殻の蟲",
+    baseAtk: 3,
+    baseHp: 7,
     tier: 3,
-    lore: "新しい肉体が近づくたびに膨れ上がる、異常な肉芽組織。制御不能。だが有用。",
+    lore: "全身を覆う針は内向きに湾曲し、攻撃の衝撃が伝わるたびに後方の仲間へと深く沈み込む。",
   },
   corroding_mold: {
     id: "corroding_mold",

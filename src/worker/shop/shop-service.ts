@@ -1,6 +1,8 @@
 import type { ShopSlot, ShopItemSlot, OriginId } from "../../shared/types";
 import { createSeededRng } from "../../engine/rng";
+import type { Rng } from "../../engine/rng";
 import { createUnit } from "../../engine/helpers";
+import { atLevel, TAINTED_PLACENTA } from "../../shared/skill-params";
 import { isEventNight, selectEvent, buildEventShopUnits } from "../../engine/event-helpers";
 import type { ShopStateRow } from "./shop-state-row";
 import {
@@ -64,6 +66,23 @@ function buildNormalShop(
   return { units, items: result.items };
 }
 
+function applyTaintedPlacentaSetupBuff(
+  prevBoard: (BoardUnit | null)[],
+  shopUnits: (ShopSlot | null)[],
+  rng: Rng,
+): void {
+  const active = shopUnits.map((s, i) => (s ? i : -1)).filter((i) => i >= 0);
+  if (active.length === 0) return;
+  for (const bu of prevBoard) {
+    if (!bu || bu.id !== "tainted_placenta") continue;
+    const b = atLevel(TAINTED_PLACENTA.shopBuff, bu.level);
+    const idx = active[Math.floor(rng.next() * active.length)]!;
+    const target = shopUnits[idx]!;
+    target.unit.buffAtk += b.atk;
+    target.unit.buffHp += b.hp;
+  }
+}
+
 export function executeSetup(
   night: number,
   life: number,
@@ -81,6 +100,8 @@ export function executeSetup(
   const shop = useTutorialShop
     ? buildTutorialShop(night, originId, prevUnits, prevItems, rng)
     : buildNormalShop(night, event, originId, prevUnits, prevItems, rng);
+
+  applyTaintedPlacentaSetupBuff(prevBoard, shop.units, rng);
 
   const rngState = rng.getState();
   const resetBoard = prevBoard.map((bu) => (bu && bu.tempBuffAtk ? { ...bu, tempBuffAtk: 0 } : bu));

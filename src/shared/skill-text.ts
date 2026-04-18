@@ -57,7 +57,7 @@ import {
   DEVOURING_WOUND,
   CRAWLING_CORD,
   GHOUL_INFANT,
-  FLESH_GRANULATION,
+  NEEDLESHELL_WORM,
   CORPSE_BROKER,
   TUMOR_GUARDIAN,
   GROANING_COFFIN,
@@ -160,7 +160,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   tainted_placenta: (lv) => {
     const b = atLevel(TAINTED_PLACENTA.shopBuff, lv);
-    return `味方購入: 闇市場の素体1体に+${b.atk}/+${b.hp}`;
+    return `ターン開始: 闇市場の素体1体に+${b.atk}/+${b.hp}`;
   },
   flayed_saint: (lv) => `被弾: ランダムな敵に${atLevel(FLAYED_SAINT.damage, lv)}ダメージ`,
   charnel_pit: (lv) => {
@@ -188,7 +188,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   bone_tree: (lv) => {
     const b = atLevel(BONE_TREE.buff, lv);
     const u = atLevel(BONE_TREE.uses, lv);
-    return `Tier1~2購入: 味方全体に+${b.atk}/+${b.hp}(${u}回/ターン)`;
+    return `味方死亡: 前方全体に+${b.atk}/+${b.hp}(${u}回まで)`;
   },
   howling_giant: (lv) => `被弾: 味方全体の攻撃+${atLevel(HOWLING_GIANT.atkBuff, lv)}`,
   paladin: (lv) => `開戦: 味方全体のHP+${atLevel(PALADIN.hpBuff, lv)}`,
@@ -230,10 +230,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `味方死亡: ランダム味方1体に+${b.atk}/+${b.hp}(${atLevel(CRAWLING_CORD.uses, lv)}回/戦)`;
   },
   ghoul_infant: (lv) => `味方購入: 味方1体にATK+${atLevel(GHOUL_INFANT.atkBuff, lv)}`,
-  flesh_granulation: (lv) => {
-    const b = atLevel(FLESH_GRANULATION.buff, lv);
-    return `味方召喚時: 自身に+${b.atk}/+${b.hp}`;
-  },
+  needleshell_worm: (lv) => `攻撃後: 後方味方${atLevel(NEEDLESHELL_WORM.targets, lv)}体に1ダメージ`,
   corpse_broker: (lv) => {
     const b = atLevel(CORPSE_BROKER.sellBuff, lv);
     return `味方解体: 自身に+${b.atk}/+${b.hp}`;

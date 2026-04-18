@@ -1,7 +1,6 @@
 import type { UnitInstance } from "../../shared/types";
 import type { Rng } from "../rng";
 import {
-  applyBoneTreeAccumulation,
   applyGhoulInfantAccumulation,
   applyRotRingAccumulation,
   applyTaintedPlacentaAccumulation,
@@ -20,9 +19,6 @@ import {
 export function applySimShopEffects(team: UnitInstance[], night: number, rng: Rng): void {
   for (const unit of team) {
     switch (unit.id) {
-      case "bone_tree":
-        applyBoneTreeAccumulation(unit, team, night);
-        break;
       case "ghoul_infant":
         applyGhoulInfantAccumulation(unit, team, night, rng);
         break;

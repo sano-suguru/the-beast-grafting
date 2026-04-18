@@ -14,6 +14,7 @@ import {
   WAILING_CURSECHILD,
   INSATIABLE_MAW,
   GRINNING_SKULL,
+  BONE_TREE,
 } from "../shared/skill-params";
 import { EVANGELIST, CROW, BEELZEBUB } from "../shared/skill-params-death";
 
@@ -59,6 +60,9 @@ const INIT_OVERRIDES = {
   },
   insatiable_maw: (bu: BattleUnit) => {
     bu.skillUses = atLevel(INSATIABLE_MAW.uses, bu.level);
+  },
+  bone_tree: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(BONE_TREE.uses, bu.level);
   },
   grinning_skull: (bu: BattleUnit) => {
     bu.skillUses = atLevel(GRINNING_SKULL.uses, bu.level);

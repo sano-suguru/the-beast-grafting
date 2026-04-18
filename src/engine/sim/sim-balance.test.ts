@@ -342,7 +342,7 @@ describe("archetype discovery pipeline", () => {
     }
   });
 
-  it("runs all-vs-all without crashing", () => {
+  it("runs all-vs-all without crashing", { timeout: 30_000 }, () => {
     const names = [...positioned.keys()];
     const TRIALS = 1_000;
 

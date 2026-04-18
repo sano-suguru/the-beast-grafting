@@ -149,7 +149,7 @@ const UNIT_ICONS: Record<UnitId, typeof Rat> = {
   tainted_placenta: Flower,
   graft_scion: Leaf,
   // Regular — 追加 Tier 3
-  flesh_granulation: Microscope,
+  needleshell_worm: Microscope,
   corroding_mold: Hexagon,
   omen_womb: Spade,
   corpse_broker: Syringe,
