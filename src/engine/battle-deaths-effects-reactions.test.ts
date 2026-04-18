@@ -7,23 +7,23 @@ import {
   callDeathHandler as callHandler,
 } from "./test-helpers";
 import { MAX_BOARD_SIZE } from "./constants";
-import { atLevel, CROW, SIN_EATER, CATHEDRAL } from "../shared/skill-params";
+import { atLevel, CROW, SIN_EATER, CATHEDRAL, BEELZEBUB } from "../shared/skill-params";
 
 describe("handleBeelzebubSpawns", () => {
-  it("spawns 2/2 fly when beelzebub is alive (Lv1)", () => {
+  it("spawns 4/4 fly when beelzebub is alive (Lv1)", () => {
     const beelzebub = makeBattleUnit({
       id: "beelzebub",
       name: "ベルゼブブ",
       atk: 4,
       hp: 4,
-      skillUses: 2,
+      skillUses: atLevel(BEELZEBUB.uses, 1),
     });
     const ctx = makeContext([beelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
     expect(fly).toBeDefined();
-    expect(fly!.atk).toBe(2);
-    expect(fly!.hp).toBe(2);
+    expect(fly!.atk).toBe(4);
+    expect(fly!.hp).toBe(4);
   });
 
   it("player and enemy fly spawns are independent", () => {
@@ -31,13 +31,13 @@ describe("handleBeelzebubSpawns", () => {
       id: "beelzebub",
       name: "ベルゼブブ",
       hp: 4,
-      skillUses: 2,
+      skillUses: atLevel(BEELZEBUB.uses, 1),
     });
     const eBeelzebub = makeBattleUnit({
       id: "beelzebub",
       name: "敵ベルゼブブ",
       hp: 4,
-      skillUses: 2,
+      skillUses: atLevel(BEELZEBUB.uses, 1),
     });
     const ctx = makeContext([pBeelzebub], [eBeelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
@@ -52,12 +52,12 @@ describe("handleBeelzebubSpawns", () => {
       id: "beelzebub",
       name: "ベルゼブブ",
       hp: 4,
-      skillUses: 2,
+      skillUses: atLevel(BEELZEBUB.uses, 1),
     });
     const ctx = makeContext([zealot, beelzebub]);
     handleBeelzebubSpawns(ctx.pBoard, true, ctx, 0);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
-    expect(fly!.atk).toBe(3); // 2 base + 1 zealot
+    expect(fly!.atk).toBe(5); // 4 base (Lv1) + 1 zealot
   });
 
   it("does not trigger when no beelzebub on board", () => {
@@ -112,12 +112,13 @@ describe("resolveDeaths – cathedral spawns on ally death", () => {
   it("spawns a token and decrements skillUses", () => {
     // dead.id must not be "token" — cathedral spawn is gated by dead.id !== "token"
     const dying = makeBattleUnit({ id: "beggar", hp: 0 });
+    const uses = atLevel(CATHEDRAL.uses, 1);
     const cathedral = makeBattleUnit({
       id: "cathedral",
       name: "礼拝堂",
       atk: 1,
       hp: 8,
-      skillUses: 2,
+      skillUses: uses,
     });
     const enemy = makeBattleUnit({ hp: 20 });
     const ctx = makeContext([dying, cathedral], [enemy]);
@@ -127,7 +128,7 @@ describe("resolveDeaths – cathedral spawns on ally death", () => {
     expect(token).toBeDefined();
     expect(token!.atk).toBe(t.atk);
     expect(token!.hp).toBe(t.hp);
-    expect(cathedral.skillUses).toBe(1);
+    expect(cathedral.skillUses).toBe(uses - 1);
   });
 
   it("does not spawn when skillUses exhausted", () => {

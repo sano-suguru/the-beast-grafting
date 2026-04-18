@@ -13,6 +13,7 @@ import {
   ASH_FUNGUS,
   GHOUL_INFANT,
   CORPSE_BROKER,
+  CHALICE,
   type Buff,
   type Scaled,
 } from "../shared/skill-params";
@@ -80,22 +81,25 @@ function applyRotRingBuff(
 ): { board: (UnitInstance | null)[]; rotRingUses: number } {
   if (boughtUnit.tier !== 1) return { board, rotRingUses };
   let totalMaxUses = 0;
-  let rotRingCount = 0;
+  let totalAtkBuff = 0;
+  let totalHpBuff = 0;
   board.forEach((u) => {
     if (u && u.id === "rot_ring") {
-      rotRingCount += 1;
       totalMaxUses += atLevel(ROT_RING.uses, u.level);
+      const b = atLevel(ROT_RING.buff, u.level);
+      totalAtkBuff += b.atk;
+      totalHpBuff += b.hp;
     }
   });
-  if (rotRingCount === 0) return { board, rotRingUses };
+  if (totalAtkBuff === 0 && totalHpBuff === 0) return { board, rotRingUses };
   if (rotRingUses >= totalMaxUses) return { board, rotRingUses };
   return {
     board: board.map((bu) =>
       bu
         ? {
             ...bu,
-            buffAtk: bu.buffAtk + rotRingCount * ROT_RING.buff.atk,
-            buffHp: bu.buffHp + rotRingCount * ROT_RING.buff.hp,
+            buffAtk: bu.buffAtk + totalAtkBuff,
+            buffHp: bu.buffHp + totalHpBuff,
           }
         : null,
     ),
@@ -105,7 +109,7 @@ function applyRotRingBuff(
 
 interface BuyResult {
   board: (UnitInstance | null)[];
-  chaliceTriggered: boolean;
+  chaliceLevel: number | null;
   rotRingUses: number;
 }
 
@@ -120,7 +124,7 @@ export const applyBuyEffects = (
   applyGhoulInfantBuyBuff(board, rng);
   return {
     board,
-    chaliceTriggered: boughtUnit.id === "chalice",
+    chaliceLevel: boughtUnit.id === "chalice" ? boughtUnit.level : null,
     rotRingUses: rotRing.rotRingUses,
   };
 };
@@ -133,12 +137,14 @@ function applyGhoulInfantBuyBuff(board: (UnitInstance | null)[], rng: Rng): void
   }
 }
 
-export const applyChaliceEffect = (shopItems: (ShopItemSlot | null)[]): (ShopItemSlot | null)[] => {
-  const pureBlood = ITEMS["pure_blood"];
-  if (!pureBlood) return shopItems;
+export const applyChaliceEffect = (
+  shopItems: (ShopItemSlot | null)[],
+  level: number,
+): (ShopItemSlot | null)[] => {
+  const item = ITEMS[atLevel(CHALICE.itemId, level)];
   const result: (ShopItemSlot | null)[] = shopItems.map(() => null);
   for (let i = 0; i < Math.min(2, result.length); i++) {
-    result[i] = { item: pureBlood, frozen: false };
+    result[i] = { item, frozen: false };
   }
   return result;
 };

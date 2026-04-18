@@ -62,8 +62,9 @@ export function applyRotRingAccumulation(
     potentialTriggers += Math.min(nightTriggers, maxUses);
   }
 
-  const buffAtk = Math.floor(potentialTriggers * ROT_RING.buff.atk);
-  const buffHp = Math.floor(potentialTriggers * ROT_RING.buff.hp);
+  const ringBuff = atLevel(ROT_RING.buff, rotRing.level);
+  const buffAtk = Math.floor(potentialTriggers * ringBuff.atk);
+  const buffHp = Math.floor(potentialTriggers * ringBuff.hp);
   if (buffAtk <= 0 && buffHp <= 0) return;
 
   for (const u of team) {

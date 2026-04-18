@@ -14,10 +14,12 @@ import {
   applyCatacombRatSkill,
   applyPaladinSkill,
   applyHolyFireSkill,
-  applyDevouringGraftSkill,
-  applyMimickingFleshSkill,
-  applyCorrodingMoldSkill,
 } from "./battle-skills-start";
+import {
+  applyDevouringGraftSkill,
+  applyCorrodingMoldSkill,
+  applyMimickingFleshSkill,
+} from "./battle-skills-start-pred";
 import {
   applyParasiteBuff,
   applyEyeGaze,

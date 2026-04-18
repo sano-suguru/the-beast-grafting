@@ -96,7 +96,9 @@ export type ItemId =
   | "acid_blood"
   | "corpse_wax"
   | "death_curse"
-  | "pure_blood";
+  | "pure_blood"
+  | "pure_blood_2"
+  | "pure_blood_3";
 
 export interface UnitData {
   id: DataUnitId;

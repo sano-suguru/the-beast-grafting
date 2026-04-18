@@ -11,6 +11,7 @@ import {
   FLAGELLANT,
   LEECH,
   TUMOR_GUARDIAN,
+  AMNIOTIC_ARMOR,
 } from "../shared/skill-params";
 
 describe("applyOnHitSkills – templar", () => {
@@ -166,18 +167,19 @@ describe("applyOnHitSkills – tumor_guardian", () => {
 
 describe("applyOnHitSkills – amniotic_armor", () => {
   it("grants corpse_wax on first hit with skillUses", () => {
+    const uses = atLevel(AMNIOTIC_ARMOR.uses, 1);
     const armor = makeBattleUnit({
       id: "amniotic_armor",
       name: "羊膜の鎧",
       atk: 2,
       hp: 8,
-      skillUses: 1,
+      skillUses: uses,
     });
     const board = [armor];
     const ctx = makeContext(board, []);
     applyOnHitSkills(armor, board, true, ctx);
     expect(armor.equip).toBe("corpse_wax");
-    expect(armor.skillUses).toBe(0);
+    expect(armor.skillUses).toBe(uses - 1);
     expect(ctx.frames).toHaveLength(1);
   });
 
@@ -197,19 +199,20 @@ describe("applyOnHitSkills – amniotic_armor", () => {
   });
 
   it("does not trigger when already equipped", () => {
+    const uses = atLevel(AMNIOTIC_ARMOR.uses, 1);
     const armor = makeBattleUnit({
       id: "amniotic_armor",
       name: "羊膜の鎧",
       atk: 2,
       hp: 8,
-      skillUses: 1,
-      equip: "iron_plate",
+      skillUses: uses,
+      equip: "corpse_wax",
     });
     const board = [armor];
     const ctx = makeContext(board, []);
     applyOnHitSkills(armor, board, true, ctx);
-    expect(armor.equip).toBe("iron_plate");
-    expect(armor.skillUses).toBe(1);
+    expect(armor.equip).toBe("corpse_wax");
+    expect(armor.skillUses).toBe(uses);
   });
 });
 

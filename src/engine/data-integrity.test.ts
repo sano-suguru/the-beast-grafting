@@ -4,6 +4,7 @@ import { ITEMS } from "../shared/data/items";
 import { EQUIPS } from "../shared/data/equips";
 import type { EquipType } from "../shared/types";
 import { ORIGINS } from "../shared/data/origins";
+import { CHALICE } from "../shared/skill-params";
 import { UNIT_DEATH_HANDLERS } from "./battle-deaths-handlers";
 import { getUnitsByTier, getShopPool, getItemPool } from "./helpers";
 import { TIERS } from "../shared/data/tiers";
@@ -87,8 +88,8 @@ describe("CHURCH_UNITS data integrity", () => {
 describe("ITEMS data integrity", () => {
   const entries = Object.entries(ITEMS);
 
-  it("contains exactly 9 items", () => {
-    expect(entries).toHaveLength(9);
+  it("contains exactly 11 items", () => {
+    expect(entries).toHaveLength(11);
   });
 
   it("every item has non-negative cost", () => {
@@ -120,6 +121,14 @@ describe("ITEMS data integrity", () => {
 
   it("pure_blood has cost 0 (free item)", () => {
     expect(ITEMS["pure_blood"]!.cost).toBe(0);
+  });
+
+  it("CHALICE.buff matches pure_blood item stats", () => {
+    const ids = ["pure_blood", "pure_blood_2", "pure_blood_3"] as const;
+    ids.forEach((id, i) => {
+      expect(CHALICE.buff[i]!.atk, `${id}.atk`).toBe(ITEMS[id]!.atk);
+      expect(CHALICE.buff[i]!.hp, `${id}.hp`).toBe(ITEMS[id]!.hp);
+    });
   });
 });
 

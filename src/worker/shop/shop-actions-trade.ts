@@ -133,9 +133,12 @@ function finalizeBuy(
     blood: state.blood - cost,
     board: instancesToBoard(buyResult.board),
     shopUnits,
-    shopItems: buyResult.chaliceTriggered
-      ? itemSlotsToJson(applyChaliceEffect(itemSlotsFromJson(state.shopItems)))
-      : state.shopItems,
+    shopItems:
+      buyResult.chaliceLevel !== null
+        ? itemSlotsToJson(
+            applyChaliceEffect(itemSlotsFromJson(state.shopItems), buyResult.chaliceLevel),
+          )
+        : state.shopItems,
     rewardSlots: opts.rewardMode === "append" ? [...state.rewardSlots, ...rewards] : rewards,
     rotRingUses: buyResult.rotRingUses,
     undoSnapshot: captureUndo(state),

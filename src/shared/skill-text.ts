@@ -17,6 +17,7 @@ import {
   HOUND,
   BEAST,
   CHURCH_BEAST,
+  MAIDEN,
   EVANGELIST,
   BEELZEBUB,
   ALTAR,
@@ -66,6 +67,7 @@ import {
   AMNIOTIC_ARMOR,
   OMEN_WOMB,
   DEVOURING_GRAFT,
+  CHALICE,
 } from "./skill-params";
 
 const houndDeathText = (lv: number) => {
@@ -78,8 +80,9 @@ type SkillTemplate = (lv: number) => string;
 const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   rat: (lv) => {
     const b = atLevel(RAT.deathBuff, lv);
-    return `死亡: 味方全体に+${b.atk}/+${b.hp}`;
+    return `死亡: ランダム味方1体に+${b.atk}/+${b.hp}`;
   },
+
   hound: houndDeathText,
   church_hound: houndDeathText,
   bat: (lv) => {
@@ -113,7 +116,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   revenant: (lv) => {
     const b = atLevel(REVENANT.buff, lv);
-    return `開戦: 前方${atLevel(REVENANT.targets, lv)}体の攻撃+${b} (前夜敗北なら+${b * REVENANT.lossBonusMult})`;
+    return `前夜敗北時: 前方${atLevel(REVENANT.targets, lv)}体の攻撃+${b}`;
   },
   evangelist: (lv) =>
     `味方死亡: ランダムな敵${atLevel(EVANGELIST.targets, lv)}体を感染させる(${atLevel(EVANGELIST.uses, lv)}回/戦)`,
@@ -140,8 +143,10 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   eye: (lv) =>
     `直前の味方が攻撃: ランダム敵に${atLevel(EYE.damage, lv)}ダメ(${atLevel(EYE.uses, lv)}回/戦)`,
-  rot_ring: (lv) =>
-    `Tier1購入: 味方全体に+${ROT_RING.buff.atk}/+${ROT_RING.buff.hp}(${atLevel(ROT_RING.uses, lv)}回/夜)`,
+  rot_ring: (lv) => {
+    const b = atLevel(ROT_RING.buff, lv);
+    return `Tier1購入: 味方全体に+${b.atk}/+${b.hp}(${atLevel(ROT_RING.uses, lv)}回/夜)`;
+  },
   grave_worm: (lv) => {
     const b = atLevel(GRAVE_WORM.sellBuff, lv);
     return `味方解体: ランダムな味方1体に+${b.atk}/+${b.hp}`;
@@ -256,12 +261,15 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   // 固定テキスト（レベルで変化しない）
   beggar: () => "解体: {blood}を1多く獲得",
-  maiden: () => "死亡: 後ろに【屍蝋の盾】",
+  maiden: (lv) => `死亡: 後方${atLevel(MAIDEN.targets, lv)}体に【屍蝋の盾】`,
   famine_corpse: () => "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
   graft_scion: () => "死亡: 前の味方に自身ATK分のATKバフ",
   devouring_graft: (lv) =>
     `開戦: 前の味方を${atLevel(DEVOURING_GRAFT.absorbPercent, lv)}%吸収(+ATK/HP)。死亡: 吸収先の${atLevel(DEVOURING_GRAFT.decayPercent, lv)}%で再召喚`,
-  chalice: () => "購入: 闇市場の薬を2つの無料【純血】(+1/+2)に",
+  chalice: (lv) => {
+    const b = atLevel(CHALICE.buff, lv);
+    return `購入: 闇市場の薬を2つの無料【純血】(+${b.atk}/+${b.hp})に`;
+  },
   necrotic_finger: () => "常時: 攻撃で対象を即死させる。内蔵: 屍蝋の盾",
   mimicking_flesh: () => "開戦: 前の味方のスキルをコピー(戦闘中のみ)",
   brains: () => "常時: 前の味方の能力2回発動",

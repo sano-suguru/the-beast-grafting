@@ -35,7 +35,7 @@ describe("applyAcidSplash", () => {
 });
 
 describe("processHundredArmsKnockout", () => {
-  it("hundred_arms deals 3 damage to front enemy after knockout", () => {
+  it("hundred_arms deals 4 damage to front enemy after knockout", () => {
     const hundredArms = makeBattleUnit({ id: "hundred_arms", atk: 6, hp: 7 });
     const enemy1 = makeBattleUnit({ hp: 10, tier: 3 });
     const enemy2 = makeBattleUnit({ hp: 10, tier: 3 });
@@ -43,7 +43,7 @@ describe("processHundredArmsKnockout", () => {
     const defenderBoard = [enemy1, enemy2];
     const ctx = makeContext(attackerBoard, defenderBoard);
     processHundredArmsKnockout(hundredArms, defenderBoard, attackerBoard, true, ctx);
-    expect(defenderBoard[0]!.hp).toBe(7);
+    expect(defenderBoard[0]!.hp).toBe(6);
   });
 
   it("hundred_arms deals 8 damage to tier 1 enemy", () => {
@@ -89,7 +89,7 @@ describe("processHundredArmsKnockout", () => {
     processHundredArmsKnockout(hundredArms, defenderBoard, attackerBoard, true, ctx);
     expect(defenderBoard.every((u) => u.uid !== "weak")).toBe(true);
     const remaining = defenderBoard.find((u) => u.uid === "strong");
-    expect(remaining!.hp).toBe(7);
+    expect(remaining!.hp).toBe(6);
   });
 
   it("kills multiple consecutive weak enemies", () => {
@@ -104,7 +104,7 @@ describe("processHundredArmsKnockout", () => {
     expect(defenderBoard.some((u) => u.uid === "e1")).toBe(false);
     expect(defenderBoard.some((u) => u.uid === "e2")).toBe(false);
     const e3Remaining = defenderBoard.find((u) => u.uid === "e3");
-    expect(e3Remaining!.hp).toBe(17);
+    expect(e3Remaining!.hp).toBe(16);
   });
 });
 

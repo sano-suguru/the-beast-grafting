@@ -141,7 +141,7 @@ describe("applyBuyEffects – rot_ring", () => {
     expect(effectiveAtk(result[0]!)).toBe(6);
   });
 
-  it("Lv2 rot_ring allows up to 5 uses", () => {
+  it("Lv2 rot_ring allows up to 4 uses", () => {
     const board: (UnitInstance | null)[] = [
       makeUnit({ id: "rot_ring", baseAtk: 6, baseHp: 8, level: 2 }),
       null,
@@ -149,12 +149,12 @@ describe("applyBuyEffects – rot_ring", () => {
       null,
       null,
     ];
-    // Lv2 uses = 5; 4回使用済みでもまだ発動する
-    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 4, createSeededRng(1));
-    expect(rotRingUses).toBe(5);
+    // Lv2 uses = 4; 3回使用済みでもまだ発動する
+    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 3, createSeededRng(1));
+    expect(rotRingUses).toBe(4);
   });
 
-  it("Lv2 rot_ring stops at 5 uses", () => {
+  it("Lv2 rot_ring stops at 4 uses", () => {
     const board: (UnitInstance | null)[] = [
       makeUnit({ id: "rot_ring", baseAtk: 6, baseHp: 8, level: 2 }),
       null,
@@ -162,8 +162,8 @@ describe("applyBuyEffects – rot_ring", () => {
       null,
       null,
     ];
-    // Lv2 uses = 5; 5回使用済みなら発動しない
-    const { board: result } = applyBuyEffects(makeUnit({ tier: 1 }), board, 5, createSeededRng(1));
+    // Lv2 uses = 4; 4回使用済みなら発動しない
+    const { board: result } = applyBuyEffects(makeUnit({ tier: 1 }), board, 4, createSeededRng(1));
     expect(effectiveAtk(result[0]!)).toBe(6);
   });
 
@@ -175,18 +175,25 @@ describe("applyBuyEffects – rot_ring", () => {
       null,
       null,
     ];
-    // Lv1(4) + Lv2(5) = totalMaxUses 9; 8回使用済みでもまだ発動
-    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 8, createSeededRng(1));
-    expect(rotRingUses).toBe(9);
+    // Lv1(4) + Lv2(4) = totalMaxUses 8; 7回使用済みでもまだ発動
+    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 7, createSeededRng(1));
+    expect(rotRingUses).toBe(8);
   });
 });
 
 describe("applyBuyEffects – chalice and fallback", () => {
-  it("sets chaliceTriggered when chalice is bought", () => {
+  it("sets chaliceLevel when chalice is bought", () => {
     const board: (UnitInstance | null)[] = [null, null, null, null, null];
-    const boughtUnit = makeUnit({ id: "chalice" });
-    const { chaliceTriggered } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1));
-    expect(chaliceTriggered).toBe(true);
+    const boughtUnit = makeUnit({ id: "chalice", level: 2 });
+    const { chaliceLevel } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1));
+    expect(chaliceLevel).toBe(2);
+  });
+
+  it("returns null chaliceLevel for non-chalice unit", () => {
+    const board: (UnitInstance | null)[] = [null, null, null, null, null];
+    const boughtUnit = makeUnit({ id: "beast" });
+    const { chaliceLevel } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1));
+    expect(chaliceLevel).toBeNull();
   });
 
   it("returns original board reference when no effects triggered", () => {
@@ -198,24 +205,44 @@ describe("applyBuyEffects – chalice and fallback", () => {
 });
 
 describe("applyChaliceEffect", () => {
-  it("converts all non-null items to pure_blood", () => {
+  it("Lv1 converts slots to pure_blood", () => {
     const shopItems: (ShopItemSlot | null)[] = [
-      { item: ITEMS["iron_plate"]!, frozen: false },
+      { item: ITEMS["bile"]!, frozen: false },
       { item: ITEMS["bile"]!, frozen: true },
       null,
     ];
-    const result = applyChaliceEffect(shopItems);
+    const result = applyChaliceEffect(shopItems, 1);
     expect(result[0]!.item.id).toBe("pure_blood");
     expect(result[1]!.item.id).toBe("pure_blood");
     expect(result[2]).toBeNull();
   });
 
-  it("replaces with exactly 2 unfrozen items", () => {
+  it("Lv2 converts slots to pure_blood_2", () => {
     const shopItems: (ShopItemSlot | null)[] = [
-      { item: ITEMS["iron_plate"]!, frozen: false },
+      { item: ITEMS["bile"]!, frozen: false },
       { item: ITEMS["bile"]!, frozen: true },
     ];
-    const result = applyChaliceEffect(shopItems);
+    const result = applyChaliceEffect(shopItems, 2);
+    expect(result[0]!.item.id).toBe("pure_blood_2");
+    expect(result[1]!.item.id).toBe("pure_blood_2");
+  });
+
+  it("Lv3 converts slots to pure_blood_3", () => {
+    const shopItems: (ShopItemSlot | null)[] = [
+      { item: ITEMS["bile"]!, frozen: false },
+      { item: ITEMS["bile"]!, frozen: true },
+    ];
+    const result = applyChaliceEffect(shopItems, 3);
+    expect(result[0]!.item.id).toBe("pure_blood_3");
+    expect(result[1]!.item.id).toBe("pure_blood_3");
+  });
+
+  it("replaces with exactly 2 unfrozen items", () => {
+    const shopItems: (ShopItemSlot | null)[] = [
+      { item: ITEMS["bile"]!, frozen: false },
+      { item: ITEMS["bile"]!, frozen: true },
+    ];
+    const result = applyChaliceEffect(shopItems, 1);
     expect(result[0]!.frozen).toBe(false);
     expect(result[1]!.frozen).toBe(false);
   });
@@ -231,8 +258,8 @@ describe("applySummonEffects – altar buffs", () => {
       null,
     ];
     const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(4); // 2 + 2(altar)
-    expect(effectiveHp(result[1]!)).toBe(4); // 3 + 1(altar)
+    expect(effectiveAtk(result[1]!)).toBe(5); // 2 + 3(altar Lv1)
+    expect(effectiveHp(result[1]!)).toBe(4); // 3 + 1(altar Lv1)
   });
 
   it("stacks multiple altar buffs", () => {
@@ -244,8 +271,8 @@ describe("applySummonEffects – altar buffs", () => {
       null,
     ];
     const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(5); // 1 + 2×2(altar)
-    expect(effectiveHp(result[1]!)).toBe(3); // 1 + 1×2(altar)
+    expect(effectiveAtk(result[1]!)).toBe(7); // 1 + 3×2(altar Lv1)
+    expect(effectiveHp(result[1]!)).toBe(3); // 1 + 1×2(altar Lv1)
   });
 });
 
@@ -287,8 +314,8 @@ describe("applySummonEffects – combined and edge cases", () => {
       null,
     ];
     const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(4); // 1 + 2(altar) + 1(zealot)
-    expect(effectiveHp(result[1]!)).toBe(2); // 1 + 1(altar)
+    expect(effectiveAtk(result[1]!)).toBe(5); // 1 + 3(altar Lv1) + 1(zealot)
+    expect(effectiveHp(result[1]!)).toBe(2); // 1 + 1(altar Lv1)
   });
 
   it("returns original board when no altar present", () => {

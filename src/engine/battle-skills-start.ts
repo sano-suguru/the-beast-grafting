@@ -1,4 +1,4 @@
-import type { BattleAction, UnitId } from "../shared/types";
+import type { BattleAction } from "../shared/types";
 import type { BattleUnit } from "./battle-context";
 import {
   pushFrame,
@@ -21,10 +21,7 @@ import {
   CATACOMB_RAT,
   PALADIN,
   HOLY_FIRE,
-  CORRODING_MOLD,
 } from "../shared/skill-params";
-import { DEVOURING_GRAFT } from "../shared/skill-params-death";
-import { getInitOverride } from "./battle-init-overrides";
 
 export function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
   if (targetArr.length === 0) return;
@@ -114,11 +111,11 @@ export function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext)
 }
 
 export function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
+  if (ctx.lastBattleResult !== "LOSE") return;
   const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
   const prefix = enemyPrefix(isPlayer);
   const maxTargets = atLevel(REVENANT.targets, u.level);
-  const baseBuff = atLevel(REVENANT.buff, u.level);
-  const buffAmount = ctx.lastBattleResult === "LOSE" ? baseBuff * REVENANT.lossBonusMult : baseBuff;
+  const buffAmount = atLevel(REVENANT.buff, u.level);
   const actions: Record<string, BattleAction> = {
     [u.uid]: skillAction(),
   };
@@ -131,14 +128,15 @@ export function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
     buffed++;
   }
   if (buffed > 0) {
-    const logSuffix =
-      ctx.lastBattleResult === "LOSE"
-        ? `の眼が血走り激怒する。前方${buffed}体の肉が激しく脈打つ。`
-        : `の眼が血走る。前方${buffed}体の肉が脈打つ。`;
     pushFrame(
       ctx,
       "skill",
-      () => [prefix, seg.u(u.name), logSuffix, seg.s(`+${buffAmount}/+0`)],
+      () => [
+        prefix,
+        seg.u(u.name),
+        `の眼が血走り激怒する。前方${buffed}体の肉が激しく脈打つ。`,
+        seg.s(`+${buffAmount}/+0`),
+      ],
       "skill",
       actions,
     );
@@ -217,95 +215,4 @@ export function applyHolyFireSkill({ u, targetArr, isPlayer, ctx }: SkillContext
     isPlayer,
     ctx,
   );
-}
-
-export function applyDevouringGraftSkill({ u, isPlayer, ctx }: SkillContext) {
-  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
-  const idx = allyBoard.indexOf(u);
-  if (idx <= 0) return;
-  const pred = allyBoard[idx - 1]!;
-  ctx.absorbedUnits.set(u.uid, {
-    id: pred.id,
-    name: pred.name,
-    tier: pred.tier,
-    atk: pred.atk,
-    hp: pred.hp,
-    isChurch: pred.isChurch,
-    equip: pred.equip,
-  });
-  const absorbRate = atLevel(DEVOURING_GRAFT.absorbPercent, u.level) / 100;
-  const gainedAtk = Math.floor(pred.atk * absorbRate);
-  const gainedHp = Math.floor(pred.hp * absorbRate);
-  u.atk += gainedAtk;
-  u.hp += gainedHp;
-  allyBoard.splice(idx - 1, 1);
-  const prefix = enemyPrefix(isPlayer);
-  pushFrame(
-    ctx,
-    "skill",
-    () => [
-      prefix,
-      seg.u(u.name),
-      "が",
-      seg.u(pred.name),
-      "を丸呑みにした！ ",
-      seg.s(`+${gainedAtk}/+${gainedHp}`),
-    ],
-    "skill",
-    { [u.uid]: buffAction({ atk: gainedAtk, hp: gainedHp }, u.uid) },
-  );
-}
-
-export function applyCorrodingMoldSkill({ u, isPlayer, ctx }: SkillContext) {
-  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
-  const idx = allyBoard.indexOf(u);
-  if (idx <= 0) return;
-  const front = allyBoard[idx - 1]!;
-  if (front.hp <= 0) return;
-  const b = atLevel(CORRODING_MOLD.buff, u.level);
-  front.atk += b.atk;
-  front.hp += b.hp;
-  const prefix = enemyPrefix(isPlayer);
-  pushFrame(
-    ctx,
-    "skill",
-    () => [
-      prefix,
-      seg.u(u.name),
-      "が",
-      seg.u(front.name),
-      "に侵蝕する。",
-      seg.s(`+${b.atk}/+${b.hp}`),
-    ],
-    "skill",
-    { [front.uid]: buffAction(b, u.uid) },
-  );
-}
-
-export function applyMimickingFleshSkill(
-  ctx_: SkillContext,
-  getStartHandler: (id: UnitId) => ((c: SkillContext) => void) | undefined,
-) {
-  const { u, targetArr, isPlayer, ctx } = ctx_;
-  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
-  const idx = allyBoard.indexOf(u);
-  if (idx <= 0) return;
-  const pred = allyBoard[idx - 1];
-  // TokenIdはDataUnitIdに属さず、UNITS/CHURCH_UNITSにスキル定義が存在しないためコピー不可
-  if (!pred || pred.id === "token") return;
-  const prevName = u.name;
-  u.id = pred.id;
-  u.name = pred.name;
-  const initOv = getInitOverride(u.id);
-  if (initOv) initOv(u);
-  const prefix = enemyPrefix(isPlayer);
-  pushFrame(
-    ctx,
-    "skill",
-    () => [prefix, seg.u(prevName), "が震え、", seg.u(pred.name), "の形に変わる。"],
-    "skill",
-    { [u.uid]: skillAction() },
-  );
-  const handler = getStartHandler(u.id);
-  if (handler) handler({ u, targetArr, isPlayer, ctx });
 }

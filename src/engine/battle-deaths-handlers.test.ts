@@ -10,35 +10,45 @@ describe("handleRatDeath", () => {
     expect(ctx.frames).toHaveLength(0);
   });
 
-  it("buffs all remaining allies (Lv1: +1/+0)", () => {
+  it("buffs a random ally (Lv1: +1/+1)", () => {
     const ally = makeBattleUnit({ atk: 3, hp: 5, uid: "ally-1" });
     const ctx = makeContext([ally], [], null, { next: () => 0 });
     const dead = makeBattleUnit({ id: "rat", name: "ネズミ" });
     callHandler("rat", dead, ctx.pBoard, 0, true, ctx);
     expect(ally.atk).toBe(4);
-    expect(ally.hp).toBe(5);
+    expect(ally.hp).toBe(6);
   });
 
-  it("buffs every ally on the board", () => {
+  it("buffs exactly 1 ally chosen by rng", () => {
     const a = makeBattleUnit({ atk: 1, hp: 1, uid: "a" });
     const b = makeBattleUnit({ atk: 2, hp: 2, uid: "b" });
     const c = makeBattleUnit({ atk: 3, hp: 3, uid: "c" });
-    const ctx = makeContext([a, b, c]);
+    // rng=0.5 → Math.floor(0.5 * 3) = 1 → b が選ばれる
+    const ctx = makeContext([a, b, c], [], null, { next: () => 0.5 });
     const dead = makeBattleUnit({ id: "rat", name: "ネズミ" });
     callHandler("rat", dead, ctx.pBoard, 0, true, ctx);
-    expect(a.atk).toBe(2);
-    expect(b.atk).toBe(3);
-    expect(c.atk).toBe(4);
+    expect(a.atk).toBe(1); // 未バフ
+    expect(b.atk).toBe(3); // +1
+    expect(c.atk).toBe(3); // 未バフ
   });
 
-  it("frame action value matches actual buff (+1/+0)", () => {
+  it("Lv2 buffs +2/+2", () => {
+    const ally = makeBattleUnit({ atk: 1, hp: 1, uid: "ally-1" });
+    const ctx = makeContext([ally], [], null, { next: () => 0 });
+    const dead = makeBattleUnit({ id: "rat", name: "ネズミ", level: 2 });
+    callHandler("rat", dead, ctx.pBoard, 0, true, ctx);
+    expect(ally.atk).toBe(3);
+    expect(ally.hp).toBe(3);
+  });
+
+  it("frame action value matches actual buff (+1/+1)", () => {
     const ally = makeBattleUnit({ atk: 3, hp: 5, uid: "ally-1" });
-    const ctx = makeContext([ally]);
+    const ctx = makeContext([ally], [], null, { next: () => 0 });
     const dead = makeBattleUnit({ id: "rat", name: "ネズミ" });
     callHandler("rat", dead, ctx.pBoard, 0, true, ctx);
     const action = ctx.frames[0]?.actions["ally-1"];
     expect(action).toBeDefined();
-    expect(action!.value).toBe("+1/+0");
+    expect(action!.value).toBe("+1/+1");
   });
 });
 
@@ -195,17 +205,31 @@ describe("handlePriestDeath", () => {
 });
 
 describe("handleMaidenDeath", () => {
-  it("grants corpse_wax to immediate successor", () => {
+  it("Lv1: grants corpse_wax to immediate successor only", () => {
     const next = makeBattleUnit({ equip: null, uid: "next" });
-    const ctx = makeContext([next]);
-    const dead = makeBattleUnit({ id: "maiden", name: "処女" });
+    const other = makeBattleUnit({ equip: null, uid: "other" });
+    const ctx = makeContext([next, other]);
+    const dead = makeBattleUnit({ id: "maiden", name: "処女", level: 1 });
     callHandler("maiden", dead, ctx.pBoard, 0, true, ctx);
     expect(next.equip).toBe("corpse_wax");
+    expect(other.equip).toBeNull();
+  });
+
+  it("Lv2: grants corpse_wax to 2 successors", () => {
+    const a = makeBattleUnit({ equip: null, uid: "a" });
+    const b = makeBattleUnit({ equip: null, uid: "b" });
+    const c = makeBattleUnit({ equip: null, uid: "c" });
+    const ctx = makeContext([a, b, c]);
+    const dead = makeBattleUnit({ id: "maiden", name: "処女", level: 2 });
+    callHandler("maiden", dead, ctx.pBoard, 0, true, ctx);
+    expect(a.equip).toBe("corpse_wax");
+    expect(b.equip).toBe("corpse_wax");
+    expect(c.equip).toBeNull();
   });
 
   it("does nothing when maiden was last unit", () => {
     const ctx = makeContext();
-    const dead = makeBattleUnit({ id: "maiden", name: "処女" });
+    const dead = makeBattleUnit({ id: "maiden", name: "処女", level: 1 });
     callHandler("maiden", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.frames).toHaveLength(0);
   });
@@ -213,7 +237,7 @@ describe("handleMaidenDeath", () => {
   it("overwrites existing equip on target", () => {
     const next = makeBattleUnit({ equip: "iron_plate", uid: "next" });
     const ctx = makeContext([next]);
-    const dead = makeBattleUnit({ id: "maiden", name: "処女" });
+    const dead = makeBattleUnit({ id: "maiden", name: "処女", level: 1 });
     callHandler("maiden", dead, ctx.pBoard, 0, true, ctx);
     expect(next.equip).toBe("corpse_wax");
   });

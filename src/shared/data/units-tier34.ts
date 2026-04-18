@@ -16,8 +16,8 @@ export const UNITS_TIER34 = {
   maiden: {
     id: "maiden",
     name: "鉄の処女の残骸",
-    baseAtk: 1,
-    baseHp: 2,
+    baseAtk: 2,
+    baseHp: 5,
     tier: 3,
     lore: "内側に無数の棘が並ぶ拷問具。中に素体を押し込めば、死の間際に後続の盾となるよう完璧に固定される。",
     secretLore:

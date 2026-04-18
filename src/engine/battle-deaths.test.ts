@@ -3,7 +3,7 @@ import { createSeededRng } from "./rng";
 import { makeBattleUnit, makeContext } from "./test-helpers";
 import { segmentsToPlainText } from "./test-helpers";
 import { MAX_BOARD_SIZE } from "./constants";
-import { atLevel, HANGED_MAN, SERAPH } from "../shared/skill-params";
+import { atLevel, HANGED_MAN, SERAPH, BEELZEBUB, EVANGELIST } from "../shared/skill-params";
 import type { BattleFrame } from "../shared/types";
 
 const logText = (f: BattleFrame) => segmentsToPlainText(f.log.segments);
@@ -29,16 +29,17 @@ describe("resolveDeaths – basic removal", () => {
 });
 
 describe("resolveDeaths – spawn on death", () => {
-  it("rat death buffs all allies", () => {
+  it("rat death buffs a random ally (Lv1: +1/+1)", () => {
     const rat = makeBattleUnit({ id: "rat", hp: 0 });
-    const ally1 = makeBattleUnit({ atk: 3, hp: 5 });
-    const ally2 = makeBattleUnit({ atk: 2, hp: 4 });
-    const ctx = makeContext([rat, ally1, ally2], []);
+    const ally1 = makeBattleUnit({ atk: 3, hp: 5, uid: "a1" });
+    const ally2 = makeBattleUnit({ atk: 2, hp: 4, uid: "a2" });
+    // rng=0 → ally1 が選ばれる
+    const ctx = makeContext([rat, ally1, ally2], [], null, { next: () => 0 });
     resolveDeaths(ctx);
-    // Lv1: +1/+0
+    // Lv1: +1/+1 (1体のみ)
     expect(ally1.atk).toBe(4);
-    expect(ally1.hp).toBe(5);
-    expect(ally2.atk).toBe(3);
+    expect(ally1.hp).toBe(6);
+    expect(ally2.atk).toBe(2); // 未バフ
     expect(ally2.hp).toBe(4);
   });
 
@@ -132,26 +133,26 @@ describe("resolveDeaths – token buff synergies", () => {
     expect(token!.atk).toBe(2); // 1 base + 1 zealot buff
   });
 
-  it("altar buffs spawned tokens +2/+1", () => {
+  it("altar buffs spawned tokens +3/+1", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const altar = makeBattleUnit({ id: "altar", name: "祭壇", atk: 3, hp: 4 });
     const ctx = makeContext([hound, altar], []);
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(3); // 1 base + 2 altar
-    expect(token!.hp).toBe(2); // 1 base + 1 altar
+    expect(token!.atk).toBe(4); // 1 base + 3 altar (Lv1)
+    expect(token!.hp).toBe(2); // 1 base + 1 altar (Lv1)
   });
 
-  it("altar log shows +2/+1 and final stats without brains", () => {
+  it("altar log shows +3/+1 and final stats without brains", () => {
     const hound = makeBattleUnit({ id: "hound", name: "猟犬", hp: 0 });
     const altar = makeBattleUnit({ id: "altar", name: "祭壇", atk: 3, hp: 4 });
     const ctx = makeContext([hound, altar], []);
     resolveDeaths(ctx);
     const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
-    expect(logText(altarLog!)).toContain("+2/+1");
-    expect(logText(altarLog!)).toContain("→ 3/2");
+    expect(logText(altarLog!)).toContain("+3/+1");
+    expect(logText(altarLog!)).toContain("→ 4/2");
   });
 
   it("altar buff doubles with brains behind it", () => {
@@ -162,8 +163,8 @@ describe("resolveDeaths – token buff synergies", () => {
     resolveDeaths(ctx);
     const token = ctx.pBoard.find((u) => u.id === "token");
     expect(token).toBeDefined();
-    expect(token!.atk).toBe(5); // 1 base + 2*2 altar
-    expect(token!.hp).toBe(3); // 1 base + 1*2 altar
+    expect(token!.atk).toBe(7); // 1 base + 3*2 altar (Lv1)
+    expect(token!.hp).toBe(3); // 1 base + 1*2 altar (Lv1)
   });
 
   it("altar log shows doubled buff and final stats with brains", () => {
@@ -174,50 +175,52 @@ describe("resolveDeaths – token buff synergies", () => {
     resolveDeaths(ctx);
     const altarLog = ctx.frames.find((f) => logText(f).includes("瘴気が溢れる"));
     expect(altarLog).toBeDefined();
-    expect(logText(altarLog!)).toContain("+4/+2");
-    expect(logText(altarLog!)).toContain("→ 5/3");
+    expect(logText(altarLog!)).toContain("+6/+2");
+    expect(logText(altarLog!)).toContain("→ 7/3");
   });
 });
 
 describe("resolveDeaths – beelzebub", () => {
-  it("spawns 2/2 fly on ally death (Lv1)", () => {
+  it("spawns 4/4 fly on ally death (Lv1)", () => {
     const dying = makeBattleUnit({ hp: 0 });
     const beelzebub = makeBattleUnit({
       id: "beelzebub",
       name: "ベルゼブブ",
       atk: 4,
       hp: 4,
-      skillUses: 2,
+      skillUses: atLevel(BEELZEBUB.uses, 1),
     });
     const ctx = makeContext([dying, beelzebub], []);
     resolveDeaths(ctx);
     const fly = ctx.pBoard.find((u) => u.name === "腐肉の蠅");
     expect(fly).toBeDefined();
-    expect(fly!.atk).toBe(2);
-    expect(fly!.hp).toBe(2);
+    expect(fly!.atk).toBe(4);
+    expect(fly!.hp).toBe(4);
   });
 
-  it("fly spawn limited by skillUses (Lv1: max 2)", () => {
+  it("fly spawn limited by skillUses (Lv1: max 3)", () => {
+    const uses = atLevel(BEELZEBUB.uses, 1);
     const units = [
       makeBattleUnit({ id: "eye", hp: 0 }),
       makeBattleUnit({ id: "eye", hp: 0 }),
       makeBattleUnit({ id: "eye", hp: 0 }),
       makeBattleUnit({ id: "eye", hp: 0 }),
-      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4, skillUses: 2 }),
+      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ", atk: 4, hp: 4, skillUses: uses }),
     ];
     const ctx = makeContext(units, []);
     resolveDeaths(ctx);
     const flies = ctx.pBoard.filter((u) => u.name === "腐肉の蠅");
-    expect(flies.length).toBe(2);
+    expect(flies.length).toBe(uses);
   });
 
   it("two beelzebubs spawn independently, limited by board size", () => {
+    const uses = atLevel(BEELZEBUB.uses, 1);
     const units = [
       makeBattleUnit({ hp: 0 }),
       makeBattleUnit({ hp: 0 }),
       makeBattleUnit({ hp: 0 }),
-      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ1", atk: 4, hp: 4, skillUses: 2 }),
-      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ2", atk: 4, hp: 4, skillUses: 2 }),
+      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ1", atk: 4, hp: 4, skillUses: uses }),
+      makeBattleUnit({ id: "beelzebub", name: "ベルゼブブ2", atk: 4, hp: 4, skillUses: uses }),
     ];
     const ctx = makeContext(units, []);
     resolveDeaths(ctx);
@@ -232,7 +235,7 @@ describe("resolveDeaths – beelzebub", () => {
       name: "ベルゼブブ",
       atk: 4,
       hp: 4,
-      skillUses: 2,
+      skillUses: atLevel(BEELZEBUB.uses, 1),
     });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const ctx = makeContext([dying, beelzebub, brains], []);
@@ -242,6 +245,7 @@ describe("resolveDeaths – beelzebub", () => {
   });
 
   it("skillUses limits total spawns across multiple deaths", () => {
+    const uses = atLevel(BEELZEBUB.uses, 1);
     const d1 = makeBattleUnit({ id: "eye", hp: 0, atk: 5 });
     const d2 = makeBattleUnit({ id: "eye", hp: 0, atk: 3 });
     const d3 = makeBattleUnit({ id: "eye", hp: 0, atk: 1 });
@@ -250,12 +254,12 @@ describe("resolveDeaths – beelzebub", () => {
       name: "ベルゼブブ",
       atk: 4,
       hp: 4,
-      skillUses: 2,
+      skillUses: uses,
     });
     const ctx = makeContext([d1, d2, d3, beelzebub], []);
     resolveDeaths(ctx);
     const flies = ctx.pBoard.filter((u) => u.name === "腐肉の蠅");
-    expect(flies.length).toBe(2);
+    expect(flies.length).toBe(uses);
   });
 
   it("token (zombie fly) death does not trigger beelzebub spawns (SAP準拠)", () => {
@@ -265,7 +269,7 @@ describe("resolveDeaths – beelzebub", () => {
       name: "ベルゼブブ",
       atk: 4,
       hp: 4,
-      skillUses: 2,
+      skillUses: atLevel(BEELZEBUB.uses, 1),
     });
     const ctx = makeContext([token, beelzebub], []);
     resolveDeaths(ctx);
@@ -273,13 +277,14 @@ describe("resolveDeaths – beelzebub", () => {
   });
 
   it("player and enemy fly counters are independent", () => {
+    const uses = atLevel(BEELZEBUB.uses, 1);
     const pDead = makeBattleUnit({ hp: 0 });
     const pBeelzebub = makeBattleUnit({
       id: "beelzebub",
       name: "ベルゼブブ",
       atk: 4,
       hp: 4,
-      skillUses: 2,
+      skillUses: uses,
     });
     const eDead = makeBattleUnit({ hp: 0 });
     const eBeelzebub = makeBattleUnit({
@@ -287,7 +292,7 @@ describe("resolveDeaths – beelzebub", () => {
       name: "敵ベルゼブブ",
       atk: 4,
       hp: 4,
-      skillUses: 2,
+      skillUses: uses,
     });
     const ctx = makeContext([pDead, pBeelzebub], [eDead, eBeelzebub]);
     resolveDeaths(ctx);
@@ -355,7 +360,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
-      skillUses: 2,
+      skillUses: atLevel(EVANGELIST.uses, 1),
     });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
@@ -364,13 +369,14 @@ describe("resolveDeaths – evangelist plague", () => {
   });
 
   it("brains behind evangelist infects twice (two different enemies)", () => {
+    // brains がスキルを2回発動させるため、uses=2（Lv2）が必要
     const dying = makeBattleUnit({ hp: 0 });
     const evangelist = makeBattleUnit({
       id: "evangelist",
       name: "伝道師",
       atk: 3,
       hp: 5,
-      skillUses: 2,
+      skillUses: atLevel(EVANGELIST.uses, 2),
     });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const enemy1 = makeBattleUnit({ hp: 20 });
@@ -401,7 +407,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
-      skillUses: 2,
+      skillUses: atLevel(EVANGELIST.uses, 1),
     });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([token, evangelist], [enemy], null, { next: () => 0 });
@@ -416,7 +422,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
-      skillUses: 2,
+      skillUses: atLevel(EVANGELIST.uses, 1),
     });
     const ctx = makeContext([dying, evangelist], []);
     resolveDeaths(ctx);
@@ -431,7 +437,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
-      skillUses: 2,
+      skillUses: atLevel(EVANGELIST.uses, 1),
     });
     const bystander = makeBattleUnit({ hp: 20 });
     const eEvangelist = makeBattleUnit({
@@ -449,6 +455,7 @@ describe("resolveDeaths – evangelist plague", () => {
 
   it("does not re-infect already-infected enemy when only one target exists", () => {
     // 2体死亡 → 2回発動するが、感染候補が1体のみ → 2回目はスキップ
+    // uses=2（Lv2）で2回発動が起きることを確認するテスト
     const dead1 = makeBattleUnit({ id: "beggar", hp: 0, atk: 5 });
     const dead2 = makeBattleUnit({ id: "beggar", hp: 0, atk: 2 });
     const evangelist = makeBattleUnit({
@@ -456,7 +463,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 1,
       hp: 10,
-      skillUses: 2,
+      skillUses: atLevel(EVANGELIST.uses, 2),
     });
     const enemy = makeBattleUnit({ hp: 20 });
     const ctx = makeContext([dead1, dead2, evangelist], [enemy], null, { next: () => 0 });
@@ -488,7 +495,7 @@ describe("resolveDeaths – evangelist plague", () => {
       level: 2,
       atk: 3,
       hp: 5,
-      skillUses: 2,
+      skillUses: atLevel(EVANGELIST.uses, 2),
     });
     const enemy = makeBattleUnit({ hp: 10, equip: "iron_plate" });
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
@@ -504,7 +511,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
-      skillUses: 2,
+      skillUses: atLevel(EVANGELIST.uses, 1),
     });
     const deadEnemy = makeBattleUnit({ hp: -2 });
     const aliveEnemy = makeBattleUnit({ hp: 10 });
@@ -521,7 +528,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 3,
       hp: 5,
-      skillUses: 2,
+      skillUses: atLevel(EVANGELIST.uses, 1),
     });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([dying, evangelist], [enemy], null, { next: () => 0 });
@@ -530,7 +537,8 @@ describe("resolveDeaths – evangelist plague", () => {
     expect(evangelist.hp).toBe(5);
   });
 
-  it("stops infecting after skillUses exhausted", () => {
+  it("stops infecting after skillUses exhausted (Lv2: uses=2)", () => {
+    const uses = atLevel(EVANGELIST.uses, 2);
     const dead1 = makeBattleUnit({ id: "beggar", hp: 0 });
     const dead2 = makeBattleUnit({ id: "beggar", hp: 0 });
     const dead3 = makeBattleUnit({ id: "beggar", hp: 0 });
@@ -539,7 +547,7 @@ describe("resolveDeaths – evangelist plague", () => {
       name: "伝道師",
       atk: 1,
       hp: 20,
-      skillUses: 2,
+      skillUses: uses,
     });
     const e1 = makeBattleUnit({ hp: 10 });
     const e2 = makeBattleUnit({ hp: 10 });
@@ -548,7 +556,7 @@ describe("resolveDeaths – evangelist plague", () => {
       next: () => 0,
     });
     resolveDeaths(ctx);
-    // skillUses=2 → 2回発動後stop。3体目の死亡には反応しない
+    // uses=2 → 2回発動後stop。3体目の死亡には反応しない
     expect(e1.equip).toBe("infection");
     expect(e2.equip).toBe("infection");
     expect(e3.equip).not.toBe("infection");

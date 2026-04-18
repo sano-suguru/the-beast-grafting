@@ -1,14 +1,14 @@
 import type { Buff, Scaled } from "./skill-params";
-import type { UnitId } from "./types";
+import type { ItemId, UnitId } from "./types";
 
 type SN = Scaled<number>;
 type SB = Scaled<Buff>;
 
 export const ALTAR = {
   buff: [
-    { atk: 2, hp: 1 },
-    { atk: 3, hp: 2 },
-    { atk: 5, hp: 3 },
+    { atk: 3, hp: 1 },
+    { atk: 5, hp: 2 },
+    { atk: 7, hp: 3 },
   ] as SB,
 };
 
@@ -17,8 +17,12 @@ export const ZEALOT = {
 };
 
 export const ROT_RING = {
-  uses: [4, 5, 6] as SN,
-  buff: { atk: 1, hp: 1 } satisfies Buff,
+  uses: [4, 4, 4] as SN,
+  buff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+  ] as SB,
 };
 
 export const BLOOD_FONT = {
@@ -80,6 +84,15 @@ export const CORPSE_BROKER = {
     { atk: 1, hp: 0 },
     { atk: 1, hp: 1 },
     { atk: 2, hp: 1 },
+  ] as SB,
+};
+
+export const CHALICE = {
+  itemId: ["pure_blood", "pure_blood_2", "pure_blood_3"] as Scaled<ItemId>,
+  buff: [
+    { atk: 1, hp: 2 },
+    { atk: 2, hp: 4 },
+    { atk: 3, hp: 6 },
   ] as SB,
 };
 

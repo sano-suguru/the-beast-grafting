@@ -5,9 +5,9 @@ type SB = Scaled<Buff>;
 
 export const RAT = {
   deathBuff: [
-    { atk: 1, hp: 0 },
     { atk: 1, hp: 1 },
-    { atk: 2, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
   ] as SB,
 };
 
@@ -46,8 +46,8 @@ export const HOUND = {
 export const BEAST = {
   summon: [
     { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
     { atk: 4, hp: 4 },
+    { atk: 6, hp: 6 },
   ] as SB,
 };
 
@@ -101,11 +101,11 @@ export const CATHEDRAL = {
 
 export const BEELZEBUB = {
   token: [
-    { atk: 2, hp: 2 },
     { atk: 4, hp: 4 },
-    { atk: 6, hp: 6 },
+    { atk: 8, hp: 8 },
+    { atk: 12, hp: 12 },
   ] as SB,
-  uses: [2, 3, 4] as SN,
+  uses: [3, 3, 3] as SN,
 };
 
 export const OMEN_WOMB = {
@@ -122,6 +122,10 @@ export const STELLAR_COCOON = {
     { atk: 3, hp: 3 },
     { atk: 4, hp: 4 },
   ] as SB,
+};
+
+export const MAIDEN = {
+  targets: [1, 2, 3] as SN,
 };
 
 export const DEVOURING_GRAFT = {

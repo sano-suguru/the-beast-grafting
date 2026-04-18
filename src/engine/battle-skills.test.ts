@@ -13,6 +13,7 @@ import {
   atLevel,
   CATACOMB_RAT,
   PLAGUE_BELL,
+  EYE,
   PALADIN,
   HOLY_FIRE,
   FAMINE_CORPSE,
@@ -106,41 +107,40 @@ describe("runStartSkills – damage skills", () => {
 });
 
 describe("runStartSkills – revenant buff", () => {
-  it("doubles buff when last battle was LOSE", () => {
-    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
+  it("buffs front 3 allies when last battle was LOSE", () => {
+    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3, level: 1 });
     const ally1 = makeBattleUnit({ atk: 3, hp: 3 });
     const ally2 = makeBattleUnit({ atk: 4, hp: 2 });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([rev, ally1, ally2], [enemy], "LOSE");
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(rev.atk).toBe(2); // self not buffed (SAP Snail rule)
-    expect(ally1.atk).toBe(5); // +2 (baseBuff 1 × lossBonusMult 2)
-    expect(ally2.atk).toBe(6);
+    expect(rev.atk).toBe(2); // self not buffed
+    expect(ally1.atk).toBe(4); // +1 (Lv1 buff)
+    expect(ally2.atk).toBe(5); // +1
+    expect(ctx.frames).toHaveLength(1);
   });
 
-  it("applies base buff when last battle was WIN", () => {
+  it("does nothing when last battle was WIN", () => {
     const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
     const ally = makeBattleUnit({ atk: 3, hp: 3 });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([rev, ally], [enemy], "WIN");
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(rev.atk).toBe(2);
-    expect(ally.atk).toBe(4); // +1 (baseBuff)
-    expect(ctx.frames).toHaveLength(1);
+    expect(ally.atk).toBe(3); // no buff
+    expect(ctx.frames).toHaveLength(0);
   });
 
-  it("applies base buff when lastBattleResult is null", () => {
+  it("does nothing when lastBattleResult is null", () => {
     const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
     const ally = makeBattleUnit({ atk: 3, hp: 3 });
     const enemy = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([rev, ally], [enemy], null);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(rev.atk).toBe(2);
-    expect(ally.atk).toBe(4); // +1 (baseBuff)
-    expect(ctx.frames).toHaveLength(1);
+    expect(ally.atk).toBe(3); // no buff
+    expect(ctx.frames).toHaveLength(0);
   });
 
-  it("generates a skill frame with loss log", () => {
+  it("generates a skill frame on LOSE", () => {
     const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
     const ally = makeBattleUnit({ atk: 3, hp: 3 });
     const enemy = makeBattleUnit({ hp: 10 });
@@ -152,7 +152,7 @@ describe("runStartSkills – revenant buff", () => {
   });
 
   it("buffs at most 3 allies even with more on board", () => {
-    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
+    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3, level: 1 });
     const a1 = makeBattleUnit({ atk: 1, hp: 1 });
     const a2 = makeBattleUnit({ atk: 1, hp: 1 });
     const a3 = makeBattleUnit({ atk: 1, hp: 1 });
@@ -161,20 +161,20 @@ describe("runStartSkills – revenant buff", () => {
     const ctx = makeContext([rev, a1, a2, a3, a4], [enemy], "LOSE");
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(rev.atk).toBe(2); // self not buffed
-    expect(a1.atk).toBe(3); // +2 (doubled on LOSE)
-    expect(a2.atk).toBe(3);
-    expect(a3.atk).toBe(3);
-    expect(a4.atk).toBe(1); // 4th ally (5th unit), not buffed
+    expect(a1.atk).toBe(2); // +1 (Lv1)
+    expect(a2.atk).toBe(2);
+    expect(a3.atk).toBe(2);
+    expect(a4.atk).toBe(1); // 4th ally not buffed (targets=3)
   });
 
   it("buffs enemy-side allies when isPlayer=false", () => {
-    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
+    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3, level: 1 });
     const eAlly = makeBattleUnit({ atk: 3, hp: 3 });
     const player = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([player], [rev, eAlly], "LOSE");
     runStartSkills(ctx.eBoard, ctx.pBoard, false, ctx);
     expect(rev.atk).toBe(2); // self not buffed
-    expect(eAlly.atk).toBe(5); // +2 (doubled on LOSE)
+    expect(eAlly.atk).toBe(4); // +1 (Lv1)
     expect(ctx.frames).toHaveLength(1);
     expect(logText(ctx.frames[0]!)).toContain("敵の");
   });
@@ -265,13 +265,19 @@ describe("applyBeforeAttackSkills", () => {
     expect(parasite.hp).toBe(4);
   });
 
-  it("eye deals 4 damage to a random enemy", () => {
+  it("eye deals 5 damage to a random enemy", () => {
     const front = makeBattleUnit({ atk: 3, hp: 3 });
-    const eye = makeBattleUnit({ id: "eye", name: "大目玉", atk: 6, hp: 6, skillUses: 4 });
+    const eye = makeBattleUnit({
+      id: "eye",
+      name: "大目玉",
+      atk: 6,
+      hp: 6,
+      skillUses: atLevel(EYE.uses, 1),
+    });
     const target = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([front, eye], [target], null, { next: () => 0 });
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(target.hp).toBe(6);
+    expect(target.hp).toBe(5);
   });
 
   it("parasite at index 2 does not buff itself", () => {
@@ -343,13 +349,14 @@ describe("runStartSkills – catacomb_rat", () => {
 
 describe("applyBeforeAttackSkills – plague_bell", () => {
   it("deals AoE damage to all enemies from SUPPORT_IDX", () => {
+    const uses = atLevel(PLAGUE_BELL.uses, 1);
     const front = makeBattleUnit({ atk: 5, hp: 10 });
     const bell = makeBattleUnit({
       id: "plague_bell",
       name: "疫病の鐘撞き",
       atk: 3,
       hp: 7,
-      skillUses: 3,
+      skillUses: uses,
     });
     const e1 = makeBattleUnit({ hp: 10 });
     const e2 = makeBattleUnit({ hp: 8 });
@@ -358,7 +365,7 @@ describe("applyBeforeAttackSkills – plague_bell", () => {
     const dmg = atLevel(PLAGUE_BELL.damage, 1);
     expect(e1.hp).toBe(10 - dmg);
     expect(e2.hp).toBe(8 - dmg);
-    expect(bell.skillUses).toBe(2);
+    expect(bell.skillUses).toBe(uses - 1);
   });
 
   it("does not trigger when skillUses is 0", () => {
@@ -384,7 +391,7 @@ describe("applyBeforeAttackSkills – plague_bell", () => {
       name: "疫病の鐘撞き",
       atk: 3,
       hp: 7,
-      skillUses: 3,
+      skillUses: atLevel(PLAGUE_BELL.uses, 1),
     });
     const e1 = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([front, middle, bell], [e1]);

@@ -12,6 +12,7 @@ import {
   HOUND,
   BEAST,
   CHURCH_BEAST,
+  MAIDEN,
   SQUIRE,
   MARTYR,
   PRIEST,
@@ -50,19 +51,26 @@ function deathBuffAllAllies(
 }
 
 export function handleRatDeath({ dead, board, isPlayer, ctx }: DeathContext) {
+  if (board.length === 0) return;
   const b = atLevel(RAT.deathBuff, dead.level);
+  const target = board[Math.floor(ctx.rng.next() * board.length)]!;
+  target.atk += b.atk;
+  target.hp += b.hp;
   const prefix = enemyPrefix(isPlayer);
-  deathBuffAllAllies(
-    dead,
-    board,
-    b,
+  pushFrame(
+    ctx,
+    "skill",
     () => [
       prefix,
       seg.u(dead.name),
-      "の汚染された血が味方全体に変異を促す！ ",
+      "の汚染された血が",
+      seg.u(target.name),
+      "に変異を促す！ ",
       seg.s(`+${b.atk}/+${b.hp}`),
     ],
-    ctx,
+    "skill",
+    { [target.uid]: buffAction(b, dead.uid) },
+    FRAME_DELAY_DEATH_CHAIN,
   );
 }
 
@@ -200,25 +208,25 @@ export function handlePriestDeath({ dead, board, isPlayer, ctx }: DeathContext) 
   );
 }
 
-export function handleMaidenDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
-  if (!successor) return;
-  successor.equip = "corpse_wax";
+export function handleMaidenDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
+  const maxTargets = atLevel(MAIDEN.targets, dead.level);
+  const targets = board.slice(idx, idx + maxTargets);
+  if (targets.length === 0) return;
   const prefix = enemyPrefix(isPlayer);
+  const actionMap: Record<string, BattleAction> = {};
+  for (const target of targets) {
+    target.equip = "corpse_wax";
+    actionMap[target.uid] = defendAction("盾");
+  }
+  const nameSegs: LogSegment[] = targets.flatMap((t, i) =>
+    i === 0 ? [seg.u(t.name)] : ["・", seg.u(t.name)],
+  );
   pushFrame(
     ctx,
     "skill",
-    () => [
-      prefix,
-      seg.u(dead.name),
-      "の残骸が",
-      seg.u(successor.name),
-      "を覆う！ ",
-      seg.e("屍蝋の盾"),
-    ],
+    () => [prefix, seg.u(dead.name), "の残骸が", ...nameSegs, "を覆う！ ", seg.e("屍蝋の盾")],
     "skill",
-    {
-      [successor.uid]: defendAction("盾"),
-    },
+    actionMap,
     FRAME_DELAY_DEATH_CHAIN,
   );
 }

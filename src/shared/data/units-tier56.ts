@@ -6,7 +6,7 @@ export const UNITS_TIER56 = {
   shrieking_throat: {
     id: "shrieking_throat",
     name: "叫喚する喉袋",
-    baseAtk: 7,
+    baseAtk: 8,
     baseHp: 4,
     tier: 5,
     lore: "火炙りにされた魔女の遺灰を強引に実体化させたもの。その絶叫は壁の向こうに隠れ潜む者すら確実に呪い殺す。",
@@ -107,7 +107,7 @@ export const UNITS_TIER56 = {
   eye: {
     id: "eye",
     name: "寄生する大目玉",
-    baseAtk: 6,
+    baseAtk: 8,
     baseHp: 3,
     tier: 6,
     lore: "深淵の悪魔から抉り取った巨大な眼球。前衛の激しい動きに呼応して充血し、敵の急所へ致死の呪詛を撃ち込み続ける。",
@@ -126,7 +126,7 @@ export const UNITS_TIER56 = {
   rot_ring: {
     id: "rot_ring",
     name: "自食する環蟲",
-    baseAtk: 4,
+    baseAtk: 3,
     baseHp: 8,
     tier: 6,
     lore: "自らの尾を喰らう蛇のミイラ。最も無価値な命を捧げるたび、工房の全ての肉塊が脈打ち、肥大化していく。",

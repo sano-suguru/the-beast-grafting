@@ -34,9 +34,8 @@ export const BANSHEE = {
 };
 
 export const REVENANT = {
-  targets: [3, 4, 5] as SN,
+  targets: [3, 3, 3] as SN,
   buff: [1, 2, 3] as SN,
-  lossBonusMult: 2,
 };
 
 export const CATACOMB_RAT = {
@@ -66,8 +65,8 @@ export const PARASITE = {
 };
 
 export const EYE = {
-  damage: [4, 8, 12] as SN,
-  uses: [3, 4, 6] as SN,
+  damage: [5, 10, 15] as SN,
+  uses: [5, 5, 5] as SN,
 };
 
 export const FAMINE_CORPSE = {
@@ -147,7 +146,7 @@ export const DEVOURING_WOUND = {
 
 export const HUNDRED_ARMS = {
   damageT1: [8, 16, 24] as SN,
-  damageDefault: [3, 6, 9] as SN,
+  damageDefault: [4, 8, 12] as SN,
 };
 
 export const ORGAN_GRINDER = {
@@ -171,6 +170,7 @@ export {
   HOUND,
   BEAST,
   CHURCH_BEAST,
+  MAIDEN,
   HANGED_MAN,
   SERAPH,
   EVANGELIST,
@@ -279,5 +279,6 @@ export {
   GHOUL_INFANT,
   TAINTED_PLACENTA,
   CORPSE_BROKER,
+  CHALICE,
   sellBloodGain,
 } from "./skill-params-shop";
