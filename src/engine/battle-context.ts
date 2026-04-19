@@ -139,15 +139,6 @@ export function buffAction(buff: Buff, source?: string): BattleAction {
   };
 }
 
-export function healAction(hp: number, source?: string): BattleAction {
-  return {
-    type: "heal",
-    value: `+0/+${hp}`,
-    heal: hp,
-    ...(source !== undefined && { source }),
-  };
-}
-
 export type ClashActionType = "damage" | "defend";
 
 export function damageAction(

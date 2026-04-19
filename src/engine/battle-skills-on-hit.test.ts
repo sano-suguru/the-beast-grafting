@@ -58,7 +58,7 @@ describe("on-hit kill → resolveDeaths cascade", () => {
 });
 
 describe("applyOnHitSkills – stitched_twin", () => {
-  it("buffs self atk and damages unit behind with fixed 1 damage", () => {
+  it("buffs self atk on hit", () => {
     const twin = makeBattleUnit({ id: "stitched_twin", name: "継ぎ接ぎ", atk: 2, hp: 4 });
     const behind = makeBattleUnit({ atk: 3, hp: 10 });
     const board = [twin, behind];
@@ -66,7 +66,7 @@ describe("applyOnHitSkills – stitched_twin", () => {
     applyOnHitSkills(twin, board, true, ctx);
     const b = atLevel(STITCHED_TWIN.atkBuff, 1);
     expect(twin.atk).toBe(2 + b);
-    expect(behind.hp).toBe(10 - 1);
+    expect(behind.hp).toBe(10);
   });
 
   it("does not crash when no unit behind", () => {
@@ -77,15 +77,15 @@ describe("applyOnHitSkills – stitched_twin", () => {
     expect(twin.atk).toBe(2 + atLevel(STITCHED_TWIN.atkBuff, 1));
   });
 
-  it("damages puppeteer behind with fixed 1 damage", () => {
+  it("does not damage puppeteer behind", () => {
     const twin = makeBattleUnit({ id: "stitched_twin", name: "継ぎ接ぎ", atk: 2, hp: 4 });
     const puppet = makeBattleUnit({ id: "puppeteer", name: "操り糸", atk: 4, hp: 6 });
     const board = [twin, puppet];
     const ctx = makeContext(board, []);
     applyOnHitSkills(twin, board, true, ctx);
-    const dmg = atLevel(STITCHED_TWIN.atkBuff, 1);
-    expect(twin.atk).toBe(2 + dmg);
-    expect(puppet.hp).toBe(6 - 1);
+    const b = atLevel(STITCHED_TWIN.atkBuff, 1);
+    expect(twin.atk).toBe(2 + b);
+    expect(puppet.hp).toBe(6);
   });
 });
 

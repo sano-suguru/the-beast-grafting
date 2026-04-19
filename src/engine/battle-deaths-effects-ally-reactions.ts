@@ -1,15 +1,8 @@
 import type { LogSegment } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix, seg, buffAction, aoeBuffActions } from "./battle-context";
-import { mustGet } from "../shared/invariant";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import {
-  atLevel,
-  CRAWLING_CORD,
-  INSATIABLE_MAW,
-  BONE_TREE,
-  type Buff,
-} from "../shared/skill-params";
+import { atLevel, INSATIABLE_MAW, BONE_TREE, type Buff } from "../shared/skill-params";
 
 function applyAllyDeathReaction(
   board: BattleUnit[],
@@ -25,36 +18,6 @@ function applyAllyDeathReaction(
     for (let m = 0; m < mult && u.skillUses > 0; m++) {
       u.skillUses -= 1;
       apply(u, prefix);
-    }
-  }
-}
-
-export function handleCrawlingCordBuff(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
-  const prefix = enemyPrefix(isPlayer);
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "crawling_cord" || u.hp <= 0) continue;
-    const mult = getMult(board, i);
-    const b = atLevel(CRAWLING_CORD.buff, u.level);
-    const adjacent = [board[i - 1], board[i + 1]].filter(
-      (a): a is BattleUnit => a != null && a.hp > 0,
-    );
-    if (adjacent.length === 0) continue;
-    for (let m = 0; m < mult && u.skillUses > 0; m++) {
-      u.skillUses -= 1;
-      const target = mustGet(
-        adjacent,
-        Math.floor(ctx.rng.next() * adjacent.length),
-        "cord buff target",
-      );
-      buffAlly(ctx, u, target, b, () => [
-        prefix,
-        seg.u(u.name),
-        "が蠢き、",
-        seg.u(target.name),
-        "に巻きつく。",
-        seg.s(`+${b.atk}/+${b.hp}`),
-      ]);
     }
   }
 }

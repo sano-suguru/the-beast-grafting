@@ -99,7 +99,10 @@ export type ItemId =
   | "pure_blood"
   | "pure_blood_2"
   | "pure_blood_3"
-  | "bone_meal";
+  | "bone_meal"
+  | "worm_apple"
+  | "worm_apple_2"
+  | "worm_apple_3";
 
 export interface UnitData {
   id: DataUnitId;

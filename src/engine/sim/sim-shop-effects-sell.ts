@@ -7,7 +7,6 @@ import {
   BONE_JAW,
   CORPSE_BROKER,
   CORPSE_PECKER,
-  MARKET_VULTURE,
   ROT_FEEDER,
 } from "../../shared/skill-params-shop";
 import {
@@ -98,25 +97,4 @@ export function applyCorpsePeckerAccumulation(
   // Self-sell: one-time bone_meal → approximate as ATK buff
   const atk = atLevel(CORPSE_PECKER.breadCrumbs, corpsePecker.level);
   if (atk > 0) distributeBuffRandomly(team, atk, 0, rng);
-}
-
-/**
- * market_vulture: shopBuff（売却時にショップにバフ）を近似。
- *
- * shopBuff は本来ショップ内ユニットに付与→購入でチーム合流。vulture 自身を含む全体分配で近似。
- * 売却後に購入が続く確率を 0.5 と推定。
- */
-export function applyMarketVultureAccumulation(
-  vulture: UnitInstance,
-  team: UnitInstance[],
-  night: number,
-  rng: Rng,
-): void {
-  const nights = activeNights(vulture.tier as Tier, night);
-  if (nights <= 0) return;
-  const rawSells = totalWeightedSells(vulture.tier as Tier, night);
-  const shopBuff = atLevel(MARKET_VULTURE.shopBuff, vulture.level);
-  const totalAtk = Math.floor(shopBuff.atk * rawSells * 0.5);
-  const totalHp = Math.floor(shopBuff.hp * rawSells * 0.5);
-  distributeBuffRandomly(team, totalAtk, totalHp, rng);
 }

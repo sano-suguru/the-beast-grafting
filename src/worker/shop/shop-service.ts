@@ -1,9 +1,10 @@
-import type { ShopSlot, ShopItemSlot, OriginId } from "../../shared/types";
+import type { ShopSlot, ShopItemSlot, OriginId, BattleResult } from "../../shared/types";
 import { createSeededRng } from "../../engine/rng";
-import type { Rng } from "../../engine/rng";
 import { createUnit } from "../../engine/helpers";
-import { atLevel, TAINTED_PLACENTA } from "../../shared/skill-params";
+import { atLevel, TAINTED_PLACENTA, WORM } from "../../shared/skill-params";
+import { ITEMS } from "../../shared/data/items";
 import { isEventNight, selectEvent, buildEventShopUnits } from "../../engine/event-helpers";
+import { applySnailBuff } from "../../engine/shop-effects-setup";
 import type { ShopStateRow } from "./shop-state-row";
 import {
   slotsToJson,
@@ -66,20 +67,24 @@ function buildNormalShop(
   return { units, items: result.items };
 }
 
-function applyTaintedPlacentaSetupBuff(
-  prevBoard: (BoardUnit | null)[],
-  shopUnits: (ShopSlot | null)[],
-  rng: Rng,
-): void {
-  const active = shopUnits.map((s, i) => (s ? i : -1)).filter((i) => i >= 0);
-  if (active.length === 0) return;
+/** Swan (tainted_placenta): ターン開始 – blood獲得 */
+function calcSwanBloodGain(prevBoard: (BoardUnit | null)[]): number {
+  let total = 0;
   for (const bu of prevBoard) {
     if (!bu || bu.id !== "tainted_placenta") continue;
-    const b = atLevel(TAINTED_PLACENTA.shopBuff, bu.level);
-    const idx = active[Math.floor(rng.next() * active.length)]!;
-    const target = shopUnits[idx]!;
-    target.unit.buffAtk += b.atk;
-    target.unit.buffHp += b.hp;
+    total += atLevel(TAINTED_PLACENTA.bloodGain, bu.level);
+  }
+  return total;
+}
+
+/** Worm (graft_scion): ターン開始 – アイテムショップに補充 */
+function stockWormItems(prevBoard: (BoardUnit | null)[], shopItems: (ShopItemSlot | null)[]): void {
+  for (const bu of prevBoard) {
+    if (!bu || bu.id !== "graft_scion") continue;
+    const itemId = atLevel(WORM.itemId, bu.level);
+    const emptyIdx = shopItems.findIndex((s) => s === null);
+    if (emptyIdx === -1) break;
+    shopItems[emptyIdx] = { item: ITEMS[itemId], frozen: false };
   }
 }
 
@@ -92,6 +97,7 @@ export function executeSetup(
   useTutorialShop: boolean,
   prevShopUnits: (ShopSlotJson | null)[],
   prevShopItems: (ShopItemSlotJson | null)[],
+  lastBattleResult: BattleResult = null,
 ): ShopStateRow {
   const rng = createSeededRng(deriveNightSeed(shopSeed, night));
   const prevUnits = slotsFromJson(prevShopUnits);
@@ -101,12 +107,14 @@ export function executeSetup(
     ? buildTutorialShop(night, originId, prevUnits, prevItems, rng)
     : buildNormalShop(night, event, originId, prevUnits, prevItems, rng);
 
-  applyTaintedPlacentaSetupBuff(prevBoard, shop.units, rng);
+  stockWormItems(prevBoard, shop.items);
+  const swanBlood = calcSwanBloodGain(prevBoard);
 
   const rngState = rng.getState();
   const resetBoard = prevBoard.map((bu) => (bu && bu.tempBuffAtk ? { ...bu, tempBuffAtk: 0 } : bu));
+  applySnailBuff(resetBoard, lastBattleResult);
   return {
-    blood: 10 + (event?.bloodBonus ?? 0),
+    blood: 10 + (event?.bloodBonus ?? 0) + swanBlood,
     board: resetBoard,
     shopUnits: slotsToJson(shop.units),
     shopItems: itemSlotsToJson(shop.items),

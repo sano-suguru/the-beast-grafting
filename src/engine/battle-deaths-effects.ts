@@ -10,7 +10,6 @@ import {
 } from "./battle-deaths-effects-reactions";
 import { applyStarFrenzyDeath } from "./battle-deaths-handlers-spawn";
 import {
-  handleCrawlingCordBuff,
   handleInsatiableMawBuff,
   handleBoneTreeAllyDeath,
 } from "./battle-deaths-effects-ally-reactions";
@@ -97,7 +96,6 @@ export const SPAWN_ALLY_REACTIONS: AllyReaction[] = [
 export const PERSISTENT_ALLY_REACTIONS: AllyReaction[] = [
   (r) => handleEvangelistPlague(r.board, r.enemyBoard, r.isPlayer, r.ctx),
   (r) => handleSinEaterAbsorb(r.board, r.dead.atk, r.isPlayer, r.ctx),
-  (r) => handleCrawlingCordBuff(r.board, r.isPlayer, r.ctx),
   (r) => handleInsatiableMawBuff(r.board, r.isPlayer, r.ctx),
   (r) => handleBoneTreeAllyDeath(r.board, r.isPlayer, r.ctx),
 ];

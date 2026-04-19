@@ -88,8 +88,8 @@ describe("CHURCH_UNITS data integrity", () => {
 describe("ITEMS data integrity", () => {
   const entries = Object.entries(ITEMS);
 
-  it("contains exactly 12 items", () => {
-    expect(entries).toHaveLength(12);
+  it("contains exactly 15 items", () => {
+    expect(entries).toHaveLength(15);
   });
 
   it("every item has non-negative cost", () => {

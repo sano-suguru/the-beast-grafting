@@ -3,14 +3,14 @@ import type { Rng } from "../rng";
 import {
   applyGutHandAccumulation,
   applyRotRingAccumulation,
-  applyTaintedPlacentaAccumulation,
+  applyMarketVultureAccumulation,
+  applySnailAccumulation,
 } from "./sim-shop-effects-buy";
 import {
   applyAshFungusAccumulation,
   applyBoneJawAccumulation,
   applyCorpseBrokerAccumulation,
   applyCorpsePeckerAccumulation,
-  applyMarketVultureAccumulation,
   applyRotFeederAccumulation,
 } from "./sim-shop-effects-sell";
 
@@ -20,8 +20,10 @@ function applyBuyPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: n
       return applyGutHandAccumulation(unit, team, night, rng);
     case "rot_ring":
       return applyRotRingAccumulation(unit, team, night);
-    case "tainted_placenta":
-      return applyTaintedPlacentaAccumulation(unit, team, night, rng);
+    case "market_vulture":
+      return applyMarketVultureAccumulation(unit, team, night);
+    case "catacomb_rat":
+      return applySnailAccumulation(unit, team, night);
   }
 }
 
@@ -37,8 +39,6 @@ function applySellPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: 
       return applyRotFeederAccumulation(unit, team, night, rng);
     case "corpse_pecker":
       return applyCorpsePeckerAccumulation(unit, team, night, rng);
-    case "market_vulture":
-      return applyMarketVultureAccumulation(unit, team, night, rng);
   }
 }
 

@@ -134,3 +134,28 @@ export function spawnSummonedUnitAndNotify(
   getInitOverride(unit.id)?.(unit);
   return finalize(s, unit);
 }
+
+type EnemySpawnBase = Omit<SpawnBase, "board" | "idx"> & {
+  enemyBoard: BattleUnit[];
+  name: string;
+};
+
+/** 敵ボードの先頭(index 0)にトークンを召喚する */
+export function spawnTokenOnEnemyBoard(s: EnemySpawnBase): BattleUnit | null {
+  if (s.enemyBoard.length >= MAX_BOARD_SIZE) {
+    notifyBoardFull(s.ctx, s.name, s.isPlayer);
+    return null;
+  }
+  const token = createToken(s.name, s.atk, s.hp, s.isChurch);
+  s.enemyBoard.splice(0, 0, token);
+  applyZealotBuff(s.enemyBoard, token.uid, !s.isPlayer, s.ctx);
+  pushFrame(
+    s.ctx,
+    "skill",
+    s.segments,
+    "skill",
+    { [token.uid]: summonAction(s.spawnerUid) },
+    s.delay,
+  );
+  return token;
+}

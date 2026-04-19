@@ -4,7 +4,7 @@ import {
   processKnockoutEffects,
 } from "./battle-skills-combat";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
-import { atLevel, ORGAN_GRINDER, RISEN_POPE, DEVOURING_WOUND } from "../shared/skill-params";
+import { atLevel, ORGAN_GRINDER, RISEN_POPE } from "../shared/skill-params";
 import { RAT } from "../shared/skill-params-death";
 
 describe("applyAcidSplash", () => {
@@ -148,18 +148,5 @@ describe("processKnockoutEffects – risen_pope", () => {
     const b = atLevel(RISEN_POPE.buff, 1);
     expect(ally.atk).toBe(3 + b.atk);
     expect(ally.hp).toBe(4 + b.hp);
-  });
-});
-
-describe("processKnockoutEffects – devouring_wound", () => {
-  it("heals self on knockout", () => {
-    const unit = makeBattleUnit({ id: "devouring_wound", name: "喰らう傷口", atk: 3, hp: 4 });
-    const board = [unit];
-    const enemy = makeBattleUnit({ hp: 0 });
-    const ctx = makeContext(board, [enemy]);
-    processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
-    const heal = atLevel(DEVOURING_WOUND.hpHeal, 1);
-    expect(unit.hp).toBe(4 + heal);
-    expect(ctx.frames).toHaveLength(1);
   });
 });

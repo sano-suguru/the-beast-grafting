@@ -1,7 +1,6 @@
 import { runStartSkills } from "./battle-skills";
 import { resolveDeaths } from "./battle-deaths";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
-import { atLevel, CHOLERA } from "../shared/skill-params";
 
 describe("devouring_graft – start skill", () => {
   it("absorbs predecessor and gains stats", () => {
@@ -81,16 +80,6 @@ describe("mimicking_flesh + devouring_graft – interaction edge cases", () => {
     expect(ctx.absorbedUnits.has(mimic.uid)).toBe(true);
     const absorbed = ctx.absorbedUnits.get(mimic.uid)!;
     expect(absorbed.id).toBe("devouring_graft");
-  });
-
-  it("mimic copies cholera and gets initOverride applied", () => {
-    const cholera = makeBattleUnit({ id: "cholera", name: "コレラ", atk: 3, hp: 3 });
-    const mimic = makeBattleUnit({ id: "mimicking_flesh", name: "模倣する粘肉", atk: 4, hp: 3 });
-    const board = [cholera, mimic];
-    const ctx = makeContext(board, []);
-    runStartSkills(board, [], true, ctx);
-    expect(mimic.id).toBe("cholera");
-    expect(mimic.skillUses).toBe(atLevel(CHOLERA.uses, mimic.level));
   });
 
   it("graft absorbs mimic; re-spawns mimicking_flesh on death", () => {

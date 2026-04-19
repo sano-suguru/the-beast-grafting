@@ -1,19 +1,18 @@
 import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg, skillAction, defendAction } from "./battle-context";
+import { getMult, enemyPrefix } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { SUPPORT_IDX } from "./constants";
 import type { SkillContext, BeforeAttackArgs } from "./battle-skills-util";
 import { applyNeedleshellWormAfterAttack } from "./battle-skills-after-attack";
-import { notifyEquipInfection } from "./battle-context";
 import {
   applyBatSkill,
   applyInquisitorSkill,
   applyBansheeSkill,
   applyRevenantSkill,
-  applyCatacombRatSkill,
   applyPaladinSkill,
   applyHolyFireSkill,
+  applyMarketVultureSkill,
 } from "./battle-skills-start";
 import {
   applyDevouringGraftSkill,
@@ -27,6 +26,7 @@ import {
   applyRelicSwordBuff,
   applyPlagueBellToll,
   applyMachineTransfusion,
+  applyCrawlingCordBuff,
 } from "./battle-skills-before-attack";
 
 // ── 開戦スキルレジストリ ──
@@ -38,7 +38,7 @@ const START_SKILL_HANDLERS = {
   church_inquisitor: applyInquisitorSkill,
   shrieking_throat: applyBansheeSkill,
   revenant: applyRevenantSkill,
-  catacomb_rat: applyCatacombRatSkill,
+  market_vulture: applyMarketVultureSkill,
   paladin: applyPaladinSkill,
   holy_fire: applyHolyFireSkill,
   devouring_graft: applyDevouringGraftSkill,
@@ -80,60 +80,13 @@ export function runStartSkills(
   }
 }
 
-// ── Cholera (board iteration + スキル実装を同居) ──
-
-function applyCholeraSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
-  if (targetArr.length === 0) return;
-  const targetIdx = Math.floor(ctx.rng.next() * targetArr.length);
-  const target = mustGet(targetArr, targetIdx, "cholera target");
-  const prevEquip = target.equip;
-  target.equip = "infection";
-  target.infectionLevel = u.level;
-  const prefix = enemyPrefix(isPlayer);
-  if (prevEquip && prevEquip !== "infection") {
-    notifyEquipInfection(ctx, prefix, target);
-  }
-  pushFrame(
-    ctx,
-    "skill",
-    () => [
-      prefix,
-      seg.u(u.name),
-      "が疫病を撒き散らす！ ",
-      seg.u(target.name),
-      "が",
-      seg.e("感染"),
-      "した。",
-    ],
-    "skill",
-    {
-      [u.uid]: skillAction(),
-      [target.uid]: defendAction("感染"),
-    },
-  );
-}
-
-export function applyCholeraBeforeAttack(
-  board: BattleUnit[],
-  targetArr: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "cholera") continue;
-    if (u.skillUses <= 0) continue;
-    applyCholeraSkill({ u, targetArr, isPlayer, ctx });
-    u.skillUses = 0;
-  }
-}
-
 // ── 攻撃前スキルレジストリ ──
 
 type BeforeAttackHandler = (args: BeforeAttackArgs) => void;
 
 const BEFORE_ATTACK_HANDLERS = {
   parasite: ({ u, prefix, ctx }: BeforeAttackArgs) => applyParasiteBuff(u, prefix, ctx),
+  crawling_cord: ({ u, prefix, ctx }: BeforeAttackArgs) => applyCrawlingCordBuff(u, prefix, ctx),
   eye: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>
     applyEyeGaze(u, enemyBoard, prefix, ctx),
   famine_corpse: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>

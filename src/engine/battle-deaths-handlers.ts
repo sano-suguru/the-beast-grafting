@@ -13,13 +13,14 @@ import {
   handleSeraphDeath,
 } from "./battle-deaths-handlers-unit";
 import {
-  handleGraftScionDeath,
   handleOmenWombDeath,
   handleStellarCocoonDeath,
   handleDevouringGraftDeath,
   handleBuddingHydraDeath,
+  handleDevouringWoundDeath,
 } from "./battle-deaths-handlers-spawn";
 import { handleAshFungusDeath } from "./battle-deaths-handlers-buff";
+import { handleCholeraDeath } from "./battle-deaths-handlers-aoe";
 
 export const UNIT_DEATH_HANDLERS = {
   rat: handleRatDeath,
@@ -33,7 +34,8 @@ export const UNIT_DEATH_HANDLERS = {
   maiden: handleMaidenDeath,
   hanged_man: handleHangedManDeath,
   seraph: handleSeraphDeath,
-  graft_scion: handleGraftScionDeath,
+  cholera: handleCholeraDeath,
+  devouring_wound: handleDevouringWoundDeath,
   omen_womb: handleOmenWombDeath,
   stellar_cocoon: handleStellarCocoonDeath,
   devouring_graft: handleDevouringGraftDeath,

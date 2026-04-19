@@ -1,9 +1,4 @@
-import {
-  runStartSkills,
-  applyBeforeAttackSkills,
-  applyCholeraBeforeAttack,
-  applyAfterAttackSkills,
-} from "./battle-skills";
+import { runStartSkills, applyBeforeAttackSkills, applyAfterAttackSkills } from "./battle-skills";
 import { runDeploySkills } from "./battle-skills-init";
 import { runBattle } from "./battle";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID, makeEnemyTeam } from "./test-helpers";
@@ -11,7 +6,6 @@ import type { BattleFrame } from "../shared/types";
 import { segmentsToPlainText } from "./test-helpers";
 import {
   atLevel,
-  CATACOMB_RAT,
   PLAGUE_BELL,
   EYE,
   PALADIN,
@@ -180,34 +174,6 @@ describe("runStartSkills – revenant buff", () => {
   });
 });
 
-describe("runStartSkills – cholera infection", () => {
-  it("cholera applies infection to a random enemy", () => {
-    const cholera = makeBattleUnit({ id: "cholera", name: "コレラ", atk: 1, hp: 2, skillUses: 1 });
-    const target = makeBattleUnit({ equip: null });
-    const ctx = makeContext([cholera], [target], null, { next: () => 0 });
-    applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(target.equip).toBe("infection");
-  });
-
-  it("cholera logs overwrite when target has equipment", () => {
-    const cholera = makeBattleUnit({ id: "cholera", name: "コレラ", atk: 1, hp: 2, skillUses: 1 });
-    const target = makeBattleUnit({ equip: "iron_plate", hp: 5 });
-    const ctx = makeContext([cholera], [target], null, { next: () => 0 });
-    applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(target.equip).toBe("infection");
-    expect(ctx.frames).toHaveLength(2);
-    expect(logText(ctx.frames[0]!)).toContain("蝕まれた");
-  });
-
-  it("cholera does not log overwrite when target has no equipment", () => {
-    const cholera = makeBattleUnit({ id: "cholera", name: "コレラ", atk: 1, hp: 2, skillUses: 1 });
-    const target = makeBattleUnit({ equip: null, hp: 5 });
-    const ctx = makeContext([cholera], [target], null, { next: () => 0 });
-    applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(ctx.frames).toHaveLength(1);
-  });
-});
-
 describe("runStartSkills – brains and edge cases", () => {
   it("brains doubles start-of-battle skills", () => {
     const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2 });
@@ -326,24 +292,6 @@ describe("applyBeforeAttackSkills", () => {
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(front.atk).toBe(5);
     expect(front.hp).toBe(5);
-  });
-});
-
-describe("runStartSkills – catacomb_rat", () => {
-  it("deals tier×mult damage to a random enemy", () => {
-    const rat = makeBattleUnit({ id: "catacomb_rat", name: "聖骨齧り", atk: 2, hp: 3, tier: 3 });
-    const enemy = makeBattleUnit({ hp: 20 });
-    const ctx = makeContext([rat], [enemy], null, { next: () => 0 });
-    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    const dmg = 3 * atLevel(CATACOMB_RAT.tierMult, 1);
-    expect(enemy.hp).toBe(20 - dmg);
-  });
-
-  it("does nothing when enemy board is empty", () => {
-    const rat = makeBattleUnit({ id: "catacomb_rat", name: "聖骨齧り", atk: 2, hp: 3, tier: 2 });
-    const ctx = makeContext([rat], []);
-    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(ctx.frames.filter((f) => f.log.type === "skill")).toHaveLength(0);
   });
 });
 

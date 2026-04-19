@@ -2,12 +2,12 @@ import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
 import { atLevel } from "../../shared/skill-params";
-import { GUT_HAND, ROT_RING, TAINTED_PLACENTA } from "../../shared/skill-params-shop";
+import { GUT_HAND, ROT_RING, SNAIL } from "../../shared/skill-params-shop";
+import { CRAB } from "../../shared/skill-params";
 import {
   activeNights,
   estimateWeightedActions,
   distributeBuffRandomly,
-  PLACENTA_START_CONVERSION,
 } from "./sim-shop-effects-util";
 
 /** Night N のショッププール内でTier 1が占める割合 (全Tier 10体ずつ均等) */
@@ -68,23 +68,42 @@ export function applyRotRingAccumulation(
 }
 
 /**
- * tainted_placenta: ターン開始でショップランダム1体にバフ → PLACENTA_START_CONVERSIONでチームに還元。
- *
- * バフはターン開始時に視認可能なため、プレイヤーが意図的に購入できる。
- * ナイトごとに1回発動 × PLACENTA_START_CONVERSION = 0.25 の購入確率で累積。
+ * market_vulture (Crab): 開戦時に味方最大HPの X% を自身HPに加算。
+ * SoB 1回/戦なので activeNights 分累積。
  */
-export function applyTaintedPlacentaAccumulation(
-  placenta: UnitInstance,
+export function applyMarketVultureAccumulation(
+  vulture: UnitInstance,
   team: UnitInstance[],
   night: number,
-  rng: Rng,
 ): void {
-  const nights = activeNights(placenta.tier as Tier, night);
+  const nights = activeNights(vulture.tier as Tier, night);
   if (nights <= 0) return;
+  let maxHp = 0;
+  for (const ally of team) {
+    if (ally.uid === vulture.uid) continue;
+    const total = ally.baseHp + ally.buffHp;
+    if (total > maxHp) maxHp = total;
+  }
+  if (maxHp === 0) return;
+  const percent = atLevel(CRAB.percent, vulture.level);
+  vulture.buffHp += Math.max(1, Math.floor((maxHp * percent) / 100)) * nights;
+}
 
-  const shopBuff = atLevel(TAINTED_PLACENTA.shopBuff, placenta.level);
-  const totalAtk = Math.floor(shopBuff.atk * nights * PLACENTA_START_CONVERSION);
-  const totalHp = Math.floor(shopBuff.hp * nights * PLACENTA_START_CONVERSION);
-  if (totalAtk === 0 && totalHp === 0) return;
-  distributeBuffRandomly(team, totalAtk, totalHp, rng);
+/**
+ * catacomb_rat (Snail): ターン開始時に前夜敗北なら前方3体にATKバフ。
+ * 敗北確率 50% 仮定で activeNights × 0.5 回分を前方ユニットに分配。
+ */
+export function applySnailAccumulation(
+  snail: UnitInstance,
+  team: UnitInstance[],
+  night: number,
+): void {
+  const nights = activeNights(snail.tier as Tier, night);
+  if (nights <= 0) return;
+  const atkBuff = atLevel(SNAIL.atkBuff, snail.level);
+  const estimatedTriggers = nights * 0.5;
+  const targets = team.filter((u) => u.uid !== snail.uid).slice(0, SNAIL.targets);
+  for (const t of targets) {
+    t.buffAtk += Math.floor(atkBuff * estimatedTriggers);
+  }
 }

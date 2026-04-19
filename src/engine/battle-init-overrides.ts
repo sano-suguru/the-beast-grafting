@@ -2,14 +2,12 @@ import type { UnitId } from "../shared/types";
 import type { BattleUnit } from "./battle-context";
 import {
   atLevel,
-  CHOLERA,
   EYE,
   CATHEDRAL,
   SIN_EATER,
   PLAGUE_BELL,
   AMNIOTIC_ARMOR,
   MACHINE,
-  CRAWLING_CORD,
   CHARNEL_PIT,
   WAILING_CURSECHILD,
   INSATIABLE_MAW,
@@ -19,9 +17,6 @@ import {
 import { EVANGELIST, BEELZEBUB } from "../shared/skill-params-death";
 
 const INIT_OVERRIDES = {
-  cholera: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(CHOLERA.uses, bu.level);
-  },
   eye: (bu: BattleUnit) => {
     bu.skillUses = atLevel(EYE.uses, bu.level);
   },
@@ -42,9 +37,6 @@ const INIT_OVERRIDES = {
   },
   machine: (bu: BattleUnit) => {
     bu.skillUses = atLevel(MACHINE.uses, bu.level);
-  },
-  crawling_cord: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(CRAWLING_CORD.uses, bu.level);
   },
   evangelist: (bu: BattleUnit) => {
     bu.skillUses = atLevel(EVANGELIST.uses, bu.level);

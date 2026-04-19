@@ -19,6 +19,7 @@ import {
   RELIC_SWORD,
   PLAGUE_BELL,
   MACHINE,
+  CRAWLING_CORD,
 } from "../shared/skill-params";
 
 export function applyParasiteBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {
@@ -165,5 +166,23 @@ export function applyMachineTransfusion(
     ],
     "skill",
     { [u.uid]: skillAction(), [front.uid]: buffAction(b, u.uid) },
+  );
+}
+
+export function applyCrawlingCordBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {
+  const b = atLevel(CRAWLING_CORD.buff, u.level);
+  u.atk += b.atk;
+  u.hp += b.hp;
+  pushFrame(
+    ctx,
+    "skill",
+    () => [
+      prefix,
+      seg.u(u.name),
+      "が蠢き、前衛の闘争に呼応して膨れ上がる。",
+      seg.s(`+${b.atk}/+${b.hp}`),
+    ],
+    "skill",
+    { [u.uid]: buffAction(b, u.uid) },
   );
 }

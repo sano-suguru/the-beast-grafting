@@ -22,14 +22,6 @@ const SELL_START_NIGHT = 4;
 /** 1ナイトあたりのショップ閲覧回数（初期表示 + 平均ロール回数） */
 const VIEWS_PER_NIGHT = 3.5;
 
-/**
- * ターン開始ショップバフがチームに還元される確率。
- *
- * ターン開始でバフが視認可能なため、プレイヤーが意図的にバフ済み素体を購入できる。
- * 購入確率をほぼ確実な0.25と推定（ショップの空きスロット数 ~4 のうち1体）。
- */
-export const PLACENTA_START_CONVERSION = 0.25;
-
 /** Night N のショップスロット数（engine/constants.ts の SHOP_SIZES に準拠） */
 function shopSlotsAt(night: number): number {
   if (night >= 9) return 5;

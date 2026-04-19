@@ -1,6 +1,7 @@
 import { Hono } from "hono";
+import { eq, and, desc } from "drizzle-orm";
 import { safeAsync, dbErr } from "../../shared/errors";
-import { runs } from "../../db/schema";
+import { runs, battles } from "../../db/schema";
 import { requireAuth } from "../auth/middleware";
 import type { AuthEnv } from "../auth/types";
 import { jsonBody, getParsedBody, bodyField } from "../parse-json";
@@ -36,6 +37,21 @@ import {
   shopActionWithParsed,
 } from "./shop-helpers";
 
+import type { DrizzleD1Database } from "drizzle-orm/d1";
+
+function loadLastBattleResult(db: DrizzleD1Database, runId: string, playerId: string) {
+  return safeAsync(
+    () =>
+      db
+        .select({ result: battles.result })
+        .from(battles)
+        .where(and(eq(battles.runId, runId), eq(battles.playerId, playerId)))
+        .orderBy(desc(battles.night))
+        .limit(1),
+    dbErr,
+  );
+}
+
 const shopRoutes = new Hono<AuthEnv>();
 
 shopRoutes.post("/setup", requireAuth, jsonBody(), async (c) => {
@@ -57,9 +73,15 @@ shopRoutes.post("/setup", requireAuth, jsonBody(), async (c) => {
   if (seedResult.isErr()) return internalError(c, "[shop/setup:seed]", seedResult.error);
   const shopSeed = seedResult.value;
 
-  const prevResult = await loadPrevNightShop(db, runId, run.night);
+  const [prevResult, lastBattleRow] = await Promise.all([
+    loadPrevNightShop(db, runId, run.night),
+    loadLastBattleResult(db, runId, playerId),
+  ]);
   if (prevResult.isErr()) return internalError(c, "[shop/setup:prev]", prevResult.error);
   const prev = prevResult.value;
+  if (lastBattleRow.isErr()) return internalError(c, "[shop/setup:battle]", lastBattleRow.error);
+  const lastBattleResult = lastBattleRow.value[0]?.result ?? null;
+
   const useTutorialShop = bodyField(body, "useTutorialShop") === true;
   const state = executeSetup(
     run.night,
@@ -70,6 +92,7 @@ shopRoutes.post("/setup", requireAuth, jsonBody(), async (c) => {
     useTutorialShop,
     prev.shopUnits,
     prev.shopItems,
+    lastBattleResult,
   );
 
   const insertResult = await upsertShopState(db, runId, state);

@@ -4,14 +4,13 @@ import type { Rng } from "./rng";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import {
   atLevel,
-  MARKET_VULTURE,
   ASH_FUNGUS,
   CORPSE_BROKER,
   BONE_JAW,
   ROT_FEEDER,
   CORPSE_PECKER,
 } from "../shared/skill-params";
-import { buffRandomUnit, sumBuffByUnitId } from "./buff-utils";
+import { buffRandomUnit } from "./buff-utils";
 
 interface SellResult {
   board: (UnitInstance | null)[];
@@ -50,13 +49,6 @@ function getCorpsePeckerSelfSellItems(soldUnit: UnitInstance): ItemData[] | unde
 
 // ── Passive sell reactions (remaining board units react to any sell) ──
 
-function collectPassiveShopBuff(
-  board: (UnitInstance | null)[],
-): { atk: number; hp: number } | undefined {
-  const { atk, hp } = sumBuffByUnitId(board, "market_vulture", MARKET_VULTURE.shopBuff);
-  return atk > 0 || hp > 0 ? { atk, hp } : undefined;
-}
-
 function applyAshFungusSell(soldUnit: UnitInstance, nextBoard: (UnitInstance | null)[], rng: Rng) {
   const totalStats = effectiveAtk(soldUnit) + effectiveHp(soldUnit);
   for (let i = 0; i < nextBoard.length; i++) {
@@ -78,15 +70,6 @@ function applyCorpseBrokerSell(nextBoard: (UnitInstance | null)[]): void {
   }
 }
 
-function mergeShopBuffs(
-  a: { atk: number; hp: number } | undefined,
-  b: { atk: number; hp: number } | undefined,
-): { atk: number; hp: number } | undefined {
-  if (!a) return b;
-  if (!b) return a;
-  return { atk: a.atk + b.atk, hp: a.hp + b.hp };
-}
-
 export const applySellEffects = (
   soldUnit: UnitInstance,
   currentBoard: (UnitInstance | null)[],
@@ -98,12 +81,11 @@ export const applySellEffects = (
   const selfShopBuff = getRotFeederSelfSellBuff(soldUnit);
   const stockItems = getCorpsePeckerSelfSellItems(soldUnit);
   // Phase 2: Passive sell reactions (remaining board units)
-  const passiveShopBuff = collectPassiveShopBuff(nextBoard);
   applyAshFungusSell(soldUnit, nextBoard, rng);
   applyCorpseBrokerSell(nextBoard);
   return {
     board: nextBoard,
-    shopBuff: mergeShopBuffs(selfShopBuff, passiveShopBuff),
+    shopBuff: selfShopBuff,
     stockItems,
   };
 };

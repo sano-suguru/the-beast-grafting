@@ -18,7 +18,6 @@ import { resolveDeaths } from "./battle-deaths";
 import {
   runStartSkills,
   applyBeforeAttackSkills,
-  applyCholeraBeforeAttack,
   applyOnHitSkills,
   applyEquipmentEffects,
   applyAfterAttackSkills,
@@ -162,9 +161,6 @@ function resolveClash(
 }
 
 function runClash(ctx: BattleContext) {
-  applyCholeraBeforeAttack(ctx.pBoard, ctx.eBoard, true, ctx);
-  applyCholeraBeforeAttack(ctx.eBoard, ctx.pBoard, false, ctx);
-
   applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
   applyBeforeAttackSkills(ctx.eBoard, ctx.pBoard, false, ctx);
 

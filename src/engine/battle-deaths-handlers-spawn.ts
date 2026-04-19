@@ -6,12 +6,15 @@ import {
   takeDamage,
   enemyPrefix,
   seg,
-  buffAction,
   skillAction,
   damageAction,
 } from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN, MAX_BOARD_SIZE } from "./constants";
-import { spawnTokenAndNotify, spawnSummonedUnitAndNotify } from "./battle-spawn";
+import {
+  spawnTokenAndNotify,
+  spawnSummonedUnitAndNotify,
+  spawnTokenOnEnemyBoard,
+} from "./battle-spawn";
 import { lookupUnitData } from "../shared/data/unit-lookup";
 import { invariant, mustGet } from "../shared/invariant";
 import {
@@ -20,27 +23,8 @@ import {
   STELLAR_COCOON,
   BUDDING_HYDRA,
   DEVOURING_GRAFT,
+  DIRTY_RAT,
 } from "../shared/skill-params";
-
-export function handleGraftScionDeath({ dead, isPlayer, ctx, successor }: DeathContext) {
-  if (!successor) return;
-  successor.atk += dead.atk;
-  pushFrame(
-    ctx,
-    "skill",
-    () => [
-      enemyPrefix(isPlayer),
-      seg.u(dead.name),
-      "の筋繊維が",
-      seg.u(successor.name),
-      "に食い込む！ ",
-      seg.s(`+${dead.atk}/+0`),
-    ],
-    "skill",
-    { [successor.uid]: buffAction({ atk: dead.atk, hp: 0 }, dead.uid) },
-    FRAME_DELAY_DEATH_CHAIN,
-  );
-}
 
 export function handleOmenWombDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const t = atLevel(OMEN_WOMB.token, dead.level);
@@ -210,6 +194,33 @@ export function handleBuddingHydraDeath({ dead, board, idx, isPlayer, ctx }: Dea
       hp: t.hp,
       isChurch: dead.isChurch,
       segments,
+      isPlayer,
+      ctx,
+      delay: FRAME_DELAY_DEATH_CHAIN,
+      spawnerUid: dead.uid,
+    });
+  }
+}
+
+/** Dirty Rat (devouring_wound): Faint – 敵チーム前方に1/1トークンを召喚 */
+export function handleDevouringWoundDeath({ dead, isPlayer, ctx }: DeathContext) {
+  const count = atLevel(DIRTY_RAT.uses, dead.level);
+  const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
+  const prefix = enemyPrefix(isPlayer);
+  const { atk, hp } = DIRTY_RAT.token;
+  for (let i = 0; i < count; i++) {
+    spawnTokenOnEnemyBoard({
+      enemyBoard,
+      name: "汚染された残骸",
+      atk,
+      hp,
+      isChurch: dead.isChurch,
+      segments: () => [
+        prefix,
+        seg.u(dead.name),
+        "の肉片が敵陣に飛び散る！ ",
+        seg.s(`${atk}/${hp} 召喚`),
+      ],
       isPlayer,
       ctx,
       delay: FRAME_DELAY_DEATH_CHAIN,

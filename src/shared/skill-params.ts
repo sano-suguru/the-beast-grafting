@@ -38,10 +38,6 @@ export const REVENANT = {
   buff: [1, 2, 3] as SN,
 };
 
-export const CATACOMB_RAT = {
-  tierMult: [1, 2, 3] as SN,
-};
-
 export const PALADIN = {
   hpBuff: [1, 2, 3] as SN,
 };
@@ -50,11 +46,12 @@ export const HOLY_FIRE = {
   damage: [10, 15, 20] as SN,
 };
 
-// ── 攻撃前スキル ──
-
-export const CHOLERA = {
-  uses: [1, 2, 3] as SN,
+/** Crab (market_vulture): SoB – 最高HP味方のHP × percent% を自身HPに加算 */
+export const CRAB = {
+  percent: [25, 50, 75] as SN,
 };
+
+// ── 攻撃前スキル ──
 
 export const PARASITE = {
   buff: [
@@ -97,7 +94,7 @@ export const TEMPLAR = {
 };
 
 export const STITCHED_TWIN = {
-  atkBuff: [2, 3, 4] as SN,
+  atkBuff: [3, 6, 9] as SN,
 };
 
 export const FLAYED_SAINT = {
@@ -130,10 +127,6 @@ export const MACHINE = {
 };
 
 // ── 戦闘スキル（撃破） ──
-
-export const DEVOURING_WOUND = {
-  hpHeal: [2, 3, 4] as SN,
-};
 
 export const HUNDRED_ARMS = {
   damageT1: [8, 16, 24] as SN,
@@ -171,6 +164,8 @@ export {
   OMEN_WOMB,
   STELLAR_COCOON,
   DEVOURING_GRAFT,
+  HEDGEHOG,
+  DIRTY_RAT,
 } from "./skill-params-death";
 
 // ── Avengeスキル ──
@@ -235,15 +230,15 @@ export const CORRODING_MOLD = {
   ] as SB,
 };
 
-// ── 味方死亡リアクション ──
+// ── 味方前衛攻撃リアクション ──
 
+/** Kangaroo (crawling_cord): 前方味方攻撃時に自身バフ */
 export const CRAWLING_CORD = {
   buff: [
     { atk: 1, hp: 1 },
     { atk: 2, hp: 2 },
     { atk: 3, hp: 3 },
   ] as SB,
-  uses: [1, 2, 3] as SN,
 };
 
 export const INSATIABLE_MAW = {
@@ -263,7 +258,6 @@ export {
   BLOOD_FONT,
   BUDDING_HYDRA,
   BONE_TREE,
-  MARKET_VULTURE,
   ASH_FUNGUS,
   TAINTED_PLACENTA,
   CORPSE_BROKER,
@@ -273,5 +267,7 @@ export {
   ROT_FEEDER,
   CORPSE_PECKER,
   NESTING_GRUB,
+  SNAIL,
+  WORM,
   sellBloodGain,
 } from "./skill-params-shop";

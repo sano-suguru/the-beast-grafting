@@ -83,7 +83,7 @@ function applyTemplarHit({ defender: u, prefix, ctx }: HitCtx) {
   );
 }
 
-function applyStitchedTwinHit({ defender: u, board, idx, prefix, isPlayer, ctx, depth }: HitCtx) {
+function applyStitchedTwinHit({ defender: u, prefix, ctx }: HitCtx) {
   const b = atLevel(STITCHED_TWIN.atkBuff, u.level);
   u.atk += b;
   pushFrame(
@@ -95,30 +95,6 @@ function applyStitchedTwinHit({ defender: u, board, idx, prefix, isPlayer, ctx, 
       [u.uid]: buffAction({ atk: b, hp: 0 }, u.uid),
     },
   );
-  const behind = board[idx + 1];
-  if (behind && behind.hp > 0) {
-    const dmg = 1;
-    takeDamage(behind, dmg, u.uid);
-    pushFrame(
-      ctx,
-      "skill",
-      () => [
-        prefix,
-        seg.u(u.name),
-        "がのたうち、",
-        seg.u(behind.name),
-        "に噛みつく。",
-        seg.s(`${dmg}ダメージ`),
-      ],
-      "skill",
-      {
-        [behind.uid]: damageAction(dmg, u.uid),
-      },
-    );
-    if (depth === 0) {
-      applyOnHitSkills(behind, board, isPlayer, ctx, depth + 1);
-    }
-  }
 }
 
 function applyFlayedSaintHit({ defender: u, isPlayer, prefix, ctx }: HitCtx) {

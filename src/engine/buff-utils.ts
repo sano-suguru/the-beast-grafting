@@ -1,6 +1,6 @@
 import { invariant } from "../shared/invariant";
-import { atLevel, ZEALOT, type Buff, type Scaled } from "../shared/skill-params";
-import type { UnitId, UnitInstance } from "../shared/types";
+import { atLevel, ZEALOT } from "../shared/skill-params";
+import type { UnitInstance } from "../shared/types";
 import type { Rng } from "./rng";
 
 function getActiveIndices(board: (UnitInstance | null)[]): number[] {
@@ -28,23 +28,6 @@ export function buffRandomUnit(
   if (idx === null) return;
   const target = board[idx]!;
   board[idx] = { ...target, buffAtk: target.buffAtk + atkBuff, buffHp: target.buffHp + hpBuff };
-}
-
-export function sumBuffByUnitId(
-  board: (UnitInstance | null)[],
-  unitId: UnitId,
-  param: Scaled<Buff>,
-  multiplier = 1,
-): Buff {
-  let atk = 0;
-  let hp = 0;
-  for (const u of board) {
-    if (!u || u.id !== unitId) continue;
-    const b = atLevel(param, u.level);
-    atk += b.atk * multiplier;
-    hp += b.hp * multiplier;
-  }
-  return { atk, hp };
 }
 
 /** Zealot バフ量を計算する共通ロジック */

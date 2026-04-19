@@ -12,7 +12,7 @@ import { invariant } from "../shared/invariant";
 import { resolveDeaths } from "./battle-deaths";
 import { runStartSkills } from "./battle-skills";
 import { MAX_BOARD_SIZE } from "./constants";
-import { atLevel, CHOLERA } from "../shared/skill-params";
+import { atLevel } from "../shared/skill-params";
 import { BUDDING_HYDRA } from "../shared/skill-params-shop";
 import { OMEN_WOMB, STELLAR_COCOON } from "../shared/skill-params-death";
 
@@ -97,26 +97,6 @@ describe("budding_hydra – death spawns", () => {
     callHandler("budding_hydra", hydra, board, 0, true, ctx);
     expect(board.length).toBeLessThanOrEqual(MAX_BOARD_SIZE);
     expect(board.filter((u) => u.name === "ヒドラの首").length).toBe(MAX_BOARD_SIZE - 3);
-  });
-});
-
-describe("handleGraftScionDeath", () => {
-  it("transfers dead ATK to successor", () => {
-    const successor = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 5 });
-    const board = [successor];
-    const dead = makeBattleUnit({ id: "graft_scion", name: "接ぎ穂の残骸", atk: 4, hp: 0 });
-    const ctx = makeContext(board, []);
-    callHandler("graft_scion", dead, board, 0, true, ctx, successor);
-    expect(successor.atk).toBe(3 + 4);
-    expect(ctx.frames).toHaveLength(1);
-  });
-
-  it("does nothing without successor", () => {
-    const board: BattleUnit[] = [];
-    const dead = makeBattleUnit({ id: "graft_scion", name: "接ぎ穂の残骸", atk: 4, hp: 0 });
-    const ctx = makeContext(board, []);
-    callHandler("graft_scion", dead, board, 0, true, ctx, null);
-    expect(ctx.frames).toHaveLength(0);
   });
 });
 
@@ -320,8 +300,8 @@ describe("devouring_graft – resummon inherits graft level", () => {
     expect(ctx.pBoard[0]!.level).toBe(2);
   });
 
-  it("Lv2 graft re-spawns cholera with correct skillUses", () => {
-    const cholera = makeBattleUnit({ id: "cholera", name: "コレラ", atk: 3, hp: 3 });
+  it("Lv2 graft re-spawns unit with correct skillUses", () => {
+    const cholera = makeBattleUnit({ id: "cholera", name: "コレラ", atk: 3, hp: 3, skillUses: 3 });
     const graft = makeBattleUnit({
       id: "devouring_graft",
       name: "貪る接合体",
@@ -339,7 +319,7 @@ describe("devouring_graft – resummon inherits graft level", () => {
     const spawned = ctx.pBoard[0]!;
     expect(spawned.id).toBe("cholera");
     expect(spawned.level).toBe(2);
-    expect(spawned.skillUses).toBe(atLevel(CHOLERA.uses, 2));
+    expect(spawned.skillUses).toBe(0);
   });
 
   it("Lv1 graft re-spawns at level 1 (default)", () => {

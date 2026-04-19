@@ -75,12 +75,15 @@ export const NESTING_GRUB = {
   targets: 2,
 };
 
-export const MARKET_VULTURE = {
-  shopBuff: [
-    { atk: 1, hp: 0 },
-    { atk: 1, hp: 1 },
-    { atk: 1, hp: 1 },
-  ] as SB,
+/** Snail (catacomb_rat): Start turn – 前夜敗北なら前方3体にATKバフ */
+export const SNAIL = {
+  targets: 3,
+  atkBuff: [1, 2, 3] as SN,
+};
+
+/** Worm (graft_scion): Turn start – アイテム補充 */
+export const WORM = {
+  itemId: ["worm_apple", "worm_apple_2", "worm_apple_3"] as Scaled<ItemId>,
 };
 
 export const ASH_FUNGUS = {
@@ -88,11 +91,7 @@ export const ASH_FUNGUS = {
 };
 
 export const TAINTED_PLACENTA = {
-  shopBuff: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-  ] as SB,
+  bloodGain: [1, 2, 3] as SN,
 };
 
 export const CORPSE_BROKER = {

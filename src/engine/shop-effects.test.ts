@@ -10,14 +10,7 @@ import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { createSeededRng } from "./rng";
-import {
-  atLevel,
-  MARKET_VULTURE,
-  CORPSE_BROKER,
-  GUT_HAND,
-  BONE_JAW,
-  ROT_FEEDER,
-} from "../shared/skill-params";
+import { atLevel, CORPSE_BROKER, GUT_HAND, BONE_JAW, ROT_FEEDER } from "../shared/skill-params";
 import { makeUnit } from "./test-helpers";
 
 describe("graftUnits", () => {
@@ -395,27 +388,6 @@ describe("applySellEffects – determinism", () => {
   });
 });
 
-describe("applySellEffects – market_vulture shopBuff", () => {
-  it("returns shopBuff when market_vulture is on board", () => {
-    const merchant = makeUnit({ id: "market_vulture", uid: "bm-1" });
-    const board: (UnitInstance | null)[] = [merchant, null];
-    const sold = makeUnit({ uid: "sold-1" });
-    const rng = createSeededRng(1);
-    const result = applySellEffects(sold, board, rng);
-    const b = atLevel(MARKET_VULTURE.shopBuff, 1);
-    expect(result.shopBuff).toEqual({ atk: b.atk, hp: b.hp });
-  });
-
-  it("returns no shopBuff when no market_vulture", () => {
-    const ally = makeUnit({ uid: "ally-1" });
-    const board: (UnitInstance | null)[] = [ally, null];
-    const sold = makeUnit({ uid: "sold-1" });
-    const rng = createSeededRng(1);
-    const result = applySellEffects(sold, board, rng);
-    expect(result.shopBuff).toBeUndefined();
-  });
-});
-
 // ── gut_hand: 自身が購入された時に味方にHPバフ ──
 
 describe("applyBuyEffects – gut_hand", () => {
@@ -522,15 +494,14 @@ describe("applySellEffects – rot_feeder self-sell shopBuff", () => {
     expect(result.shopBuff).toBeUndefined();
   });
 
-  it("combines with market_vulture passive shopBuff", () => {
+  it("returns only self-sell buff even with market_vulture on board", () => {
     const feeder = makeUnit({ id: "rot_feeder", uid: "rf-1" });
     const vulture = makeUnit({ id: "market_vulture", uid: "mv-1" });
     const board: (UnitInstance | null)[] = [null, vulture];
     const rng = createSeededRng(1);
     const result = applySellEffects(feeder, board, rng);
-    const mvBuff = atLevel(MARKET_VULTURE.shopBuff, 1);
     const rfHp = atLevel(ROT_FEEDER.hpBuff, 1);
-    expect(result.shopBuff).toEqual({ atk: mvBuff.atk, hp: mvBuff.hp + rfHp });
+    expect(result.shopBuff).toEqual({ atk: 0, hp: rfHp });
   });
 });
 
@@ -657,33 +628,5 @@ describe("applySellEffects – corpse_broker", () => {
     const unchanged = result.board.find((u): u is UnitInstance => u !== null && u.uid === "ally-1");
     expect(unchanged!.buffAtk).toBe(0);
     expect(unchanged!.buffHp).toBe(0);
-  });
-});
-
-// ── market_vulture: 解体時に自身バフなし ──
-
-describe("applySellEffects – market_vulture no selfBuff", () => {
-  it("does not buff market_vulture itself on ally sell", () => {
-    const vulture = makeUnit({ id: "market_vulture", uid: "mv-1" });
-    const board: (UnitInstance | null)[] = [vulture, null];
-    const sold = makeUnit({ uid: "sold-1" });
-    const rng = createSeededRng(1);
-    const result = applySellEffects(sold, board, rng);
-    const updated = result.board.find((u): u is UnitInstance => u !== null && u.uid === "mv-1");
-    expect(updated!.buffAtk).toBe(0);
-    expect(updated!.buffHp).toBe(0);
-  });
-
-  it("returns shopBuff without selfBuff", () => {
-    const vulture = makeUnit({ id: "market_vulture", uid: "mv-1" });
-    const board: (UnitInstance | null)[] = [vulture, null];
-    const sold = makeUnit({ uid: "sold-1" });
-    const rng = createSeededRng(1);
-    const result = applySellEffects(sold, board, rng);
-    const sb = atLevel(MARKET_VULTURE.shopBuff, 1);
-    expect(result.shopBuff).toEqual({ atk: sb.atk, hp: sb.hp });
-    const updated = result.board.find((u): u is UnitInstance => u !== null && u.uid === "mv-1");
-    expect(updated!.buffAtk).toBe(0);
-    expect(updated!.buffHp).toBe(0);
   });
 });

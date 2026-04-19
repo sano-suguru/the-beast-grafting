@@ -8,7 +8,6 @@ import {
   seg,
   aoeDamageActions,
   aoeBuffActions,
-  healAction,
   damageAction,
   skillAction,
 } from "./battle-context";
@@ -16,13 +15,7 @@ import { resolveDeaths } from "./battle-deaths";
 import { buffAllAlive } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { HUNDRED_ARMS_SAFETY, ACID_SPLASH_DAMAGE } from "./constants";
-import {
-  atLevel,
-  DEVOURING_WOUND,
-  HUNDRED_ARMS,
-  ORGAN_GRINDER,
-  RISEN_POPE,
-} from "../shared/skill-params";
+import { atLevel, HUNDRED_ARMS, ORGAN_GRINDER, RISEN_POPE } from "../shared/skill-params";
 
 export function applyAcidSplash(
   attacker: BattleUnit,
@@ -68,8 +61,6 @@ type KnockoutContext = {
 type KnockoutHandler = (k: KnockoutContext) => void;
 
 const KNOCKOUT_HANDLERS = {
-  devouring_wound: (k) =>
-    processDevouringWoundKnockout(k.attacker, k.attackerBoard, k.isPlayer, k.ctx),
   hundred_arms: (k) =>
     processHundredArmsKnockout(k.attacker, k.defenderBoard, k.attackerBoard, k.isPlayer, k.ctx),
   organ_grinder: (k) =>
@@ -98,28 +89,6 @@ function getKnockoutMult(unit: BattleUnit, id: UnitId, board: BattleUnit[]): num
   if (unit.id !== id || unit.hp <= 0) return 0;
   const idx = board.indexOf(unit);
   return idx === -1 ? 0 : getMult(board, idx);
-}
-
-function processDevouringWoundKnockout(
-  attacker: BattleUnit,
-  attackerBoard: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  const mult = getKnockoutMult(attacker, "devouring_wound", attackerBoard);
-  if (mult === 0) return;
-  const prefix = enemyPrefix(isPlayer);
-  for (let m = 0; m < mult; m++) {
-    const heal = atLevel(DEVOURING_WOUND.hpHeal, attacker.level);
-    attacker.hp += heal;
-    pushFrame(
-      ctx,
-      "skill",
-      () => [prefix, seg.u(attacker.name), "が塞がり、また開く。", seg.s(`+0/+${heal}`)],
-      "skill",
-      { [attacker.uid]: healAction(heal, attacker.uid) },
-    );
-  }
 }
 
 function processOrganGrinderKnockout(

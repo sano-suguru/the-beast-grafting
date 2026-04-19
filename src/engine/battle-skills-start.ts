@@ -18,9 +18,9 @@ import {
   INQUISITOR,
   BANSHEE,
   REVENANT,
-  CATACOMB_RAT,
   PALADIN,
   HOLY_FIRE,
+  CRAB,
 } from "../shared/skill-params";
 
 export function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
@@ -143,25 +143,24 @@ export function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
   }
 }
 
-export function applyCatacombRatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
-  if (targetArr.length === 0) return;
-  const idx = Math.floor(ctx.rng.next() * targetArr.length);
-  const victim = mustGet(targetArr, idx, "catacomb_rat target");
-  const tierDmg = u.tier * atLevel(CATACOMB_RAT.tierMult, u.level);
-  const before = victim.hp;
-  applySkillDamage(
-    u,
-    victim,
-    tierDmg,
-    () => [
-      seg.u(u.name),
-      "が聖骨を齧る！ ",
-      seg.u(victim.name),
-      "に ",
-      seg.hp(`${before}→${Math.max(0, before - tierDmg)}`),
-    ],
-    isPlayer,
+export function applyMarketVultureSkill({ u, isPlayer, ctx }: SkillContext) {
+  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
+  let maxHp = 0;
+  for (const ally of allyBoard) {
+    if (ally.uid === u.uid || ally.hp <= 0) continue;
+    if (ally.hp > maxHp) maxHp = ally.hp;
+  }
+  if (maxHp === 0) return;
+  const percent = atLevel(CRAB.percent, u.level);
+  const hpGain = Math.max(1, Math.floor((maxHp * percent) / 100));
+  u.hp += hpGain;
+  const prefix = enemyPrefix(isPlayer);
+  pushFrame(
     ctx,
+    "skill",
+    () => [prefix, seg.u(u.name), "が味方の血を啜る。殻が膨らんでいく。", seg.s(`+0/+${hpGain}`)],
+    "skill",
+    { [u.uid]: buffAction({ atk: 0, hp: hpGain }, u.uid) },
   );
 }
 

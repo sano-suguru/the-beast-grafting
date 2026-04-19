@@ -1,12 +1,12 @@
 import type { ChurchUnitId, RawUnitData, RegularUnitId, UnitData, UnitId } from "./types";
 import { invariant } from "./invariant";
+import { ITEMS } from "./data/items";
 import {
   atLevel,
   BAT,
   INQUISITOR,
   BANSHEE,
   REVENANT,
-  CHOLERA,
   PARASITE,
   EYE,
   TEMPLAR,
@@ -25,7 +25,6 @@ import {
   ZEALOT,
   HUNDRED_ARMS,
   ROT_RING,
-  CATACOMB_RAT,
   PLAGUE_BELL,
   PALADIN,
   HOLY_FIRE,
@@ -46,12 +45,10 @@ import {
   BLOOD_FONT,
   BUDDING_HYDRA,
   BONE_TREE,
-  MARKET_VULTURE,
   ASH_FUNGUS,
   TAINTED_PLACENTA,
   CORRODING_MOLD,
   STELLAR_COCOON,
-  DEVOURING_WOUND,
   CRAWLING_CORD,
   NEEDLESHELL_WORM,
   CORPSE_BROKER,
@@ -68,6 +65,11 @@ import {
   ROT_FEEDER,
   CORPSE_PECKER,
   NESTING_GRUB,
+  HEDGEHOG,
+  DIRTY_RAT,
+  SNAIL,
+  WORM,
+  CRAB,
 } from "./skill-params";
 
 const houndDeathText = (lv: number) => {
@@ -108,8 +110,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(CHURCH_BEAST.token, lv);
     return `死亡: ${b.atk}/${b.hp}幼子を召喚`;
   },
-  cholera: (lv) =>
-    `攻撃前: ランダムな敵1体の装備を【感染】(被ダメージ+3)に変える(${atLevel(CHOLERA.uses, lv)}回/戦)`,
+  cholera: (lv) => `死亡: 全体に${atLevel(HEDGEHOG.damage, lv)}ダメージ`,
   parasite: (lv) => {
     const b = atLevel(PARASITE.buff, lv);
     return `直前の味方が攻撃: 自身に+${b.atk}/+${b.hp}`;
@@ -147,17 +148,11 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(ROT_RING.buff, lv);
     return `Tier1購入: 味方全体に+${b.atk}/+${b.hp}(${atLevel(ROT_RING.uses, lv)}回/夜)`;
   },
-  catacomb_rat: (lv) => `開戦: ランダムな敵にTier×${atLevel(CATACOMB_RAT.tierMult, lv)}ダメージ`,
-  stitched_twin: (lv) =>
-    `被弾: 自身の攻撃+${atLevel(STITCHED_TWIN.atkBuff, lv)}、後方味方に1ダメージ`,
-  market_vulture: (lv) => {
-    const b = atLevel(MARKET_VULTURE.shopBuff, lv);
-    return `味方解体: 闇市場の全素体に+${b.atk}/+${b.hp}`;
-  },
-  tainted_placenta: (lv) => {
-    const b = atLevel(TAINTED_PLACENTA.shopBuff, lv);
-    return `ターン開始: 闇市場の素体1体に+${b.atk}/+${b.hp}`;
-  },
+  catacomb_rat: (lv) =>
+    `ターン開始: 前夜敗北なら前方${SNAIL.targets}体の攻撃+${atLevel(SNAIL.atkBuff, lv)}`,
+  stitched_twin: (lv) => `被弾: 自身の攻撃+${atLevel(STITCHED_TWIN.atkBuff, lv)}`,
+  market_vulture: (lv) => `開戦: 最もHPの高い味方のHP×${atLevel(CRAB.percent, lv)}%を自身に獲得`,
+  tainted_placenta: (lv) => `ターン開始: {blood}+${atLevel(TAINTED_PLACENTA.bloodGain, lv)}`,
   flayed_saint: (lv) => `被弾: ランダムな敵に${atLevel(FLAYED_SAINT.damage, lv)}ダメージ`,
   charnel_pit: (lv) => {
     const b = atLevel(CHARNEL_PIT.token, lv);
@@ -218,10 +213,10 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(RISEN_POPE.buff, lv);
     return `撃破: 味方全体に+${b.atk}/+${b.hp}`;
   },
-  devouring_wound: (lv) => `撃破: 自身にHP+${atLevel(DEVOURING_WOUND.hpHeal, lv)}`,
+  devouring_wound: (lv) => `死亡: 敵側に1/1を${atLevel(DIRTY_RAT.uses, lv)}体召喚`,
   crawling_cord: (lv) => {
     const b = atLevel(CRAWLING_CORD.buff, lv);
-    return `味方死亡: ランダム味方1体に+${b.atk}/+${b.hp}(${atLevel(CRAWLING_CORD.uses, lv)}回/戦)`;
+    return `直前の味方が攻撃: 自身に+${b.atk}/+${b.hp}`;
   },
   needleshell_worm: (lv) => `攻撃後: 後方味方${atLevel(NEEDLESHELL_WORM.targets, lv)}体に1ダメージ`,
   corpse_broker: (lv) => {
@@ -262,7 +257,10 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   maiden: (lv) => `死亡: 後方${atLevel(MAIDEN.targets, lv)}体に【屍蝋の盾】`,
   famine_corpse: () => "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
-  graft_scion: () => "死亡: 前の味方に自身ATK分のATKバフ",
+  graft_scion: (lv) => {
+    const item = ITEMS[atLevel(WORM.itemId, lv)];
+    return `ターン開始: ${item.cost}血の${item.name}(+${item.atk}/+${item.hp})を闇市場に補充`;
+  },
   devouring_graft: (lv) =>
     `開戦: 前の味方を${atLevel(DEVOURING_GRAFT.absorbPercent, lv)}%吸収(+ATK/HP)。死亡: 吸収先の${atLevel(DEVOURING_GRAFT.decayPercent, lv)}%で再召喚`,
   chalice: (lv) => {
