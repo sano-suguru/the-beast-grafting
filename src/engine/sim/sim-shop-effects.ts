@@ -4,7 +4,7 @@ import {
   applyGutHandAccumulation,
   applyRotRingAccumulation,
   applyMarketVultureAccumulation,
-  applySnailAccumulation,
+  applyCatacombRatAccumulation,
 } from "./sim-shop-effects-buy";
 import {
   applyAshFungusAccumulation,
@@ -23,7 +23,7 @@ function applyBuyPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: n
     case "market_vulture":
       return applyMarketVultureAccumulation(unit, team, night);
     case "catacomb_rat":
-      return applySnailAccumulation(unit, team, night);
+      return applyCatacombRatAccumulation(unit, team, night);
   }
 }
 

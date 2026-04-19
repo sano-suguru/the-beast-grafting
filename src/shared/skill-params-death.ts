@@ -124,13 +124,13 @@ export const DEVOURING_GRAFT = {
   decayPercent: [30, 40, 50] as SN,
 };
 
-/** Hedgehog (cholera): Faint – 全ペットにダメージ */
-export const HEDGEHOG = {
+/** cholera: Faint – 全ペットにダメージ */
+export const CHOLERA = {
   damage: [2, 4, 6] as SN,
 };
 
-/** Dirty Rat (devouring_wound): Faint – 敵側に1/1トークン召喚 */
-export const DIRTY_RAT = {
+/** devouring_wound: Faint – 敵側に1/1トークン召喚 */
+export const DEVOURING_WOUND = {
   token: { atk: 1, hp: 1 },
   uses: [1, 2, 3] as SN,
 };

@@ -1,11 +1,11 @@
 import type { DeathContext } from "./battle-deaths-handlers-unit";
 import { pushFrame, takeDamage, enemyPrefix, seg, aoeDamageActions } from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import { atLevel, HEDGEHOG } from "../shared/skill-params";
+import { atLevel, CHOLERA } from "../shared/skill-params";
 
-/** Hedgehog (cholera): Faint – 場の全ペット（味方含む）にダメージ */
+/** cholera: Faint – 場の全ペット（味方含む）にダメージ */
 export function handleCholeraDeath({ dead, board, isPlayer, ctx }: DeathContext) {
-  const dmg = atLevel(HEDGEHOG.damage, dead.level);
+  const dmg = atLevel(CHOLERA.damage, dead.level);
   const prefix = enemyPrefix(isPlayer);
   const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
   const allUnits = [...board, ...enemyBoard].filter((u) => u.hp > 0);

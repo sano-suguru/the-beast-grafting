@@ -228,7 +228,7 @@ describe("resolveDeaths – beelzebub", () => {
     expect(flies.length).toBeLessThanOrEqual(3);
   });
 
-  it("brains behind beelzebub spawns 2 flies per faint (SAP Tiger+Fly)", () => {
+  it("brains behind beelzebub spawns 2 flies per faint", () => {
     const dying = makeBattleUnit({ hp: 0 });
     const beelzebub = makeBattleUnit({
       id: "beelzebub",

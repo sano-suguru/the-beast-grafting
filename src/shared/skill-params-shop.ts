@@ -69,20 +69,20 @@ export const NESTING_GRUB = {
   buff: [
     { atk: 1, hp: 1 },
     { atk: 2, hp: 2 },
-    // SAP Fish Lv3 準拠: Lv3では能力なし。Scaled<Buff> 3要素規約のプレースホルダー
+    // Lv3では能力なし。Scaled<Buff> 3要素規約のプレースホルダー
     { atk: 0, hp: 0 },
   ] as SB,
   targets: 2,
 };
 
-/** Snail (catacomb_rat): Start turn – 前夜敗北なら前方3体にATKバフ */
-export const SNAIL = {
+/** catacomb_rat: Start turn – 前夜敗北なら前方3体にATKバフ */
+export const CATACOMB_RAT = {
   targets: 3,
   atkBuff: [1, 2, 3] as SN,
 };
 
-/** Worm (graft_scion): Turn start – アイテム補充 */
-export const WORM = {
+/** graft_scion: Turn start – アイテム補充 */
+export const GRAFT_SCION = {
   itemId: ["worm_apple", "worm_apple_2", "worm_apple_3"] as Scaled<ItemId>,
 };
 

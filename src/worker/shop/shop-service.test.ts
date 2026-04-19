@@ -7,7 +7,7 @@ import type { UnitId, EventData } from "../../shared/types";
 import { UNIT_COST } from "../../shared/constants";
 import { effectiveAtk } from "../../shared/unit-stats";
 import { ITEMS } from "../../shared/data/items";
-import { atLevel, SNAIL } from "../../shared/skill-params";
+import { atLevel, CATACOMB_RAT } from "../../shared/skill-params";
 import type { ShopSlotJson, ShopItemSlotJson } from "../../db/shop-state-types";
 import type { ShopStateRow } from "./shop-state-row";
 import { executeSetup } from "./shop-service";
@@ -104,7 +104,7 @@ describe("executeSetup", () => {
     expect(unit.tempBuffAtk).toBe(0);
   });
 
-  test("tainted_placenta (Swan) on prevBoard adds blood at turn start", () => {
+  test("tainted_placenta on prevBoard adds blood at turn start", () => {
     const placenta = unitInstanceToBoardUnit(makeUnit({ id: "tainted_placenta" as UnitId }));
     const result = executeSetup(1, 5, null, 42, [placenta, null, null, null, null], true, [], []);
     expect(result.blood).toBe(10 + 1);
@@ -115,21 +115,25 @@ describe("executeSetup", () => {
     expect(result.blood).toBe(10);
   });
 
-  test("Snail (catacomb_rat) buffs front allies at setup when last battle was LOSE", () => {
-    const snail = unitInstanceToBoardUnit(makeUnit({ id: "catacomb_rat" as UnitId, uid: "sn-1" }));
+  test("catacomb_rat buffs front allies at setup when last battle was LOSE", () => {
+    const catacombRat = unitInstanceToBoardUnit(
+      makeUnit({ id: "catacomb_rat" as UnitId, uid: "cr-1" }),
+    );
     const ally1 = unitInstanceToBoardUnit(makeUnit({ id: "rat", uid: "a-1" }));
     const ally2 = unitInstanceToBoardUnit(makeUnit({ id: "bat", uid: "a-2" }));
-    const board: (BoardUnit | null)[] = [ally1, ally2, snail, null, null];
+    const board: (BoardUnit | null)[] = [ally1, ally2, catacombRat, null, null];
     const result = executeSetup(2, 5, null, 42, board, false, [], [], "LOSE");
-    const b = atLevel(SNAIL.atkBuff, 1);
+    const b = atLevel(CATACOMB_RAT.atkBuff, 1);
     expect((result.board[0] as BoardUnit).buffAtk).toBe(b);
     expect((result.board[1] as BoardUnit).buffAtk).toBe(b);
   });
 
-  test("Snail does not buff when last battle was WIN", () => {
-    const snail = unitInstanceToBoardUnit(makeUnit({ id: "catacomb_rat" as UnitId, uid: "sn-1" }));
+  test("catacomb_rat does not buff when last battle was WIN", () => {
+    const catacombRat = unitInstanceToBoardUnit(
+      makeUnit({ id: "catacomb_rat" as UnitId, uid: "cr-1" }),
+    );
     const ally = unitInstanceToBoardUnit(makeUnit({ id: "rat", uid: "a-1" }));
-    const board: (BoardUnit | null)[] = [ally, snail, null, null, null];
+    const board: (BoardUnit | null)[] = [ally, catacombRat, null, null, null];
     const result = executeSetup(2, 5, null, 42, board, false, [], [], "WIN");
     expect((result.board[0] as BoardUnit).buffAtk).toBe(0);
   });

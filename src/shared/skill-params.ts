@@ -46,8 +46,8 @@ export const HOLY_FIRE = {
   damage: [10, 15, 20] as SN,
 };
 
-/** Crab (market_vulture): SoB – 最高HP味方のHP × percent% を自身HPに加算 */
-export const CRAB = {
+/** market_vulture: SoB – 最高HP味方のHP × percent% を自身HPに加算 */
+export const MARKET_VULTURE = {
   percent: [25, 50, 75] as SN,
 };
 
@@ -164,8 +164,8 @@ export {
   OMEN_WOMB,
   STELLAR_COCOON,
   DEVOURING_GRAFT,
-  HEDGEHOG,
-  DIRTY_RAT,
+  CHOLERA,
+  DEVOURING_WOUND,
 } from "./skill-params-death";
 
 // ── Avengeスキル ──
@@ -232,7 +232,7 @@ export const CORRODING_MOLD = {
 
 // ── 味方前衛攻撃リアクション ──
 
-/** Kangaroo (crawling_cord): 前方味方攻撃時に自身バフ */
+/** crawling_cord: 前方味方攻撃時に自身バフ */
 export const CRAWLING_CORD = {
   buff: [
     { atk: 1, hp: 1 },
@@ -267,7 +267,7 @@ export {
   ROT_FEEDER,
   CORPSE_PECKER,
   NESTING_GRUB,
-  SNAIL,
-  WORM,
+  CATACOMB_RAT,
+  GRAFT_SCION,
   sellBloodGain,
 } from "./skill-params-shop";

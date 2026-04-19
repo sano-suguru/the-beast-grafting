@@ -23,7 +23,7 @@ import {
   STELLAR_COCOON,
   BUDDING_HYDRA,
   DEVOURING_GRAFT,
-  DIRTY_RAT,
+  DEVOURING_WOUND,
 } from "../shared/skill-params";
 
 export function handleOmenWombDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
@@ -202,12 +202,12 @@ export function handleBuddingHydraDeath({ dead, board, idx, isPlayer, ctx }: Dea
   }
 }
 
-/** Dirty Rat (devouring_wound): Faint – 敵チーム前方に1/1トークンを召喚 */
+/** devouring_wound: Faint – 敵チーム前方に1/1トークンを召喚 */
 export function handleDevouringWoundDeath({ dead, isPlayer, ctx }: DeathContext) {
-  const count = atLevel(DIRTY_RAT.uses, dead.level);
+  const count = atLevel(DEVOURING_WOUND.uses, dead.level);
   const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
   const prefix = enemyPrefix(isPlayer);
-  const { atk, hp } = DIRTY_RAT.token;
+  const { atk, hp } = DEVOURING_WOUND.token;
   for (let i = 0; i < count; i++) {
     spawnTokenOnEnemyBoard({
       enemyBoard,

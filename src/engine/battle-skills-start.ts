@@ -20,7 +20,7 @@ import {
   REVENANT,
   PALADIN,
   HOLY_FIRE,
-  CRAB,
+  MARKET_VULTURE,
 } from "../shared/skill-params";
 
 export function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
@@ -151,7 +151,7 @@ export function applyMarketVultureSkill({ u, isPlayer, ctx }: SkillContext) {
     if (ally.hp > maxHp) maxHp = ally.hp;
   }
   if (maxHp === 0) return;
-  const percent = atLevel(CRAB.percent, u.level);
+  const percent = atLevel(MARKET_VULTURE.percent, u.level);
   const hpGain = Math.max(1, Math.floor((maxHp * percent) / 100));
   u.hp += hpGain;
   const prefix = enemyPrefix(isPlayer);

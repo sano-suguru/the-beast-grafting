@@ -446,7 +446,7 @@ describe("applyBuyEffects – gut_hand", () => {
   });
 });
 
-// ── bone_jaw (Beaver): 自身が売却された時に味方2体にATKバフ ──
+// ── bone_jaw: 自身が売却された時に味方2体にATKバフ ──
 
 describe("applySellEffects – bone_jaw self-sell", () => {
   it("buffs 2 allies with ATK when bone_jaw is sold (Lv1)", () => {
@@ -473,7 +473,7 @@ describe("applySellEffects – bone_jaw self-sell", () => {
   });
 });
 
-// ── rot_feeder (Duck): 自身が売却された時にshopBuff(HP) ──
+// ── rot_feeder: 自身が売却された時にshopBuff(HP) ──
 
 describe("applySellEffects – rot_feeder self-sell shopBuff", () => {
   it("returns shopBuff with HP when rot_feeder is sold", () => {

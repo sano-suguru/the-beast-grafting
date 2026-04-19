@@ -1,10 +1,10 @@
 import type { ShopSlot, ShopItemSlot, OriginId, BattleResult } from "../../shared/types";
 import { createSeededRng } from "../../engine/rng";
 import { createUnit } from "../../engine/helpers";
-import { atLevel, TAINTED_PLACENTA, WORM } from "../../shared/skill-params";
+import { atLevel, TAINTED_PLACENTA, GRAFT_SCION } from "../../shared/skill-params";
 import { ITEMS } from "../../shared/data/items";
 import { isEventNight, selectEvent, buildEventShopUnits } from "../../engine/event-helpers";
-import { applySnailBuff } from "../../engine/shop-effects-setup";
+import { applyCatacombRatBuff } from "../../engine/shop-effects-setup";
 import type { ShopStateRow } from "./shop-state-row";
 import {
   slotsToJson,
@@ -67,8 +67,8 @@ function buildNormalShop(
   return { units, items: result.items };
 }
 
-/** Swan (tainted_placenta): ターン開始 – blood獲得 */
-function calcSwanBloodGain(prevBoard: (BoardUnit | null)[]): number {
+/** tainted_placenta: ターン開始 – blood獲得 */
+function calcPlacentaBloodGain(prevBoard: (BoardUnit | null)[]): number {
   let total = 0;
   for (const bu of prevBoard) {
     if (!bu || bu.id !== "tainted_placenta") continue;
@@ -77,11 +77,11 @@ function calcSwanBloodGain(prevBoard: (BoardUnit | null)[]): number {
   return total;
 }
 
-/** Worm (graft_scion): ターン開始 – アイテムショップに補充 */
+/** graft_scion: ターン開始 – アイテムショップに補充 */
 function stockWormItems(prevBoard: (BoardUnit | null)[], shopItems: (ShopItemSlot | null)[]): void {
   for (const bu of prevBoard) {
     if (!bu || bu.id !== "graft_scion") continue;
-    const itemId = atLevel(WORM.itemId, bu.level);
+    const itemId = atLevel(GRAFT_SCION.itemId, bu.level);
     const emptyIdx = shopItems.findIndex((s) => s === null);
     if (emptyIdx === -1) break;
     shopItems[emptyIdx] = { item: ITEMS[itemId], frozen: false };
@@ -108,13 +108,13 @@ export function executeSetup(
     : buildNormalShop(night, event, originId, prevUnits, prevItems, rng);
 
   stockWormItems(prevBoard, shop.items);
-  const swanBlood = calcSwanBloodGain(prevBoard);
+  const placentaBlood = calcPlacentaBloodGain(prevBoard);
 
   const rngState = rng.getState();
   const resetBoard = prevBoard.map((bu) => (bu && bu.tempBuffAtk ? { ...bu, tempBuffAtk: 0 } : bu));
-  applySnailBuff(resetBoard, lastBattleResult);
+  applyCatacombRatBuff(resetBoard, lastBattleResult);
   return {
-    blood: 10 + (event?.bloodBonus ?? 0) + swanBlood,
+    blood: 10 + (event?.bloodBonus ?? 0) + placentaBlood,
     board: resetBoard,
     shopUnits: slotsToJson(shop.units),
     shopItems: itemSlotsToJson(shop.items),

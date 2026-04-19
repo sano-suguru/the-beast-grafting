@@ -2,8 +2,8 @@ import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
 import { atLevel } from "../../shared/skill-params";
-import { GUT_HAND, ROT_RING, SNAIL } from "../../shared/skill-params-shop";
-import { CRAB } from "../../shared/skill-params";
+import { GUT_HAND, ROT_RING, CATACOMB_RAT } from "../../shared/skill-params-shop";
+import { MARKET_VULTURE } from "../../shared/skill-params";
 import {
   activeNights,
   estimateWeightedActions,
@@ -68,7 +68,7 @@ export function applyRotRingAccumulation(
 }
 
 /**
- * market_vulture (Crab): 開戦時に味方最大HPの X% を自身HPに加算。
+ * market_vulture: 開戦時に味方最大HPの X% を自身HPに加算。
  * SoB 1回/戦なので activeNights 分累積。
  */
 export function applyMarketVultureAccumulation(
@@ -85,24 +85,24 @@ export function applyMarketVultureAccumulation(
     if (total > maxHp) maxHp = total;
   }
   if (maxHp === 0) return;
-  const percent = atLevel(CRAB.percent, vulture.level);
+  const percent = atLevel(MARKET_VULTURE.percent, vulture.level);
   vulture.buffHp += Math.max(1, Math.floor((maxHp * percent) / 100)) * nights;
 }
 
 /**
- * catacomb_rat (Snail): ターン開始時に前夜敗北なら前方3体にATKバフ。
+ * catacomb_rat: ターン開始時に前夜敗北なら前方3体にATKバフ。
  * 敗北確率 50% 仮定で activeNights × 0.5 回分を前方ユニットに分配。
  */
-export function applySnailAccumulation(
-  snail: UnitInstance,
+export function applyCatacombRatAccumulation(
+  catacombRat: UnitInstance,
   team: UnitInstance[],
   night: number,
 ): void {
-  const nights = activeNights(snail.tier as Tier, night);
+  const nights = activeNights(catacombRat.tier as Tier, night);
   if (nights <= 0) return;
-  const atkBuff = atLevel(SNAIL.atkBuff, snail.level);
+  const atkBuff = atLevel(CATACOMB_RAT.atkBuff, catacombRat.level);
   const estimatedTriggers = nights * 0.5;
-  const targets = team.filter((u) => u.uid !== snail.uid).slice(0, SNAIL.targets);
+  const targets = team.filter((u) => u.uid !== catacombRat.uid).slice(0, CATACOMB_RAT.targets);
   for (const t of targets) {
     t.buffAtk += Math.floor(atkBuff * estimatedTriggers);
   }

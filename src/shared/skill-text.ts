@@ -65,11 +65,11 @@ import {
   ROT_FEEDER,
   CORPSE_PECKER,
   NESTING_GRUB,
-  HEDGEHOG,
-  DIRTY_RAT,
-  SNAIL,
-  WORM,
-  CRAB,
+  CHOLERA,
+  DEVOURING_WOUND,
+  CATACOMB_RAT,
+  GRAFT_SCION,
+  MARKET_VULTURE,
 } from "./skill-params";
 
 const houndDeathText = (lv: number) => {
@@ -110,7 +110,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(CHURCH_BEAST.token, lv);
     return `死亡: ${b.atk}/${b.hp}幼子を召喚`;
   },
-  cholera: (lv) => `死亡: 全体に${atLevel(HEDGEHOG.damage, lv)}ダメージ`,
+  cholera: (lv) => `死亡: 全体に${atLevel(CHOLERA.damage, lv)}ダメージ`,
   parasite: (lv) => {
     const b = atLevel(PARASITE.buff, lv);
     return `直前の味方が攻撃: 自身に+${b.atk}/+${b.hp}`;
@@ -149,9 +149,10 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `Tier1購入: 味方全体に+${b.atk}/+${b.hp}(${atLevel(ROT_RING.uses, lv)}回/夜)`;
   },
   catacomb_rat: (lv) =>
-    `ターン開始: 前夜敗北なら前方${SNAIL.targets}体の攻撃+${atLevel(SNAIL.atkBuff, lv)}`,
+    `ターン開始: 前夜敗北なら前方${CATACOMB_RAT.targets}体の攻撃+${atLevel(CATACOMB_RAT.atkBuff, lv)}`,
   stitched_twin: (lv) => `被弾: 自身の攻撃+${atLevel(STITCHED_TWIN.atkBuff, lv)}`,
-  market_vulture: (lv) => `開戦: 最もHPの高い味方のHP×${atLevel(CRAB.percent, lv)}%を自身に獲得`,
+  market_vulture: (lv) =>
+    `開戦: 最もHPの高い味方のHP×${atLevel(MARKET_VULTURE.percent, lv)}%を自身に獲得`,
   tainted_placenta: (lv) => `ターン開始: {blood}+${atLevel(TAINTED_PLACENTA.bloodGain, lv)}`,
   flayed_saint: (lv) => `被弾: ランダムな敵に${atLevel(FLAYED_SAINT.damage, lv)}ダメージ`,
   charnel_pit: (lv) => {
@@ -213,7 +214,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(RISEN_POPE.buff, lv);
     return `撃破: 味方全体に+${b.atk}/+${b.hp}`;
   },
-  devouring_wound: (lv) => `死亡: 敵側に1/1を${atLevel(DIRTY_RAT.uses, lv)}体召喚`,
+  devouring_wound: (lv) => `死亡: 敵側に1/1を${atLevel(DEVOURING_WOUND.uses, lv)}体召喚`,
   crawling_cord: (lv) => {
     const b = atLevel(CRAWLING_CORD.buff, lv);
     return `直前の味方が攻撃: 自身に+${b.atk}/+${b.hp}`;
@@ -258,7 +259,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   maiden: (lv) => `死亡: 後方${atLevel(MAIDEN.targets, lv)}体に【屍蝋の盾】`,
   famine_corpse: () => "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
   graft_scion: (lv) => {
-    const item = ITEMS[atLevel(WORM.itemId, lv)];
+    const item = ITEMS[atLevel(GRAFT_SCION.itemId, lv)];
     return `ターン開始: ${item.cost}血の${item.name}(+${item.atk}/+${item.hp})を闇市場に補充`;
   },
   devouring_graft: (lv) =>
