@@ -4,7 +4,6 @@ import { MAGGOT_TOKEN, DEATH_CURSE_TOKEN, FRAME_DELAY_DEATH_CHAIN } from "./cons
 import { spawnTokenAndNotify } from "./battle-spawn";
 import {
   handleBeelzebubSpawns,
-  handleCrowBuffs,
   handleSinEaterAbsorb,
   handleCathedralSpawns,
   handleEvangelistPlague,
@@ -97,7 +96,6 @@ export const SPAWN_ALLY_REACTIONS: AllyReaction[] = [
 
 export const PERSISTENT_ALLY_REACTIONS: AllyReaction[] = [
   (r) => handleEvangelistPlague(r.board, r.enemyBoard, r.isPlayer, r.ctx),
-  (r) => handleCrowBuffs(r.board, r.isPlayer, r.ctx),
   (r) => handleSinEaterAbsorb(r.board, r.dead.atk, r.isPlayer, r.ctx),
   (r) => handleCrawlingCordBuff(r.board, r.isPlayer, r.ctx),
   (r) => handleInsatiableMawBuff(r.board, r.isPlayer, r.ctx),

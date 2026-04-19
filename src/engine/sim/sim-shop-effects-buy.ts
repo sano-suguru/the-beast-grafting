@@ -2,12 +2,10 @@ import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
 import { atLevel } from "../../shared/skill-params";
-import { GHOUL_INFANT, ROT_RING, TAINTED_PLACENTA } from "../../shared/skill-params-shop";
-import { invariant } from "../../shared/invariant";
+import { GUT_HAND, ROT_RING, TAINTED_PLACENTA } from "../../shared/skill-params-shop";
 import {
   activeNights,
   estimateWeightedActions,
-  distributeTempBuffRandomly,
   distributeBuffRandomly,
   PLACENTA_START_CONVERSION,
 } from "./sim-shop-effects-util";
@@ -22,22 +20,18 @@ function tier1FractionAtNight(night: number): number {
   return 1;
 }
 
-export function applyGhoulInfantAccumulation(
-  ghoulInfant: UnitInstance,
+export function applyGutHandAccumulation(
+  gutHand: UnitInstance,
   team: UnitInstance[],
   night: number,
   rng: Rng,
 ): void {
-  const nights = activeNights(ghoulInfant.tier as Tier, night);
+  const nights = activeNights(gutHand.tier as Tier, night);
   if (nights <= 0) return;
-
-  const atkBuff = atLevel(GHOUL_INFANT.atkBuff, ghoulInfant.level);
-  // tempBuffAtk は夜ごとにリセットされるため、バトル直前の1夜分のみ反映
-  const actions = estimateWeightedActions(ghoulInfant.tier as Tier, night);
-  const lastNight = actions[actions.length - 1];
-  invariant(lastNight, "estimateWeightedActions returned empty for activeNights > 0");
-  const totalAtk = Math.floor(atkBuff * lastNight.purchases);
-  distributeTempBuffRandomly(team, totalAtk, rng);
+  // gut_hand は自身が購入された時のみ発動する一回性スキル
+  const targets = atLevel(GUT_HAND.targets, gutHand.level);
+  const totalHp = GUT_HAND.hpBuff * targets;
+  distributeBuffRandomly(team, 0, totalHp, rng);
 }
 
 /**

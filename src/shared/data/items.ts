@@ -112,4 +112,14 @@ export const ITEMS: Record<ItemId, ItemData> = {
     skillText: "対象に+3/+6",
     lore: "聖杯の奇跡が凝縮された一滴。飲み干した者は、神に近いものへと変容する。",
   },
+  bone_meal: {
+    id: "bone_meal",
+    name: "骨粉",
+    cost: 0,
+    atk: 1,
+    hp: 0,
+    equip: null,
+    skillText: "対象に+1/+0",
+    lore: "死肉啄みが溜め込んだ骨の粉。素体に振りかけると、筋繊維が硬化し攻撃力が僅かに上がる。",
+  },
 };

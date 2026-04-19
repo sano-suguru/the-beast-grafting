@@ -1,6 +1,6 @@
 import { resolveDeaths } from "./battle-deaths";
 import { INERT_UNIT_ID, makeBattleUnit, makeContext } from "./test-helpers";
-import { atLevel, HANGED_MAN, CROW } from "../shared/skill-params";
+import { atLevel, HANGED_MAN } from "../shared/skill-params";
 import type { BattleUnit } from "./battle-context";
 import type { UnitId } from "../shared/types";
 
@@ -51,30 +51,6 @@ describe("resolveDeaths – puppeteer doubles death skill", () => {
 });
 
 describe("puppeteer does NOT double ally reactions (getMult only checks brains)", () => {
-  it("puppeteer in front of crow does not double crow death buff", () => {
-    const dying = makeBattleUnit({ id: "beggar", hp: 0 });
-    const puppeteer = makeBattleUnit({ id: "puppeteer", name: "操り糸", atk: 4, hp: 6 });
-    const crow = makeBattleUnit({ id: "crow", name: "鴉", atk: 2, hp: 1, skillUses: 2 });
-    const ctx = makeContext([dying, puppeteer, crow], [makeBattleUnit({ hp: 10 })]);
-    resolveDeaths(ctx);
-    const b = atLevel(CROW.buff, 1);
-    // getMult checks brains, not puppeteer → crow triggers once
-    expect(crow.atk).toBe(2 + b.atk);
-    expect(crow.hp).toBe(1 + b.hp);
-  });
-
-  it("brains behind crow DOES double crow death buff", () => {
-    const dying = makeBattleUnit({ id: "beggar", hp: 0 });
-    const crow = makeBattleUnit({ id: "crow", name: "鴉", atk: 2, hp: 1, skillUses: 4 });
-    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
-    const ctx = makeContext([dying, crow, brains], [makeBattleUnit({ hp: 10 })]);
-    resolveDeaths(ctx);
-    const b = atLevel(CROW.buff, 1);
-    // getMult returns 2 (brains behind crow) → crow triggers twice
-    expect(crow.atk).toBe(2 + b.atk * 2);
-    expect(crow.hp).toBe(1 + b.hp * 2);
-  });
-
   it("puppeteer in front of cathedral does not double cathedral spawn", () => {
     const dying = makeBattleUnit({ id: "beggar", hp: 0 });
     const puppeteer = makeBattleUnit({ id: "puppeteer", name: "操り糸", atk: 4, hp: 6 });

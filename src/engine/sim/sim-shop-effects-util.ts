@@ -101,17 +101,6 @@ export function estimateWeightedActions(tier: Tier, battleNight: number): readon
   return frozen;
 }
 
-/** tempBuffAtk にATKバフを分配（夜ごとにリセットされる一時バフ用） */
-export function distributeTempBuffRandomly(team: UnitInstance[], atk: number, rng: Rng): void {
-  if (team.length === 0 || atk <= 0) return;
-  const perUnit = Math.floor(atk / team.length);
-  for (const u of team) u.tempBuffAtk += perUnit;
-  const remainder = atk - perUnit * team.length;
-  if (remainder > 0) {
-    team[Math.floor(rng.next() * team.length)]!.tempBuffAtk += remainder;
-  }
-}
-
 export function distributeBuffRandomly(
   team: UnitInstance[],
   atk: number,

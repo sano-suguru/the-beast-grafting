@@ -76,15 +76,6 @@ export const EVANGELIST = {
   uses: [1, 2, 3] as SN,
 };
 
-export const CROW = {
-  buff: [
-    { atk: 1, hp: 0 },
-    { atk: 1, hp: 1 },
-    { atk: 1, hp: 2 },
-  ] as SB,
-  uses: [2, 3, 4] as SN,
-};
-
 export const SIN_EATER = {
   atkCap: [4, 8, 12] as SN,
   uses: [3, 4, 5] as SN,

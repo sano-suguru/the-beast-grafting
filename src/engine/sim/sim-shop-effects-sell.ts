@@ -4,9 +4,11 @@ import type { Rng } from "../rng";
 import { atLevel, type Buff } from "../../shared/skill-params";
 import {
   ASH_FUNGUS,
+  BONE_JAW,
   CORPSE_BROKER,
-  GRAVE_WORM,
+  CORPSE_PECKER,
   MARKET_VULTURE,
+  ROT_FEEDER,
 } from "../../shared/skill-params-shop";
 import {
   activeNights,
@@ -33,21 +35,6 @@ function applySelfBuffFromSells(unit: UnitInstance, buff: Buff, night: number): 
   const rawSells = totalWeightedSells(unit.tier as Tier, night);
   unit.buffAtk += Math.floor(buff.atk * rawSells);
   unit.buffHp += Math.floor(buff.hp * rawSells);
-}
-
-function applyTeamBuffFromSells(
-  unit: UnitInstance,
-  buff: Buff,
-  team: UnitInstance[],
-  night: number,
-  rng: Rng,
-): void {
-  const nights = activeNights(unit.tier as Tier, night);
-  if (nights <= 0) return;
-  const rawSells = totalWeightedSells(unit.tier as Tier, night);
-  const totalAtk = Math.floor(buff.atk * rawSells);
-  const totalHp = Math.floor(buff.hp * rawSells);
-  distributeBuffRandomly(team, totalAtk, totalHp, rng);
 }
 
 export function applyAshFungusAccumulation(
@@ -77,13 +64,40 @@ export function applyCorpseBrokerAccumulation(broker: UnitInstance, night: numbe
   applySelfBuffFromSells(broker, atLevel(CORPSE_BROKER.sellBuff, broker.level), night);
 }
 
-export function applyGraveWormAccumulation(
-  worm: UnitInstance,
+export function applyBoneJawAccumulation(
+  boneJaw: UnitInstance,
   team: UnitInstance[],
   night: number,
   rng: Rng,
 ): void {
-  applyTeamBuffFromSells(worm, atLevel(GRAVE_WORM.sellBuff, worm.level), team, night, rng);
+  if (activeNights(boneJaw.tier as Tier, night) <= 0) return;
+  // Self-sell: one-time ATK buff to allies when sold
+  const atkBuff = atLevel(BONE_JAW.atkBuff, boneJaw.level);
+  distributeBuffRandomly(team, atkBuff * BONE_JAW.targets, 0, rng);
+}
+
+export function applyRotFeederAccumulation(
+  rotFeeder: UnitInstance,
+  team: UnitInstance[],
+  night: number,
+  rng: Rng,
+): void {
+  if (activeNights(rotFeeder.tier as Tier, night) <= 0) return;
+  // Self-sell: one-time shop HP buff → approximate as 50% team HP buff
+  const hp = Math.floor(atLevel(ROT_FEEDER.hpBuff, rotFeeder.level) * 0.5);
+  if (hp > 0) distributeBuffRandomly(team, 0, hp, rng);
+}
+
+export function applyCorpsePeckerAccumulation(
+  corpsePecker: UnitInstance,
+  team: UnitInstance[],
+  night: number,
+  rng: Rng,
+): void {
+  if (activeNights(corpsePecker.tier as Tier, night) <= 0) return;
+  // Self-sell: one-time bone_meal → approximate as ATK buff
+  const atk = atLevel(CORPSE_PECKER.breadCrumbs, corpsePecker.level);
+  if (atk > 0) distributeBuffRandomly(team, atk, 0, rng);
 }
 
 /**

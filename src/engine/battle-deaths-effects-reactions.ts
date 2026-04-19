@@ -10,7 +10,7 @@ import {
 } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import { atLevel, BEELZEBUB, EVANGELIST, CROW, SIN_EATER, CATHEDRAL } from "../shared/skill-params";
+import { atLevel, BEELZEBUB, EVANGELIST, SIN_EATER, CATHEDRAL } from "../shared/skill-params";
 import { notifyEquipInfection } from "./battle-context";
 import { spawnTokenAndNotify } from "./battle-spawn";
 
@@ -61,29 +61,6 @@ export function handleBeelzebubSpawns(
         spawnerUid: beelzebub.uid,
       });
       if (!token) break;
-    }
-  }
-}
-
-export function handleCrowBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
-  const prefix = enemyPrefix(isPlayer);
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "crow" || u.hp <= 0) continue;
-    const mult = getMult(board, i);
-    for (let m = 0; m < mult && u.skillUses > 0; m++) {
-      u.skillUses -= 1;
-      const b = atLevel(CROW.buff, u.level);
-      u.atk += b.atk;
-      u.hp += b.hp;
-      pushFrame(
-        ctx,
-        "skill",
-        () => [prefix, seg.u(u.name), "が死肉を啄む。", seg.s(`+${b.atk}/+${b.hp}`)],
-        "skill",
-        { [u.uid]: buffAction(b, u.uid) },
-        FRAME_DELAY_DEATH_CHAIN,
-      );
     }
   }
 }

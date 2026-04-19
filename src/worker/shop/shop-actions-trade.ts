@@ -1,15 +1,16 @@
 import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
-import type { UnitInstance, ShopSlot, OriginId } from "../../shared/types";
+import type { UnitInstance, ShopSlot, ShopItemSlot, OriginId, ItemData } from "../../shared/types";
 import type { ShopSlotJson } from "../../db/shop-state-types";
 import { UNIT_COST } from "../../shared/constants";
 import { sellBloodGain, type Buff } from "../../shared/skill-params";
 import {
   applyBuyEffects,
   applyChaliceEffect,
+  applyLevelUpEffects,
   applySellEffects,
-  buffRandomUnit,
 } from "../../engine/shop-effects";
+import { buffRandomUnit } from "../../engine/buff-utils";
 import type { ShopStateRow } from "./shop-state-row";
 import {
   slotFromJson,
@@ -123,7 +124,8 @@ function finalizeBuy(
   const { board: newBoard, leveledUp } = placeResult.value;
 
   const { rng, saveRng } = withRng(state);
-  const buyResult = applyBuyEffects(unit, newBoard, state.rotRingUses, rng);
+  if (leveledUp) applyLevelUpEffects(newBoard, boardIndex, rng);
+  const buyResult = applyBuyEffects(unit, newBoard, state.rotRingUses, rng, boardIndex);
   const rewards = generateLevelUpRewards(leveledUp, state.night, rng);
 
   const shopUnits = opts.shopUnits ?? state.shopUnits;
@@ -166,6 +168,21 @@ function applyShopBuffAll(
   );
 }
 
+function stockItemsToShop(
+  slots: (ShopItemSlot | null)[],
+  items: ItemData[],
+): (ShopItemSlot | null)[] {
+  const result = [...slots];
+  let placed = 0;
+  for (let i = 0; i < result.length && placed < items.length; i++) {
+    if (result[i] === null) {
+      result[i] = { item: items[placed]!, frozen: false };
+      placed++;
+    }
+  }
+  return result;
+}
+
 export function executeSell(
   state: ShopStateRow,
   boardIndex: number,
@@ -185,6 +202,9 @@ export function executeSell(
   const shopUnits = sellResult.shopBuff
     ? applyShopBuffAll(state.shopUnits, sellResult.shopBuff)
     : state.shopUnits;
+  const shopItems = sellResult.stockItems
+    ? itemSlotsToJson(stockItemsToShop(itemSlotsFromJson(state.shopItems), sellResult.stockItems))
+    : state.shopItems;
 
   if (originId === "surgeon") {
     buffRandomUnit(newBoard, 1, 1, rng);
@@ -193,6 +213,7 @@ export function executeSell(
       blood: state.blood + bloodGain,
       board: instancesToBoard(newBoard),
       shopUnits,
+      shopItems,
       undoSnapshot: captureUndo(state),
       ...saveRng(),
     });
@@ -203,6 +224,7 @@ export function executeSell(
     blood: state.blood + bloodGain,
     board: instancesToBoard(newBoard),
     shopUnits,
+    shopItems,
     undoSnapshot: captureUndo(state),
     ...saveRng(),
   });

@@ -7,7 +7,7 @@ import {
   callDeathHandler as callHandler,
 } from "./test-helpers";
 import { MAX_BOARD_SIZE } from "./constants";
-import { atLevel, CROW, SIN_EATER, CATHEDRAL, BEELZEBUB } from "../shared/skill-params";
+import { atLevel, SIN_EATER, CATHEDRAL, BEELZEBUB } from "../shared/skill-params";
 
 describe("handleBeelzebubSpawns", () => {
   it("spawns 4/4 fly when beelzebub is alive (Lv1)", () => {
@@ -143,19 +143,6 @@ describe("resolveDeaths – cathedral spawns on ally death", () => {
     const ctx = makeContext([dying, cathedral], [makeBattleUnit({ hp: 20 })]);
     resolveDeaths(ctx);
     expect(ctx.pBoard.filter((u) => u.name === "信徒")).toHaveLength(0);
-  });
-});
-
-describe("resolveDeaths – crow gains stats on ally death", () => {
-  it("buffs crow when an ally dies", () => {
-    const dying = makeBattleUnit({ id: "beggar", hp: 0 });
-    const crow = makeBattleUnit({ id: "crow", name: "鴉", atk: 2, hp: 1, skillUses: 2 });
-    const ctx = makeContext([dying, crow], [makeBattleUnit({ hp: 10 })]);
-    resolveDeaths(ctx);
-    const b = atLevel(CROW.buff, 1);
-    expect(crow.atk).toBe(2 + b.atk);
-    expect(crow.hp).toBe(1 + b.hp);
-    expect(crow.skillUses).toBe(1);
   });
 });
 

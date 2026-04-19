@@ -1,16 +1,46 @@
 import type { UnitInstance } from "../../shared/types";
 import type { Rng } from "../rng";
 import {
-  applyGhoulInfantAccumulation,
+  applyGutHandAccumulation,
   applyRotRingAccumulation,
   applyTaintedPlacentaAccumulation,
 } from "./sim-shop-effects-buy";
 import {
   applyAshFungusAccumulation,
+  applyBoneJawAccumulation,
   applyCorpseBrokerAccumulation,
-  applyGraveWormAccumulation,
+  applyCorpsePeckerAccumulation,
   applyMarketVultureAccumulation,
+  applyRotFeederAccumulation,
 } from "./sim-shop-effects-sell";
+
+function applyBuyPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: number, rng: Rng) {
+  switch (unit.id) {
+    case "gut_hand":
+      return applyGutHandAccumulation(unit, team, night, rng);
+    case "rot_ring":
+      return applyRotRingAccumulation(unit, team, night);
+    case "tainted_placenta":
+      return applyTaintedPlacentaAccumulation(unit, team, night, rng);
+  }
+}
+
+function applySellPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: number, rng: Rng) {
+  switch (unit.id) {
+    case "ash_fungus":
+      return applyAshFungusAccumulation(unit, team, night, rng);
+    case "corpse_broker":
+      return applyCorpseBrokerAccumulation(unit, night);
+    case "bone_jaw":
+      return applyBoneJawAccumulation(unit, team, night, rng);
+    case "rot_feeder":
+      return applyRotFeederAccumulation(unit, team, night, rng);
+    case "corpse_pecker":
+      return applyCorpsePeckerAccumulation(unit, team, night, rng);
+    case "market_vulture":
+      return applyMarketVultureAccumulation(unit, team, night, rng);
+  }
+}
 
 /**
  * チーム構成に基づくショップスキルの累積効果を適用する。
@@ -18,28 +48,7 @@ import {
  */
 export function applySimShopEffects(team: UnitInstance[], night: number, rng: Rng): void {
   for (const unit of team) {
-    switch (unit.id) {
-      case "ghoul_infant":
-        applyGhoulInfantAccumulation(unit, team, night, rng);
-        break;
-      case "ash_fungus":
-        applyAshFungusAccumulation(unit, team, night, rng);
-        break;
-      case "corpse_broker":
-        applyCorpseBrokerAccumulation(unit, night);
-        break;
-      case "grave_worm":
-        applyGraveWormAccumulation(unit, team, night, rng);
-        break;
-      case "market_vulture":
-        applyMarketVultureAccumulation(unit, team, night, rng);
-        break;
-      case "rot_ring":
-        applyRotRingAccumulation(unit, team, night);
-        break;
-      case "tainted_placenta":
-        applyTaintedPlacentaAccumulation(unit, team, night, rng);
-        break;
-    }
+    applyBuyPhaseEffects(unit, team, night, rng);
+    applySellPhaseEffects(unit, team, night, rng);
   }
 }

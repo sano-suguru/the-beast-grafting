@@ -3,8 +3,7 @@ import type { UnitId } from "./types";
 
 describe("template coverage", () => {
   // bone_tree: Lv1とLv2のバフ値が同じ({0,1})のためテキストも同一
-  // grave_worm: Lv1とLv2のsellBuff値が同じ({0,1})のためテキストも同一
-  const LV1_EQUALS_LV2: ReadonlySet<UnitId> = new Set(["bone_tree", "grave_worm"] as UnitId[]);
+  const LV1_EQUALS_LV2: ReadonlySet<UnitId> = new Set(["bone_tree"] as UnitId[]);
 
   for (const id of TEMPLATED_UNIT_IDS) {
     if (FIXED_SKILL_IDS.has(id as Parameters<typeof FIXED_SKILL_IDS.has>[0])) {

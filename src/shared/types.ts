@@ -11,9 +11,11 @@ export type RegularUnitId =
   | "hound"
   | "bat"
   | "zealot"
-  | "grave_worm"
-  | "leech"
-  | "crow"
+  | "gut_hand"
+  | "bone_jaw"
+  | "rot_feeder"
+  | "corpse_pecker"
+  | "nesting_grub"
   | "martyr"
   | "beast"
   | "cholera"
@@ -47,8 +49,6 @@ export type RegularUnitId =
   | "budding_hydra"
   | "bone_tree"
   | "howling_giant"
-  | "ghoul_infant"
-  | "dead_hand"
   | "devouring_wound"
   | "crawling_cord"
   | "tainted_placenta"
@@ -98,7 +98,8 @@ export type ItemId =
   | "death_curse"
   | "pure_blood"
   | "pure_blood_2"
-  | "pure_blood_3";
+  | "pure_blood_3"
+  | "bone_meal";
 
 export interface UnitData {
   id: DataUnitId;
@@ -121,7 +122,7 @@ export interface UnitInstance {
   baseHp: number;
   buffAtk: number;
   buffHp: number;
-  /** 夜開始時にリセットされる一時ATKバフ（zealot/ghoul_infantショップバフ用） */
+  /** 夜開始時にリセットされる一時ATKバフ（zealotショップバフ用） */
   tempBuffAtk: number;
   tier: Tier;
   skillText: string;

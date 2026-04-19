@@ -8,7 +8,6 @@ import {
   seg,
   aoeBuffActions,
   buffAction,
-  healAction,
   damageAction,
   skillAction,
 } from "./battle-context";
@@ -16,13 +15,11 @@ import { mustGet } from "../shared/invariant";
 import {
   atLevel,
   TEMPLAR,
-  LEECH,
   STITCHED_TWIN,
   FLAYED_SAINT,
   FLAGELLANT,
   HOWLING_GIANT,
   TUMOR_GUARDIAN,
-  DEAD_HAND,
 } from "../shared/skill-params";
 
 type HitCtx = {
@@ -39,14 +36,12 @@ type HitHandler = (h: HitCtx) => void;
 
 const HIT_HANDLERS = {
   templar: applyTemplarHit,
-  leech: applyLeechHit,
   stitched_twin: applyStitchedTwinHit,
   flayed_saint: applyFlayedSaintHit,
   flagellant: applyFlagellantHit,
   howling_giant: applyHowlingGiantHit,
   tumor_guardian: applyTumorGuardianHit,
   amniotic_armor: applyAmnioticArmorHit,
-  dead_hand: applyDeadHandHit,
 } satisfies Partial<Record<UnitId, HitHandler>>;
 
 type HitHandlerUnitId = keyof typeof HIT_HANDLERS;
@@ -84,20 +79,6 @@ function applyTemplarHit({ defender: u, prefix, ctx }: HitCtx) {
     "skill",
     {
       [u.uid]: buffAction({ atk: b, hp: 0 }, u.uid),
-    },
-  );
-}
-
-function applyLeechHit({ defender: u, prefix, ctx }: HitCtx) {
-  const b = atLevel(LEECH.hpBuff, u.level);
-  u.hp += b;
-  pushFrame(
-    ctx,
-    "skill",
-    () => [prefix, seg.u(u.name), "が血を啜る。", seg.s(`+0/+${b}`)],
-    "skill",
-    {
-      [u.uid]: healAction(b, u.uid),
     },
   );
 }
@@ -240,19 +221,5 @@ function applyAmnioticArmorHit({ defender: u, prefix, ctx }: HitCtx) {
     () => [prefix, seg.u(u.name), "の膜が硬化し、", seg.e("屍蝋"), "が纏う。"],
     "skill",
     { [u.uid]: { type: "buff", value: "屍蝋" } },
-  );
-}
-
-function applyDeadHandHit({ defender: u, prefix, ctx }: HitCtx) {
-  const hpGain = atLevel(DEAD_HAND.hpBuff, u.level);
-  const atkGain = atLevel(DEAD_HAND.atkBuff, u.level);
-  u.hp += hpGain;
-  u.atk += atkGain;
-  pushFrame(
-    ctx,
-    "skill",
-    () => [prefix, seg.u(u.name), "が噛みつき返す。肉が膨れる。", seg.s(`+${atkGain}/+${hpGain}`)],
-    "skill",
-    { [u.uid]: buffAction({ atk: atkGain, hp: hpGain }, u.uid) },
   );
 }

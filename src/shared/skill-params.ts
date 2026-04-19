@@ -96,10 +96,6 @@ export const TEMPLAR = {
   atkBuff: [1, 2, 3] as SN,
 };
 
-export const LEECH = {
-  hpBuff: [1, 2, 3] as SN,
-};
-
 export const STITCHED_TWIN = {
   atkBuff: [2, 3, 4] as SN,
 };
@@ -135,11 +131,6 @@ export const MACHINE = {
 
 // ── 戦闘スキル（撃破） ──
 
-export const DEAD_HAND = {
-  hpBuff: [1, 2, 3] as SN,
-  atkBuff: [1, 1, 2] as SN,
-};
-
 export const DEVOURING_WOUND = {
   hpHeal: [2, 3, 4] as SN,
 };
@@ -174,7 +165,6 @@ export {
   HANGED_MAN,
   SERAPH,
   EVANGELIST,
-  CROW,
   SIN_EATER,
   CATHEDRAL,
   BEELZEBUB,
@@ -273,12 +263,15 @@ export {
   BLOOD_FONT,
   BUDDING_HYDRA,
   BONE_TREE,
-  GRAVE_WORM,
   MARKET_VULTURE,
   ASH_FUNGUS,
-  GHOUL_INFANT,
   TAINTED_PLACENTA,
   CORPSE_BROKER,
   CHALICE,
+  GUT_HAND,
+  BONE_JAW,
+  ROT_FEEDER,
+  CORPSE_PECKER,
+  NESTING_GRUB,
   sellBloodGain,
 } from "./skill-params-shop";

@@ -47,12 +47,32 @@ export const BONE_TREE = {
   uses: [3, 4, 5] as SN,
 };
 
-export const GRAVE_WORM = {
-  sellBuff: [
-    { atk: 0, hp: 1 },
-    { atk: 0, hp: 1 },
+export const GUT_HAND = {
+  targets: [1, 2, 3] as SN,
+  hpBuff: 1,
+};
+
+export const BONE_JAW = {
+  atkBuff: [1, 2, 3] as SN,
+  targets: 2,
+};
+
+export const ROT_FEEDER = {
+  hpBuff: [1, 2, 3] as SN,
+};
+
+export const CORPSE_PECKER = {
+  breadCrumbs: [1, 2, 3] as SN,
+};
+
+export const NESTING_GRUB = {
+  buff: [
     { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    // SAP Fish Lv3 準拠: Lv3では能力なし。Scaled<Buff> 3要素規約のプレースホルダー
+    { atk: 0, hp: 0 },
   ] as SB,
+  targets: 2,
 };
 
 export const MARKET_VULTURE = {
@@ -65,10 +85,6 @@ export const MARKET_VULTURE = {
 
 export const ASH_FUNGUS = {
   percent: [20, 35, 50] as SN,
-};
-
-export const GHOUL_INFANT = {
-  atkBuff: [1, 2, 3] as SN,
 };
 
 export const TAINTED_PLACENTA = {
@@ -96,7 +112,7 @@ export const CHALICE = {
   ] as SB,
 };
 
-/** 売却時の血液獲得量（レベル + beggarボーナス） */
+/** 売却時の血液獲得量（beggar は 2×レベル、他はレベル） */
 export function sellBloodGain(level: number, id: UnitId): number {
-  return level + (id === "beggar" ? 1 : 0);
+  return level + (id === "beggar" ? level : 0);
 }

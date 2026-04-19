@@ -3,13 +3,11 @@ import { resolveDeaths } from "./battle-deaths";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
 import {
   atLevel,
-  DEAD_HAND,
   FLAYED_SAINT,
   RAT,
   STITCHED_TWIN,
   HOWLING_GIANT,
   FLAGELLANT,
-  LEECH,
   TUMOR_GUARDIAN,
   AMNIOTIC_ARMOR,
 } from "../shared/skill-params";
@@ -125,25 +123,6 @@ describe("applyOnHitSkills – flagellant", () => {
   });
 });
 
-describe("applyOnHitSkills – leech", () => {
-  it("gains HP when hit", () => {
-    const leech = makeBattleUnit({ id: "leech", name: "蛭", atk: 1, hp: 2 });
-    const board = [leech];
-    const ctx = makeContext(board, []);
-    applyOnHitSkills(leech, board, true, ctx);
-    const buff = atLevel(LEECH.hpBuff, 1);
-    expect(leech.hp).toBe(2 + buff);
-  });
-
-  it("does not trigger when hp <= 0", () => {
-    const leech = makeBattleUnit({ id: "leech", name: "蛭", atk: 1, hp: 0 });
-    const board = [leech];
-    const ctx = makeContext(board, []);
-    applyOnHitSkills(leech, board, true, ctx);
-    expect(leech.hp).toBe(0);
-  });
-});
-
 describe("applyOnHitSkills – tumor_guardian", () => {
   it("buffs unit behind on hit", () => {
     const guardian = makeBattleUnit({ id: "tumor_guardian", name: "瘤の守り手", atk: 2, hp: 6 });
@@ -213,25 +192,5 @@ describe("applyOnHitSkills – amniotic_armor", () => {
     applyOnHitSkills(armor, board, true, ctx);
     expect(armor.equip).toBe("corpse_wax");
     expect(armor.skillUses).toBe(uses);
-  });
-});
-
-describe("applyOnHitSkills – dead_hand", () => {
-  it("buffs self atk and hp when hit", () => {
-    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 5, level: 1 });
-    const board = [unit];
-    const ctx = makeContext(board, []);
-    applyOnHitSkills(unit, board, true, ctx);
-    expect(unit.atk).toBe(2 + atLevel(DEAD_HAND.atkBuff, 1));
-    expect(unit.hp).toBe(5 + atLevel(DEAD_HAND.hpBuff, 1));
-  });
-
-  it("does not trigger when hp <= 0", () => {
-    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 0 });
-    const board = [unit];
-    const ctx = makeContext(board, []);
-    applyOnHitSkills(unit, board, true, ctx);
-    expect(unit.atk).toBe(2);
-    expect(unit.hp).toBe(0);
   });
 });

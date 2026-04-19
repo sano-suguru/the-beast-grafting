@@ -151,18 +151,6 @@ describe("processKnockoutEffects – risen_pope", () => {
   });
 });
 
-describe("processKnockoutEffects – dead_hand removed", () => {
-  it("no longer triggers on knockout (moved to on-hit)", () => {
-    const unit = makeBattleUnit({ id: "dead_hand", name: "齧りつく死手", atk: 2, hp: 3 });
-    const board = [unit];
-    const enemy = makeBattleUnit({ hp: 0 });
-    const ctx = makeContext(board, [enemy]);
-    processKnockoutEffects(unit, ctx.eBoard, board, true, ctx);
-    expect(unit.hp).toBe(3);
-    expect(ctx.frames).toHaveLength(0);
-  });
-});
-
 describe("processKnockoutEffects – devouring_wound", () => {
   it("heals self on knockout", () => {
     const unit = makeBattleUnit({ id: "devouring_wound", name: "喰らう傷口", atk: 3, hp: 4 });

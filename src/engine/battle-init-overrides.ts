@@ -16,7 +16,7 @@ import {
   GRINNING_SKULL,
   BONE_TREE,
 } from "../shared/skill-params";
-import { EVANGELIST, CROW, BEELZEBUB } from "../shared/skill-params-death";
+import { EVANGELIST, BEELZEBUB } from "../shared/skill-params-death";
 
 const INIT_OVERRIDES = {
   cholera: (bu: BattleUnit) => {
@@ -54,9 +54,6 @@ const INIT_OVERRIDES = {
   },
   charnel_pit: (bu: BattleUnit) => {
     bu.skillUses = atLevel(CHARNEL_PIT.uses, bu.level);
-  },
-  crow: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(CROW.uses, bu.level);
   },
   insatiable_maw: (bu: BattleUnit) => {
     bu.skillUses = atLevel(INSATIABLE_MAW.uses, bu.level);

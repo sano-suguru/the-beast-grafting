@@ -70,13 +70,13 @@ describe("generateSimTeam", () => {
 
 describe("findOptimalPositioning", () => {
   it("returns a permutation of the input", () => {
-    const ids: RegularUnitId[] = ["rat", "parasite", "bat", "martyr", "crow"];
+    const ids: RegularUnitId[] = ["rat", "parasite", "bat", "martyr", "gut_hand"];
     const result = findOptimalPositioning(ids, 12, 42, 20);
     expect([...result].sort()).toEqual([...ids].sort());
   });
 
   it("is deterministic with same seed", () => {
-    const ids: RegularUnitId[] = ["brains", "eye", "rat", "bat", "crow"];
+    const ids: RegularUnitId[] = ["brains", "eye", "rat", "bat", "gut_hand"];
     const a = findOptimalPositioning(ids, 12, 99, 20);
     const b = findOptimalPositioning(ids, 12, 99, 20);
     expect(a).toEqual(b);

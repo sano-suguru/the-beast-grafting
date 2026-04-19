@@ -43,8 +43,8 @@ describe("getShopPool", () => {
   it("returns Tier 1 units for night 1-2", () => {
     const pool = getShopPool(1);
     expect(pool).toContain("rat");
-    expect(pool).toContain("ghoul_infant");
-    expect(pool).toContain("dead_hand");
+    expect(pool).toContain("gut_hand");
+    expect(pool).toContain("bone_jaw");
     expect(pool).toHaveLength(10);
   });
 

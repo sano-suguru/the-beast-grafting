@@ -4,6 +4,7 @@ import {
   applyChaliceEffect,
   applySummonEffects,
   applySellEffects,
+  applyLevelUpEffects,
 } from "./shop-effects";
 import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
@@ -11,10 +12,11 @@ import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { createSeededRng } from "./rng";
 import {
   atLevel,
-  GRAVE_WORM,
   MARKET_VULTURE,
-  GHOUL_INFANT,
   CORPSE_BROKER,
+  GUT_HAND,
+  BONE_JAW,
+  ROT_FEEDER,
 } from "../shared/skill-params";
 import { makeUnit } from "./test-helpers";
 
@@ -109,7 +111,7 @@ describe("applyBuyEffects – rot_ring", () => {
       null,
     ];
     const boughtUnit = makeUnit({ tier: 1 });
-    const { board: result } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1));
+    const { board: result } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1), 0);
     expect(effectiveAtk(result[0]!)).toBe(7);
     expect(effectiveHp(result[0]!)).toBe(9);
     expect(effectiveAtk(result[1]!)).toBe(3);
@@ -124,7 +126,13 @@ describe("applyBuyEffects – rot_ring", () => {
       null,
       null,
     ];
-    const { board: result } = applyBuyEffects(makeUnit({ tier: 1 }), board, 0, createSeededRng(1));
+    const { board: result } = applyBuyEffects(
+      makeUnit({ tier: 1 }),
+      board,
+      0,
+      createSeededRng(1),
+      0,
+    );
     expect(effectiveAtk(result[0]!)).toBe(8);
     expect(effectiveHp(result[0]!)).toBe(10);
   });
@@ -137,7 +145,13 @@ describe("applyBuyEffects – rot_ring", () => {
       null,
       null,
     ];
-    const { board: result } = applyBuyEffects(makeUnit({ tier: 3 }), board, 0, createSeededRng(1));
+    const { board: result } = applyBuyEffects(
+      makeUnit({ tier: 3 }),
+      board,
+      0,
+      createSeededRng(1),
+      0,
+    );
     expect(effectiveAtk(result[0]!)).toBe(6);
   });
 
@@ -150,7 +164,7 @@ describe("applyBuyEffects – rot_ring", () => {
       null,
     ];
     // Lv2 uses = 4; 3回使用済みでもまだ発動する
-    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 3, createSeededRng(1));
+    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 3, createSeededRng(1), 0);
     expect(rotRingUses).toBe(4);
   });
 
@@ -163,7 +177,13 @@ describe("applyBuyEffects – rot_ring", () => {
       null,
     ];
     // Lv2 uses = 4; 4回使用済みなら発動しない
-    const { board: result } = applyBuyEffects(makeUnit({ tier: 1 }), board, 4, createSeededRng(1));
+    const { board: result } = applyBuyEffects(
+      makeUnit({ tier: 1 }),
+      board,
+      4,
+      createSeededRng(1),
+      0,
+    );
     expect(effectiveAtk(result[0]!)).toBe(6);
   });
 
@@ -176,7 +196,7 @@ describe("applyBuyEffects – rot_ring", () => {
       null,
     ];
     // Lv1(4) + Lv2(4) = totalMaxUses 8; 7回使用済みでもまだ発動
-    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 7, createSeededRng(1));
+    const { rotRingUses } = applyBuyEffects(makeUnit({ tier: 1 }), board, 7, createSeededRng(1), 0);
     expect(rotRingUses).toBe(8);
   });
 });
@@ -185,21 +205,21 @@ describe("applyBuyEffects – chalice and fallback", () => {
   it("sets chaliceLevel when chalice is bought", () => {
     const board: (UnitInstance | null)[] = [null, null, null, null, null];
     const boughtUnit = makeUnit({ id: "chalice", level: 2 });
-    const { chaliceLevel } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1));
+    const { chaliceLevel } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1), 0);
     expect(chaliceLevel).toBe(2);
   });
 
   it("returns null chaliceLevel for non-chalice unit", () => {
     const board: (UnitInstance | null)[] = [null, null, null, null, null];
     const boughtUnit = makeUnit({ id: "beast" });
-    const { chaliceLevel } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1));
+    const { chaliceLevel } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1), 0);
     expect(chaliceLevel).toBeNull();
   });
 
   it("returns original board reference when no effects triggered", () => {
     const board: (UnitInstance | null)[] = [makeUnit(), null, null, null, null];
     const boughtUnit = makeUnit({ tier: 2, id: "beast" });
-    const { board: result } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1));
+    const { board: result } = applyBuyEffects(boughtUnit, board, 0, createSeededRng(1), 0);
     expect(result).toBe(board);
   });
 });
@@ -338,24 +358,22 @@ describe("applySummonEffects – combined and edge cases", () => {
 });
 
 describe("applySellEffects – determinism", () => {
-  it("grave_worm sell buff is deterministic with seeded rng", () => {
-    const worm = makeUnit({ id: "grave_worm", uid: "worm-1" });
-    const ally = makeUnit({ uid: "ally-1" });
-    const sold = makeUnit({ uid: "sold-1" });
-    const board: (UnitInstance | null)[] = [worm, ally, null];
+  it("bone_jaw self-sell buff is deterministic with seeded rng", () => {
+    const jaw = makeUnit({ id: "bone_jaw", uid: "bj-1" });
+    const ally1 = makeUnit({ uid: "ally-1" });
+    const ally2 = makeUnit({ uid: "ally-2" });
+    const board: (UnitInstance | null)[] = [null, ally1, ally2];
 
     const rng1 = createSeededRng(99);
-    const result1 = applySellEffects(sold, board, rng1);
+    const result1 = applySellEffects(jaw, board, rng1);
 
     const rng2 = createSeededRng(99);
-    const result2 = applySellEffects(sold, board, rng2);
+    const result2 = applySellEffects(jaw, board, rng2);
 
-    const buffed1 = result1.board.find((u) => u?.uid === "ally-1");
-    const buffed2 = result2.board.find((u) => u?.uid === "ally-1");
-    expect(buffed1!.buffAtk).toBe(buffed2!.buffAtk);
-    expect(buffed1!.buffHp).toBe(buffed2!.buffHp);
-    // Lv1: +0/+1
-    expect(buffed1!.buffHp).toBeGreaterThan(0);
+    const sum1 = result1.board.reduce((s, u) => s + (u?.buffAtk ?? 0), 0);
+    const sum2 = result2.board.reduce((s, u) => s + (u?.buffAtk ?? 0), 0);
+    expect(sum1).toBe(sum2);
+    expect(sum1).toBeGreaterThan(0);
   });
 
   it("ash_fungus sell buff is deterministic with seeded rng", () => {
@@ -398,51 +416,222 @@ describe("applySellEffects – market_vulture shopBuff", () => {
   });
 });
 
-// ── ghoul_infant: 購入時に味方にATKバフ ──
+// ── gut_hand: 自身が購入された時に味方にHPバフ ──
 
-describe("applyBuyEffects – ghoul_infant", () => {
-  it("buffs a random ally tempBuffAtk when ghoul_infant is on board", () => {
-    const ghoul = makeUnit({ id: "ghoul_infant", uid: "gi-1" });
+describe("applyBuyEffects – gut_hand", () => {
+  it("buffs a random ally buffHp when gut_hand is bought (Lv1)", () => {
+    const gutHand = makeUnit({ id: "gut_hand", uid: "gh-1" });
     const ally = makeUnit({ id: "rat", uid: "ally-1" });
-    const board: (UnitInstance | null)[] = [ghoul, ally];
-    const bought = makeUnit({ uid: "bought-1" });
+    const board: (UnitInstance | null)[] = [gutHand, ally];
+    const bought = makeUnit({ id: "gut_hand", uid: "gh-1" });
     const rng = createSeededRng(42);
-    const result = applyBuyEffects(bought, board, 0, rng);
-    const b = atLevel(GHOUL_INFANT.atkBuff, 1);
-    const totalTempBuff = result.board
+    const result = applyBuyEffects(bought, board, 0, rng, 0);
+    const totalBuff = result.board
       .filter((u): u is UnitInstance => u !== null)
-      .reduce((sum, u) => sum + u.tempBuffAtk, 0);
-    expect(totalTempBuff).toBe(b);
+      .reduce((sum, u) => sum + u.buffHp, 0);
+    expect(totalBuff).toBe(GUT_HAND.hpBuff);
   });
 
-  it("does not buff when no ghoul_infant on board", () => {
+  it("does not buff when a non-gut_hand unit is bought", () => {
+    const gutHand = makeUnit({ id: "gut_hand", uid: "gh-1" });
     const ally = makeUnit({ id: "rat", uid: "ally-1" });
-    const board: (UnitInstance | null)[] = [ally, null];
-    const bought = makeUnit({ uid: "bought-1" });
+    const board: (UnitInstance | null)[] = [gutHand, ally];
+    const bought = makeUnit({ id: "rat", uid: "bought-1" });
     const rng = createSeededRng(42);
-    const result = applyBuyEffects(bought, board, 0, rng);
-    const totalTempBuff = result.board
+    const result = applyBuyEffects(bought, board, 0, rng, 0);
+    const totalBuff = result.board
       .filter((u): u is UnitInstance => u !== null)
-      .reduce((sum, u) => sum + u.tempBuffAtk, 0);
-    expect(totalTempBuff).toBe(0);
+      .reduce((sum, u) => sum + u.buffHp, 0);
+    expect(totalBuff).toBe(0);
   });
 
-  it("excludes ghoul_infant itself from buff targets", () => {
-    const ghoul = makeUnit({ id: "ghoul_infant", uid: "gi-1" });
+  it("excludes gut_hand itself from buff targets", () => {
+    const gutHand = makeUnit({ id: "gut_hand", uid: "gh-1" });
     const ally = makeUnit({ id: "rat", uid: "ally-1" });
-    const board: (UnitInstance | null)[] = [ghoul, ally];
-    const bought = makeUnit({ uid: "bought-1" });
+    const board: (UnitInstance | null)[] = [gutHand, ally];
+    const bought = makeUnit({ id: "gut_hand", uid: "gh-1" });
     for (let seed = 1; seed <= 20; seed++) {
-      const result = applyBuyEffects(bought, [...board], 0, createSeededRng(seed));
-      const ghoulResult = result.board[0] as UnitInstance;
+      const result = applyBuyEffects(bought, [...board], 0, createSeededRng(seed), 0);
+      const ghResult = result.board[0] as UnitInstance;
       const allyResult = result.board[1] as UnitInstance;
-      expect(ghoulResult.tempBuffAtk).toBe(0);
-      expect(allyResult.tempBuffAtk).toBe(atLevel(GHOUL_INFANT.atkBuff, 1));
+      expect(ghResult.buffHp).toBe(0);
+      expect(allyResult.buffHp).toBe(GUT_HAND.hpBuff);
     }
+  });
+
+  it("Lv2 gut_hand buffs 2 allies", () => {
+    const gutHand = makeUnit({ id: "gut_hand", uid: "gh-1", level: 2 });
+    const ally1 = makeUnit({ uid: "a1" });
+    const ally2 = makeUnit({ uid: "a2" });
+    const board: (UnitInstance | null)[] = [gutHand, ally1, ally2, null, null];
+    const bought = makeUnit({ id: "gut_hand", uid: "gh-1" });
+    const rng = createSeededRng(42);
+    const result = applyBuyEffects(bought, board, 0, rng, 0);
+    const totalBuff = result.board
+      .filter((u): u is UnitInstance => u !== null && u.uid !== "gh-1")
+      .reduce((sum, u) => sum + u.buffHp, 0);
+    expect(totalBuff).toBe(GUT_HAND.hpBuff * 2);
   });
 });
 
-// ── corpse_broker: 売却時に自身にバフ ──
+// ── bone_jaw (Beaver): 自身が売却された時に味方2体にATKバフ ──
+
+describe("applySellEffects – bone_jaw self-sell", () => {
+  it("buffs 2 allies with ATK when bone_jaw is sold (Lv1)", () => {
+    const jaw = makeUnit({ id: "bone_jaw", uid: "bj-1" });
+    const ally1 = makeUnit({ uid: "a1" });
+    const ally2 = makeUnit({ uid: "a2" });
+    const board: (UnitInstance | null)[] = [null, ally1, ally2];
+    const rng = createSeededRng(42);
+    const result = applySellEffects(jaw, board, rng);
+    const totalAtk = result.board
+      .filter((u): u is UnitInstance => u !== null)
+      .reduce((s, u) => s + u.buffAtk, 0);
+    expect(totalAtk).toBe(atLevel(BONE_JAW.atkBuff, 1) * BONE_JAW.targets);
+  });
+
+  it("does not trigger when a different unit is sold (bone_jaw stays on board)", () => {
+    const jaw = makeUnit({ id: "bone_jaw", uid: "bj-1" });
+    const board: (UnitInstance | null)[] = [jaw, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const rng = createSeededRng(1);
+    const result = applySellEffects(sold, board, rng);
+    const updated = result.board[0] as UnitInstance;
+    expect(updated.buffAtk).toBe(0);
+  });
+});
+
+// ── rot_feeder (Duck): 自身が売却された時にshopBuff(HP) ──
+
+describe("applySellEffects – rot_feeder self-sell shopBuff", () => {
+  it("returns shopBuff with HP when rot_feeder is sold", () => {
+    const feeder = makeUnit({ id: "rot_feeder", uid: "rf-1" });
+    const board: (UnitInstance | null)[] = [null, null];
+    const rng = createSeededRng(1);
+    const result = applySellEffects(feeder, board, rng);
+    const hpBuff = atLevel(ROT_FEEDER.hpBuff, 1);
+    expect(result.shopBuff).toEqual({ atk: 0, hp: hpBuff });
+  });
+
+  it("does not trigger when a different unit is sold (rot_feeder stays on board)", () => {
+    const feeder = makeUnit({ id: "rot_feeder", uid: "rf-1" });
+    const board: (UnitInstance | null)[] = [feeder, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const rng = createSeededRng(1);
+    const result = applySellEffects(sold, board, rng);
+    expect(result.shopBuff).toBeUndefined();
+  });
+
+  it("combines with market_vulture passive shopBuff", () => {
+    const feeder = makeUnit({ id: "rot_feeder", uid: "rf-1" });
+    const vulture = makeUnit({ id: "market_vulture", uid: "mv-1" });
+    const board: (UnitInstance | null)[] = [null, vulture];
+    const rng = createSeededRng(1);
+    const result = applySellEffects(feeder, board, rng);
+    const mvBuff = atLevel(MARKET_VULTURE.shopBuff, 1);
+    const rfHp = atLevel(ROT_FEEDER.hpBuff, 1);
+    expect(result.shopBuff).toEqual({ atk: mvBuff.atk, hp: mvBuff.hp + rfHp });
+  });
+});
+
+// ── corpse_pecker (Pigeon): 自身が売却された時にstockItems(bone_meal) ──
+
+describe("applySellEffects – corpse_pecker self-sell stockItems", () => {
+  it("returns bone_meal stockItems when corpse_pecker is sold (Lv1)", () => {
+    const pecker = makeUnit({ id: "corpse_pecker", uid: "cp-1" });
+    const board: (UnitInstance | null)[] = [null, null];
+    const rng = createSeededRng(1);
+    const result = applySellEffects(pecker, board, rng);
+    expect(result.stockItems).toHaveLength(1);
+    expect(result.stockItems![0]!.id).toBe("bone_meal");
+    expect(result.stockItems![0]!.cost).toBe(0);
+    expect(result.stockItems![0]!.atk).toBe(1);
+    expect(result.stockItems![0]!.hp).toBe(0);
+  });
+
+  it("Lv2 corpse_pecker returns 2 bone_meal", () => {
+    const pecker = makeUnit({ id: "corpse_pecker", uid: "cp-1", level: 2 });
+    const board: (UnitInstance | null)[] = [null, null];
+    const rng = createSeededRng(1);
+    const result = applySellEffects(pecker, board, rng);
+    expect(result.stockItems).toHaveLength(2);
+  });
+
+  it("does not trigger when a different unit is sold (corpse_pecker stays on board)", () => {
+    const pecker = makeUnit({ id: "corpse_pecker", uid: "cp-1" });
+    const board: (UnitInstance | null)[] = [pecker, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const rng = createSeededRng(1);
+    const result = applySellEffects(sold, board, rng);
+    expect(result.stockItems).toBeUndefined();
+  });
+
+  it("returns no stockItems when a non-corpse_pecker unit is sold", () => {
+    const ally = makeUnit({ uid: "ally-1" });
+    const board: (UnitInstance | null)[] = [ally, null];
+    const sold = makeUnit({ uid: "sold-1" });
+    const rng = createSeededRng(1);
+    const result = applySellEffects(sold, board, rng);
+    expect(result.stockItems).toBeUndefined();
+  });
+});
+
+// ── nesting_grub: レベルアップ時に味方にバフ ──
+
+describe("applyLevelUpEffects – nesting_grub", () => {
+  it("Lv1→Lv2: buffs 2 allies with +1/+1 each", () => {
+    const grub = makeUnit({ id: "nesting_grub", uid: "ng-1", level: 2 });
+    const ally1 = makeUnit({ uid: "a1" });
+    const ally2 = makeUnit({ uid: "a2" });
+    const board: (UnitInstance | null)[] = [grub, ally1, ally2, null, null];
+    const rng = createSeededRng(42);
+    applyLevelUpEffects(board, 0, rng);
+    const totalAtk = [board[1], board[2]]
+      .filter((u): u is UnitInstance => u !== null)
+      .reduce((s, u) => s + u.buffAtk, 0);
+    const totalHp = [board[1], board[2]]
+      .filter((u): u is UnitInstance => u !== null)
+      .reduce((s, u) => s + u.buffHp, 0);
+    expect(totalAtk).toBe(2); // +1 × 2 targets
+    expect(totalHp).toBe(2);
+  });
+
+  it("Lv2→Lv3: buffs 2 allies with +2/+2 each", () => {
+    const grub = makeUnit({ id: "nesting_grub", uid: "ng-1", level: 3 });
+    const ally1 = makeUnit({ uid: "a1" });
+    const ally2 = makeUnit({ uid: "a2" });
+    const board: (UnitInstance | null)[] = [grub, ally1, ally2, null, null];
+    const rng = createSeededRng(42);
+    applyLevelUpEffects(board, 0, rng);
+    const totalAtk = [board[1], board[2]]
+      .filter((u): u is UnitInstance => u !== null)
+      .reduce((s, u) => s + u.buffAtk, 0);
+    const totalHp = [board[1], board[2]]
+      .filter((u): u is UnitInstance => u !== null)
+      .reduce((s, u) => s + u.buffHp, 0);
+    expect(totalAtk).toBe(4); // +2 × 2 targets
+    expect(totalHp).toBe(4);
+  });
+
+  it("excludes nesting_grub itself from buff targets", () => {
+    const grub = makeUnit({ id: "nesting_grub", uid: "ng-1", level: 2 });
+    const board: (UnitInstance | null)[] = [grub, null, null, null, null];
+    const rng = createSeededRng(42);
+    applyLevelUpEffects(board, 0, rng);
+    expect((board[0] as UnitInstance).buffAtk).toBe(0);
+    expect((board[0] as UnitInstance).buffHp).toBe(0);
+  });
+
+  it("does not trigger for non-nesting_grub units", () => {
+    const rat = makeUnit({ id: "rat", uid: "r-1", level: 2 });
+    const ally = makeUnit({ uid: "a1" });
+    const board: (UnitInstance | null)[] = [rat, ally, null, null, null];
+    const rng = createSeededRng(42);
+    applyLevelUpEffects(board, 0, rng);
+    expect((board[1] as UnitInstance).buffAtk).toBe(0);
+    expect((board[1] as UnitInstance).buffHp).toBe(0);
+  });
+});
 
 describe("applySellEffects – corpse_broker", () => {
   it("buffs corpse_broker on ally sell", () => {
@@ -496,25 +685,5 @@ describe("applySellEffects – market_vulture no selfBuff", () => {
     const updated = result.board.find((u): u is UnitInstance => u !== null && u.uid === "mv-1");
     expect(updated!.buffAtk).toBe(0);
     expect(updated!.buffHp).toBe(0);
-  });
-});
-
-// ── grave_worm: ボード上にいれば他ユニット解体時にバフ ──
-
-describe("applySellEffects – grave_worm", () => {
-  it("does not buff the worm itself (excludeIdx)", () => {
-    const worm = makeUnit({ id: "grave_worm", uid: "worm-1" });
-    const board: (UnitInstance | null)[] = [worm, null];
-    const sold = makeUnit({ uid: "sold-1" });
-    const rng = createSeededRng(1);
-    const result = applySellEffects(sold, board, rng);
-    const b = atLevel(GRAVE_WORM.sellBuff, 1);
-    const updatedWorm = result.board.find(
-      (u): u is UnitInstance => u !== null && u.uid === "worm-1",
-    );
-    expect(updatedWorm!.buffAtk).toBe(0);
-    expect(updatedWorm!.buffHp).toBe(0);
-    // バフの合計値も0（バフできる対象がいない）
-    expect(b.atk + b.hp).toBeGreaterThan(0);
   });
 });

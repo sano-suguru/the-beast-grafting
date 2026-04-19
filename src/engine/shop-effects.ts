@@ -4,42 +4,9 @@ import type { Rng } from "./rng";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { invariant } from "../shared/invariant";
 import { CUMULATIVE_EXP, MAX_UNIT_LEVEL } from "../shared/constants";
-import {
-  atLevel,
-  ALTAR,
-  ROT_RING,
-  GRAVE_WORM,
-  MARKET_VULTURE,
-  ASH_FUNGUS,
-  GHOUL_INFANT,
-  CORPSE_BROKER,
-  CHALICE,
-  type Buff,
-  type Scaled,
-} from "../shared/skill-params";
+import { atLevel, ALTAR, ROT_RING, CHALICE, GUT_HAND, NESTING_GRUB } from "../shared/skill-params";
 import { getSkillText } from "../shared/skill-text";
-import { computeZealotBuff } from "./buff-utils";
-
-function getActiveIndices(board: (UnitInstance | null)[]): number[] {
-  return board.map((u, i) => (u ? i : null)).filter((i): i is number => i !== null);
-}
-
-function sumBuffByUnitId(
-  board: (UnitInstance | null)[],
-  unitId: UnitId,
-  param: Scaled<Buff>,
-  multiplier = 1,
-): Buff {
-  let atk = 0;
-  let hp = 0;
-  for (const u of board) {
-    if (!u || u.id !== unitId) continue;
-    const b = atLevel(param, u.level);
-    atk += b.atk * multiplier;
-    hp += b.hp * multiplier;
-  }
-  return { atk, hp };
-}
+import { buffRandomUnit, computeZealotBuff } from "./buff-utils";
 
 interface GraftResult {
   unit: UnitInstance;
@@ -118,10 +85,11 @@ export const applyBuyEffects = (
   currentBoard: (UnitInstance | null)[],
   rotRingUses: number,
   rng: Rng,
+  placedIndex: number,
 ): BuyResult => {
   const rotRing = applyRotRingBuff(boughtUnit, currentBoard, rotRingUses);
   const board = rotRing.board;
-  applyGhoulInfantBuyBuff(board, rng);
+  applyGutHandBuyBuff(board, boughtUnit.id, rng, placedIndex);
   return {
     board,
     chaliceLevel: boughtUnit.id === "chalice" ? boughtUnit.level : null,
@@ -129,11 +97,18 @@ export const applyBuyEffects = (
   };
 };
 
-function applyGhoulInfantBuyBuff(board: (UnitInstance | null)[], rng: Rng): void {
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i];
-    if (!u || u.id !== "ghoul_infant") continue;
-    tempBuffRandomUnit(board, atLevel(GHOUL_INFANT.atkBuff, u.level), rng, i);
+function applyGutHandBuyBuff(
+  board: (UnitInstance | null)[],
+  boughtId: UnitId,
+  rng: Rng,
+  placedIndex: number,
+): void {
+  if (boughtId !== "gut_hand") return;
+  const u = board[placedIndex];
+  if (!u) return;
+  const targets = atLevel(GUT_HAND.targets, u.level);
+  for (let i = 0; i < targets; i++) {
+    buffRandomUnit(board, 0, GUT_HAND.hpBuff, rng, placedIndex);
   }
 }
 
@@ -192,102 +167,19 @@ export const applySummonEffects = (
   return modified ? nextBoard : currentBoard;
 };
 
-interface SellResult {
-  board: (UnitInstance | null)[];
-  shopBuff?: { atk: number; hp: number } | undefined;
-}
+export { applySellEffects } from "./shop-effects-sell";
 
-function pickRandomTarget(
+export function applyLevelUpEffects(
   board: (UnitInstance | null)[],
+  leveledIndex: number,
   rng: Rng,
-  excludeIdx?: number,
-): number | null {
-  const active = getActiveIndices(board).filter((i) => i !== excludeIdx);
-  if (active.length === 0) return null;
-  return active[Math.floor(rng.next() * active.length)]!;
-}
-
-function applyRandomBuff(
-  board: (UnitInstance | null)[],
-  atkBuff: number,
-  hpBuff: number,
-  rng: Rng,
-  excludeIdx?: number,
-  temp?: true,
 ): void {
-  const idx = pickRandomTarget(board, rng, excludeIdx);
-  if (idx === null) return;
-  const target = board[idx]!;
-  board[idx] = temp
-    ? { ...target, tempBuffAtk: target.tempBuffAtk + atkBuff }
-    : { ...target, buffAtk: target.buffAtk + atkBuff, buffHp: target.buffHp + hpBuff };
-}
-
-/** ghoul_infant 用: tempBuffAtk にATKバフを加算（夜開始時にリセットされる） */
-function tempBuffRandomUnit(
-  board: (UnitInstance | null)[],
-  atkBuff: number,
-  rng: Rng,
-  excludeIdx?: number,
-): void {
-  applyRandomBuff(board, atkBuff, 0, rng, excludeIdx, true);
-}
-
-export function buffRandomUnit(
-  board: (UnitInstance | null)[],
-  atkBuff: number,
-  hpBuff: number,
-  rng: Rng,
-  excludeIdx?: number,
-): void {
-  applyRandomBuff(board, atkBuff, hpBuff, rng, excludeIdx);
-}
-
-function applyGraveWormSell(nextBoard: (UnitInstance | null)[], rng: Rng) {
-  for (let i = 0; i < nextBoard.length; i++) {
-    const u = nextBoard[i];
-    if (!u || u.id !== "grave_worm") continue;
-    const b = atLevel(GRAVE_WORM.sellBuff, u.level);
-    buffRandomUnit(nextBoard, b.atk, b.hp, rng, i);
+  const unit = board[leveledIndex];
+  if (!unit || unit.id !== "nesting_grub") return;
+  const prevLevel = unit.level - 1;
+  const b = atLevel(NESTING_GRUB.buff, prevLevel);
+  if (b.atk === 0 && b.hp === 0) return;
+  for (let i = 0; i < NESTING_GRUB.targets; i++) {
+    buffRandomUnit(board, b.atk, b.hp, rng, leveledIndex);
   }
 }
-
-function collectMarketVultureShopBuff(
-  board: (UnitInstance | null)[],
-): { atk: number; hp: number } | undefined {
-  const { atk, hp } = sumBuffByUnitId(board, "market_vulture", MARKET_VULTURE.shopBuff);
-  return atk > 0 || hp > 0 ? { atk, hp } : undefined;
-}
-
-function applyAshFungusSell(soldUnit: UnitInstance, nextBoard: (UnitInstance | null)[], rng: Rng) {
-  const totalStats = effectiveAtk(soldUnit) + effectiveHp(soldUnit);
-  for (const u of nextBoard) {
-    if (!u || u.id !== "ash_fungus") continue;
-    const buff = Math.floor(totalStats * (atLevel(ASH_FUNGUS.percent, u.level) / 100));
-    if (buff <= 0) continue;
-    const half = Math.floor(buff / 2);
-    buffRandomUnit(nextBoard, buff - half, half, rng);
-  }
-}
-
-function applyCorpseBrokerSell(nextBoard: (UnitInstance | null)[]): void {
-  for (let i = 0; i < nextBoard.length; i++) {
-    const u = nextBoard[i];
-    if (!u || u.id !== "corpse_broker") continue;
-    const b = atLevel(CORPSE_BROKER.sellBuff, u.level);
-    nextBoard[i] = { ...u, buffAtk: u.buffAtk + b.atk, buffHp: u.buffHp + b.hp };
-  }
-}
-
-export const applySellEffects = (
-  soldUnit: UnitInstance,
-  currentBoard: (UnitInstance | null)[],
-  rng: Rng,
-): SellResult => {
-  const nextBoard = [...currentBoard];
-  applyGraveWormSell(nextBoard, rng);
-  const shopBuff = collectMarketVultureShopBuff(nextBoard);
-  applyAshFungusSell(soldUnit, nextBoard, rng);
-  applyCorpseBrokerSell(nextBoard);
-  return { board: nextBoard, shopBuff };
-};

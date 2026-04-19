@@ -30,7 +30,6 @@ import {
   PALADIN,
   HOLY_FIRE,
   RELIC_SWORD,
-  LEECH,
   STITCHED_TWIN,
   FLAYED_SAINT,
   FLAGELLANT,
@@ -39,7 +38,6 @@ import {
   RISEN_POPE,
   HANGED_MAN,
   SERAPH,
-  CROW,
   SIN_EATER,
   CATHEDRAL,
   CHARNEL_PIT,
@@ -48,16 +46,13 @@ import {
   BLOOD_FONT,
   BUDDING_HYDRA,
   BONE_TREE,
-  GRAVE_WORM,
   MARKET_VULTURE,
   ASH_FUNGUS,
   TAINTED_PLACENTA,
   CORRODING_MOLD,
   STELLAR_COCOON,
-  DEAD_HAND,
   DEVOURING_WOUND,
   CRAWLING_CORD,
-  GHOUL_INFANT,
   NEEDLESHELL_WORM,
   CORPSE_BROKER,
   TUMOR_GUARDIAN,
@@ -68,6 +63,11 @@ import {
   OMEN_WOMB,
   DEVOURING_GRAFT,
   CHALICE,
+  GUT_HAND,
+  BONE_JAW,
+  ROT_FEEDER,
+  CORPSE_PECKER,
+  NESTING_GRUB,
 } from "./skill-params";
 
 const houndDeathText = (lv: number) => {
@@ -147,15 +147,6 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(ROT_RING.buff, lv);
     return `Tier1購入: 味方全体に+${b.atk}/+${b.hp}(${atLevel(ROT_RING.uses, lv)}回/夜)`;
   },
-  grave_worm: (lv) => {
-    const b = atLevel(GRAVE_WORM.sellBuff, lv);
-    return `味方解体: ランダムな味方1体に+${b.atk}/+${b.hp}`;
-  },
-  leech: (lv) => `被弾: 自身のHP+${atLevel(LEECH.hpBuff, lv)}`,
-  crow: (lv) => {
-    const b = atLevel(CROW.buff, lv);
-    return `味方死亡: 自身に+${b.atk}/+${b.hp}(${atLevel(CROW.uses, lv)}回/戦)`;
-  },
   catacomb_rat: (lv) => `開戦: ランダムな敵にTier×${atLevel(CATACOMB_RAT.tierMult, lv)}ダメージ`,
   stitched_twin: (lv) =>
     `被弾: 自身の攻撃+${atLevel(STITCHED_TWIN.atkBuff, lv)}、後方味方に1ダメージ`,
@@ -227,14 +218,11 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(RISEN_POPE.buff, lv);
     return `撃破: 味方全体に+${b.atk}/+${b.hp}`;
   },
-  dead_hand: (lv) =>
-    `被弾: 自身に+${atLevel(DEAD_HAND.atkBuff, lv)}/+${atLevel(DEAD_HAND.hpBuff, lv)}`,
   devouring_wound: (lv) => `撃破: 自身にHP+${atLevel(DEVOURING_WOUND.hpHeal, lv)}`,
   crawling_cord: (lv) => {
     const b = atLevel(CRAWLING_CORD.buff, lv);
     return `味方死亡: ランダム味方1体に+${b.atk}/+${b.hp}(${atLevel(CRAWLING_CORD.uses, lv)}回/戦)`;
   },
-  ghoul_infant: (lv) => `味方購入: 味方1体にATK+${atLevel(GHOUL_INFANT.atkBuff, lv)}`,
   needleshell_worm: (lv) => `攻撃後: 後方味方${atLevel(NEEDLESHELL_WORM.targets, lv)}体に1ダメージ`,
   corpse_broker: (lv) => {
     const b = atLevel(CORPSE_BROKER.sellBuff, lv);
@@ -260,7 +248,18 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `死亡: 2体の${t.atk}/${t.hp}「忌み子」を召喚`;
   },
   // 固定テキスト（レベルで変化しない）
-  beggar: () => "解体: {blood}を1多く獲得",
+  beggar: () => "解体: {blood}を多く獲得",
+  gut_hand: (lv) => `購入: ランダムな味方${atLevel(GUT_HAND.targets, lv)}体にHP+${GUT_HAND.hpBuff}`,
+  bone_jaw: (lv) => `解体: 味方${BONE_JAW.targets}体に攻撃+${atLevel(BONE_JAW.atkBuff, lv)}`,
+  rot_feeder: (lv) => `解体: 闇市場の全素体にHP+${atLevel(ROT_FEEDER.hpBuff, lv)}`,
+  corpse_pecker: (lv) =>
+    `解体: 無料の骨粉(+1/+0)を${atLevel(CORPSE_PECKER.breadCrumbs, lv)}個ストック`,
+  nesting_grub: (lv) => {
+    const b = atLevel(NESTING_GRUB.buff, lv);
+    return b.atk === 0 && b.hp === 0
+      ? "接合で強化: (効果なし)"
+      : `接合で強化: 味方${NESTING_GRUB.targets}体に+${b.atk}/+${b.hp}`;
+  },
   maiden: (lv) => `死亡: 後方${atLevel(MAIDEN.targets, lv)}体に【屍蝋の盾】`,
   famine_corpse: () => "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
   graft_scion: () => "死亡: 前の味方に自身ATK分のATKバフ",
