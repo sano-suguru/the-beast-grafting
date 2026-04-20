@@ -37,7 +37,6 @@ export function handleSpiteBeastDeath({ dead, board, idx, isPlayer, ctx }: Death
   );
 }
 
-/** cholera: Faint – 場の全ペット（味方含む）にダメージ */
 export function handleCholeraDeath({ dead, board, isPlayer, ctx }: DeathContext) {
   const dmg = atLevel(CHOLERA.damage, dead.level);
   const prefix = enemyPrefix(isPlayer);

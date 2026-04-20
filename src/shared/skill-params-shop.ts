@@ -6,10 +6,11 @@ type SB = Scaled<Buff>;
 
 export const ALTAR = {
   buff: [
-    { atk: 3, hp: 1 },
-    { atk: 5, hp: 2 },
-    { atk: 7, hp: 3 },
+    { atk: 1, hp: 2 },
+    { atk: 2, hp: 4 },
+    { atk: 3, hp: 6 },
   ] as SB,
+  requiredFriendLevel: 3,
 };
 
 export const ZEALOT = {
@@ -83,7 +84,13 @@ export const GRAFT_SCION = {
 };
 
 export const ASH_FUNGUS = {
-  percent: [20, 35, 50] as SN,
+  buff: [1, 2, 3] as SN,
+  targets: 2,
+  minLevel: 2,
+};
+
+export const MACHINE = {
+  discount: [1, 2, 3] as SN,
 };
 
 export const TAINTED_PLACENTA = {

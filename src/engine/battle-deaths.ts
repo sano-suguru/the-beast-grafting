@@ -18,54 +18,7 @@ import {
 } from "./battle-deaths-handlers";
 import { processAvenge, incrementAvengeCounters } from "./battle-avenge";
 import { DEATH_CASCADE_LIMIT, FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import { atLevel, ALTAR, PARASITE } from "../shared/skill-params";
-
-function buffTokenFromAltar(
-  token: BattleUnit,
-  altar: BattleUnit,
-  altarIdx: number,
-  board: BattleUnit[],
-  prefix: string,
-  ctx: BattleContext,
-) {
-  const mult = getMult(board, altarIdx);
-  const ab = atLevel(ALTAR.buff, altar.level);
-  const atkBuff = ab.atk * mult;
-  const hpBuff = ab.hp * mult;
-  token.atk += atkBuff;
-  token.hp += hpBuff;
-  pushFrame(
-    ctx,
-    "skill",
-    () => [
-      prefix,
-      seg.u(altar.name),
-      "から瘴気が溢れる。",
-      seg.u(token.name),
-      "の肉が膨れ上がる！ ",
-      seg.s(`+${atkBuff}/+${hpBuff}`),
-      " → ",
-      seg.s(`${token.atk}/${token.hp}`),
-    ],
-    "skill",
-    {
-      [token.uid]: buffAction({ atk: atkBuff, hp: hpBuff }, altar.uid),
-    },
-    FRAME_DELAY_DEATH_CHAIN,
-  );
-}
-
-function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
-  const prefix = enemyPrefix(isPlayer);
-  for (const token of board) {
-    if (token.id !== "token" || token.spawnProcessed) continue;
-    for (let aIdx = 0; aIdx < board.length; aIdx++) {
-      const altar = board[aIdx]!;
-      if (altar.id !== "altar") continue;
-      buffTokenFromAltar(token, altar, aIdx, board, prefix, ctx);
-    }
-  }
-}
+import { atLevel, PARASITE } from "../shared/skill-params";
 
 function markTokensProcessed(board: BattleUnit[]) {
   for (const u of board) {
@@ -221,8 +174,6 @@ export function resolveDeaths(ctx: BattleContext) {
 
     applyParasiteSummonReaction(ctx.pBoard, true, ctx);
     applyParasiteSummonReaction(ctx.eBoard, false, ctx);
-    applyAltarBuffs(ctx.pBoard, true, ctx);
-    applyAltarBuffs(ctx.eBoard, false, ctx);
     markTokensProcessed(ctx.pBoard);
     markTokensProcessed(ctx.eBoard);
   }

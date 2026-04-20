@@ -8,6 +8,7 @@ import {
   seg,
   aoeDamageActions,
   aoeBuffActions,
+  buffAction,
   damageAction,
   skillAction,
 } from "./battle-context";
@@ -15,7 +16,13 @@ import { resolveDeaths } from "./battle-deaths";
 import { buffAllAlive } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { HUNDRED_ARMS_SAFETY, ACID_SPLASH_DAMAGE } from "./constants";
-import { atLevel, HUNDRED_ARMS, ORGAN_GRINDER, RISEN_POPE } from "../shared/skill-params";
+import {
+  atLevel,
+  HUNDRED_ARMS,
+  ORGAN_GRINDER,
+  RISEN_POPE,
+  SIN_EATER,
+} from "../shared/skill-params";
 
 export function applyAcidSplash(
   attacker: BattleUnit,
@@ -66,6 +73,7 @@ const KNOCKOUT_HANDLERS = {
   organ_grinder: (k) =>
     processOrganGrinderKnockout(k.attacker, k.defenderBoard, k.attackerBoard, k.isPlayer, k.ctx),
   risen_pope: (k) => processRisenPopeKnockout(k.attacker, k.attackerBoard, k.isPlayer, k.ctx),
+  sin_eater: (k) => processSinEaterKnockout(k.attacker, k.attackerBoard, k.isPlayer, k.ctx),
 } satisfies Partial<Record<UnitId, KnockoutHandler>>;
 
 type KnockoutUnitId = keyof typeof KNOCKOUT_HANDLERS;
@@ -83,6 +91,34 @@ export function processKnockoutEffects(
 ) {
   const handler = getKnockoutHandler(attacker.id);
   if (handler) handler({ attacker, defenderBoard, attackerBoard, isPlayer, ctx });
+}
+
+function processSinEaterKnockout(
+  attacker: BattleUnit,
+  attackerBoard: BattleUnit[],
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  const mult = getKnockoutMult(attacker, "sin_eater", attackerBoard);
+  if (mult === 0) return;
+  const prefix = enemyPrefix(isPlayer);
+  for (let m = 0; m < mult; m++) {
+    const b = atLevel(SIN_EATER.buff, attacker.level);
+    attacker.atk += b.atk;
+    attacker.hp += b.hp;
+    pushFrame(
+      ctx,
+      "skill",
+      () => [
+        prefix,
+        seg.u(attacker.name),
+        "が屍を喰らい、殻が膨れる。",
+        seg.s(`+${b.atk}/+${b.hp}`),
+      ],
+      "skill",
+      { [attacker.uid]: buffAction(b, attacker.uid) },
+    );
+  }
 }
 
 function getKnockoutMult(unit: BattleUnit, id: UnitId, board: BattleUnit[]): number {

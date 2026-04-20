@@ -161,23 +161,3 @@ describe("resolveDeaths – token deaths do not increment avenge", () => {
     expect(skull.atk).toBe(0);
   });
 });
-
-describe("resolveDeaths – cross-board cascade", () => {
-  it("evangelist skips already-infected enemies", () => {
-    const dead1 = makeBattleUnit({ id: "beggar", hp: 0, atk: 5 });
-    const dead2 = makeBattleUnit({ id: "beggar", hp: 0, atk: 2 });
-    const evangelist = makeBattleUnit({
-      id: "evangelist",
-      name: "伝道師",
-      atk: 1,
-      hp: 10,
-      skillUses: 2,
-    });
-    const enemy1 = makeBattleUnit({ hp: 10 });
-    const enemy2 = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([dead1, dead2, evangelist], [enemy1, enemy2], null, { next: () => 0 });
-    resolveDeaths(ctx);
-    expect(enemy1.equip).toBe("infection");
-    expect(enemy2.equip).toBe("infection");
-  });
-});

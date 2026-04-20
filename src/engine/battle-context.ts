@@ -219,22 +219,6 @@ export function createBattleContext(
   };
 }
 
-export function notifyEquipInfection(
-  ctx: BattleContext,
-  prefix: string,
-  target: BattleUnit,
-  delay?: number,
-) {
-  pushFrame(
-    ctx,
-    "skill",
-    () => [prefix, seg.u(target.name), "の装備が疫病に蝕まれた！"],
-    "skill",
-    { [target.uid]: { type: "damage", value: "装備消去" } },
-    delay,
-  );
-}
-
 export function buffAllAlive(board: BattleUnit[], buff: Buff): BattleUnit[] {
   const buffed: BattleUnit[] = [];
   for (const u of board) {

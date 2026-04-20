@@ -1,6 +1,6 @@
-import type { LogSegment, DataUnitId } from "../shared/types";
+import type { DataUnitId } from "../shared/types";
 import type { DeathContext } from "./battle-deaths-handlers-unit";
-import type { AbsorbedData, BattleContext } from "./battle-context";
+import type { AbsorbedData, BattleUnit, BattleContext } from "./battle-context";
 import { enemyPrefix, seg } from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN, MAX_BOARD_SIZE } from "./constants";
 import {
@@ -15,7 +15,7 @@ import {
   OMEN_WOMB,
   STELLAR_COCOON,
   BUDDING_HYDRA,
-  DEVOURING_GRAFT,
+  GROANING_COFFIN,
   DEVOURING_WOUND,
 } from "../shared/skill-params";
 
@@ -46,7 +46,7 @@ export function handleStellarCocoonDeath({ dead, board, idx, isPlayer, ctx }: De
     enemyPrefix(isPlayer),
     seg.u(dead.name),
     "の殻が砕ける。中から何かが…… ",
-    seg.s(`${spawnAtk}/1 × ${count}`),
+    seg.s(`${spawnAtk}/1 召喚`),
   ];
   for (let i = 0; i < count; i++) {
     spawnTokenAndNotify({
@@ -65,74 +65,100 @@ export function handleStellarCocoonDeath({ dead, board, idx, isPlayer, ctx }: De
   }
 }
 
+type DevouringCtx = {
+  dead: BattleUnit;
+  board: BattleUnit[];
+  idx: number;
+  isPlayer: boolean;
+  ctx: BattleContext;
+  prefix: string;
+};
+
+function spawnAbsorbedToken(absorbed: AbsorbedData, s: DevouringCtx): void {
+  spawnTokenAndNotify({
+    board: s.board,
+    idx: s.idx,
+    name: absorbed.name,
+    atk: absorbed.atk,
+    hp: absorbed.hp,
+    isChurch: absorbed.isChurch,
+    segments: () => [
+      s.prefix,
+      seg.u(s.dead.name),
+      "の腹から",
+      seg.u(absorbed.name),
+      "が這い出した！ ",
+      seg.s(`${absorbed.atk}/${absorbed.hp} 召喚`),
+    ],
+    isPlayer: s.isPlayer,
+    ctx: s.ctx,
+    delay: FRAME_DELAY_DEATH_CHAIN,
+    spawnerUid: s.dead.uid,
+  });
+}
+
+function spawnAbsorbedUnit(absorbed: AbsorbedData, s: DevouringCtx): void {
+  const unitData = lookupUnitData(absorbed.id as DataUnitId);
+  invariant(unitData, `unknown absorbed unit id: ${absorbed.id}`);
+  const { baseAtk, baseHp } = unitData;
+  const spawned = spawnSummonedUnitAndNotify({
+    board: s.board,
+    idx: s.idx,
+    unitData,
+    atk: baseAtk,
+    hp: baseHp,
+    isChurch: absorbed.isChurch,
+    level: s.dead.level,
+    segments: () => [
+      s.prefix,
+      seg.u(s.dead.name),
+      "の腹から",
+      seg.u(absorbed.name),
+      "が這い出した！ ",
+      seg.s(`${baseAtk}/${baseHp} 召喚`),
+    ],
+    isPlayer: s.isPlayer,
+    ctx: s.ctx,
+    delay: FRAME_DELAY_DEATH_CHAIN,
+    spawnerUid: s.dead.uid,
+  });
+  if (spawned && absorbed.equip) spawned.equip = absorbed.equip;
+}
+
 export function handleDevouringGraftDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const absorbed = ctx.absorbedUnits.get(dead.uid);
   if (!absorbed) return;
   ctx.absorbedUnits.delete(dead.uid);
-  const prefix = enemyPrefix(isPlayer);
-  const decay = atLevel(DEVOURING_GRAFT.decayPercent, dead.level) / 100;
-  const decayedAtk = Math.floor(absorbed.atk * decay);
-  const decayedHp = Math.max(1, Math.floor(absorbed.hp * decay));
-  const segments = () => [
-    prefix,
-    seg.u(dead.name),
-    "の腹から",
-    seg.u(absorbed.name),
-    "が這い出した！ ",
-    seg.s(`${decayedAtk}/${decayedHp} 召喚`),
-  ];
-  const spawned =
-    absorbed.id === "token"
-      ? spawnTokenAndNotify({
-          board,
-          idx,
-          name: absorbed.name,
-          atk: decayedAtk,
-          hp: decayedHp,
-          isChurch: absorbed.isChurch,
-          segments,
-          isPlayer,
-          ctx,
-          delay: FRAME_DELAY_DEATH_CHAIN,
-          spawnerUid: dead.uid,
-        })
-      : spawnNamedUnit(
-          { ...absorbed, atk: decayedAtk, hp: decayedHp },
-          dead,
-          board,
-          idx,
-          segments,
-          isPlayer,
-          ctx,
-        );
-  if (spawned && absorbed.equip) spawned.equip = absorbed.equip;
+  const s: DevouringCtx = { dead, board, idx, isPlayer, ctx, prefix: enemyPrefix(isPlayer) };
+  if (absorbed.id === "token") {
+    spawnAbsorbedToken(absorbed, s);
+  } else {
+    spawnAbsorbedUnit(absorbed, s);
+  }
 }
 
-function spawnNamedUnit(
-  absorbed: AbsorbedData,
-  dead: DeathContext["dead"],
-  board: DeathContext["board"],
-  idx: number,
-  segments: () => LogSegment[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  const unitData = lookupUnitData(absorbed.id as DataUnitId);
-  invariant(unitData, `unknown absorbed unit id: ${absorbed.id}`);
-  return spawnSummonedUnitAndNotify({
+export function handleGroaningCoffinDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
+  const t = atLevel(GROANING_COFFIN.token, dead.level);
+  const prefix = enemyPrefix(isPlayer);
+  const spawned = spawnTokenAndNotify({
     board,
     idx,
-    unitData,
-    atk: absorbed.atk,
-    hp: absorbed.hp,
-    isChurch: absorbed.isChurch,
-    level: dead.level,
-    segments,
+    name: "骸の残骸",
+    atk: t.atk,
+    hp: t.hp,
+    isChurch: dead.isChurch,
+    segments: () => [
+      prefix,
+      seg.u(dead.name),
+      "の棺が割れる。中から何かが這い出す！ ",
+      seg.s(`${t.atk}/${t.hp} 召喚`),
+    ],
     isPlayer,
     ctx,
     delay: FRAME_DELAY_DEATH_CHAIN,
     spawnerUid: dead.uid,
   });
+  if (spawned) spawned.equip = "acid_blood";
 }
 
 export function handleBuddingHydraDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
@@ -163,7 +189,6 @@ export function handleBuddingHydraDeath({ dead, board, idx, isPlayer, ctx }: Dea
   }
 }
 
-/** devouring_wound: Faint – 敵チーム前方に1/1トークンを召喚 */
 export function handleDevouringWoundDeath({ dead, isPlayer, ctx }: DeathContext) {
   const count = atLevel(DEVOURING_WOUND.uses, dead.level);
   const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;

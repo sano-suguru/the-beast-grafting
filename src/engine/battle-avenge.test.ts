@@ -1,12 +1,6 @@
 import { processAvenge, incrementAvengeCounters } from "./battle-avenge";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
-import {
-  atLevel,
-  GRINNING_SKULL,
-  ARCHANGEL,
-  GROANING_COFFIN,
-  WAILING_CURSECHILD,
-} from "../shared/skill-params";
+import { atLevel, GRINNING_SKULL, ARCHANGEL, WAILING_CURSECHILD } from "../shared/skill-params";
 
 describe("processAvenge – grinning_skull (independent counters)", () => {
   it("buffs all allies when counter reaches threshold", () => {
@@ -114,57 +108,21 @@ describe("processAvenge – archangel (independent counters)", () => {
 
 describe("incrementAvengeCounters – independent per-unit", () => {
   it("increments only avenge units, not others", () => {
-    const coffin = makeBattleUnit({ id: "groaning_coffin", hp: 6 });
+    const arch = makeBattleUnit({ id: "archangel", hp: 8 });
     const rel = makeBattleUnit({ id: "grinning_skull", hp: 8 });
     const other = makeBattleUnit({ id: "rat", hp: 3 });
-    const board = [coffin, rel, other];
+    const board = [arch, rel, other];
     incrementAvengeCounters(board);
-    expect(coffin.avengeDeathCount).toBe(1);
+    expect(arch.avengeDeathCount).toBe(1);
     expect(rel.avengeDeathCount).toBe(1);
     expect(other.avengeDeathCount).toBe(0);
   });
 
   it("does not increment dead avenge units", () => {
-    const coffin = makeBattleUnit({ id: "groaning_coffin", hp: 0 });
-    const board = [coffin];
+    const arch = makeBattleUnit({ id: "archangel", hp: 0 });
+    const board = [arch];
     incrementAvengeCounters(board);
-    expect(coffin.avengeDeathCount).toBe(0);
-  });
-});
-
-describe("processAvenge – groaning_coffin", () => {
-  it("deals damage to random enemy when threshold reached", () => {
-    const coffin = makeBattleUnit({
-      id: "groaning_coffin",
-      name: "唸る棺",
-      atk: 2,
-      hp: 5,
-      avengeDeathCount: 2,
-    });
-    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, hp: 10 });
-    const board = [coffin];
-    const ctx = makeContext(board, [enemy]);
-    processAvenge(board, true, ctx);
-    const dmg = atLevel(GROANING_COFFIN.damage, 1);
-    expect(enemy.hp).toBe(10 - dmg);
-    expect(coffin.avengeDeathCount).toBe(0);
-    expect(ctx.frames).toHaveLength(1);
-  });
-
-  it("does not trigger below threshold", () => {
-    const coffin = makeBattleUnit({
-      id: "groaning_coffin",
-      name: "唸る棺",
-      atk: 2,
-      hp: 5,
-      avengeDeathCount: 1,
-    });
-    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, hp: 10 });
-    const board = [coffin];
-    const ctx = makeContext(board, [enemy]);
-    processAvenge(board, true, ctx);
-    expect(enemy.hp).toBe(10);
-    expect(ctx.frames).toHaveLength(0);
+    expect(arch.avengeDeathCount).toBe(0);
   });
 });
 

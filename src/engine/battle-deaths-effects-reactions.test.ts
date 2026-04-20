@@ -7,7 +7,7 @@ import {
   callDeathHandler as callHandler,
 } from "./test-helpers";
 import { MAX_BOARD_SIZE } from "./constants";
-import { atLevel, SIN_EATER, CATHEDRAL, BEELZEBUB } from "../shared/skill-params";
+import { atLevel, CATHEDRAL, BEELZEBUB } from "../shared/skill-params";
 
 describe("handleBeelzebubSpawns", () => {
   it("spawns 4/4 fly when beelzebub is alive (Lv1)", () => {
@@ -143,46 +143,5 @@ describe("resolveDeaths – cathedral spawns on ally death", () => {
     const ctx = makeContext([dying, cathedral], [makeBattleUnit({ hp: 20 })]);
     resolveDeaths(ctx);
     expect(ctx.pBoard.filter((u) => u.name === "信徒")).toHaveLength(0);
-  });
-});
-
-describe("resolveDeaths – sin_eater absorbs dead atk", () => {
-  const uses = atLevel(SIN_EATER.uses, 1);
-
-  it("absorbs dead unit atk up to cap", () => {
-    const dying = makeBattleUnit({ id: "beggar", atk: 10, hp: 0 });
-    const eater = makeBattleUnit({ id: "sin_eater", name: "黒蟲", atk: 3, hp: 4, skillUses: uses });
-    const ctx = makeContext([dying, eater], [makeBattleUnit({ hp: 10 })]);
-    resolveDeaths(ctx);
-    const cap = atLevel(SIN_EATER.atkCap, 1);
-    expect(eater.atk).toBe(3 + Math.min(10, cap));
-  });
-
-  it("caps absorption at level-based limit", () => {
-    const dying = makeBattleUnit({ id: "beggar", atk: 100, hp: 0 });
-    const eater = makeBattleUnit({ id: "sin_eater", name: "黒蟲", atk: 3, hp: 4, skillUses: uses });
-    const ctx = makeContext([dying, eater], [makeBattleUnit({ hp: 10 })]);
-    resolveDeaths(ctx);
-    const cap = atLevel(SIN_EATER.atkCap, 1);
-    expect(eater.atk).toBe(3 + cap);
-  });
-
-  it("stops absorbing after uses are exhausted", () => {
-    const cap = atLevel(SIN_EATER.atkCap, 1);
-    const eater = makeBattleUnit({
-      id: "sin_eater",
-      name: "黒蟲",
-      atk: 3,
-      hp: 10,
-      skillUses: uses,
-    });
-    // uses 回 + 1 回死亡させる → uses 回目まで吸収、それ以降は吸収しない
-    const dying = Array.from({ length: uses + 1 }, () =>
-      makeBattleUnit({ id: "beggar", atk: 10, hp: 0 }),
-    );
-    const ctx = makeContext([...dying, eater], [makeBattleUnit({ hp: 50 })]);
-    resolveDeaths(ctx);
-    expect(eater.atk).toBe(3 + cap * uses);
-    expect(eater.skillUses).toBe(0);
   });
 });

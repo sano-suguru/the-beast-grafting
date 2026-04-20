@@ -2,7 +2,13 @@ import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
 import { atLevel } from "../../shared/skill-params";
-import { GUT_HAND, ROT_RING, CATACOMB_RAT } from "../../shared/skill-params-shop";
+import {
+  GUT_HAND,
+  ROT_RING,
+  CATACOMB_RAT,
+  ASH_FUNGUS,
+  ALTAR,
+} from "../../shared/skill-params-shop";
 import { MARKET_VULTURE } from "../../shared/skill-params";
 import {
   activeNights,
@@ -106,4 +112,40 @@ export function applyCatacombRatAccumulation(
   for (const t of targets) {
     t.buffAtk += Math.floor(atkBuff * estimatedTriggers);
   }
+}
+
+/**
+ * ash_fungus (Penguin): ターン開始 – Lv2以上の味方2体に+buff/+buff。
+ * 対象数をチーム内Lv2+ユニット数で制限し、activeNights × targets × buff を近似分配。
+ */
+export function applyAshFungusAccumulation(
+  ashFungus: UnitInstance,
+  team: UnitInstance[],
+  night: number,
+  rng: Rng,
+): void {
+  const nights = activeNights(ashFungus.tier as Tier, night);
+  if (nights <= 0) return;
+  const buff = atLevel(ASH_FUNGUS.buff, ashFungus.level);
+  const eligible = team.filter((u) => u.uid !== ashFungus.uid && u.level >= ASH_FUNGUS.minLevel);
+  const targetsPerTrigger = Math.min(ASH_FUNGUS.targets, eligible.length);
+  if (targetsPerTrigger <= 0) return;
+  const totalBuff = nights * buff * targetsPerTrigger;
+  distributeBuffRandomly(team, totalBuff, totalBuff, rng);
+}
+
+/**
+ * altar: ターン終了時にLv3味方がいれば自身にバフ。
+ * sim 用の粗推定 — 実ゲーム計算からは参照しない。
+ */
+const ALTAR_HIGH_LEVEL_FRIEND_PRESENCE_ESTIMATE = 0.5;
+
+export function applyAltarAccumulation(altar: UnitInstance, night: number): void {
+  const nights = activeNights(altar.tier as Tier, night);
+  if (nights <= 0) return;
+  const buff = atLevel(ALTAR.buff, altar.level);
+  const triggers = Math.floor(nights * ALTAR_HIGH_LEVEL_FRIEND_PRESENCE_ESTIMATE);
+  if (triggers <= 0) return;
+  altar.buffAtk += buff.atk * triggers;
+  altar.buffHp += buff.hp * triggers;
 }

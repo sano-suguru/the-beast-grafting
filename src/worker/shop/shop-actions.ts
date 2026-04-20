@@ -2,8 +2,9 @@ import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
 import type { OriginId, UnitInstance } from "../../shared/types";
 import type { BoardUnit } from "../../shared/board-unit";
-import { graftUnits } from "../../engine/shop-effects";
+import { graftUnits, applyAltarEndOfTurn, calcAlchemyDiscount } from "../../engine/shop-effects";
 import { applyCorpseBrokerDoseBuff } from "../../engine/shop-effects-dose";
+import { isAlchemy } from "../../shared/data/items";
 import { CULTIST_LIFE_COST, CULTIST_BLOOD_GAIN } from "../../shared/constants";
 import type { ShopStateRow } from "./shop-state-row";
 import { boardToInstances, instancesToBoard, itemSlotsFromJson } from "./shop-serialization";
@@ -24,11 +25,14 @@ export function executeEquip(
   if (!itemSlot) return err({ type: "INVALID_TARGET", reason: "empty_item_slot" });
   const item = itemSlot.item;
 
-  if (state.blood < item.cost)
+  const discount = isAlchemy(item) ? calcAlchemyDiscount(state.board) : 0;
+  const effectiveCost = Math.max(0, item.cost - discount);
+
+  if (state.blood < effectiveCost)
     return err({
       type: "INSUFFICIENT_RESOURCE",
       resource: "blood",
-      minimum: item.cost,
+      minimum: effectiveCost,
       current: state.blood,
     });
 
@@ -44,18 +48,17 @@ export function executeEquip(
     equip: item.equip ?? target.equip,
   };
 
-  const dose =
-    item.equip === null
-      ? applyCorpseBrokerDoseBuff(
-          newBoard as (UnitInstance | null)[],
-          boardIndex,
-          state.corpseBrokerUses,
-        )
-      : { board: newBoard, corpseBrokerUses: state.corpseBrokerUses };
+  const dose = isAlchemy(item)
+    ? applyCorpseBrokerDoseBuff(
+        newBoard as (UnitInstance | null)[],
+        boardIndex,
+        state.corpseBrokerUses,
+      )
+    : { board: newBoard, corpseBrokerUses: state.corpseBrokerUses };
 
   return ok({
     ...state,
-    blood: state.blood - item.cost,
+    blood: state.blood - effectiveCost,
     board: instancesToBoard(dose.board as (UnitInstance | null)[]),
     shopItems: state.shopItems.map((u, i) => (i === shopItemIndex ? null : u)),
     corpseBrokerUses: dose.corpseBrokerUses,
@@ -181,25 +184,7 @@ export function executeCultist(
 
 export function executeUndo(state: ShopStateRow): Result<ShopStateRow, GameError> {
   if (!state.undoSnapshot) return err({ type: "PRECONDITION_FAILED", reason: "no_undo_available" });
-
-  const snap = state.undoSnapshot;
-  return ok({
-    ...state,
-    blood: snap.blood,
-    board: snap.board,
-    shopUnits: snap.shopUnits,
-    shopItems: snap.shopItems,
-    freeRoll: snap.freeRoll,
-    cultistUsed: snap.cultistUsed,
-    rotRingUses: snap.rotRingUses,
-    corpseBrokerUses: snap.corpseBrokerUses,
-    activeEvent: snap.activeEvent,
-    rngS0: snap.rngS0,
-    rngS1: snap.rngS1,
-    life: snap.life,
-    rewardSlots: snap.rewardSlots,
-    undoSnapshot: null,
-  });
+  return ok({ ...state, ...state.undoSnapshot, undoSnapshot: null });
 }
 
 export function executeReady(
@@ -209,7 +194,8 @@ export function executeReady(
   if (!instances.some((u) => u !== null))
     return err({ type: "PRECONDITION_FAILED", reason: "board_empty" });
 
-  const finalBoard = instancesToBoard(instances);
+  const boardAfterEot = applyAltarEndOfTurn(instances);
+  const finalBoard = instancesToBoard(boardAfterEot);
 
   return ok({
     state: { ...state, board: finalBoard, undoSnapshot: null },

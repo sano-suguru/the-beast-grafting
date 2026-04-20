@@ -1,6 +1,11 @@
 import type { ItemData, ItemId } from "../types";
 import { EQUIPS } from "./equips";
 
+/** 錬金薬（消耗品）かどうか。equip=null のアイテムは装備付与ではなく一時的な強化薬。 */
+export function isAlchemy(item: ItemData): boolean {
+  return item.equip === null;
+}
+
 export const ITEMS: Record<ItemId, ItemData> = {
   preservative: {
     id: "preservative",

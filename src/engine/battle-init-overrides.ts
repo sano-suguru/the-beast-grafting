@@ -4,17 +4,15 @@ import {
   atLevel,
   EYE,
   CATHEDRAL,
-  SIN_EATER,
   PLAGUE_BELL,
   AMNIOTIC_ARMOR,
-  MACHINE,
   WAILING_CURSECHILD,
   INSATIABLE_MAW,
   GRINNING_SKULL,
   BONE_TREE,
   CARRION_SENTINEL,
 } from "../shared/skill-params";
-import { EVANGELIST, BEELZEBUB } from "../shared/skill-params-death";
+import { BEELZEBUB } from "../shared/skill-params-death";
 
 const INIT_OVERRIDES = {
   eye: (bu: BattleUnit) => {
@@ -26,20 +24,11 @@ const INIT_OVERRIDES = {
   cathedral: (bu: BattleUnit) => {
     bu.skillUses = atLevel(CATHEDRAL.uses, bu.level);
   },
-  sin_eater: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(SIN_EATER.uses, bu.level);
-  },
   plague_bell: (bu: BattleUnit) => {
     bu.skillUses = atLevel(PLAGUE_BELL.uses, bu.level);
   },
   amniotic_armor: (bu: BattleUnit) => {
     bu.skillUses = atLevel(AMNIOTIC_ARMOR.uses, bu.level);
-  },
-  machine: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(MACHINE.uses, bu.level);
-  },
-  evangelist: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(EVANGELIST.uses, bu.level);
   },
   wailing_cursechild: (bu: BattleUnit) => {
     bu.skillUses = atLevel(WAILING_CURSECHILD.uses, bu.level);

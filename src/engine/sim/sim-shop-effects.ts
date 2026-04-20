@@ -5,9 +5,10 @@ import {
   applyRotRingAccumulation,
   applyMarketVultureAccumulation,
   applyCatacombRatAccumulation,
+  applyAshFungusAccumulation,
+  applyAltarAccumulation,
 } from "./sim-shop-effects-buy";
 import {
-  applyAshFungusAccumulation,
   applyBoneJawAccumulation,
   applyCorpseBrokerAccumulation,
   applyCorpsePeckerAccumulation,
@@ -27,10 +28,17 @@ function applyBuyPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: n
   }
 }
 
-function applySellPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: number, rng: Rng) {
+function applyTurnPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: number, rng: Rng) {
   switch (unit.id) {
     case "ash_fungus":
       return applyAshFungusAccumulation(unit, team, night, rng);
+    case "altar":
+      return applyAltarAccumulation(unit, night);
+  }
+}
+
+function applySellPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: number, rng: Rng) {
+  switch (unit.id) {
     case "corpse_broker":
       return applyCorpseBrokerAccumulation(unit, team, night, rng);
     case "bone_jaw":
@@ -50,5 +58,6 @@ export function applySimShopEffects(team: UnitInstance[], night: number, rng: Rn
   for (const unit of team) {
     applyBuyPhaseEffects(unit, team, night, rng);
     applySellPhaseEffects(unit, team, night, rng);
+    applyTurnPhaseEffects(unit, team, night, rng);
   }
 }

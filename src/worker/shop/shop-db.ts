@@ -200,6 +200,7 @@ export async function saveShopState(
   state: ShopStateRow,
   life?: number,
   runId?: string,
+  playerId?: string,
 ): Promise<Result<unknown, InfraError | GameError>> {
   const now = new Date();
   const shopUpdate = db
@@ -208,8 +209,11 @@ export async function saveShopState(
     .where(and(eq(shopStates.id, shopRowId), eq(shopStates.version, expectedVersion)))
     .returning({ id: shopStates.id });
 
-  if (life !== undefined && runId) {
-    const runUpdate = db.update(runs).set({ life, updatedAt: now }).where(eq(runs.id, runId));
+  if (life !== undefined && runId && playerId) {
+    const runUpdate = db
+      .update(runs)
+      .set({ life, updatedAt: now })
+      .where(and(eq(runs.id, runId), eq(runs.playerId, playerId)));
     const batchResult = await safeAsync(() => db.batch([shopUpdate, runUpdate] as const), dbErr);
     if (batchResult.isErr()) return batchResult;
     const [shopRows] = batchResult.value;
@@ -228,12 +232,17 @@ export async function saveShopState(
 export async function ensureShopSeed(
   db: DrizzleD1Database,
   runId: string,
+  playerId: string,
   existing: number | null,
 ): Promise<Result<number, InfraError>> {
   if (existing != null) return ok(existing);
   const seed = generateShopSeed();
   const result = await safeAsync(
-    () => db.update(runs).set({ shopSeed: seed, updatedAt: new Date() }).where(eq(runs.id, runId)),
+    () =>
+      db
+        .update(runs)
+        .set({ shopSeed: seed, updatedAt: new Date() })
+        .where(and(eq(runs.id, runId), eq(runs.playerId, playerId))),
     dbErr,
   );
   return result.isErr() ? err(result.error) : ok(seed);
@@ -255,10 +264,7 @@ export function upsertShopState(db: DrizzleD1Database, runId: string, state: Sho
           createdAt: now,
           updatedAt: now,
         })
-        .onConflictDoUpdate({
-          target: [shopStates.runId, shopStates.night],
-          set: { ...cols, version: 1, updatedAt: now },
-        }),
+        .onConflictDoNothing({ target: [shopStates.runId, shopStates.night] }),
     dbErr,
   );
 }

@@ -83,11 +83,7 @@ export const PLAGUE_BELL = {
 // ── 被弾スキル ──
 
 export const TUMOR_GUARDIAN = {
-  buff: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-  ] as SB,
+  damage: [3, 6, 9] as SN,
 };
 
 export const TEMPLAR = {
@@ -122,15 +118,6 @@ export const AMNIOTIC_ARMOR = {
   uses: [2, 3, 4] as SN,
 };
 
-export const MACHINE = {
-  buff: [
-    { atk: 1, hp: 1 },
-    { atk: 1, hp: 2 },
-    { atk: 2, hp: 2 },
-  ] as SB,
-  uses: [3, 3, 3] as SN,
-};
-
 // ── 戦闘スキル（撃破） ──
 
 export const HUNDRED_ARMS = {
@@ -150,6 +137,24 @@ export const RISEN_POPE = {
   ] as SB,
 };
 
+// ── 開戦スキル（追加） ──
+
+/** evangelist: SoB – 最高HPの敵のHPをN%削減 */
+export const EVANGELIST = {
+  reductionPercent: [33, 66, 99] as SN,
+};
+
+// ── 戦闘スキル（撃破）追加 ──
+
+/** sin_eater: 撃破 – 自身に+N/+N */
+export const SIN_EATER = {
+  buff: [
+    { atk: 3, hp: 3 },
+    { atk: 6, hp: 6 },
+    { atk: 9, hp: 9 },
+  ] as SB,
+};
+
 // ── 死亡スキル ──
 export {
   RAT,
@@ -162,13 +167,11 @@ export {
   MAIDEN,
   HANGED_MAN,
   SERAPH,
-  EVANGELIST,
-  SIN_EATER,
   CATHEDRAL,
   BEELZEBUB,
   OMEN_WOMB,
   STELLAR_COCOON,
-  DEVOURING_GRAFT,
+  GROANING_COFFIN,
   CHOLERA,
   DEVOURING_WOUND,
   SPITE_BEAST,
@@ -193,11 +196,6 @@ export const ARCHANGEL = {
     { atk: 6, hp: 6 },
     { atk: 8, hp: 8 },
   ] as SB,
-};
-
-export const GROANING_COFFIN = {
-  threshold: 2,
-  damage: [3, 5, 7] as SN,
 };
 
 export const WAILING_CURSECHILD = {
@@ -257,6 +255,7 @@ export {
   BUDDING_HYDRA,
   BONE_TREE,
   ASH_FUNGUS,
+  MACHINE,
   TAINTED_PLACENTA,
   CORPSE_BROKER,
   CHALICE,

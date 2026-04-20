@@ -1,9 +1,8 @@
 import type { UnitId } from "../shared/types";
 import { pushFrame, enemyPrefix, seg, buffAction, skillAction } from "./battle-context";
-import { atLevel, CORRODING_MOLD } from "../shared/skill-params";
-import { DEVOURING_GRAFT } from "../shared/skill-params-death";
+import { atLevel, CORRODING_MOLD, EVANGELIST } from "../shared/skill-params";
 import { getInitOverride } from "./battle-init-overrides";
-import type { SkillContext } from "./battle-skills-util";
+import { applySkillDamage, type SkillContext } from "./battle-skills-util";
 
 export function applyDevouringGraftSkill({ u, isPlayer, ctx }: SkillContext) {
   const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
@@ -19,26 +18,40 @@ export function applyDevouringGraftSkill({ u, isPlayer, ctx }: SkillContext) {
     isChurch: pred.isChurch,
     equip: pred.equip,
   });
-  const absorbRate = atLevel(DEVOURING_GRAFT.absorbPercent, u.level) / 100;
-  const gainedAtk = Math.floor(pred.atk * absorbRate);
-  const gainedHp = Math.floor(pred.hp * absorbRate);
-  u.atk += gainedAtk;
-  u.hp += gainedHp;
   allyBoard.splice(idx - 1, 1);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
     "skill",
-    () => [
-      prefix,
-      seg.u(u.name),
-      "が",
-      seg.u(pred.name),
-      "を丸呑みにした！ ",
-      seg.s(`+${gainedAtk}/+${gainedHp}`),
-    ],
+    () => [prefix, seg.u(u.name), "が", seg.u(pred.name), "を丸呑みにした！"],
     "skill",
-    { [u.uid]: buffAction({ atk: gainedAtk, hp: gainedHp }, u.uid) },
+    { [u.uid]: skillAction() },
+  );
+}
+
+export function applyEvangelistSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
+  const aliveTargets = targetArr.filter((e) => e.hp > 0);
+  if (aliveTargets.length === 0) return;
+  let target = aliveTargets[0]!;
+  for (const e of aliveTargets) {
+    if (e.hp > target.hp) target = e;
+  }
+  const percent = atLevel(EVANGELIST.reductionPercent, u.level);
+  const hpBefore = target.hp;
+  const dmg = Math.max(1, Math.floor((hpBefore * percent) / 100));
+  applySkillDamage(
+    u,
+    target,
+    dmg,
+    () => [
+      seg.u(u.name),
+      "の瘴気が",
+      seg.u(target.name),
+      "に纏わりつく。",
+      seg.hp(`${hpBefore}→${Math.max(0, target.hp)}`),
+    ],
+    isPlayer,
+    ctx,
   );
 }
 

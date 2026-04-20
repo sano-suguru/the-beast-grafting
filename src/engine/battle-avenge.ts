@@ -2,23 +2,8 @@ import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import type { Scaled, Buff } from "../shared/skill-params";
 import { buffAllAlive } from "./battle-context";
-import {
-  pushFrame,
-  takeDamage,
-  enemyPrefix,
-  seg,
-  skillDamageActions,
-  aoeBuffActions,
-  buffAction,
-} from "./battle-context";
-import { mustGet } from "../shared/invariant";
-import {
-  atLevel,
-  GRINNING_SKULL,
-  ARCHANGEL,
-  GROANING_COFFIN,
-  WAILING_CURSECHILD,
-} from "../shared/skill-params";
+import { pushFrame, enemyPrefix, seg, aoeBuffActions, buffAction } from "./battle-context";
+import { atLevel, GRINNING_SKULL, ARCHANGEL, WAILING_CURSECHILD } from "../shared/skill-params";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 
 type AvengeCtx = {
@@ -72,33 +57,6 @@ function handleArchangel({ u, isPlayer, ctx }: AvengeCtx) {
   );
 }
 
-function handleGroaningCoffin({ u, isPlayer, ctx }: AvengeCtx) {
-  const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
-  const alive = enemyBoard.filter((e) => e.hp > 0);
-  if (alive.length === 0) return;
-  const idx = Math.floor(ctx.rng.next() * alive.length);
-  const target = mustGet(alive, idx, "coffin target");
-  const dmg = atLevel(GROANING_COFFIN.damage, u.level);
-  const before = target.hp;
-  takeDamage(target, dmg, u.uid);
-  const prefix = enemyPrefix(isPlayer);
-  pushFrame(
-    ctx,
-    "skill",
-    () => [
-      prefix,
-      seg.u(u.name),
-      "の蓋が軋み、隙間から何かが漏れ出る。",
-      seg.u(target.name),
-      " ",
-      seg.hp(`${before}→${Math.max(0, target.hp)}`),
-    ],
-    "skill",
-    skillDamageActions(u, target, dmg),
-    FRAME_DELAY_DEATH_CHAIN,
-  );
-}
-
 function handleWailingCursechild(c: AvengeCtx) {
   if (c.u.skillUses <= 0) return;
   c.u.skillUses -= 1;
@@ -114,7 +72,6 @@ interface AvengeSpec {
 const AVENGE_SPECS: AvengeSpec[] = [
   { id: "grinning_skull", threshold: GRINNING_SKULL.threshold, apply: handleGrinningSkull },
   { id: "archangel", threshold: ARCHANGEL.threshold, apply: handleArchangel },
-  { id: "groaning_coffin", threshold: GROANING_COFFIN.threshold, apply: handleGroaningCoffin },
   {
     id: "wailing_cursechild",
     threshold: WAILING_CURSECHILD.threshold,

@@ -616,6 +616,36 @@ describe("executeUndo", () => {
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().type).toBe("PRECONDITION_FAILED");
   });
+
+  test("restores all ShopUndoSnapshot counters (boneTreeUses / rotRingUses / corpseBrokerUses)", () => {
+    const snapshot = {
+      blood: 10,
+      board: [null, null, null, null, null] as (BoardUnit | null)[],
+      shopUnits: [] as (ShopSlotJson | null)[],
+      shopItems: [] as (ShopItemSlotJson | null)[],
+      freeRoll: false,
+      cultistUsed: false,
+      rotRingUses: 2,
+      boneTreeUses: 3,
+      corpseBrokerUses: 1,
+      activeEvent: null,
+      rngS0: 0,
+      rngS1: 0,
+      life: 5,
+      rewardSlots: [],
+    };
+    const state = makeState({
+      blood: 0,
+      rotRingUses: 0,
+      boneTreeUses: 0,
+      corpseBrokerUses: 0,
+      undoSnapshot: snapshot,
+    });
+    const next = executeUndo(state)._unsafeUnwrap();
+    expect(next.rotRingUses).toBe(2);
+    expect(next.boneTreeUses).toBe(3);
+    expect(next.corpseBrokerUses).toBe(1);
+  });
 });
 
 describe("rotting_cargo event", () => {
@@ -704,5 +734,49 @@ describe("executeReady", () => {
     const result = executeReady(state);
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().state.undoSnapshot).toBeNull();
+  });
+});
+
+describe("executeEquip – machine (Squirrel) discount", () => {
+  it("reduces alchemy item cost by machine Lv1 discount (1)", () => {
+    const state = makeState({
+      blood: 3,
+      board: [makeBoardUnit(), makeBoardUnit("machine"), null, null, null],
+      shopItems: [makeItemSlot("preservative"), null],
+    });
+    const result = executeEquip(state, 0, 0);
+    expect(result.isOk()).toBe(true);
+    // preservative cost=3, machine discount=1 → effectiveCost=2, blood remaining=1
+    expect(result._unsafeUnwrap().blood).toBe(1);
+  });
+
+  it("stacks two machine discounts", () => {
+    const state = makeState({
+      blood: 3,
+      board: [makeBoardUnit(), makeBoardUnit("machine"), makeBoardUnit("machine"), null, null],
+      shopItems: [makeItemSlot("preservative"), null],
+    });
+    const result = executeEquip(state, 0, 0);
+    expect(result.isOk()).toBe(true);
+    // discount=2 → effectiveCost=1, blood remaining=2
+    expect(result._unsafeUnwrap().blood).toBe(2);
+  });
+
+  it("discount does not reduce cost below 0", () => {
+    const state = makeState({
+      blood: 10,
+      board: [
+        makeBoardUnit(),
+        makeBoardUnit("machine"),
+        makeBoardUnit("machine"),
+        makeBoardUnit("machine"),
+        null,
+      ],
+      shopItems: [makeItemSlot("preservative"), null],
+    });
+    const result = executeEquip(state, 0, 0);
+    expect(result.isOk()).toBe(true);
+    // discount=3 = cost=3 → effectiveCost=0, blood unchanged
+    expect(result._unsafeUnwrap().blood).toBe(10);
   });
 });

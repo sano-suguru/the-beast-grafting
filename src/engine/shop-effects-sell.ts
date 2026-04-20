@@ -1,8 +1,7 @@
 import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ItemData } from "../shared/types";
 import type { Rng } from "./rng";
-import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
-import { atLevel, ASH_FUNGUS, BONE_JAW, ROT_FEEDER, CORPSE_PECKER } from "../shared/skill-params";
+import { atLevel, BONE_JAW, ROT_FEEDER, CORPSE_PECKER } from "../shared/skill-params";
 import { buffRandomUnit } from "./buff-utils";
 
 interface SellResult {
@@ -40,32 +39,15 @@ function getCorpsePeckerSelfSellItems(soldUnit: UnitInstance): ItemData[] | unde
   return items.length > 0 ? items : undefined;
 }
 
-// ── Passive sell reactions (remaining board units react to any sell) ──
-
-function applyAshFungusSell(soldUnit: UnitInstance, nextBoard: (UnitInstance | null)[], rng: Rng) {
-  const totalStats = effectiveAtk(soldUnit) + effectiveHp(soldUnit);
-  for (let i = 0; i < nextBoard.length; i++) {
-    const u = nextBoard[i];
-    if (!u || u.id !== "ash_fungus") continue;
-    const buff = Math.floor(totalStats * (atLevel(ASH_FUNGUS.percent, u.level) / 100));
-    if (buff <= 0) continue;
-    const half = Math.floor(buff / 2);
-    buffRandomUnit(nextBoard, buff - half, half, rng, i);
-  }
-}
-
 export const applySellEffects = (
   soldUnit: UnitInstance,
   currentBoard: (UnitInstance | null)[],
   rng: Rng,
 ): SellResult => {
   const nextBoard = [...currentBoard];
-  // Phase 1: Self-sell triggers (sold unit's own sell ability)
   applyBoneJawSelfSell(soldUnit, nextBoard, rng);
   const selfShopBuff = getRotFeederSelfSellBuff(soldUnit);
   const stockItems = getCorpsePeckerSelfSellItems(soldUnit);
-  // Phase 2: Passive sell reactions (remaining board units)
-  applyAshFungusSell(soldUnit, nextBoard, rng);
   return {
     board: nextBoard,
     shopBuff: selfShopBuff,

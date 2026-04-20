@@ -19,6 +19,7 @@ export function applyCorpseBrokerDoseBuff(
   let totalHpBuff = 0;
   for (const u of board) {
     if (!u || u.id !== "corpse_broker") continue;
+    if (u.uid === target.uid) continue;
     totalHpBuff += atLevel(CORPSE_BROKER.hpBuff, u.level);
   }
 

@@ -10,14 +10,7 @@ import {
 } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
-import {
-  atLevel,
-  EYE,
-  RELIC_SWORD,
-  PLAGUE_BELL,
-  MACHINE,
-  CRAWLING_CORD,
-} from "../shared/skill-params";
+import { atLevel, EYE, RELIC_SWORD, PLAGUE_BELL, CRAWLING_CORD } from "../shared/skill-params";
 
 export function applyEyeGaze(
   u: BattleUnit,
@@ -97,34 +90,6 @@ export function applyPlagueBellToll(
   );
   u.skillUses -= 1;
   resolveDeaths(ctx);
-}
-
-export function applyMachineTransfusion(
-  u: BattleUnit,
-  board: BattleUnit[],
-  prefix: string,
-  ctx: BattleContext,
-) {
-  const front = board[0];
-  if (!front || u.skillUses <= 0) return;
-  const b = atLevel(MACHINE.buff, u.level);
-  front.atk += b.atk;
-  front.hp += b.hp;
-  u.skillUses -= 1;
-  pushFrame(
-    ctx,
-    "skill",
-    () => [
-      prefix,
-      seg.u(u.name),
-      "が",
-      seg.u(front.name),
-      "に不浄な血を送る。",
-      seg.s(`+${b.atk}/+${b.hp}`),
-    ],
-    "skill",
-    { [u.uid]: skillAction(), [front.uid]: buffAction(b, u.uid) },
-  );
 }
 
 export function applyCrawlingCordBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {

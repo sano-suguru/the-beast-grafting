@@ -121,8 +121,8 @@ describe("runStartSkills – brains and edge cases", () => {
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
     const ctx = makeContext([fodder, graft, brains], [makeBattleUnit({ hp: 10 })]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(graft.atk).toBe(3 + Math.floor(2 * 0.7));
-    expect(graft.hp).toBe(6 + Math.floor(3 * 0.7));
+    expect(graft.atk).toBe(3); // no stat gain on SoB
+    expect(graft.hp).toBe(6);
     expect(ctx.pBoard).toHaveLength(2);
   });
 
@@ -132,6 +132,16 @@ describe("runStartSkills – brains and edge cases", () => {
     const ctx = makeContext([plain], [target]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(target.hp).toBe(5);
+  });
+
+  it("brains + evangelist: HP-percent shred compounds strictly monotonically", () => {
+    const ev = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 1, hp: 8, level: 1 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
+    const target = makeBattleUnit({ hp: 100 });
+    const ctx = makeContext([ev, brains], [target]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    // Lv1=33%: 100 → 67 → floor(67*0.33)=22 damage → 45
+    expect(target.hp).toBe(45);
   });
 
   it("does nothing when target array is empty", () => {
@@ -165,25 +175,6 @@ describe("applyBeforeAttackSkills", () => {
     const ctx = makeContext([front], [makeBattleUnit()]);
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(ctx.frames).toHaveLength(0);
-  });
-
-  it("machine buffs frontmost ally +1/+1 per trigger", () => {
-    const front = makeBattleUnit({ atk: 5, hp: 5 });
-    const machine = makeBattleUnit({ id: "machine", name: "輸血機械", skillUses: 3 });
-    const ctx = makeContext([front, machine], [makeBattleUnit()]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(front.atk).toBe(6);
-    expect(front.hp).toBe(6);
-    expect(machine.skillUses).toBe(2);
-  });
-
-  it("machine stops after skillUses exhausted", () => {
-    const front = makeBattleUnit({ atk: 5, hp: 5 });
-    const machine = makeBattleUnit({ id: "machine", name: "輸血機械", skillUses: 0 });
-    const ctx = makeContext([front, machine], [makeBattleUnit()]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(front.atk).toBe(5);
-    expect(front.hp).toBe(5);
   });
 });
 
@@ -393,6 +384,29 @@ describe("needleshell_worm – 攻撃後", () => {
     applyAfterAttackSkills(worm, board, [enemy], true, ctx);
     expect(b1.hp).toBe(0); // b1は死亡(0以下)
     expect(b2.hp).toBe(4); // リターゲットでb2が1ダメ
+  });
+
+  it("L2: b1が生存し2回被弾した場合、2フレーム pushされる（各1ダメ）", () => {
+    const worm = makeBattleUnit({
+      id: "needleshell_worm",
+      name: "針殻の蟲",
+      atk: 3,
+      hp: 7,
+      level: 2,
+    });
+    const b1 = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 5 });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 10 });
+    const board = [worm, b1];
+    const ctx = makeContext(board, [enemy]);
+    const framesBefore = ctx.frames.length;
+    applyAfterAttackSkills(worm, board, [enemy], true, ctx);
+    const addedFrames = ctx.frames.length - framesBefore;
+    expect(addedFrames).toBe(2);
+    expect(b1.hp).toBe(3);
+    const lastFrame = ctx.frames[ctx.frames.length - 1]!;
+    const b1Action = lastFrame.actions[b1.uid];
+    expect(b1Action?.type).toBe("damage");
+    expect(b1Action?.damage).toBe(1);
   });
 
   it("後方の味方が被弾スキル持ちの場合チェーン発動", () => {

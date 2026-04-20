@@ -16,6 +16,7 @@ import {
 } from "./battle-skills-start";
 import {
   applyDevouringGraftSkill,
+  applyEvangelistSkill,
   applyCorrodingMoldSkill,
   applyMimickingFleshSkill,
 } from "./battle-skills-start-pred";
@@ -23,7 +24,6 @@ import {
   applyEyeGaze,
   applyRelicSwordBuff,
   applyPlagueBellToll,
-  applyMachineTransfusion,
   applyCrawlingCordBuff,
 } from "./battle-skills-before-attack";
 
@@ -39,6 +39,7 @@ const START_SKILL_HANDLERS = {
   market_vulture: applyMarketVultureSkill,
   paladin: applyPaladinSkill,
   holy_fire: applyHolyFireSkill,
+  evangelist: applyEvangelistSkill,
   devouring_graft: applyDevouringGraftSkill,
   corroding_mold: applyCorrodingMoldSkill,
 } satisfies Partial<Record<UnitId, StartSkillHandler>>;
@@ -90,8 +91,6 @@ const BEFORE_ATTACK_HANDLERS = {
     applyRelicSwordBuff(u, board, prefix, ctx),
   plague_bell: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>
     applyPlagueBellToll(u, enemyBoard, prefix, ctx),
-  machine: ({ u, board, prefix, ctx }: BeforeAttackArgs) =>
-    applyMachineTransfusion(u, board, prefix, ctx),
 } satisfies Partial<Record<UnitId, BeforeAttackHandler>>;
 
 type BeforeAttackUnitId = keyof typeof BEFORE_ATTACK_HANDLERS;

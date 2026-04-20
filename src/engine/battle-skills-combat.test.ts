@@ -4,7 +4,7 @@ import {
   processKnockoutEffects,
 } from "./battle-skills-combat";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
-import { atLevel, ORGAN_GRINDER, RISEN_POPE } from "../shared/skill-params";
+import { atLevel, ORGAN_GRINDER, RISEN_POPE, SIN_EATER } from "../shared/skill-params";
 import { RAT } from "../shared/skill-params-death";
 
 describe("applyAcidSplash", () => {
@@ -148,5 +148,36 @@ describe("processKnockoutEffects – risen_pope", () => {
     const b = atLevel(RISEN_POPE.buff, 1);
     expect(ally.atk).toBe(3 + b.atk);
     expect(ally.hp).toBe(4 + b.hp);
+  });
+});
+
+describe("processKnockoutEffects – sin_eater (Hippo)", () => {
+  it("self-buffs +3/+3 on knockout (Lv1)", () => {
+    const sinner = makeBattleUnit({ id: "sin_eater", name: "罪喰い", atk: 4, hp: 7 });
+    const board = [sinner];
+    const ctx = makeContext(board, [makeBattleUnit()]);
+    processKnockoutEffects(sinner, [], board, true, ctx);
+    const b = atLevel(SIN_EATER.buff, 1);
+    expect(sinner.atk).toBe(4 + b.atk);
+    expect(sinner.hp).toBe(7 + b.hp);
+  });
+
+  it("doubles with brains behind (×2 activation)", () => {
+    const sinner = makeBattleUnit({ id: "sin_eater", name: "罪喰い", atk: 4, hp: 7 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
+    const board = [sinner, brains];
+    const ctx = makeContext(board, [makeBattleUnit()]);
+    processKnockoutEffects(sinner, [], board, true, ctx);
+    const b = atLevel(SIN_EATER.buff, 1);
+    expect(sinner.atk).toBe(4 + b.atk * 2);
+    expect(sinner.hp).toBe(7 + b.hp * 2);
+  });
+
+  it("does not trigger when unit is dead", () => {
+    const sinner = makeBattleUnit({ id: "sin_eater", name: "罪喰い", atk: 4, hp: 0 });
+    const board = [sinner];
+    const ctx = makeContext(board, [makeBattleUnit()]);
+    processKnockoutEffects(sinner, [], board, true, ctx);
+    expect(sinner.atk).toBe(4);
   });
 });

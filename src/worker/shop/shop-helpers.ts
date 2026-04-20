@@ -127,6 +127,7 @@ async function persistShopState(
     newState,
     lifeChanged,
     lifeChanged !== undefined ? run.id : undefined,
+    lifeChanged !== undefined ? playerId : undefined,
   );
   if (saveResult.isErr()) {
     const e = saveResult.error;

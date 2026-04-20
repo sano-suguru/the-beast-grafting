@@ -1,1 +1,0 @@
-ALTER TABLE `shop_states` ADD `corpse_broker_uses` integer DEFAULT 0 NOT NULL;

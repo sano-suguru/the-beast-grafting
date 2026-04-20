@@ -2,12 +2,7 @@ import type { BattleUnit, BattleContext } from "./battle-context";
 import { enemyPrefix, seg } from "./battle-context";
 import { MAGGOT_TOKEN, DEATH_CURSE_TOKEN, FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { spawnTokenAndNotify } from "./battle-spawn";
-import {
-  handleBeelzebubSpawns,
-  handleSinEaterAbsorb,
-  handleCathedralSpawns,
-  handleEvangelistPlague,
-} from "./battle-deaths-effects-reactions";
+import { handleBeelzebubSpawns, handleCathedralSpawns } from "./battle-deaths-effects-reactions";
 import {
   handleInsatiableMawBuff,
   handleBoneTreeAllyDeath,
@@ -93,8 +88,6 @@ export const SPAWN_ALLY_REACTIONS: AllyReaction[] = [
 ];
 
 export const PERSISTENT_ALLY_REACTIONS: AllyReaction[] = [
-  (r) => handleEvangelistPlague(r.board, r.enemyBoard, r.isPlayer, r.ctx),
-  (r) => handleSinEaterAbsorb(r.board, r.dead.atk, r.isPlayer, r.ctx),
   (r) => handleInsatiableMawBuff(r.board, r.isPlayer, r.ctx),
   (r) => handleBoneTreeAllyDeath(r.board, r.isPlayer, r.ctx),
   (r) => handleCarrionSentinelAllyDeath(r.board, r.deathIdx, r.isPlayer, r.ctx),

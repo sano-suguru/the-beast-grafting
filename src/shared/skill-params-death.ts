@@ -71,14 +71,12 @@ export const SERAPH = {
   ] as SB,
 };
 
-export const EVANGELIST = {
-  targets: [1, 1, 2] as SN,
-  uses: [1, 2, 3] as SN,
-};
-
-export const SIN_EATER = {
-  atkCap: [4, 8, 12] as SN,
-  uses: [3, 4, 5] as SN,
+export const GROANING_COFFIN = {
+  token: [
+    { atk: 5, hp: 3 },
+    { atk: 10, hp: 6 },
+    { atk: 15, hp: 9 },
+  ] as SB,
 };
 
 export const CATHEDRAL = {
@@ -113,11 +111,6 @@ export const STELLAR_COCOON = {
 
 export const MAIDEN = {
   targets: [1, 2, 3] as SN,
-};
-
-export const DEVOURING_GRAFT = {
-  absorbPercent: [70, 85, 100] as SN,
-  decayPercent: [30, 40, 50] as SN,
 };
 
 /** cholera: Faint – 全ペットにダメージ */

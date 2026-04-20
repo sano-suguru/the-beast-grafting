@@ -117,19 +117,35 @@ describe("applyOnHitSkills – flagellant", () => {
 });
 
 describe("applyOnHitSkills – tumor_guardian", () => {
-  it("buffs unit behind on hit", () => {
-    const guardian = makeBattleUnit({ id: "tumor_guardian", name: "瘤の守り手", atk: 2, hp: 6 });
-    const behind = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 3 });
-    const board = [guardian, behind];
-    const ctx = makeContext(board, []);
+  it("deals damage to random enemy on hit", () => {
+    const guardian = makeBattleUnit({ id: "tumor_guardian", name: "瘤の守り手", atk: 3, hp: 6 });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 2, hp: 20 });
+    const board = [guardian];
+    const ctx = makeContext(board, [enemy]);
     applyOnHitSkills(guardian, board, true, ctx);
-    const b = atLevel(TUMOR_GUARDIAN.buff, 1);
-    expect(behind.atk).toBe(3 + b.atk);
-    expect(behind.hp).toBe(3 + b.hp);
+    const dmg = atLevel(TUMOR_GUARDIAN.damage, 1);
+    expect(enemy.hp).toBe(20 - dmg);
+    expect(ctx.frames).toHaveLength(1);
   });
 
-  it("does nothing when no unit behind", () => {
-    const guardian = makeBattleUnit({ id: "tumor_guardian", name: "瘤の守り手", atk: 2, hp: 6 });
+  it("deals scaled damage at Lv2", () => {
+    const guardian = makeBattleUnit({
+      id: "tumor_guardian",
+      name: "瘤の守り手",
+      atk: 3,
+      hp: 6,
+      level: 2,
+    });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 2, hp: 20 });
+    const board = [guardian];
+    const ctx = makeContext(board, [enemy]);
+    applyOnHitSkills(guardian, board, true, ctx);
+    const dmg = atLevel(TUMOR_GUARDIAN.damage, 2);
+    expect(enemy.hp).toBe(20 - dmg);
+  });
+
+  it("does nothing when enemy board is empty", () => {
+    const guardian = makeBattleUnit({ id: "tumor_guardian", name: "瘤の守り手", atk: 3, hp: 6 });
     const board = [guardian];
     const ctx = makeContext(board, []);
     applyOnHitSkills(guardian, board, true, ctx);

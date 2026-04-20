@@ -10,7 +10,12 @@ import type {
 import { lookupUnitData } from "./data/unit-lookup";
 import { invariant } from "./invariant";
 
-/** UnitInstance から secretLore を除き、id を string に広げたシリアライズ用型 */
+/**
+ * UnitInstance から secretLore を除き、id を string に広げたシリアライズ用型
+ *
+ * ボード配列規約: `index 0 = 前衛, index N-1 = 後衛`。全レイヤー（DB, API, UI データ, 戦闘ロジック）で共通。
+ * UI 表示は描画時に `flex-row-reverse` 等で「右 = 前衛」にするが、データ上は低 index が前衛。
+ */
 export type BoardUnit = Omit<UnitInstance, "id" | "secretLore"> & { id: string };
 
 export type PvpOpponent = {

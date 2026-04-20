@@ -28,6 +28,7 @@ CREATE TABLE `battles` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `idx_battles_run_night` ON `battles` (`run_id`,`night`);--> statement-breakpoint
+CREATE INDEX `idx_battles_run_player_night` ON `battles` (`run_id`,`player_id`,`night`);--> statement-breakpoint
 CREATE INDEX `idx_battles_player_id` ON `battles` (`player_id`);--> statement-breakpoint
 CREATE INDEX `idx_battles_created_at` ON `battles` (`created_at`);--> statement-breakpoint
 CREATE TABLE `board_snapshots` (
@@ -106,6 +107,7 @@ CREATE TABLE `shop_states` (
 	`cultist_used` integer DEFAULT false NOT NULL,
 	`rot_ring_uses` integer DEFAULT 0 NOT NULL,
 	`bone_tree_uses` integer DEFAULT 0 NOT NULL,
+	`corpse_broker_uses` integer DEFAULT 0 NOT NULL,
 	`shop_units` text NOT NULL,
 	`shop_items` text NOT NULL,
 	`board` text NOT NULL,

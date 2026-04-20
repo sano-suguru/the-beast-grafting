@@ -2,46 +2,8 @@ import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
 import { atLevel } from "../../shared/skill-params";
-import {
-  ASH_FUNGUS,
-  BONE_JAW,
-  CORPSE_BROKER,
-  CORPSE_PECKER,
-  ROT_FEEDER,
-} from "../../shared/skill-params-shop";
-import {
-  activeNights,
-  estimateWeightedActions,
-  distributeBuffRandomly,
-} from "./sim-shop-effects-util";
-
-/** Night N の平均的な売却ユニットの合計スタッツ（baseAtk+baseHp + progression） */
-function avgSoldUnitTotalStats(night: number): number {
-  return 5 + Math.floor(night * 0.5);
-}
-
-export function applyAshFungusAccumulation(
-  ashFungus: UnitInstance,
-  team: UnitInstance[],
-  night: number,
-  rng: Rng,
-): void {
-  const nights = activeNights(ashFungus.tier as Tier, night);
-  if (nights <= 0) return;
-
-  const percent = atLevel(ASH_FUNGUS.percent, ashFungus.level);
-  let rawBuff = 0;
-
-  for (const action of estimateWeightedActions(ashFungus.tier as Tier, night)) {
-    const avgStats = avgSoldUnitTotalStats(action.night);
-    rawBuff += avgStats * (percent / 100) * action.sells;
-  }
-
-  const totalBuff = Math.floor(rawBuff);
-  if (totalBuff <= 0) return;
-  const half = Math.floor(totalBuff / 2);
-  distributeBuffRandomly(team, totalBuff - half, half, rng);
-}
+import { BONE_JAW, CORPSE_BROKER, CORPSE_PECKER, ROT_FEEDER } from "../../shared/skill-params-shop";
+import { activeNights, distributeBuffRandomly } from "./sim-shop-effects-util";
 
 export function applyCorpseBrokerAccumulation(
   broker: UnitInstance,

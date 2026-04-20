@@ -1,18 +1,10 @@
 import type { LogSegment } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import {
-  pushFrame,
-  getMult,
-  enemyPrefix,
-  seg,
-  buffAction,
-  defendAction,
-  aoeBuffActions,
-} from "./battle-context";
+import { pushFrame, getMult, enemyPrefix, seg, buffAction, aoeBuffActions } from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { atLevel, INSATIABLE_MAW, BONE_TREE, type Buff } from "../shared/skill-params";
 
-interface ReactionCtx {
+interface ReactorIterCtx {
   u: BattleUnit;
   idx: number;
   prefix: string;
@@ -22,8 +14,8 @@ function applyAllyDeathReaction(
   board: BattleUnit[],
   unitId: string,
   isPlayer: boolean,
-  apply: (r: ReactionCtx) => false | void,
-  filter?: (idx: number) => boolean,
+  apply: (r: ReactorIterCtx) => false | void,
+  filter?: (reactorIdx: number) => boolean,
 ) {
   const prefix = enemyPrefix(isPlayer);
   for (let i = 0; i < board.length; i++) {
@@ -115,7 +107,7 @@ export function handleCarrionSentinelAllyDeath(
           seg.e("屍蝋の盾"),
         ],
         "skill",
-        { [u.uid]: defendAction("盾") },
+        { [u.uid]: buffAction({ atk: 1, hp: 0 }) },
         FRAME_DELAY_DEATH_CHAIN,
       );
     },

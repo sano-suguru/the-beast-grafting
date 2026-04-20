@@ -1,17 +1,7 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import {
-  pushFrame,
-  getMult,
-  enemyPrefix,
-  seg,
-  buffAction,
-  skillAction,
-  defendAction,
-} from "./battle-context";
-import { mustGet } from "../shared/invariant";
+import { getMult, enemyPrefix, seg } from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import { atLevel, BEELZEBUB, EVANGELIST, SIN_EATER, CATHEDRAL } from "../shared/skill-params";
-import { notifyEquipInfection } from "./battle-context";
+import { atLevel, BEELZEBUB, CATHEDRAL } from "../shared/skill-params";
 import { spawnTokenAndNotify } from "./battle-spawn";
 
 function collectBeelzebubSpawns(board: BattleUnit[]): {
@@ -65,38 +55,6 @@ export function handleBeelzebubSpawns(
   }
 }
 
-export function handleSinEaterAbsorb(
-  board: BattleUnit[],
-  deadAtk: number,
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "sin_eater" || u.hp <= 0 || u.skillUses <= 0) continue;
-    const mult = getMult(board, i);
-    for (let m = 0; m < mult && u.skillUses > 0; m++) {
-      const gain = Math.min(deadAtk, atLevel(SIN_EATER.atkCap, u.level));
-      if (gain <= 0) continue;
-      u.atk += gain;
-      u.skillUses -= 1;
-      pushFrame(
-        ctx,
-        "skill",
-        () => [
-          enemyPrefix(isPlayer),
-          seg.u(u.name),
-          "が屍に群がり、殻が膨れる。",
-          seg.s(`+${gain}/+0`),
-        ],
-        "skill",
-        { [u.uid]: buffAction({ atk: gain, hp: 0 }, u.uid) },
-        FRAME_DELAY_DEATH_CHAIN,
-      );
-    }
-  }
-}
-
 export function handleCathedralSpawns(
   board: BattleUnit[],
   isPlayer: boolean,
@@ -131,69 +89,6 @@ export function handleCathedralSpawns(
         spawnerUid: u.uid,
       });
       if (!token) break;
-    }
-  }
-}
-
-function infectTargets(
-  u: BattleUnit,
-  enemyBoard: BattleUnit[],
-  count: number,
-  prefix: string,
-  ctx: BattleContext,
-) {
-  let infected = 0;
-  while (infected < count) {
-    const candidates = enemyBoard.filter((e) => e.hp > 0 && e.equip !== "infection");
-    if (candidates.length === 0) break;
-    const target = mustGet(
-      candidates,
-      Math.floor(ctx.rng.next() * candidates.length),
-      "infect target",
-    );
-    const prevEquip = target.equip;
-    target.equip = "infection";
-    target.infectionLevel = u.level;
-    infected++;
-    if (prevEquip && prevEquip !== "infection") {
-      notifyEquipInfection(ctx, prefix, target, FRAME_DELAY_DEATH_CHAIN);
-    }
-    pushFrame(
-      ctx,
-      "skill",
-      () => [
-        prefix,
-        seg.u(u.name),
-        "の瘴気が",
-        seg.u(target.name),
-        "に纏わりつく。",
-        seg.e("感染"),
-      ],
-      "skill",
-      {
-        [u.uid]: skillAction(),
-        [target.uid]: defendAction("感染"),
-      },
-      FRAME_DELAY_DEATH_CHAIN,
-    );
-  }
-}
-
-export function handleEvangelistPlague(
-  board: BattleUnit[],
-  enemyBoard: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "evangelist" || u.hp <= 0 || u.skillUses <= 0) continue;
-    const mult = getMult(board, i);
-    const targets = atLevel(EVANGELIST.targets, u.level);
-    const prefix = enemyPrefix(isPlayer);
-    for (let m = 0; m < mult && u.skillUses > 0; m++) {
-      u.skillUses -= 1;
-      infectTargets(u, enemyBoard, targets, prefix, ctx);
     }
   }
 }

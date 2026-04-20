@@ -3,9 +3,10 @@ import {
   applyBuyEffects,
   applyChaliceEffect,
   applySummonEffects,
-  applySellEffects,
   applyLevelUpEffects,
+  applyAltarEndOfTurn,
 } from "./shop-effects";
+import { applySellEffects } from "./shop-effects-sell";
 import { applyCorpseBrokerDoseBuff } from "./shop-effects-dose";
 import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
@@ -262,34 +263,6 @@ describe("applyChaliceEffect", () => {
   });
 });
 
-describe("applySummonEffects – altar buffs", () => {
-  it("buffs summoned unit when altar is on board", () => {
-    const board: (UnitInstance | null)[] = [
-      makeUnit({ id: "altar" }),
-      makeUnit({ baseAtk: 2, baseHp: 3 }),
-      null,
-      null,
-      null,
-    ];
-    const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(5); // 2 + 3(altar Lv1)
-    expect(effectiveHp(result[1]!)).toBe(4); // 3 + 1(altar Lv1)
-  });
-
-  it("stacks multiple altar buffs", () => {
-    const board: (UnitInstance | null)[] = [
-      makeUnit({ id: "altar" }),
-      makeUnit({ baseAtk: 1, baseHp: 1 }),
-      makeUnit({ id: "altar" }),
-      null,
-      null,
-    ];
-    const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(7); // 1 + 3×2(altar Lv1)
-    expect(effectiveHp(result[1]!)).toBe(3); // 1 + 1×2(altar Lv1)
-  });
-});
-
 describe("applySummonEffects – zealot buffs", () => {
   it("zealot buffs placed unit +1 ATK", () => {
     const board: (UnitInstance | null)[] = [
@@ -319,7 +292,7 @@ describe("applySummonEffects – zealot buffs", () => {
 });
 
 describe("applySummonEffects – combined and edge cases", () => {
-  it("zealot and altar both apply to placed unit", () => {
+  it("zealot applies to placed unit (altar no longer buffs summons)", () => {
     const board: (UnitInstance | null)[] = [
       makeUnit({ id: "altar" }),
       makeUnit({ baseAtk: 1, baseHp: 1 }),
@@ -328,8 +301,8 @@ describe("applySummonEffects – combined and edge cases", () => {
       null,
     ];
     const result = applySummonEffects(1, board);
-    expect(effectiveAtk(result[1]!)).toBe(5); // 1 + 3(altar Lv1) + 1(zealot)
-    expect(effectiveHp(result[1]!)).toBe(2); // 1 + 1(altar Lv1)
+    expect(effectiveAtk(result[1]!)).toBe(2); // 1 + 1(zealot)
+    expect(effectiveHp(result[1]!)).toBe(1); // no altar buff
   });
 
   it("returns original board when no altar present", () => {
@@ -366,24 +339,6 @@ describe("applySellEffects – determinism", () => {
 
     const sum1 = result1.board.reduce((s, u) => s + (u?.buffAtk ?? 0), 0);
     const sum2 = result2.board.reduce((s, u) => s + (u?.buffAtk ?? 0), 0);
-    expect(sum1).toBe(sum2);
-    expect(sum1).toBeGreaterThan(0);
-  });
-
-  it("ash_fungus sell buff is deterministic with seeded rng", () => {
-    const sold = makeUnit({ uid: "sold-1", baseAtk: 10, baseHp: 10 });
-    const taxer = makeUnit({ id: "ash_fungus", uid: "tax-1" });
-    const ally = makeUnit({ uid: "ally-1" });
-    const board: (UnitInstance | null)[] = [taxer, ally, null];
-
-    const rng1 = createSeededRng(42);
-    const result1 = applySellEffects(sold, board, rng1);
-
-    const rng2 = createSeededRng(42);
-    const result2 = applySellEffects(sold, board, rng2);
-
-    const sum1 = result1.board.reduce((s, u) => s + (u?.buffAtk ?? 0) + (u?.buffHp ?? 0), 0);
-    const sum2 = result2.board.reduce((s, u) => s + (u?.buffAtk ?? 0) + (u?.buffHp ?? 0), 0);
     expect(sum1).toBe(sum2);
     expect(sum1).toBeGreaterThan(0);
   });
@@ -632,5 +587,56 @@ describe("applyCorpseBrokerDoseBuff", () => {
     const result = applyCorpseBrokerDoseBuff(board, 1, 3);
     expect(result.board).toBe(board);
     expect(result.corpseBrokerUses).toBe(3);
+  });
+
+  it("broker 本体を target にした場合、自己分を除外してバフ量を合算する", () => {
+    const broker1 = makeUnit({ id: "corpse_broker", uid: "cb-1" });
+    const broker2 = makeUnit({ id: "corpse_broker", uid: "cb-2" });
+    const board: (UnitInstance | null)[] = [broker1, broker2, null];
+    const result = applyCorpseBrokerDoseBuff(board, 0, 0);
+    const hpBuff = atLevel(CORPSE_BROKER.hpBuff, 1);
+    const updated = result.board.find((u): u is UnitInstance => u?.uid === "cb-1");
+    expect(updated!.buffHp).toBe(hpBuff);
+    expect(result.corpseBrokerUses).toBe(1);
+  });
+
+  it("broker が 1 体のみで自分を target にした場合、バフ量 0 のため発動しない", () => {
+    const broker = makeUnit({ id: "corpse_broker", uid: "cb-1" });
+    const board: (UnitInstance | null)[] = [broker, null, null];
+    const result = applyCorpseBrokerDoseBuff(board, 0, 0);
+    expect(result.board).toBe(board);
+    expect(result.corpseBrokerUses).toBe(0);
+  });
+});
+
+describe("applyAltarEndOfTurn – altar (Bison)", () => {
+  it("self-buffs altar when Lv3 ally present", () => {
+    const altar = makeUnit({ id: "altar", uid: "altar1" });
+    const lv3ally = makeUnit({ level: 3, uid: "ally1" });
+    const board: (UnitInstance | null)[] = [altar, lv3ally, null, null, null];
+    const result = applyAltarEndOfTurn(board);
+    const buffedAltar = result.find((u) => u?.uid === "altar1");
+    expect(buffedAltar?.buffAtk).toBe(1);
+    expect(buffedAltar?.buffHp).toBe(2);
+  });
+
+  it("does not buff when no Lv3 ally present", () => {
+    const altar = makeUnit({ id: "altar", uid: "altar1" });
+    const lv2ally = makeUnit({ level: 2, uid: "ally1" });
+    const board: (UnitInstance | null)[] = [altar, lv2ally, null, null, null];
+    const result = applyAltarEndOfTurn(board);
+    expect(result).toBe(board);
+  });
+
+  it("multiple altars each self-buff independently", () => {
+    const altar1 = makeUnit({ id: "altar", uid: "a1" });
+    const altar2 = makeUnit({ id: "altar", uid: "a2" });
+    const lv3ally = makeUnit({ level: 3, uid: "ally1" });
+    const board: (UnitInstance | null)[] = [altar1, altar2, lv3ally, null, null];
+    const result = applyAltarEndOfTurn(board);
+    const buffed1 = result.find((u) => u?.uid === "a1");
+    const buffed2 = result.find((u) => u?.uid === "a2");
+    expect(buffed1?.buffAtk).toBe(1);
+    expect(buffed2?.buffAtk).toBe(1);
   });
 });

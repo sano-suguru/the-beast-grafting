@@ -52,6 +52,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 外部入力（localStorage, Worker message, API response）のフォールバックは正当。
 - **レジストリファイルの分割規約**: ハンドラレジストリファイル（`battle-skills.ts`, `battle-deaths-handlers.ts`等）が200行を超えたら、ハンドラ実装を `*-{category}.ts` に抽出する。レジストリオブジェクトとディスパッチャ関数は元ファイルに残す。
 
+### Migrations
+
+- **本番リリース前は単一マイグレーションに圧縮可**: `drizzle/` 配下を全削除して `pnpm exec drizzle-kit generate` で単一 `0000_*.sql` を再生成してよい。ローカル/CI の D1 は wipe すること。
+- 本番デプロイ後はこの方針を撤回し、通常の increment マイグレーション運用に切り替える。
+
 ### Narrative Text
 
 - **説明するな示せ**: lore・バトルログ・ナラティブ全般で、読者に概念を説明するのではなく像を見せる。

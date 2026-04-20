@@ -4,7 +4,11 @@ import { createUnit } from "../../engine/helpers";
 import { atLevel, TAINTED_PLACENTA, GRAFT_SCION } from "../../shared/skill-params";
 import { ITEMS } from "../../shared/data/items";
 import { isEventNight, selectEvent, buildEventShopUnits } from "../../engine/event-helpers";
-import { applyCatacombRatBuff, applyRevenantBuff } from "../../engine/shop-effects-setup";
+import {
+  applyCatacombRatBuff,
+  applyRevenantBuff,
+  applyAshFungusBuff,
+} from "../../engine/shop-effects-setup";
 import type { ShopStateRow } from "./shop-state-row";
 import {
   slotsToJson,
@@ -110,10 +114,13 @@ export function executeSetup(
   stockWormItems(prevBoard, shop.items);
   const placentaBlood = calcPlacentaBloodGain(prevBoard);
 
-  const rngState = rng.getState();
   const resetBoard = prevBoard.map((bu) => (bu && bu.tempBuffAtk ? { ...bu, tempBuffAtk: 0 } : bu));
   applyCatacombRatBuff(resetBoard, lastBattleResult);
   applyRevenantBuff(resetBoard);
+  applyAshFungusBuff(resetBoard, rng);
+  // applyAshFungusBuff が RNG を消費するため capture は必ずその後で行う。
+  // ここより前に capture すると、undo→再実行で ash_fungus のターゲットがずれる。
+  const rngState = rng.getState();
   return {
     blood: 10 + (event?.bloodBonus ?? 0) + placentaBlood,
     board: resetBoard,

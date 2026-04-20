@@ -8,8 +8,8 @@ import {
   applyBuyEffects,
   applyChaliceEffect,
   applyLevelUpEffects,
-  applySellEffects,
 } from "../../engine/shop-effects";
+import { applySellEffects } from "../../engine/shop-effects-sell";
 import { buffRandomUnit } from "../../engine/buff-utils";
 import type { ShopStateRow } from "./shop-state-row";
 import {

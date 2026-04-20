@@ -95,6 +95,7 @@ export const battles = sqliteTable(
   },
   (table) => [
     uniqueIndex("idx_battles_run_night").on(table.runId, table.night),
+    index("idx_battles_run_player_night").on(table.runId, table.playerId, table.night),
     index("idx_battles_player_id").on(table.playerId),
     index("idx_battles_created_at").on(table.createdAt),
   ],

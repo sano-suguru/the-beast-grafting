@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "80684c34-69e0-49ef-9f92-6539a41b34db",
+  "id": "039ecf9a-0940-4cc5-b07d-940bde03015d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_providers": {
@@ -164,6 +164,11 @@
           "name": "idx_battles_run_night",
           "columns": ["run_id", "night"],
           "isUnique": true
+        },
+        "idx_battles_run_player_night": {
+          "name": "idx_battles_run_player_night",
+          "columns": ["run_id", "player_id", "night"],
+          "isUnique": false
         },
         "idx_battles_player_id": {
           "name": "idx_battles_player_id",
@@ -673,6 +678,14 @@
         },
         "bone_tree_uses": {
           "name": "bone_tree_uses",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "corpse_broker_uses": {
+          "name": "corpse_broker_uses",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,

@@ -58,7 +58,6 @@ import {
   WAILING_CURSECHILD,
   AMNIOTIC_ARMOR,
   OMEN_WOMB,
-  DEVOURING_GRAFT,
   CHALICE,
   GUT_HAND,
   BONE_JAW,
@@ -118,16 +117,12 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   revenant: (lv) =>
     `ターン開始: 前方${atLevel(REVENANT.targets, lv)}体に+${REVENANT.buff.atk}/+${REVENANT.buff.hp}`,
-  evangelist: (lv) =>
-    `味方死亡: ランダムな敵${atLevel(EVANGELIST.targets, lv)}体を感染させる(${atLevel(EVANGELIST.uses, lv)}回/戦)`,
+  evangelist: (lv) => `開戦: 最高HPの敵のHPを${atLevel(EVANGELIST.reductionPercent, lv)}%削減`,
   altar: (lv) => {
     const b = atLevel(ALTAR.buff, lv);
-    return `味方配置/召喚: その味方に+${b.atk}/+${b.hp}`;
+    return `ターン終了: Lv${ALTAR.requiredFriendLevel}の味方がいれば自身に+${b.atk}/+${b.hp}`;
   },
-  machine: (lv) => {
-    const b = atLevel(MACHINE.buff, lv);
-    return `直前の味方が攻撃: 最前衛に+${b.atk}/+${b.hp}(${atLevel(MACHINE.uses, lv)}回/戦)`;
-  },
+  machine: (lv) => `ターン開始: 闇市場の全錬金薬を${atLevel(MACHINE.discount, lv)}血値引き`,
   shrieking_throat: (lv) =>
     `開戦: 最後尾の敵に${atLevel(BANSHEE.damage, lv)}ダメ(自身に${atLevel(BANSHEE.selfDamage, lv)}反動)`,
   hundred_arms: (lv) =>
@@ -158,12 +153,14 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `被弾: 後方味方に+${b.atk}/+${b.hp}`;
   },
   spite_beast: (lv) => `死亡: 攻撃の${atLevel(SPITE_BEAST.percent, lv)}%ダメージを隣接ユニットに`,
-  sin_eater: (lv) =>
-    `味方死亡: 死んだ味方の攻撃を吸収(1回上限${atLevel(SIN_EATER.atkCap, lv)}, ${atLevel(SIN_EATER.uses, lv)}回)`,
+  sin_eater: (lv) => {
+    const b = atLevel(SIN_EATER.buff, lv);
+    return `撃破: 自身に+${b.atk}/+${b.hp}`;
+  },
   carrion_sentinel: (lv) =>
     `前の味方が死亡: 【屍蝋の盾】と攻撃+1を得る(${atLevel(CARRION_SENTINEL.uses, lv)}回/戦)`,
   ash_fungus: (lv) =>
-    `味方解体/死亡: スタッツの${atLevel(ASH_FUNGUS.percent, lv)}%をランダム味方にバフ`,
+    `ターン開始: Lv${ASH_FUNGUS.minLevel}以上の味方${ASH_FUNGUS.targets}体に+${atLevel(ASH_FUNGUS.buff, lv)}/+${atLevel(ASH_FUNGUS.buff, lv)}`,
   plague_bell: (lv) =>
     `直前の味方が攻撃: 敵全体に${atLevel(PLAGUE_BELL.damage, lv)}ダメージ(${atLevel(PLAGUE_BELL.uses, lv)}回/戦)`,
   hanged_man: (lv) => `死亡: 最終スタッツを前方の味方${atLevel(HANGED_MAN.targets, lv)}体に分配`,
@@ -219,12 +216,11 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     `攻撃後: 後方の味方に1ダメージ×${atLevel(NEEDLESHELL_WORM.targets, lv)}回`,
   corpse_broker: (lv) =>
     `味方への投与: その味方にHP+${atLevel(CORPSE_BROKER.hpBuff, lv)}(${CORPSE_BROKER.maxUses}回/ターン)`,
-  tumor_guardian: (lv) => {
-    const b = atLevel(TUMOR_GUARDIAN.buff, lv);
-    return `被弾: 後ろの味方に+${b.atk}/+${b.hp}`;
+  tumor_guardian: (lv) => `被弾: ランダムな敵に${atLevel(TUMOR_GUARDIAN.damage, lv)}ダメージ`,
+  groaning_coffin: (lv) => {
+    const t = atLevel(GROANING_COFFIN.token, lv);
+    return `死亡: ${t.atk}/${t.hp}の【酸の血液】付きトークンを召喚`;
   },
-  groaning_coffin: (lv) =>
-    `味方${GROANING_COFFIN.threshold}体死亡ごと: ランダム敵に${atLevel(GROANING_COFFIN.damage, lv)}ダメージ`,
   insatiable_maw: (lv) => {
     const b = atLevel(INSATIABLE_MAW.buff, lv);
     return `味方死亡: 自身に+${b.atk}/+${b.hp}(${atLevel(INSATIABLE_MAW.uses, lv)}回/戦)`;
@@ -258,8 +254,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const item = ITEMS[atLevel(GRAFT_SCION.itemId, lv)];
     return `ターン開始: ${item.cost}血の${item.name}(+${item.atk}/+${item.hp})を闇市場に補充`;
   },
-  devouring_graft: (lv) =>
-    `開戦: 前の味方を${atLevel(DEVOURING_GRAFT.absorbPercent, lv)}%吸収(+ATK/HP)。死亡: 吸収先の${atLevel(DEVOURING_GRAFT.decayPercent, lv)}%で再召喚`,
+  devouring_graft: () => "開戦: 前の味方を飲み込む。死亡: 飲み込んだ味方を再召喚",
   chalice: (lv) => {
     const b = atLevel(CHALICE.buff, lv);
     return `購入: 闇市場の薬を2つの無料【純血】(+${b.atk}/+${b.hp})に`;

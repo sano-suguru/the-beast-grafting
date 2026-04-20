@@ -16,10 +16,10 @@ import {
   handleOmenWombDeath,
   handleStellarCocoonDeath,
   handleDevouringGraftDeath,
+  handleGroaningCoffinDeath,
   handleBuddingHydraDeath,
   handleDevouringWoundDeath,
 } from "./battle-deaths-handlers-spawn";
-import { handleAshFungusDeath } from "./battle-deaths-handlers-buff";
 import { handleCholeraDeath, handleSpiteBeastDeath } from "./battle-deaths-handlers-aoe";
 
 export const UNIT_DEATH_HANDLERS = {
@@ -40,8 +40,8 @@ export const UNIT_DEATH_HANDLERS = {
   omen_womb: handleOmenWombDeath,
   stellar_cocoon: handleStellarCocoonDeath,
   devouring_graft: handleDevouringGraftDeath,
+  groaning_coffin: handleGroaningCoffinDeath,
   budding_hydra: handleBuddingHydraDeath,
-  ash_fungus: handleAshFungusDeath,
 } satisfies Partial<Record<UnitId, DeathHandler>>;
 
 export type DeathHandlerUnitId = keyof typeof UNIT_DEATH_HANDLERS;

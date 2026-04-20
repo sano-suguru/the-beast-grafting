@@ -3,12 +3,16 @@ import type { BattleUnit, BattleContext } from "./battle-context";
 import {
   pushFrame,
   getMult,
+  takeDamage,
   enemyPrefix,
   seg,
   aoeBuffActions,
   buffAction,
   skillAction,
+  skillDamageActions,
 } from "./battle-context";
+import { mustGet } from "../shared/invariant";
+import { resolveDeaths } from "./battle-deaths";
 import {
   atLevel,
   TEMPLAR,
@@ -160,12 +164,15 @@ function applyHowlingGiantHit({ defender: u, board, prefix, ctx }: HitCtx) {
   );
 }
 
-function applyTumorGuardianHit({ defender: u, board, idx, prefix, ctx }: HitCtx) {
-  const behind = board[idx + 1];
-  if (!behind || behind.hp <= 0) return;
-  const b = atLevel(TUMOR_GUARDIAN.buff, u.level);
-  behind.atk += b.atk;
-  behind.hp += b.hp;
+function applyTumorGuardianHit({ defender: u, isPlayer, ctx }: HitCtx) {
+  const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
+  const alive = enemyBoard.filter((e) => e.hp > 0);
+  if (alive.length === 0) return;
+  const target = mustGet(alive, Math.floor(ctx.rng.next() * alive.length), "tumor_guardian target");
+  const dmg = atLevel(TUMOR_GUARDIAN.damage, u.level);
+  const hpBefore = target.hp;
+  takeDamage(target, dmg, u.uid);
+  const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
     "skill",
@@ -173,13 +180,14 @@ function applyTumorGuardianHit({ defender: u, board, idx, prefix, ctx }: HitCtx)
       prefix,
       seg.u(u.name),
       "の瘤が脈打つ。",
-      seg.u(behind.name),
-      "が変質する。",
-      seg.s(`+${b.atk}/+${b.hp}`),
+      seg.u(target.name),
+      "に毒液が飛び散る。",
+      seg.hp(`${hpBefore}→${Math.max(0, target.hp)}`),
     ],
     "skill",
-    { [behind.uid]: buffAction(b, u.uid) },
+    skillDamageActions(u, target, dmg),
   );
+  resolveDeaths(ctx);
 }
 
 function applyAmnioticArmorHit({ defender: u, prefix, ctx }: HitCtx) {

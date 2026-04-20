@@ -54,6 +54,31 @@ function loadLastBattleResult(db: DrizzleD1Database, runId: string, playerId: st
 
 const shopRoutes = new Hono<AuthEnv>();
 
+async function loadSetupInputs(
+  db: DrizzleD1Database,
+  runId: string,
+  playerId: string,
+  run: { shopSeed: number | null; night: number },
+) {
+  const [seedResult, prevResult, lastBattleRow] = await Promise.all([
+    ensureShopSeed(db, runId, playerId, run.shopSeed),
+    loadPrevNightShop(db, runId, run.night),
+    loadLastBattleResult(db, runId, playerId),
+  ]);
+  if (seedResult.isErr())
+    return { ok: false, label: "[shop/setup:seed]", error: seedResult.error } as const;
+  if (prevResult.isErr())
+    return { ok: false, label: "[shop/setup:prev]", error: prevResult.error } as const;
+  if (lastBattleRow.isErr())
+    return { ok: false, label: "[shop/setup:battle]", error: lastBattleRow.error } as const;
+  return {
+    ok: true,
+    shopSeed: seedResult.value,
+    prev: prevResult.value,
+    lastBattleResult: lastBattleRow.value[0]?.result ?? null,
+  } as const;
+}
+
 shopRoutes.post("/setup", requireAuth, jsonBody(), async (c) => {
   const db = c.get("db");
   const playerId = c.get("playerId");
@@ -69,39 +94,35 @@ shopRoutes.post("/setup", requireAuth, jsonBody(), async (c) => {
   const run = runResult.value[0];
   if (!run) return c.json({ error: { type: "NOT_FOUND", entity: "run" } }, 404);
 
-  const seedResult = await ensureShopSeed(db, runId, run.shopSeed);
-  if (seedResult.isErr()) return internalError(c, "[shop/setup:seed]", seedResult.error);
-  const shopSeed = seedResult.value;
-
-  const [prevResult, lastBattleRow] = await Promise.all([
-    loadPrevNightShop(db, runId, run.night),
-    loadLastBattleResult(db, runId, playerId),
-  ]);
-  if (prevResult.isErr()) return internalError(c, "[shop/setup:prev]", prevResult.error);
-  const prev = prevResult.value;
-  if (lastBattleRow.isErr()) return internalError(c, "[shop/setup:battle]", lastBattleRow.error);
-  const lastBattleResult = lastBattleRow.value[0]?.result ?? null;
+  const inputs = await loadSetupInputs(db, runId, playerId, run);
+  if (!inputs.ok) return internalError(c, inputs.label, inputs.error);
 
   const useTutorialShop = bodyField(body, "useTutorialShop") === true;
   const state = executeSetup(
     run.night,
     run.life,
     parseOriginId(run.originId),
-    shopSeed,
+    inputs.shopSeed,
     normalizePrevBoard(run.board),
     useTutorialShop,
-    prev.shopUnits,
-    prev.shopItems,
-    lastBattleResult,
+    inputs.prev.shopUnits,
+    inputs.prev.shopItems,
+    inputs.lastBattleResult,
   );
 
   const insertResult = await upsertShopState(db, runId, state);
   if (insertResult.isErr()) return internalError(c, "[shop/setup:insert]", insertResult.error);
 
-  const seenIds = extractLoreUnitIds(state.board, state.shopUnits, state.rewardSlots);
+  const existing = await loadShopState(db, playerId, runId);
+  if (existing.type === "error") return internalError(c, existing.label, existing.error);
+  if (existing.type === "not_found")
+    return c.json({ error: { type: "NOT_FOUND", entity: existing.entity } }, 404);
+  const canonical = existing.state;
+
+  const seenIds = extractLoreUnitIds(canonical.board, canonical.shopUnits, canonical.rewardSlots);
   markSeenAsync(db, playerId, seenIds, "[shop/setup:lore]");
 
-  return c.json({ shop: toResponse(state, run.trophy) });
+  return c.json({ shop: toResponse(canonical, run.trophy) });
 });
 
 shopRoutes.post("/roll", requireAuth, jsonBody(), (c) =>

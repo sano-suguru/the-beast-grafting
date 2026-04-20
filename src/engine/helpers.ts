@@ -86,87 +86,88 @@ const generateTeamName = (faction: EnemyFaction, rng: Rng): string => {
 };
 
 const generateCultTeam = (night: number, rng: Rng): UnitInstance[] => {
-  if (night === 1) return [createUnit("squire"), createUnit("church_hound")];
+  if (night === 1) return [createUnit("church_hound"), createUnit("squire")];
   if (night <= 3)
-    return [createUnit("priest"), createUnit("church_inquisitor"), createUnit("church_hound")];
+    return [createUnit("church_hound"), createUnit("church_inquisitor"), createUnit("priest")];
   if (night <= 6)
     return [
-      createUnit("templar"),
-      createUnit("priest"),
-      createUnit("church_inquisitor"),
-      createUnit("church_beast"),
       createUnit("church_hound"),
+      createUnit("church_beast"),
+      createUnit("church_inquisitor"),
+      createUnit("priest"),
+      createUnit("templar"),
     ];
   if (night <= 8)
     return [
-      createUnit("paladin"),
-      createUnit("flagellant"),
-      createUnit("templar"),
-      createUnit("priest"),
       createUnit("church_beast"),
+      createUnit("priest"),
+      createUnit("templar"),
+      createUnit("flagellant"),
+      createUnit("paladin"),
     ];
   if (night <= 10)
     return [
-      createUnit("cathedral"),
-      createUnit("relic_sword"),
-      createUnit("paladin"),
-      createUnit("flagellant"),
       createUnit("templar"),
+      createUnit("flagellant"),
+      createUnit("paladin"),
+      createUnit("relic_sword"),
+      createUnit("cathedral"),
     ];
   if (night <= 12)
     return [
-      createUnit("holy_fire"),
-      createUnit("seraph"),
-      createUnit("cathedral"),
-      createUnit("relic_sword"),
       createUnit("paladin"),
+      createUnit("relic_sword"),
+      createUnit("cathedral"),
+      createUnit("seraph"),
+      createUnit("holy_fire"),
     ];
   return pickRandom(CULT_TEMPLATES_LATE, rng).map(createUnit);
 };
 
+// 各配列は index 0 = 前衛, index N-1 = 後衛 の規約で定義する
 const CULT_TEMPLATES_LATE: ChurchUnitId[][] = [
-  ["archangel", "risen_pope", "holy_fire", "seraph", "cathedral"],
-  ["archangel", "holy_fire", "seraph", "relic_sword", "paladin"],
-  ["risen_pope", "risen_pope", "holy_fire", "cathedral", "seraph"],
-  ["cathedral", "seraph", "flagellant", "archangel", "paladin"],
-  ["risen_pope", "relic_sword", "flagellant", "holy_fire", "paladin"],
+  ["cathedral", "seraph", "holy_fire", "risen_pope", "archangel"],
+  ["paladin", "relic_sword", "seraph", "holy_fire", "archangel"],
+  ["seraph", "cathedral", "holy_fire", "risen_pope", "risen_pope"],
+  ["paladin", "archangel", "flagellant", "seraph", "cathedral"],
+  ["paladin", "holy_fire", "flagellant", "relic_sword", "risen_pope"],
 ];
 
 const generateGrafterTeam = (night: number, rng: Rng): UnitInstance[] => {
-  if (night <= 2) return [createUnit("bat"), createUnit("rat"), createUnit("hound")];
+  if (night <= 2) return [createUnit("hound"), createUnit("rat"), createUnit("bat")];
   if (night <= 4)
-    return [createUnit("martyr"), createUnit("beast"), createUnit("hound"), createUnit("bat")];
+    return [createUnit("bat"), createUnit("hound"), createUnit("beast"), createUnit("martyr")];
   if (night <= 7)
     return [
-      createUnit("parasite"),
-      createUnit("maiden"),
-      createUnit("beast"),
-      createUnit("hound"),
       createUnit("martyr"),
+      createUnit("hound"),
+      createUnit("beast"),
+      createUnit("maiden"),
+      createUnit("parasite"),
     ];
   if (night <= 10)
     return [
-      createUnit("evangelist"),
-      createUnit("altar"),
-      createUnit("parasite"),
-      createUnit("maiden"),
       createUnit("hound"),
+      createUnit("maiden"),
+      createUnit("parasite"),
+      createUnit("altar"),
+      createUnit("evangelist"),
     ];
   if (night <= 12)
     return [
-      createUnit("shrieking_throat"),
-      createUnit("hundred_arms"),
-      createUnit("eye"),
-      createUnit("parasite"),
       createUnit("maiden"),
+      createUnit("parasite"),
+      createUnit("eye"),
+      createUnit("hundred_arms"),
+      createUnit("shrieking_throat"),
     ];
   return pickRandom(GRAFTER_TEMPLATES_LATE, rng).map(createUnit);
 };
 
 const GRAFTER_TEMPLATES_LATE: RegularUnitId[][] = [
-  ["organ_grinder", "shrieking_throat", "hundred_arms", "eye", "grinning_skull"],
-  ["beelzebub", "eye", "hundred_arms", "parasite", "grinning_skull"],
-  ["howling_giant", "organ_grinder", "flayed_saint", "eye", "parasite"],
+  ["grinning_skull", "eye", "hundred_arms", "shrieking_throat", "organ_grinder"],
+  ["grinning_skull", "parasite", "hundred_arms", "eye", "beelzebub"],
+  ["parasite", "eye", "flayed_saint", "organ_grinder", "howling_giant"],
 ];
 
 export const generateEnemyTeam = (night: number, rng: Rng): EnemyTeam => {

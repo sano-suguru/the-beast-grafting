@@ -10,6 +10,7 @@ import {
   ROT_RING,
   CHALICE,
   GUT_HAND,
+  MACHINE,
   NESTING_GRUB,
   PARASITE,
 } from "../shared/skill-params";
@@ -161,23 +162,6 @@ export const applySummonEffects = (
   const target = nextBoard[summonedUnitIndex];
   if (!target) return currentBoard;
 
-  let altarAtkBuff = 0;
-  let altarHpBuff = 0;
-  nextBoard.forEach((u) => {
-    if (!u || u.id !== "altar") return;
-    const ab = atLevel(ALTAR.buff, u.level);
-    altarAtkBuff += ab.atk;
-    altarHpBuff += ab.hp;
-  });
-  if (altarAtkBuff > 0 || altarHpBuff > 0) {
-    nextBoard[summonedUnitIndex] = {
-      ...target,
-      buffAtk: target.buffAtk + altarAtkBuff,
-      buffHp: target.buffHp + altarHpBuff,
-    };
-    modified = true;
-  }
-
   const zealotCount = computeZealotBuff(
     nextBoard.filter((u): u is UnitInstance => u !== null),
     { requireAlive: false },
@@ -198,7 +182,34 @@ export const applySummonEffects = (
   return modified ? nextBoard : currentBoard;
 };
 
-export { applySellEffects } from "./shop-effects-sell";
+// TODO(end-of-turn-registry): 2件目の end-of-turn ユニット登場時に END_OF_TURN_HANDLERS レジストリ化
+export function applyAltarEndOfTurn(board: (UnitInstance | null)[]): (UnitInstance | null)[] {
+  const nextBoard = [...board];
+  let modified = false;
+  for (let i = 0; i < nextBoard.length; i++) {
+    const u = nextBoard[i];
+    if (!u || u.id !== "altar") continue;
+    const hasHighLevelFriend = nextBoard.some(
+      (other, j) => j !== i && other !== null && other.level >= ALTAR.requiredFriendLevel,
+    );
+    if (!hasHighLevelFriend) continue;
+    const b = atLevel(ALTAR.buff, u.level);
+    nextBoard[i] = { ...u, buffAtk: u.buffAtk + b.atk, buffHp: u.buffHp + b.hp };
+    modified = true;
+  }
+  return modified ? nextBoard : board;
+}
+
+export function calcAlchemyDiscount(
+  board: readonly ({ id: string; level: number } | null)[],
+): number {
+  let total = 0;
+  for (const bu of board) {
+    if (!bu || bu.id !== "machine") continue;
+    total += atLevel(MACHINE.discount, bu.level);
+  }
+  return total;
+}
 
 export function applyLevelUpEffects(
   board: (UnitInstance | null)[],

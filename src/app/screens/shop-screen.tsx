@@ -145,7 +145,7 @@ function BoardSection({ board: b }: { board: (UnitInstance | null)[] }) {
       </div>
       <ul
         role="list"
-        className="border-iron/20 bg-void-surface/30 shadow-inset-dark flex w-full justify-between gap-1 rounded border p-1 md:gap-2 md:p-2"
+        className="border-iron/20 bg-void-surface/30 shadow-inset-dark flex w-full flex-row-reverse justify-between gap-1 rounded border p-1 md:gap-2 md:p-2"
       >
         {b.map((u, i) => (
           <li key={`board-${i}`} className="flex min-w-0 flex-1">

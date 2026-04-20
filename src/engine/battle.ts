@@ -58,13 +58,10 @@ export function initBattleContext(
   lastBattleResult: BattleResult,
   rng: Rng,
 ): BattleContext {
-  // ショップ配列 [slot0…slotN] → 戦闘配列 [前衛…後衛]: index 0 が前線
+  // 全レイヤーで index 0 = 前衛, index N-1 = 後衛 の規約に統一されている
   return createBattleContext(
-    playerBoard
-      .filter((u): u is UnitInstance => u !== null)
-      .reverse()
-      .map(initBattleUnit),
-    enemyTeam.units.toReversed().map(initBattleUnit),
+    playerBoard.filter((u): u is UnitInstance => u !== null).map(initBattleUnit),
+    enemyTeam.units.map(initBattleUnit),
     lastBattleResult,
     rng,
   );
