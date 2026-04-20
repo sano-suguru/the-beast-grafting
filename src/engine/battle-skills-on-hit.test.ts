@@ -1,10 +1,8 @@
 import { applyOnHitSkills } from "./battle-skills-on-hit";
-import { resolveDeaths } from "./battle-deaths";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
 import {
   atLevel,
   FLAYED_SAINT,
-  RAT,
   STITCHED_TWIN,
   HOWLING_GIANT,
   FLAGELLANT,
@@ -22,38 +20,33 @@ describe("applyOnHitSkills – templar", () => {
 });
 
 describe("applyOnHitSkills – flayed_saint", () => {
-  it("damages a random enemy on the correct board (player side)", () => {
+  it("buffs the friend behind when hit", () => {
     const saint = makeBattleUnit({ id: "flayed_saint", name: "聖者", atk: 2, hp: 5 });
-    const enemy = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([saint], [enemy], null, { next: () => 0 });
-    applyOnHitSkills(saint, ctx.pBoard, true, ctx);
-    const dmg = atLevel(FLAYED_SAINT.damage, 1);
-    expect(enemy.hp).toBe(10 - dmg);
+    const ally = makeBattleUnit({ atk: 3, hp: 6 });
+    const board = [saint, ally];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(saint, board, true, ctx);
+    const b = atLevel(FLAYED_SAINT.buff, 1);
+    expect(ally.atk).toBe(3 + b.atk);
+    expect(ally.hp).toBe(6 + b.hp);
   });
 
-  it("damages a random enemy on the correct board (enemy side)", () => {
+  it("does nothing when no friend behind", () => {
     const saint = makeBattleUnit({ id: "flayed_saint", name: "聖者", atk: 2, hp: 5 });
-    const playerUnit = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([playerUnit], [saint], null, { next: () => 0 });
-    applyOnHitSkills(saint, ctx.eBoard, false, ctx);
-    const dmg = atLevel(FLAYED_SAINT.damage, 1);
-    expect(playerUnit.hp).toBe(10 - dmg);
+    const board = [saint];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(saint, board, true, ctx);
+    expect(ctx.frames).toHaveLength(0);
   });
-});
 
-describe("on-hit kill → resolveDeaths cascade", () => {
-  it("rat killed by flayed_saint on-hit triggers death handler after resolveDeaths", () => {
-    const dmg = atLevel(FLAYED_SAINT.damage, 1);
-    const rat = makeBattleUnit({ id: "rat", name: "鼠", atk: 1, hp: dmg });
-    const bystander = makeBattleUnit({ atk: 2, hp: 5 });
+  it("does nothing when friend behind is dead", () => {
     const saint = makeBattleUnit({ id: "flayed_saint", name: "聖者", atk: 2, hp: 5 });
-    const ctx = makeContext([saint], [rat, bystander], null, { next: () => 0 });
-    applyOnHitSkills(saint, ctx.pBoard, true, ctx);
-    expect(rat.hp).toBeLessThanOrEqual(0);
-    resolveDeaths(ctx);
-    const b = atLevel(RAT.deathBuff, 1);
-    expect(bystander.atk).toBe(2 + b.atk);
-    expect(bystander.hp).toBe(5 + b.hp);
+    const dead = makeBattleUnit({ atk: 3, hp: 0 });
+    const board = [saint, dead];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(saint, board, true, ctx);
+    expect(dead.atk).toBe(3);
+    expect(dead.hp).toBe(0);
   });
 });
 

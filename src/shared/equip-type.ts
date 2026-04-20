@@ -7,7 +7,6 @@ export const EQUIP_TYPES = [
   "numbness",
   "acid_blood",
   "death_curse",
-  "star_frenzy",
 ] as const;
 
 export type EquipType = (typeof EQUIP_TYPES)[number];

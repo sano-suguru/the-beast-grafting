@@ -1,23 +1,42 @@
 import type { LogSegment } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg, buffAction, aoeBuffActions } from "./battle-context";
+import {
+  pushFrame,
+  getMult,
+  enemyPrefix,
+  seg,
+  buffAction,
+  defendAction,
+  aoeBuffActions,
+} from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import { atLevel, INSATIABLE_MAW, BONE_TREE, type Buff } from "../shared/skill-params";
+
+interface ReactionCtx {
+  u: BattleUnit;
+  idx: number;
+  prefix: string;
+}
 
 function applyAllyDeathReaction(
   board: BattleUnit[],
   unitId: string,
   isPlayer: boolean,
-  apply: (u: BattleUnit, prefix: string) => void,
+  apply: (r: ReactionCtx) => false | void,
+  filter?: (idx: number) => boolean,
 ) {
   const prefix = enemyPrefix(isPlayer);
   for (let i = 0; i < board.length; i++) {
     const u = board[i]!;
     if (u.id !== unitId || u.hp <= 0) continue;
+    if (filter && !filter(i)) continue;
     const mult = getMult(board, i);
     for (let m = 0; m < mult && u.skillUses > 0; m++) {
       u.skillUses -= 1;
-      apply(u, prefix);
+      if (apply({ u, idx: i, prefix }) === false) {
+        u.skillUses += 1;
+        break;
+      }
     }
   }
 }
@@ -27,7 +46,7 @@ export function handleInsatiableMawBuff(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  applyAllyDeathReaction(board, "insatiable_maw", isPlayer, (u, prefix) => {
+  applyAllyDeathReaction(board, "insatiable_maw", isPlayer, ({ u, prefix }) => {
     const b = atLevel(INSATIABLE_MAW.buff, u.level);
     buffAlly(ctx, u, u, b, () => [
       prefix,
@@ -43,38 +62,65 @@ export function handleBoneTreeAllyDeath(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  const prefix = enemyPrefix(isPlayer);
-  for (let i = 0; i < board.length; i++) {
-    const u = board[i]!;
-    if (u.id !== "bone_tree" || u.hp <= 0) continue;
-    const mult = getMult(board, i);
+  applyAllyDeathReaction(board, "bone_tree", isPlayer, ({ u, idx, prefix }) => {
     const b = atLevel(BONE_TREE.buff, u.level);
-    const targets = board.slice(0, i).filter((t): t is BattleUnit => t.hp > 0);
-    if (targets.length === 0) continue;
-    for (let m = 0; m < mult && u.skillUses > 0; m++) {
-      u.skillUses -= 1;
-      for (const t of targets) {
-        t.atk += b.atk;
-        t.hp += b.hp;
-      }
+    const targets = board.slice(0, idx).filter((t): t is BattleUnit => t.hp > 0);
+    if (targets.length === 0) return false;
+    for (const t of targets) {
+      t.atk += b.atk;
+      t.hp += b.hp;
+    }
+    pushFrame(
+      ctx,
+      "skill",
+      () => [
+        prefix,
+        seg.u(u.name),
+        "の根が震え、前方の味方を強化した。",
+        seg.s(`+${b.atk}/+${b.hp}`),
+      ],
+      "skill",
+      {
+        [u.uid]: { type: "skill" },
+        ...aoeBuffActions(u, targets, b),
+      },
+      FRAME_DELAY_DEATH_CHAIN,
+    );
+    return;
+  });
+}
+
+export function handleCarrionSentinelAllyDeath(
+  board: BattleUnit[],
+  deathIdx: number,
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  applyAllyDeathReaction(
+    board,
+    "carrion_sentinel",
+    isPlayer,
+    ({ u, prefix }) => {
+      u.atk += 1;
+      u.equip = "corpse_wax";
       pushFrame(
         ctx,
         "skill",
         () => [
           prefix,
           seg.u(u.name),
-          "の根が震え、前方の味方を強化した。",
-          seg.s(`+${b.atk}/+${b.hp}`),
+          "が前衛の死を浴びて硬化する。",
+          seg.s("+1/+0"),
+          " + ",
+          seg.e("屍蝋の盾"),
         ],
         "skill",
-        {
-          [u.uid]: { type: "skill" },
-          ...aoeBuffActions(u, targets, b),
-        },
+        { [u.uid]: defendAction("盾") },
         FRAME_DELAY_DEATH_CHAIN,
       );
-    }
-  }
+    },
+    (i) => i === deathIdx,
+  );
 }
 
 function buffAlly(

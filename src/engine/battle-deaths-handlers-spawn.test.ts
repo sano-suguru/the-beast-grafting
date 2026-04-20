@@ -1,6 +1,5 @@
 import { getDeathHandler } from "./battle-deaths-handlers";
 import type { DeathHandlerUnitId } from "./battle-deaths-handlers";
-import { applyStarFrenzyDeath } from "./battle-deaths-handlers-spawn";
 import {
   INERT_UNIT_ID,
   makeBattleUnit,
@@ -14,7 +13,7 @@ import { runStartSkills } from "./battle-skills";
 import { MAX_BOARD_SIZE } from "./constants";
 import { atLevel } from "../shared/skill-params";
 import { BUDDING_HYDRA } from "../shared/skill-params-shop";
-import { OMEN_WOMB, STELLAR_COCOON } from "../shared/skill-params-death";
+import { OMEN_WOMB } from "../shared/skill-params-death";
 
 describe("budding_hydra – death spawns", () => {
   it("spawns floor(HP / divisor) tokens on death", () => {
@@ -115,67 +114,38 @@ describe("handleOmenWombDeath", () => {
 });
 
 describe("handleStellarCocoonDeath", () => {
-  it("spawns token with star_frenzy equip and correct stats", () => {
+  it("レベル数の落とし子をATK×50%(HP1)で召喚する", () => {
     const board: BattleUnit[] = [];
-    const dead = makeBattleUnit({ id: "stellar_cocoon", name: "星辰の繭", atk: 4, hp: 0 });
+    const dead = makeBattleUnit({
+      id: "stellar_cocoon",
+      name: "星辰の繭",
+      atk: 6,
+      hp: 0,
+      level: 2,
+    });
     const ctx = makeContext(board, []);
     callHandler("stellar_cocoon", dead, board, 0, true, ctx);
-    const t = atLevel(STELLAR_COCOON.summon, 1);
-    const children = board.filter((u) => u.id === "token" && u.equip === "star_frenzy");
+    const children = board.filter((u) => u.id === "token");
+    expect(children).toHaveLength(2); // level 2 → 2体
+    expect(children[0]!.atk).toBe(3); // ceil(6/2) = 3
+    expect(children[0]!.hp).toBe(1);
+  });
+
+  it("ATK奇数のとき切り上げで計算する", () => {
+    const board: BattleUnit[] = [];
+    const dead = makeBattleUnit({
+      id: "stellar_cocoon",
+      name: "星辰の繭",
+      atk: 5,
+      hp: 0,
+      level: 1,
+    });
+    const ctx = makeContext(board, []);
+    callHandler("stellar_cocoon", dead, board, 0, true, ctx);
+    const children = board.filter((u) => u.id === "token");
     expect(children).toHaveLength(1);
-    expect(children[0]!.atk).toBe(t.atk);
-    expect(children[0]!.hp).toBe(t.hp);
-  });
-});
-
-describe("star_frenzy equip – frenzy effect", () => {
-  it("killer attacks a random ally on star_frenzy token death", () => {
-    const dead = makeBattleUnit({
-      id: "token",
-      name: "星の落とし子",
-      hp: 0,
-      lastDamageSource: "killer-uid",
-    });
-    const killer = makeBattleUnit({ uid: "killer-uid", atk: 5, hp: 10 });
-    const ally = makeBattleUnit({ uid: "ally-uid", atk: 3, hp: 8 });
-    const ctx = makeContext([], [killer, ally], null, { next: () => 0 });
-    applyStarFrenzyDeath(dead, true, ctx);
-    expect(ally.hp).toBe(3); // 8 - 5 killer ATK
-  });
-
-  it("does nothing when killer is dead", () => {
-    const dead = makeBattleUnit({
-      id: "token",
-      name: "星の落とし子",
-      hp: 0,
-      lastDamageSource: "killer-uid",
-    });
-    const killer = makeBattleUnit({ uid: "killer-uid", atk: 5, hp: 0 });
-    const ally = makeBattleUnit({ uid: "ally-uid", atk: 3, hp: 8 });
-    const ctx = makeContext([], [killer, ally], null, { next: () => 0 });
-    applyStarFrenzyDeath(dead, true, ctx);
-    expect(ally.hp).toBe(8);
-  });
-
-  it("does nothing when killer has no allies", () => {
-    const dead = makeBattleUnit({
-      id: "token",
-      name: "星の落とし子",
-      hp: 0,
-      lastDamageSource: "killer-uid",
-    });
-    const killer = makeBattleUnit({ uid: "killer-uid", atk: 5, hp: 10 });
-    const ctx = makeContext([], [killer], null, { next: () => 0 });
-    applyStarFrenzyDeath(dead, true, ctx);
-    expect(ctx.frames).toHaveLength(0);
-  });
-
-  it("does nothing when no lastDamageSource", () => {
-    const dead = makeBattleUnit({ id: "token", name: "星の落とし子", hp: 0 });
-    const enemy = makeBattleUnit({ uid: "e1", atk: 5, hp: 10 });
-    const ctx = makeContext([], [enemy], null, { next: () => 0 });
-    applyStarFrenzyDeath(dead, true, ctx);
-    expect(ctx.frames).toHaveLength(0);
+    expect(children[0]!.atk).toBe(3); // ceil(5/2) = 3
+    expect(children[0]!.hp).toBe(1);
   });
 });
 

@@ -25,10 +25,6 @@ export const ROT_RING = {
   ] as SB,
 };
 
-export const BLOOD_FONT = {
-  hpBuff: [3, 5, 7] as SN,
-};
-
 export const BUDDING_HYDRA = {
   divisor: [5, 4, 3] as SN,
   token: [
@@ -95,11 +91,8 @@ export const TAINTED_PLACENTA = {
 };
 
 export const CORPSE_BROKER = {
-  sellBuff: [
-    { atk: 1, hp: 0 },
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 1 },
-  ] as SB,
+  hpBuff: [1, 2, 3] as SN,
+  maxUses: 3,
 };
 
 export const CHALICE = {

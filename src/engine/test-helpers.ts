@@ -58,7 +58,7 @@ export function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit 
     equipUses: 0,
     infectionLevel: 0,
     ...overrides,
-    altarBuffed: overrides.altarBuffed ?? false,
+    spawnProcessed: overrides.spawnProcessed ?? false,
     lastDamageSource: overrides.lastDamageSource ?? null,
   };
 }

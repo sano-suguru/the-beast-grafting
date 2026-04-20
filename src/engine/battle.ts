@@ -24,7 +24,6 @@ import {
 } from "./battle-skills";
 import { applyAcidSplash, processKnockoutEffects } from "./battle-skills-combat";
 import { CLASH_LIMIT, NUMBNESS_INITIAL_USES } from "./constants";
-import { runDeploySkills } from "./battle-skills-init";
 import { getInitOverride } from "./battle-init-overrides";
 
 function initBattleUnit(u: UnitInstance): BattleUnit {
@@ -41,7 +40,7 @@ function initBattleUnit(u: UnitInstance): BattleUnit {
     buffHp: 0,
     tempBuffAtk: 0,
     uid: generateUid(),
-    altarBuffed: false,
+    spawnProcessed: false,
     avengeDeathCount: 0,
     skillUses: 0,
     equipUses: 0,
@@ -215,9 +214,6 @@ export function runBattle(
     () => [seg.e(`第${night}夜`), ` 狂宴が幕を開けた。敵は ${enemyTeam.teamName} だ。`],
     "info",
   );
-
-  runDeploySkills(ctx.pBoard, true, ctx);
-  runDeploySkills(ctx.eBoard, false, ctx);
 
   runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
   runStartSkills(ctx.eBoard, ctx.pBoard, false, ctx);

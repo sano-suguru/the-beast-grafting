@@ -21,7 +21,7 @@ export interface BattleUnit extends UnitInstance {
   preDeathHp: number;
   battleBaseAtk: number;
   battleBaseHp: number;
-  altarBuffed: boolean;
+  spawnProcessed: boolean;
   avengeDeathCount: number;
   equipUses: number;
   skillUses: number;

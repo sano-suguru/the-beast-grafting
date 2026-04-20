@@ -1,8 +1,9 @@
 import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
-import type { OriginId } from "../../shared/types";
+import type { OriginId, UnitInstance } from "../../shared/types";
 import type { BoardUnit } from "../../shared/board-unit";
 import { graftUnits } from "../../engine/shop-effects";
+import { applyCorpseBrokerDoseBuff } from "../../engine/shop-effects-dose";
 import { CULTIST_LIFE_COST, CULTIST_BLOOD_GAIN } from "../../shared/constants";
 import type { ShopStateRow } from "./shop-state-row";
 import { boardToInstances, instancesToBoard, itemSlotsFromJson } from "./shop-serialization";
@@ -43,11 +44,21 @@ export function executeEquip(
     equip: item.equip ?? target.equip,
   };
 
+  const dose =
+    item.equip === null
+      ? applyCorpseBrokerDoseBuff(
+          newBoard as (UnitInstance | null)[],
+          boardIndex,
+          state.corpseBrokerUses,
+        )
+      : { board: newBoard, corpseBrokerUses: state.corpseBrokerUses };
+
   return ok({
     ...state,
     blood: state.blood - item.cost,
-    board: instancesToBoard(newBoard),
+    board: instancesToBoard(dose.board as (UnitInstance | null)[]),
     shopItems: state.shopItems.map((u, i) => (i === shopItemIndex ? null : u)),
+    corpseBrokerUses: dose.corpseBrokerUses,
     undoSnapshot: captureUndo(state),
   });
 }
@@ -181,6 +192,7 @@ export function executeUndo(state: ShopStateRow): Result<ShopStateRow, GameError
     freeRoll: snap.freeRoll,
     cultistUsed: snap.cultistUsed,
     rotRingUses: snap.rotRingUses,
+    corpseBrokerUses: snap.corpseBrokerUses,
     activeEvent: snap.activeEvent,
     rngS0: snap.rngS0,
     rngS1: snap.rngS1,

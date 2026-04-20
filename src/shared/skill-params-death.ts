@@ -102,17 +102,13 @@ export const BEELZEBUB = {
 export const OMEN_WOMB = {
   token: [
     { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
     { atk: 4, hp: 4 },
+    { atk: 6, hp: 6 },
   ] as SB,
 };
 
 export const STELLAR_COCOON = {
-  summon: [
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-    { atk: 4, hp: 4 },
-  ] as SB,
+  count: [1, 2, 3] as SN,
 };
 
 export const MAIDEN = {
@@ -133,4 +129,9 @@ export const CHOLERA = {
 export const DEVOURING_WOUND = {
   token: { atk: 1, hp: 1 },
   uses: [1, 2, 3] as SN,
+};
+
+/** spite_beast: Faint – 隣接ユニット(後方味方+敵最前衛)に攻撃のN%ダメージ */
+export const SPITE_BEAST = {
+  percent: [50, 100, 150] as SN,
 };

@@ -39,10 +39,10 @@ import {
   SERAPH,
   SIN_EATER,
   CATHEDRAL,
-  CHARNEL_PIT,
+  SPITE_BEAST,
   GRINNING_SKULL,
   ARCHANGEL,
-  BLOOD_FONT,
+  CARRION_SENTINEL,
   BUDDING_HYDRA,
   BONE_TREE,
   ASH_FUNGUS,
@@ -70,6 +70,7 @@ import {
   CATACOMB_RAT,
   GRAFT_SCION,
   MARKET_VULTURE,
+  FAMINE_CORPSE,
 } from "./skill-params";
 
 const houndDeathText = (lv: number) => {
@@ -113,12 +114,10 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   cholera: (lv) => `死亡: 全体に${atLevel(CHOLERA.damage, lv)}ダメージ`,
   parasite: (lv) => {
     const b = atLevel(PARASITE.buff, lv);
-    return `直前の味方が攻撃: 自身に+${b.atk}/+${b.hp}`;
+    return `味方召喚: 自身に+${b.atk}/+${b.hp}(戦闘終了まで)`;
   },
-  revenant: (lv) => {
-    const b = atLevel(REVENANT.buff, lv);
-    return `前夜敗北時: 前方${atLevel(REVENANT.targets, lv)}体の攻撃+${b}`;
-  },
+  revenant: (lv) =>
+    `ターン開始: 前方${atLevel(REVENANT.targets, lv)}体に+${REVENANT.buff.atk}/+${REVENANT.buff.hp}`,
   evangelist: (lv) =>
     `味方死亡: ランダムな敵${atLevel(EVANGELIST.targets, lv)}体を感染させる(${atLevel(EVANGELIST.uses, lv)}回/戦)`,
   altar: (lv) => {
@@ -154,14 +153,15 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   market_vulture: (lv) =>
     `開戦: 最もHPの高い味方のHP×${atLevel(MARKET_VULTURE.percent, lv)}%を自身に獲得`,
   tainted_placenta: (lv) => `ターン開始: {blood}+${atLevel(TAINTED_PLACENTA.bloodGain, lv)}`,
-  flayed_saint: (lv) => `被弾: ランダムな敵に${atLevel(FLAYED_SAINT.damage, lv)}ダメージ`,
-  charnel_pit: (lv) => {
-    const b = atLevel(CHARNEL_PIT.token, lv);
-    return `味方${CHARNEL_PIT.threshold}体死亡ごと: ${b.atk}/${b.hp}を召喚`;
+  flayed_saint: (lv) => {
+    const b = atLevel(FLAYED_SAINT.buff, lv);
+    return `被弾: 後方味方に+${b.atk}/+${b.hp}`;
   },
+  spite_beast: (lv) => `死亡: 攻撃の${atLevel(SPITE_BEAST.percent, lv)}%ダメージを隣接ユニットに`,
   sin_eater: (lv) =>
     `味方死亡: 死んだ味方の攻撃を吸収(1回上限${atLevel(SIN_EATER.atkCap, lv)}, ${atLevel(SIN_EATER.uses, lv)}回)`,
-  blood_font: (lv) => `出陣時: 最もHPが低い味方に+0/+${atLevel(BLOOD_FONT.hpBuff, lv)}`,
+  carrion_sentinel: (lv) =>
+    `前の味方が死亡: 【屍蝋の盾】と攻撃+1を得る(${atLevel(CARRION_SENTINEL.uses, lv)}回/戦)`,
   ash_fungus: (lv) =>
     `味方解体/死亡: スタッツの${atLevel(ASH_FUNGUS.percent, lv)}%をランダム味方にバフ`,
   plague_bell: (lv) =>
@@ -202,14 +202,10 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(ARCHANGEL.buff, lv);
     return `味方${ARCHANGEL.threshold}体死亡ごと: 自身に+${b.atk}/+${b.hp}`;
   },
-  corroding_mold: (lv) => {
-    const b = atLevel(CORRODING_MOLD.buff, lv);
-    return `開戦: 前の味方に+${b.atk}/+${b.hp}`;
-  },
-  stellar_cocoon: (lv) => {
-    const b = atLevel(STELLAR_COCOON.summon, lv);
-    return `死亡: ${b.atk}/${b.hp}の星の落とし子を召喚(倒した敵を錯乱させる)`;
-  },
+  corroding_mold: (lv) =>
+    `開戦: 自身の攻撃の${atLevel(CORRODING_MOLD.percent, lv)}%を前の味方に付与`,
+  stellar_cocoon: (lv) =>
+    `死亡: ATK×50%(HP1)の落とし子を${atLevel(STELLAR_COCOON.count, lv)}体召喚`,
   risen_pope: (lv) => {
     const b = atLevel(RISEN_POPE.buff, lv);
     return `撃破: 味方全体に+${b.atk}/+${b.hp}`;
@@ -219,11 +215,10 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(CRAWLING_CORD.buff, lv);
     return `直前の味方が攻撃: 自身に+${b.atk}/+${b.hp}`;
   },
-  needleshell_worm: (lv) => `攻撃後: 後方味方${atLevel(NEEDLESHELL_WORM.targets, lv)}体に1ダメージ`,
-  corpse_broker: (lv) => {
-    const b = atLevel(CORPSE_BROKER.sellBuff, lv);
-    return `味方解体: 自身に+${b.atk}/+${b.hp}`;
-  },
+  needleshell_worm: (lv) =>
+    `攻撃後: 後方の味方に1ダメージ×${atLevel(NEEDLESHELL_WORM.targets, lv)}回`,
+  corpse_broker: (lv) =>
+    `味方への投与: その味方にHP+${atLevel(CORPSE_BROKER.hpBuff, lv)}(${CORPSE_BROKER.maxUses}回/ターン)`,
   tumor_guardian: (lv) => {
     const b = atLevel(TUMOR_GUARDIAN.buff, lv);
     return `被弾: 後ろの味方に+${b.atk}/+${b.hp}`;
@@ -257,7 +252,8 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
       : `接合で強化: 味方${NESTING_GRUB.targets}体に+${b.atk}/+${b.hp}`;
   },
   maiden: (lv) => `死亡: 後方${atLevel(MAIDEN.targets, lv)}体に【屍蝋の盾】`,
-  famine_corpse: () => "直前の味方が攻撃: 敵前衛の攻撃を自身のATK分削る",
+  famine_corpse: (lv) =>
+    `開戦: 最もHPの低い敵に${FAMINE_CORPSE.damage}ダメージ(${atLevel(FAMINE_CORPSE.uses, lv)}回)`,
   graft_scion: (lv) => {
     const item = ITEMS[atLevel(GRAFT_SCION.itemId, lv)];
     return `ターン開始: ${item.cost}血の${item.name}(+${item.atk}/+${item.hp})を闇市場に補充`;

@@ -34,8 +34,8 @@ export const BANSHEE = {
 };
 
 export const REVENANT = {
-  targets: [3, 3, 3] as SN,
-  buff: [1, 2, 3] as SN,
+  targets: [1, 2, 3] as SN,
+  buff: { atk: 1, hp: 1 },
 };
 
 export const PALADIN = {
@@ -55,9 +55,9 @@ export const MARKET_VULTURE = {
 
 export const PARASITE = {
   buff: [
-    { atk: 2, hp: 2 },
-    { atk: 4, hp: 4 },
-    { atk: 6, hp: 6 },
+    { atk: 2, hp: 1 },
+    { atk: 4, hp: 2 },
+    { atk: 6, hp: 3 },
   ] as SB,
 };
 
@@ -67,7 +67,8 @@ export const EYE = {
 };
 
 export const FAMINE_CORPSE = {
-  debuff: [2, 3, 4] as SN,
+  damage: 4,
+  uses: [1, 2, 3] as SN,
 };
 
 export const RELIC_SWORD = {
@@ -98,7 +99,11 @@ export const STITCHED_TWIN = {
 };
 
 export const FLAYED_SAINT = {
-  damage: [2, 4, 6] as SN,
+  buff: [
+    { atk: 1, hp: 2 },
+    { atk: 2, hp: 4 },
+    { atk: 3, hp: 6 },
+  ] as SB,
 };
 
 export const FLAGELLANT = {
@@ -166,19 +171,10 @@ export {
   DEVOURING_GRAFT,
   CHOLERA,
   DEVOURING_WOUND,
+  SPITE_BEAST,
 } from "./skill-params-death";
 
 // ── Avengeスキル ──
-
-export const CHARNEL_PIT = {
-  threshold: 2,
-  token: [
-    { atk: 3, hp: 3 },
-    { atk: 5, hp: 5 },
-    { atk: 7, hp: 7 },
-  ] as SB,
-  uses: [1, 2, 3] as SN,
-};
 
 export const GRINNING_SKULL = {
   threshold: 3,
@@ -223,11 +219,7 @@ export const NEEDLESHELL_WORM = {
 // ── 開戦バフ ──
 
 export const CORRODING_MOLD = {
-  buff: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-  ] as SB,
+  percent: [50, 100, 150] as SN,
 };
 
 // ── 味方前衛攻撃リアクション ──
@@ -250,12 +242,18 @@ export const INSATIABLE_MAW = {
   uses: [2, 3, 4] as SN,
 };
 
+// ── 味方死亡リアクション ──
+
+/** carrion_sentinel: 前の味方が死亡 → 屍蝋の盾 + ATK+1 */
+export const CARRION_SENTINEL = {
+  uses: [1, 2, 3] as SN,
+};
+
 // ── ショップスキル ──
 export {
   ALTAR,
   ZEALOT,
   ROT_RING,
-  BLOOD_FONT,
   BUDDING_HYDRA,
   BONE_TREE,
   ASH_FUNGUS,

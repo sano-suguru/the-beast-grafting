@@ -152,6 +152,7 @@ export const shopStates = sqliteTable(
     cultistUsed: integer("cultist_used", { mode: "boolean" }).notNull().default(false),
     rotRingUses: integer("rot_ring_uses").notNull().default(0),
     boneTreeUses: integer("bone_tree_uses").notNull().default(0),
+    corpseBrokerUses: integer("corpse_broker_uses").notNull().default(0),
     shopUnits: text("shop_units", { mode: "json" }).$type<(ShopSlotJson | null)[]>().notNull(),
     shopItems: text("shop_items", { mode: "json" }).$type<(ShopItemSlotJson | null)[]>().notNull(),
     board: text("board", { mode: "json" }).$type<(BoardUnit | null)[]>().notNull(),

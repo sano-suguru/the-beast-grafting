@@ -12,10 +12,6 @@ export const EQUIPS: Record<EquipType, EquipInfo> = {
   numbness: { name: "痛覚麻痺", desc: "【痛覚麻痺】被ダメージ-7(2回, 最低2)" },
   acid_blood: { name: "酸の血液", desc: "【酸血】攻撃時、攻撃対象の後ろの1体に5ダメージ" },
   death_curse: { name: "道連れの呪符", desc: "【道連れ】死亡時、1/1のコピーとして蘇生" },
-  star_frenzy: {
-    name: "星辰の錯乱",
-    desc: "【星辰の錯乱】死亡時、倒した敵が正気を失いランダムな味方を攻撃する",
-  },
 };
 
 export const getEquipInfo = (equipId: EquipType): EquipInfo => EQUIPS[equipId];

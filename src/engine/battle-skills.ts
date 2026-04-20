@@ -9,7 +9,7 @@ import {
   applyBatSkill,
   applyInquisitorSkill,
   applyBansheeSkill,
-  applyRevenantSkill,
+  applyFamineCorpseSkill,
   applyPaladinSkill,
   applyHolyFireSkill,
   applyMarketVultureSkill,
@@ -20,9 +20,7 @@ import {
   applyMimickingFleshSkill,
 } from "./battle-skills-start-pred";
 import {
-  applyParasiteBuff,
   applyEyeGaze,
-  applyFamineDebuff,
   applyRelicSwordBuff,
   applyPlagueBellToll,
   applyMachineTransfusion,
@@ -37,7 +35,7 @@ const START_SKILL_HANDLERS = {
   bat: applyBatSkill,
   church_inquisitor: applyInquisitorSkill,
   shrieking_throat: applyBansheeSkill,
-  revenant: applyRevenantSkill,
+  famine_corpse: applyFamineCorpseSkill,
   market_vulture: applyMarketVultureSkill,
   paladin: applyPaladinSkill,
   holy_fire: applyHolyFireSkill,
@@ -85,12 +83,9 @@ export function runStartSkills(
 type BeforeAttackHandler = (args: BeforeAttackArgs) => void;
 
 const BEFORE_ATTACK_HANDLERS = {
-  parasite: ({ u, prefix, ctx }: BeforeAttackArgs) => applyParasiteBuff(u, prefix, ctx),
   crawling_cord: ({ u, prefix, ctx }: BeforeAttackArgs) => applyCrawlingCordBuff(u, prefix, ctx),
   eye: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>
     applyEyeGaze(u, enemyBoard, prefix, ctx),
-  famine_corpse: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>
-    applyFamineDebuff(u, enemyBoard, prefix, ctx),
   relic_sword: ({ u, board, prefix, ctx }: BeforeAttackArgs) =>
     applyRelicSwordBuff(u, board, prefix, ctx),
   plague_bell: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>

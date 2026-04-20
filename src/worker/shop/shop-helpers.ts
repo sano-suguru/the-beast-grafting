@@ -31,6 +31,7 @@ export function captureUndo(state: ShopStateRow): ShopUndoSnapshot {
     cultistUsed: state.cultistUsed,
     rotRingUses: state.rotRingUses,
     boneTreeUses: state.boneTreeUses,
+    corpseBrokerUses: state.corpseBrokerUses,
     activeEvent: state.activeEvent,
     rngS0: state.rngS0,
     rngS1: state.rngS1,

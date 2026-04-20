@@ -7,33 +7,17 @@ import {
   aoeDamageActions,
   buffAction,
   skillAction,
-  defendAction,
 } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
 import {
   atLevel,
-  PARASITE,
   EYE,
-  FAMINE_CORPSE,
   RELIC_SWORD,
   PLAGUE_BELL,
   MACHINE,
   CRAWLING_CORD,
 } from "../shared/skill-params";
-
-export function applyParasiteBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {
-  const b = atLevel(PARASITE.buff, u.level);
-  u.atk += b.atk;
-  u.hp += b.hp;
-  pushFrame(
-    ctx,
-    "skill",
-    () => [prefix, seg.u(u.name), "が前衛の闘争に興奮する！ ", seg.s(`+${b.atk}/+${b.hp}`)],
-    "skill",
-    { [u.uid]: buffAction(b, u.uid) },
-  );
-}
 
 export function applyEyeGaze(
   u: BattleUnit,
@@ -62,32 +46,6 @@ export function applyEyeGaze(
   );
   u.skillUses = u.skillUses - 1;
   resolveDeaths(ctx);
-}
-
-export function applyFamineDebuff(
-  u: BattleUnit,
-  enemyBoard: BattleUnit[],
-  prefix: string,
-  ctx: BattleContext,
-) {
-  if (enemyBoard.length === 0) return;
-  const front = mustGet(enemyBoard, 0, "famine front");
-  const debuff = atLevel(FAMINE_CORPSE.debuff, u.level);
-  front.atk = Math.max(1, front.atk - debuff);
-  pushFrame(
-    ctx,
-    "skill",
-    () => [
-      prefix,
-      seg.u(u.name),
-      "が",
-      seg.u(front.name),
-      "に群がる。肉が痩せ細っていく。",
-      seg.s(`-${debuff}/+0`),
-    ],
-    "skill",
-    { [u.uid]: skillAction(), [front.uid]: defendAction(`-${debuff}/+0`) },
-  );
 }
 
 export function applyRelicSwordBuff(

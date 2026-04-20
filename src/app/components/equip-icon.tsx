@@ -7,7 +7,6 @@ import {
   Minus,
   FlaskConical,
   RotateCcw,
-  Star,
 } from "lucide-preact";
 import type { EquipType } from "../types";
 
@@ -20,7 +19,6 @@ const EQUIP_ICONS: Record<EquipType, { Icon: typeof ShieldAlert; className: stri
   numbness: { Icon: Minus, className: "text-iron-light" },
   acid_blood: { Icon: FlaskConical, className: "text-rot-acid" },
   death_curse: { Icon: RotateCcw, className: "text-hex-dim" },
-  star_frenzy: { Icon: Star, className: "text-tarnished-gold" },
 };
 
 export function EquipIcon({ equipId }: { equipId: EquipType | null }) {

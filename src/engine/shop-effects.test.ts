@@ -6,6 +6,7 @@ import {
   applySellEffects,
   applyLevelUpEffects,
 } from "./shop-effects";
+import { applyCorpseBrokerDoseBuff } from "./shop-effects-dose";
 import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
@@ -604,29 +605,32 @@ describe("applyLevelUpEffects – nesting_grub", () => {
   });
 });
 
-describe("applySellEffects – corpse_broker", () => {
-  it("buffs corpse_broker on ally sell", () => {
+describe("applyCorpseBrokerDoseBuff", () => {
+  it("buffs target HP when corpse_broker is on board", () => {
     const broker = makeUnit({ id: "corpse_broker", uid: "cb-1" });
-    const board: (UnitInstance | null)[] = [broker, null];
-    const sold = makeUnit({ uid: "sold-1" });
-    const rng = createSeededRng(1);
-    const result = applySellEffects(sold, board, rng);
-    const b = atLevel(CORPSE_BROKER.sellBuff, 1);
-    const updatedBroker = result.board.find(
-      (u): u is UnitInstance => u !== null && u.uid === "cb-1",
-    );
-    expect(updatedBroker!.buffAtk).toBe(b.atk);
-    expect(updatedBroker!.buffHp).toBe(b.hp);
+    const target = makeUnit({ id: "rat", uid: "target-1" });
+    const board: (UnitInstance | null)[] = [broker, target, null];
+    const result = applyCorpseBrokerDoseBuff(board, 1, 0);
+    const hpBuff = atLevel(CORPSE_BROKER.hpBuff, 1);
+    const updated = result.board.find((u): u is UnitInstance => u !== null && u.uid === "target-1");
+    expect(updated!.buffHp).toBe(hpBuff);
+    expect(result.corpseBrokerUses).toBe(1);
   });
 
-  it("does not buff when no corpse_broker", () => {
-    const ally = makeUnit({ id: "rat", uid: "ally-1" });
-    const board: (UnitInstance | null)[] = [ally, null];
-    const sold = makeUnit({ uid: "sold-1" });
-    const rng = createSeededRng(1);
-    const result = applySellEffects(sold, board, rng);
-    const unchanged = result.board.find((u): u is UnitInstance => u !== null && u.uid === "ally-1");
-    expect(unchanged!.buffAtk).toBe(0);
-    expect(unchanged!.buffHp).toBe(0);
+  it("does not buff when no corpse_broker on board", () => {
+    const target = makeUnit({ id: "rat", uid: "target-1" });
+    const board: (UnitInstance | null)[] = [target, null];
+    const result = applyCorpseBrokerDoseBuff(board, 0, 0);
+    expect(result.board).toBe(board);
+    expect(result.corpseBrokerUses).toBe(0);
+  });
+
+  it("stops buffing after maxUses reached", () => {
+    const broker = makeUnit({ id: "corpse_broker", uid: "cb-1" });
+    const target = makeUnit({ id: "rat", uid: "target-1" });
+    const board: (UnitInstance | null)[] = [broker, target, null];
+    const result = applyCorpseBrokerDoseBuff(board, 1, 3);
+    expect(result.board).toBe(board);
+    expect(result.corpseBrokerUses).toBe(3);
   });
 });

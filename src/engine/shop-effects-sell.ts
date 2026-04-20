@@ -2,14 +2,7 @@ import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ItemData } from "../shared/types";
 import type { Rng } from "./rng";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
-import {
-  atLevel,
-  ASH_FUNGUS,
-  CORPSE_BROKER,
-  BONE_JAW,
-  ROT_FEEDER,
-  CORPSE_PECKER,
-} from "../shared/skill-params";
+import { atLevel, ASH_FUNGUS, BONE_JAW, ROT_FEEDER, CORPSE_PECKER } from "../shared/skill-params";
 import { buffRandomUnit } from "./buff-utils";
 
 interface SellResult {
@@ -61,15 +54,6 @@ function applyAshFungusSell(soldUnit: UnitInstance, nextBoard: (UnitInstance | n
   }
 }
 
-function applyCorpseBrokerSell(nextBoard: (UnitInstance | null)[]): void {
-  for (let i = 0; i < nextBoard.length; i++) {
-    const u = nextBoard[i];
-    if (!u || u.id !== "corpse_broker") continue;
-    const b = atLevel(CORPSE_BROKER.sellBuff, u.level);
-    nextBoard[i] = { ...u, buffAtk: u.buffAtk + b.atk, buffHp: u.buffHp + b.hp };
-  }
-}
-
 export const applySellEffects = (
   soldUnit: UnitInstance,
   currentBoard: (UnitInstance | null)[],
@@ -82,7 +66,6 @@ export const applySellEffects = (
   const stockItems = getCorpsePeckerSelfSellItems(soldUnit);
   // Phase 2: Passive sell reactions (remaining board units)
   applyAshFungusSell(soldUnit, nextBoard, rng);
-  applyCorpseBrokerSell(nextBoard);
   return {
     board: nextBoard,
     shopBuff: selfShopBuff,

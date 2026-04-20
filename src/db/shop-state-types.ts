@@ -22,6 +22,7 @@ export interface ShopUndoSnapshot {
   cultistUsed: boolean;
   rotRingUses: number;
   boneTreeUses: number;
+  corpseBrokerUses: number;
   activeEvent: EventData | null;
   rngS0: number;
   rngS1: number;

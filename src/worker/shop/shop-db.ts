@@ -77,6 +77,7 @@ function dbRowToState(
     cultistUsed: boolean;
     rotRingUses: number;
     boneTreeUses: number;
+    corpseBrokerUses: number;
     shopUnits: (ShopSlotJson | null)[];
     shopItems: (ShopItemSlotJson | null)[];
     board: (BoardUnit | null)[];
@@ -97,6 +98,7 @@ function dbRowToState(
     cultistUsed: row.cultistUsed,
     rotRingUses: row.rotRingUses,
     boneTreeUses: row.boneTreeUses,
+    corpseBrokerUses: row.corpseBrokerUses,
     activeEvent: row.activeEvent ?? null,
     rngS0: row.rngS0,
     rngS1: row.rngS1,
@@ -127,6 +129,7 @@ function stateToColumns(state: ShopStateRow) {
     cultistUsed: state.cultistUsed,
     rotRingUses: state.rotRingUses,
     boneTreeUses: state.boneTreeUses,
+    corpseBrokerUses: state.corpseBrokerUses,
     shopUnits: state.shopUnits,
     shopItems: state.shopItems,
     board: state.board,

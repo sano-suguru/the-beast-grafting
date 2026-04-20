@@ -1,4 +1,3 @@
-import type { BattleAction } from "../shared/types";
 import type { BattleUnit } from "./battle-context";
 import {
   pushFrame,
@@ -7,7 +6,6 @@ import {
   seg,
   aoeBuffActions,
   buffAction,
-  skillAction,
   damageAction,
 } from "./battle-context";
 import { mustGet } from "../shared/invariant";
@@ -17,7 +15,7 @@ import {
   BAT,
   INQUISITOR,
   BANSHEE,
-  REVENANT,
+  FAMINE_CORPSE,
   PALADIN,
   HOLY_FIRE,
   MARKET_VULTURE,
@@ -110,35 +108,31 @@ export function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext)
   );
 }
 
-export function applyRevenantSkill({ u, isPlayer, ctx }: SkillContext) {
-  if (ctx.lastBattleResult !== "LOSE") return;
-  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
-  const prefix = enemyPrefix(isPlayer);
-  const maxTargets = atLevel(REVENANT.targets, u.level);
-  const buffAmount = atLevel(REVENANT.buff, u.level);
-  const actions: Record<string, BattleAction> = {
-    [u.uid]: skillAction(),
-  };
-  let buffed = 0;
-  for (const ally of allyBoard) {
-    if (buffed >= maxTargets) break;
-    if (ally.uid === u.uid) continue;
-    ally.atk += buffAmount;
-    actions[ally.uid] = buffAction({ atk: buffAmount, hp: 0 }, u.uid);
-    buffed++;
-  }
-  if (buffed > 0) {
-    pushFrame(
-      ctx,
-      "skill",
+export function applyFamineCorpseSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
+  if (targetArr.length === 0) return;
+  const dmg = FAMINE_CORPSE.damage;
+  const uses = atLevel(FAMINE_CORPSE.uses, u.level);
+  for (let i = 0; i < uses; i++) {
+    const alive = targetArr.filter((e) => e.hp > 0);
+    if (alive.length === 0) return;
+    let lowestHp = alive[0]!;
+    for (const e of alive) {
+      if (e.hp < lowestHp.hp) lowestHp = e;
+    }
+    const hpBefore = lowestHp.hp;
+    applySkillDamage(
+      u,
+      lowestHp,
+      dmg,
       () => [
-        prefix,
         seg.u(u.name),
-        `の眼が血走り激怒する。前方${buffed}体の肉が激しく脈打つ。`,
-        seg.s(`+${buffAmount}/+0`),
+        "が飢餓を放つ！ ",
+        seg.u(lowestHp.name),
+        "に ",
+        seg.hp(`${hpBefore}→${Math.max(0, hpBefore - dmg)}`),
       ],
-      "skill",
-      actions,
+      isPlayer,
+      ctx,
     );
   }
 }

@@ -8,11 +8,11 @@ import {
   PLAGUE_BELL,
   AMNIOTIC_ARMOR,
   MACHINE,
-  CHARNEL_PIT,
   WAILING_CURSECHILD,
   INSATIABLE_MAW,
   GRINNING_SKULL,
   BONE_TREE,
+  CARRION_SENTINEL,
 } from "../shared/skill-params";
 import { EVANGELIST, BEELZEBUB } from "../shared/skill-params-death";
 
@@ -44,9 +44,6 @@ const INIT_OVERRIDES = {
   wailing_cursechild: (bu: BattleUnit) => {
     bu.skillUses = atLevel(WAILING_CURSECHILD.uses, bu.level);
   },
-  charnel_pit: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(CHARNEL_PIT.uses, bu.level);
-  },
   insatiable_maw: (bu: BattleUnit) => {
     bu.skillUses = atLevel(INSATIABLE_MAW.uses, bu.level);
   },
@@ -55,6 +52,9 @@ const INIT_OVERRIDES = {
   },
   grinning_skull: (bu: BattleUnit) => {
     bu.skillUses = atLevel(GRINNING_SKULL.uses, bu.level);
+  },
+  carrion_sentinel: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(CARRION_SENTINEL.uses, bu.level);
   },
   necrotic_finger: (bu: BattleUnit) => {
     if (!bu.equip) bu.equip = "corpse_wax";

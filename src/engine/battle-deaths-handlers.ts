@@ -20,7 +20,7 @@ import {
   handleDevouringWoundDeath,
 } from "./battle-deaths-handlers-spawn";
 import { handleAshFungusDeath } from "./battle-deaths-handlers-buff";
-import { handleCholeraDeath } from "./battle-deaths-handlers-aoe";
+import { handleCholeraDeath, handleSpiteBeastDeath } from "./battle-deaths-handlers-aoe";
 
 export const UNIT_DEATH_HANDLERS = {
   rat: handleRatDeath,
@@ -35,6 +35,7 @@ export const UNIT_DEATH_HANDLERS = {
   hanged_man: handleHangedManDeath,
   seraph: handleSeraphDeath,
   cholera: handleCholeraDeath,
+  spite_beast: handleSpiteBeastDeath,
   devouring_wound: handleDevouringWoundDeath,
   omen_womb: handleOmenWombDeath,
   stellar_cocoon: handleStellarCocoonDeath,

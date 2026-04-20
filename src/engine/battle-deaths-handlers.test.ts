@@ -235,7 +235,7 @@ describe("handleMaidenDeath", () => {
   });
 
   it("overwrites existing equip on target", () => {
-    const next = makeBattleUnit({ equip: "iron_plate", uid: "next" });
+    const next = makeBattleUnit({ equip: "iron_plate" as const, uid: "next" });
     const ctx = makeContext([next]);
     const dead = makeBattleUnit({ id: "maiden", name: "処女", level: 1 });
     callHandler("maiden", dead, ctx.pBoard, 0, true, ctx);
@@ -285,6 +285,84 @@ describe("handleMartyrDeath", () => {
     const dead = makeBattleUnit({ id: "martyr", name: "殉教者" });
     callHandler("martyr", dead, ctx.pBoard, 0, true, ctx);
     expect(ctx.frames).toHaveLength(2);
+  });
+});
+
+describe("handleSpiteBeastDeath", () => {
+  it("Lv1: 攻撃の50%ダメを後継者と敵前衛に与える", () => {
+    const successor = makeBattleUnit({ hp: 10, uid: "successor" });
+    const enemyFront = makeBattleUnit({ hp: 10, uid: "enemy-front" });
+    const ctx = makeContext([successor], [enemyFront]);
+    const dead = makeBattleUnit({ id: "spite_beast", name: "道連れの獣", atk: 6, level: 1 });
+    callHandler("spite_beast", dead, ctx.pBoard, 0, true, ctx);
+    expect(successor.hp).toBe(7); // 10 - 3 (50% of 6)
+    expect(enemyFront.hp).toBe(7);
+  });
+
+  it("Lv2: 攻撃の100%ダメ", () => {
+    const successor = makeBattleUnit({ hp: 10, uid: "successor" });
+    const enemyFront = makeBattleUnit({ hp: 10, uid: "enemy-front" });
+    const ctx = makeContext([successor], [enemyFront]);
+    const dead = makeBattleUnit({ id: "spite_beast", name: "道連れの獣", atk: 6, level: 2 });
+    callHandler("spite_beast", dead, ctx.pBoard, 0, true, ctx);
+    expect(successor.hp).toBe(4); // 10 - 6 (100%)
+    expect(enemyFront.hp).toBe(4);
+  });
+
+  it("Lv3: 攻撃の150%ダメ", () => {
+    const successor = makeBattleUnit({ hp: 10, uid: "successor" });
+    const enemyFront = makeBattleUnit({ hp: 10, uid: "enemy-front" });
+    const ctx = makeContext([successor], [enemyFront]);
+    const dead = makeBattleUnit({ id: "spite_beast", name: "道連れの獣", atk: 6, level: 3 });
+    callHandler("spite_beast", dead, ctx.pBoard, 0, true, ctx);
+    expect(successor.hp).toBe(1); // 10 - 9 (150%)
+    expect(enemyFront.hp).toBe(1);
+  });
+
+  it("後継者なし → 敵前衛のみダメージ", () => {
+    const enemyFront = makeBattleUnit({ hp: 10, uid: "enemy-front" });
+    const ctx = makeContext([], [enemyFront]);
+    const dead = makeBattleUnit({ id: "spite_beast", name: "道連れの獣", atk: 6, level: 1 });
+    callHandler("spite_beast", dead, ctx.pBoard, 0, true, ctx);
+    expect(enemyFront.hp).toBe(7);
+    expect(ctx.frames).toHaveLength(1);
+  });
+
+  it("敵前衛なし → 後継者のみダメージ", () => {
+    const successor = makeBattleUnit({ hp: 10, uid: "successor" });
+    const ctx = makeContext([successor], []);
+    const dead = makeBattleUnit({ id: "spite_beast", name: "道連れの獣", atk: 6, level: 1 });
+    callHandler("spite_beast", dead, ctx.pBoard, 0, true, ctx);
+    expect(successor.hp).toBe(7);
+    expect(ctx.frames).toHaveLength(1);
+  });
+
+  it("対象なし → フレーム生成なし", () => {
+    const ctx = makeContext([], []);
+    const dead = makeBattleUnit({ id: "spite_beast", name: "道連れの獣", atk: 6, level: 1 });
+    callHandler("spite_beast", dead, ctx.pBoard, 0, true, ctx);
+    expect(ctx.frames).toHaveLength(0);
+  });
+
+  it("isPlayer=false → 敵味方のボードが反転する", () => {
+    const successor = makeBattleUnit({ hp: 10, uid: "successor" });
+    const enemyFront = makeBattleUnit({ hp: 10, uid: "enemy-front" });
+    // isPlayer=false なので eBoard が「自分側」、pBoard が「敵側」
+    const ctx = makeContext([enemyFront], [successor]);
+    const dead = makeBattleUnit({ id: "spite_beast", name: "道連れの獣", atk: 6, level: 1 });
+    callHandler("spite_beast", dead, ctx.eBoard, 0, false, ctx);
+    expect(successor.hp).toBe(7); // eBoard[0] が後継者
+    expect(enemyFront.hp).toBe(7); // pBoard[0] が敵前衛
+  });
+
+  it("奇数ATKは端数切り捨て (ATK=5, Lv1=50% → 2ダメ)", () => {
+    const successor = makeBattleUnit({ hp: 10, uid: "successor" });
+    const enemyFront = makeBattleUnit({ hp: 10, uid: "enemy-front" });
+    const ctx = makeContext([successor], [enemyFront]);
+    const dead = makeBattleUnit({ id: "spite_beast", name: "道連れの獣", atk: 5, level: 1 });
+    callHandler("spite_beast", dead, ctx.pBoard, 0, true, ctx);
+    expect(successor.hp).toBe(8); // 10 - 2 (floor(5*50/100))
+    expect(enemyFront.hp).toBe(8);
   });
 });
 

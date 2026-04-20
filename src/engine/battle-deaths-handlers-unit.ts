@@ -210,7 +210,7 @@ export function handlePriestDeath({ dead, board, isPlayer, ctx }: DeathContext) 
 
 export function handleMaidenDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
   const maxTargets = atLevel(MAIDEN.targets, dead.level);
-  const targets = board.slice(idx, idx + maxTargets);
+  const targets = board.slice(idx, idx + maxTargets).filter((t) => t.hp > 0);
   if (targets.length === 0) return;
   const prefix = enemyPrefix(isPlayer);
   const actionMap: Record<string, BattleAction> = {};

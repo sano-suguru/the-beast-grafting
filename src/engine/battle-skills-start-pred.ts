@@ -48,23 +48,16 @@ export function applyCorrodingMoldSkill({ u, isPlayer, ctx }: SkillContext) {
   if (idx <= 0) return;
   const front = allyBoard[idx - 1]!;
   if (front.hp <= 0) return;
-  const b = atLevel(CORRODING_MOLD.buff, u.level);
-  front.atk += b.atk;
-  front.hp += b.hp;
+  const percent = atLevel(CORRODING_MOLD.percent, u.level);
+  const atkBuff = Math.max(1, Math.floor((u.atk * percent) / 100));
+  front.atk += atkBuff;
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
     "skill",
-    () => [
-      prefix,
-      seg.u(u.name),
-      "が",
-      seg.u(front.name),
-      "に侵蝕する。",
-      seg.s(`+${b.atk}/+${b.hp}`),
-    ],
+    () => [prefix, seg.u(u.name), "が", seg.u(front.name), "に侵蝕する。", seg.s(`+${atkBuff}/+0`)],
     "skill",
-    { [front.uid]: buffAction(b, u.uid) },
+    { [front.uid]: buffAction({ atk: atkBuff, hp: 0 }, u.uid) },
   );
 }
 

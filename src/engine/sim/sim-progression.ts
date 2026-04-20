@@ -10,7 +10,6 @@ import { TIER_APPEAR_NIGHT } from "./sim-types";
 /**
  * Night進行に応じた装備の重みテーブル。
  * infection は敵スキルで付与されるものなのでプレイヤー装備候補から除外。
- * star_frenzy は stellar_cocoon のトークン専用のため除外。
  */
 const EQUIP_WEIGHTS: readonly { type: EquipType; weight: number }[] = [
   { type: "iron_plate", weight: 20 },

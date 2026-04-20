@@ -2,112 +2,11 @@ import { processAvenge, incrementAvengeCounters } from "./battle-avenge";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
 import {
   atLevel,
-  CHARNEL_PIT,
   GRINNING_SKULL,
   ARCHANGEL,
   GROANING_COFFIN,
   WAILING_CURSECHILD,
 } from "../shared/skill-params";
-
-describe("processAvenge – charnel_pit (independent counters)", () => {
-  it("spawns token when counter reaches threshold", () => {
-    const pit = makeBattleUnit({
-      id: "charnel_pit",
-      name: "肉溜",
-      atk: 0,
-      hp: 6,
-      avengeDeathCount: 2,
-      skillUses: 1,
-    });
-    const board = [pit];
-    const ctx = makeContext(board, []);
-    processAvenge(board, true, ctx);
-    expect(pit.avengeDeathCount).toBe(0);
-    expect(board.length).toBe(2);
-    const token = board.find((u) => u.name === "肉塊");
-    expect(token).toBeDefined();
-    const t = atLevel(CHARNEL_PIT.token, 1);
-    expect(token!.atk).toBe(t.atk);
-    expect(token!.hp).toBe(t.hp);
-  });
-
-  it("spawns multiple tokens when counter is 2x threshold", () => {
-    const pit = makeBattleUnit({
-      id: "charnel_pit",
-      name: "肉溜",
-      atk: 0,
-      hp: 6,
-      avengeDeathCount: 4,
-      skillUses: 2,
-    });
-    const board = [pit];
-    const ctx = makeContext(board, []);
-    processAvenge(board, true, ctx);
-    expect(pit.avengeDeathCount).toBe(0);
-    const tokens = board.filter((u) => u.name === "肉塊");
-    expect(tokens.length).toBe(2);
-  });
-
-  it("keeps leftover count below threshold", () => {
-    const pit = makeBattleUnit({
-      id: "charnel_pit",
-      name: "肉溜",
-      atk: 0,
-      hp: 6,
-      avengeDeathCount: 3,
-      skillUses: 1,
-    });
-    const board = [pit];
-    const ctx = makeContext(board, []);
-    processAvenge(board, true, ctx);
-    expect(pit.avengeDeathCount).toBe(1);
-    expect(board.filter((u) => u.name === "肉塊").length).toBe(1);
-  });
-
-  it("both charnel_pits trigger independently", () => {
-    const pit1 = makeBattleUnit({
-      id: "charnel_pit",
-      name: "肉溜1",
-      atk: 0,
-      hp: 6,
-      avengeDeathCount: 2,
-      skillUses: 1,
-    });
-    const pit2 = makeBattleUnit({
-      id: "charnel_pit",
-      name: "肉溜2",
-      atk: 0,
-      hp: 6,
-      avengeDeathCount: 2,
-      skillUses: 1,
-    });
-    const board = [pit1, pit2];
-    const ctx = makeContext(board, []);
-    processAvenge(board, true, ctx);
-    const tokens = board.filter((u) => u.name === "肉塊");
-    expect(tokens.length).toBe(2);
-    expect(pit1.avengeDeathCount).toBe(0);
-    expect(pit2.avengeDeathCount).toBe(0);
-  });
-
-  it("stops spawning after skillUses exhausted", () => {
-    const pit = makeBattleUnit({
-      id: "charnel_pit",
-      name: "肉溜",
-      atk: 0,
-      hp: 6,
-      avengeDeathCount: 4,
-      skillUses: 1,
-    });
-    const board = [pit];
-    const ctx = makeContext(board, []);
-    processAvenge(board, true, ctx);
-    // skillUses=1 → 1回スポーン後stop。avengeDeathCount 4で閾値2×2回到達するがusesが足りない
-    expect(board.filter((u) => u.name === "肉塊").length).toBe(1);
-    expect(pit.skillUses).toBe(0);
-    expect(pit.avengeDeathCount).toBe(0);
-  });
-});
 
 describe("processAvenge – grinning_skull (independent counters)", () => {
   it("buffs all allies when counter reaches threshold", () => {
@@ -215,79 +114,21 @@ describe("processAvenge – archangel (independent counters)", () => {
 
 describe("incrementAvengeCounters – independent per-unit", () => {
   it("increments only avenge units, not others", () => {
-    const pit = makeBattleUnit({ id: "charnel_pit", hp: 6 });
+    const coffin = makeBattleUnit({ id: "groaning_coffin", hp: 6 });
     const rel = makeBattleUnit({ id: "grinning_skull", hp: 8 });
     const other = makeBattleUnit({ id: "rat", hp: 3 });
-    const board = [pit, rel, other];
+    const board = [coffin, rel, other];
     incrementAvengeCounters(board);
-    expect(pit.avengeDeathCount).toBe(1);
+    expect(coffin.avengeDeathCount).toBe(1);
     expect(rel.avengeDeathCount).toBe(1);
     expect(other.avengeDeathCount).toBe(0);
   });
 
   it("does not increment dead avenge units", () => {
-    const pit = makeBattleUnit({ id: "charnel_pit", hp: 0 });
-    const board = [pit];
+    const coffin = makeBattleUnit({ id: "groaning_coffin", hp: 0 });
+    const board = [coffin];
     incrementAvengeCounters(board);
-    expect(pit.avengeDeathCount).toBe(0);
-  });
-
-  it("charnel_pit and grinning_skull trigger independently on same death count", () => {
-    const pit = makeBattleUnit({
-      id: "charnel_pit",
-      atk: 0,
-      hp: 6,
-      avengeDeathCount: 1,
-      skillUses: 1,
-    });
-    const rel = makeBattleUnit({
-      id: "grinning_skull",
-      atk: 2,
-      hp: 8,
-      avengeDeathCount: 2,
-      skillUses: 2,
-    });
-    const board = [pit, rel];
-    const ctx = makeContext(board, []);
-    // Simulate 1 more death → pit reaches 2 (threshold), rel reaches 3 (threshold)
-    incrementAvengeCounters(board);
-    processAvenge(board, true, ctx);
-    expect(pit.avengeDeathCount).toBe(0);
-    expect(rel.avengeDeathCount).toBe(0);
-    // Both triggered
-    expect(board.filter((u) => u.name === "肉塊").length).toBe(1);
-    const b = atLevel(GRINNING_SKULL.buff, 1);
-    expect(rel.atk).toBe(2 + b.atk);
-  });
-});
-
-describe("processAvenge snapshot – spawn does not skip later avenge units", () => {
-  it("CharnelPit spawn does not skip GrinningSkull", () => {
-    const pit = makeBattleUnit({
-      id: "charnel_pit",
-      name: "肉溜",
-      atk: 0,
-      hp: 6,
-      avengeDeathCount: 2,
-      skillUses: 1,
-    });
-    const skull = makeBattleUnit({
-      id: "grinning_skull",
-      name: "聖骨箱",
-      atk: 2,
-      hp: 8,
-      avengeDeathCount: 3,
-      skillUses: 2,
-    });
-    const board = [pit, skull];
-    const ctx = makeContext(board, []);
-    processAvenge(board, true, ctx);
-    // Both should trigger
-    expect(pit.avengeDeathCount).toBe(0);
-    expect(skull.avengeDeathCount).toBe(0);
-    expect(board.filter((u) => u.name === "肉塊")).toHaveLength(1);
-    const b = atLevel(GRINNING_SKULL.buff, 1);
-    expect(skull.atk).toBe(2 + b.atk);
+    expect(coffin.avengeDeathCount).toBe(0);
   });
 });
 

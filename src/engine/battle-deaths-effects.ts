@@ -8,10 +8,10 @@ import {
   handleCathedralSpawns,
   handleEvangelistPlague,
 } from "./battle-deaths-effects-reactions";
-import { applyStarFrenzyDeath } from "./battle-deaths-handlers-spawn";
 import {
   handleInsatiableMawBuff,
   handleBoneTreeAllyDeath,
+  handleCarrionSentinelAllyDeath,
 } from "./battle-deaths-effects-ally-reactions";
 
 function spawnMaggotNest(
@@ -74,7 +74,6 @@ export function handleEquipDeath(
 ) {
   if (dead.equip === "maggot") spawnMaggotNest(dead, board, idx, isPlayer, ctx);
   if (dead.equip === "death_curse") spawnDeathCurse(dead, board, idx, isPlayer, ctx);
-  if (dead.equip === "star_frenzy") applyStarFrenzyDeath(dead, isPlayer, ctx);
 }
 
 export type AllyReactionCtx = {
@@ -98,4 +97,5 @@ export const PERSISTENT_ALLY_REACTIONS: AllyReaction[] = [
   (r) => handleSinEaterAbsorb(r.board, r.dead.atk, r.isPlayer, r.ctx),
   (r) => handleInsatiableMawBuff(r.board, r.isPlayer, r.ctx),
   (r) => handleBoneTreeAllyDeath(r.board, r.isPlayer, r.ctx),
+  (r) => handleCarrionSentinelAllyDeath(r.board, r.deathIdx, r.isPlayer, r.ctx),
 ];

@@ -18,7 +18,7 @@ import {
 } from "./battle-deaths-handlers";
 import { processAvenge, incrementAvengeCounters } from "./battle-avenge";
 import { DEATH_CASCADE_LIMIT, FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import { atLevel, ALTAR } from "../shared/skill-params";
+import { atLevel, ALTAR, PARASITE } from "../shared/skill-params";
 
 function buffTokenFromAltar(
   token: BattleUnit,
@@ -58,13 +58,43 @@ function buffTokenFromAltar(
 function applyAltarBuffs(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
   const prefix = enemyPrefix(isPlayer);
   for (const token of board) {
-    if (token.id !== "token" || token.altarBuffed) continue;
+    if (token.id !== "token" || token.spawnProcessed) continue;
     for (let aIdx = 0; aIdx < board.length; aIdx++) {
       const altar = board[aIdx]!;
       if (altar.id !== "altar") continue;
       buffTokenFromAltar(token, altar, aIdx, board, prefix, ctx);
     }
-    token.altarBuffed = true;
+  }
+}
+
+function markTokensProcessed(board: BattleUnit[]) {
+  for (const u of board) {
+    if (u.id === "token") u.spawnProcessed = true;
+  }
+}
+
+function applyParasiteSummonReaction(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext) {
+  const prefix = enemyPrefix(isPlayer);
+  for (const token of board) {
+    if (token.id !== "token" || token.spawnProcessed) continue;
+    for (let pIdx = 0; pIdx < board.length; pIdx++) {
+      const p = board[pIdx]!;
+      if (p.id !== "parasite" || p.hp <= 0) continue;
+      const b = atLevel(PARASITE.buff, p.level);
+      const mult = getMult(board, pIdx);
+      for (let m = 0; m < mult; m++) {
+        p.atk += b.atk;
+        p.hp += b.hp;
+        pushFrame(
+          ctx,
+          "skill",
+          () => [prefix, seg.u(p.name), "が召喚に反応し蠢く！ ", seg.s(`+${b.atk}/+${b.hp}`)],
+          "skill",
+          { [p.uid]: buffAction({ atk: b.atk, hp: b.hp }, p.uid) },
+          FRAME_DELAY_DEATH_CHAIN,
+        );
+      }
+    }
   }
 }
 
@@ -189,7 +219,11 @@ export function resolveDeaths(ctx: BattleContext) {
       deathOccurred = true;
     }
 
+    applyParasiteSummonReaction(ctx.pBoard, true, ctx);
+    applyParasiteSummonReaction(ctx.eBoard, false, ctx);
     applyAltarBuffs(ctx.pBoard, true, ctx);
     applyAltarBuffs(ctx.eBoard, false, ctx);
+    markTokensProcessed(ctx.pBoard);
+    markTokensProcessed(ctx.eBoard);
   }
 }

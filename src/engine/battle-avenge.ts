@@ -14,40 +14,12 @@ import {
 import { mustGet } from "../shared/invariant";
 import {
   atLevel,
-  CHARNEL_PIT,
   GRINNING_SKULL,
   ARCHANGEL,
   GROANING_COFFIN,
   WAILING_CURSECHILD,
 } from "../shared/skill-params";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import { spawnTokenAndNotify } from "./battle-spawn";
-
-function spawnAvengeToken(
-  u: BattleUnit,
-  board: BattleUnit[],
-  idx: number,
-  name: string,
-  atk: number,
-  hp: number,
-  text: string,
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  spawnTokenAndNotify({
-    board,
-    idx,
-    name,
-    atk,
-    hp,
-    isChurch: u.isChurch,
-    segments: () => [enemyPrefix(isPlayer), seg.u(u.name), text, seg.s(`${atk}/${hp} 召喚`)],
-    isPlayer,
-    ctx,
-    delay: FRAME_DELAY_DEATH_CHAIN,
-    spawnerUid: u.uid,
-  });
-}
 
 type AvengeCtx = {
   u: BattleUnit;
@@ -56,13 +28,6 @@ type AvengeCtx = {
   isPlayer: boolean;
   ctx: BattleContext;
 };
-
-function handleCharnelPit({ u, board, idx, isPlayer, ctx }: AvengeCtx) {
-  if (u.skillUses <= 0) return;
-  u.skillUses -= 1;
-  const t = atLevel(CHARNEL_PIT.token, u.level);
-  spawnAvengeToken(u, board, idx, "肉塊", t.atk, t.hp, "から肉塊が溢れ出す！ ", isPlayer, ctx);
-}
 
 function avengeAoeBuff(
   { u, board, isPlayer, ctx }: AvengeCtx,
@@ -147,7 +112,6 @@ interface AvengeSpec {
 }
 
 const AVENGE_SPECS: AvengeSpec[] = [
-  { id: "charnel_pit", threshold: CHARNEL_PIT.threshold, apply: handleCharnelPit },
   { id: "grinning_skull", threshold: GRINNING_SKULL.threshold, apply: handleGrinningSkull },
   { id: "archangel", threshold: ARCHANGEL.threshold, apply: handleArchangel },
   { id: "groaning_coffin", threshold: GROANING_COFFIN.threshold, apply: handleGroaningCoffin },

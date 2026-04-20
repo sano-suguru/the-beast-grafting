@@ -58,8 +58,8 @@ describe("getShopPool", () => {
   it("adds Tier 3 units at night 5", () => {
     const pool = getShopPool(5);
     expect(pool).toContain("parasite");
-    expect(pool).toContain("maiden");
     expect(pool).toContain("revenant");
+    expect(pool).not.toContain("maiden"); // maiden は Tier 4
   });
 
   it("adds Tier 4 units at night 7", () => {
@@ -67,6 +67,7 @@ describe("getShopPool", () => {
     expect(pool).toContain("evangelist");
     expect(pool).toContain("altar");
     expect(pool).toContain("machine");
+    expect(pool).toContain("maiden");
   });
 
   it("adds Tier 5 units at night 9", () => {

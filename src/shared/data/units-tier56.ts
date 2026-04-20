@@ -85,13 +85,13 @@ export const UNITS_TIER56 = {
     tier: 5,
     lore: "上位者の子を包んでいた羊膜。打たれると硬化し、一撃だけ身を守る。生まれなかった何かの、残り香。",
   },
-  mimicking_flesh: {
-    id: "mimicking_flesh",
-    name: "模倣する粘肉",
-    baseAtk: 4,
-    baseHp: 5,
+  stellar_cocoon: {
+    id: "stellar_cocoon",
+    name: "星辰の繭",
+    baseAtk: 6,
+    baseHp: 4,
     tier: 5,
-    lore: "銀色の肉塊。隣の素体の動きを完璧に模倣し、戦いが終わると粘液に戻る。模倣は本物を超えられない。だが、二つあれば十分だ。",
+    lore: "星辰の配列が正しい夜にだけ降ってくる、正体不明の繭。破壊されると、中から異形の光を帯びた何かが這い出してくる。闇市の商人は高値を付けるが、手元に長く置きたがる者はいない。",
   },
 
   // Tier 6

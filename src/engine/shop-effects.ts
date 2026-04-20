@@ -4,7 +4,15 @@ import type { Rng } from "./rng";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { invariant } from "../shared/invariant";
 import { CUMULATIVE_EXP, MAX_UNIT_LEVEL } from "../shared/constants";
-import { atLevel, ALTAR, ROT_RING, CHALICE, GUT_HAND, NESTING_GRUB } from "../shared/skill-params";
+import {
+  atLevel,
+  ALTAR,
+  ROT_RING,
+  CHALICE,
+  GUT_HAND,
+  NESTING_GRUB,
+  PARASITE,
+} from "../shared/skill-params";
 import { getSkillText } from "../shared/skill-text";
 import { buffRandomUnit, computeZealotBuff } from "./buff-utils";
 
@@ -124,6 +132,25 @@ export const applyChaliceEffect = (
   return result;
 };
 
+function applyParasiteSummonBuff(
+  nextBoard: (UnitInstance | null)[],
+  summonedUnitIndex: number,
+): boolean {
+  let modified = false;
+  for (let i = 0; i < nextBoard.length; i++) {
+    const u = nextBoard[i];
+    if (!u || u.id !== "parasite" || i === summonedUnitIndex) continue;
+    const b = atLevel(PARASITE.buff, u.level);
+    nextBoard[i] = {
+      ...u,
+      tempBuffAtk: u.tempBuffAtk + b.atk,
+      buffHp: u.buffHp + b.hp,
+    };
+    modified = true;
+  }
+  return modified;
+}
+
 export const applySummonEffects = (
   summonedUnitIndex: number,
   currentBoard: (UnitInstance | null)[],
@@ -161,6 +188,10 @@ export const applySummonEffects = (
       ...current,
       tempBuffAtk: current.tempBuffAtk + zealotCount,
     };
+    modified = true;
+  }
+
+  if (applyParasiteSummonBuff(nextBoard, summonedUnitIndex)) {
     modified = true;
   }
 

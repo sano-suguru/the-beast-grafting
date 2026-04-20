@@ -1,7 +1,7 @@
 import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
-import { atLevel, type Buff } from "../../shared/skill-params";
+import { atLevel } from "../../shared/skill-params";
 import {
   ASH_FUNGUS,
   BONE_JAW,
@@ -18,22 +18,6 @@ import {
 /** Night N の平均的な売却ユニットの合計スタッツ（baseAtk+baseHp + progression） */
 function avgSoldUnitTotalStats(night: number): number {
   return 5 + Math.floor(night * 0.5);
-}
-
-function totalWeightedSells(tier: Tier, night: number): number {
-  let total = 0;
-  for (const action of estimateWeightedActions(tier, night)) {
-    total += action.sells;
-  }
-  return total;
-}
-
-function applySelfBuffFromSells(unit: UnitInstance, buff: Buff, night: number): void {
-  const nights = activeNights(unit.tier as Tier, night);
-  if (nights <= 0) return;
-  const rawSells = totalWeightedSells(unit.tier as Tier, night);
-  unit.buffAtk += Math.floor(buff.atk * rawSells);
-  unit.buffHp += Math.floor(buff.hp * rawSells);
 }
 
 export function applyAshFungusAccumulation(
@@ -59,8 +43,25 @@ export function applyAshFungusAccumulation(
   distributeBuffRandomly(team, totalBuff - half, half, rng);
 }
 
-export function applyCorpseBrokerAccumulation(broker: UnitInstance, night: number): void {
-  applySelfBuffFromSells(broker, atLevel(CORPSE_BROKER.sellBuff, broker.level), night);
+export function applyCorpseBrokerAccumulation(
+  broker: UnitInstance,
+  team: UnitInstance[],
+  night: number,
+  rng: Rng,
+): void {
+  const nights = activeNights(broker.tier as Tier, night);
+  if (nights <= 0) return;
+
+  const hpBuff = atLevel(CORPSE_BROKER.hpBuff, broker.level);
+  const maxUses = CORPSE_BROKER.maxUses;
+
+  // 投与回数はアイテム購入回数に近似（1ターン平均0.5回程度、maxUsesで上限）
+  const dosesPerNight = Math.min(0.5, maxUses);
+  const totalDoses = Math.floor(dosesPerNight * nights);
+  if (totalDoses <= 0) return;
+
+  const totalHp = hpBuff * totalDoses;
+  distributeBuffRandomly(team, 0, totalHp, rng);
 }
 
 export function applyBoneJawAccumulation(

@@ -1,9 +1,6 @@
 import { runStartSkills, applyBeforeAttackSkills, applyAfterAttackSkills } from "./battle-skills";
-import { runDeploySkills } from "./battle-skills-init";
 import { runBattle } from "./battle";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID, makeEnemyTeam } from "./test-helpers";
-import type { BattleFrame } from "../shared/types";
-import { segmentsToPlainText } from "./test-helpers";
 import {
   atLevel,
   PLAGUE_BELL,
@@ -13,10 +10,6 @@ import {
   FAMINE_CORPSE,
   RELIC_SWORD,
 } from "../shared/skill-params";
-import { BLOOD_FONT } from "../shared/skill-params-shop";
-
-const logText = (f: BattleFrame) => segmentsToPlainText(f.log.segments);
-
 describe("runStartSkills – damage skills", () => {
   it("bat deals 1 damage to enemy front", () => {
     const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2 });
@@ -100,79 +93,7 @@ describe("runStartSkills – damage skills", () => {
   });
 });
 
-describe("runStartSkills – revenant buff", () => {
-  it("buffs front 3 allies when last battle was LOSE", () => {
-    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3, level: 1 });
-    const ally1 = makeBattleUnit({ atk: 3, hp: 3 });
-    const ally2 = makeBattleUnit({ atk: 4, hp: 2 });
-    const enemy = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([rev, ally1, ally2], [enemy], "LOSE");
-    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(rev.atk).toBe(2); // self not buffed
-    expect(ally1.atk).toBe(4); // +1 (Lv1 buff)
-    expect(ally2.atk).toBe(5); // +1
-    expect(ctx.frames).toHaveLength(1);
-  });
-
-  it("does nothing when last battle was WIN", () => {
-    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
-    const ally = makeBattleUnit({ atk: 3, hp: 3 });
-    const enemy = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([rev, ally], [enemy], "WIN");
-    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(ally.atk).toBe(3); // no buff
-    expect(ctx.frames).toHaveLength(0);
-  });
-
-  it("does nothing when lastBattleResult is null", () => {
-    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
-    const ally = makeBattleUnit({ atk: 3, hp: 3 });
-    const enemy = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([rev, ally], [enemy], null);
-    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(ally.atk).toBe(3); // no buff
-    expect(ctx.frames).toHaveLength(0);
-  });
-
-  it("generates a skill frame on LOSE", () => {
-    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3 });
-    const ally = makeBattleUnit({ atk: 3, hp: 3 });
-    const enemy = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([rev, ally], [enemy], "LOSE");
-    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(ctx.frames).toHaveLength(1);
-    expect(ctx.frames[0]!.log.type).toBe("skill");
-    expect(logText(ctx.frames[0]!)).toContain("激怒");
-  });
-
-  it("buffs at most 3 allies even with more on board", () => {
-    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3, level: 1 });
-    const a1 = makeBattleUnit({ atk: 1, hp: 1 });
-    const a2 = makeBattleUnit({ atk: 1, hp: 1 });
-    const a3 = makeBattleUnit({ atk: 1, hp: 1 });
-    const a4 = makeBattleUnit({ atk: 1, hp: 1 });
-    const enemy = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([rev, a1, a2, a3, a4], [enemy], "LOSE");
-    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(rev.atk).toBe(2); // self not buffed
-    expect(a1.atk).toBe(2); // +1 (Lv1)
-    expect(a2.atk).toBe(2);
-    expect(a3.atk).toBe(2);
-    expect(a4.atk).toBe(1); // 4th ally not buffed (targets=3)
-  });
-
-  it("buffs enemy-side allies when isPlayer=false", () => {
-    const rev = makeBattleUnit({ id: "revenant", name: "復讐の亡霊", atk: 2, hp: 3, level: 1 });
-    const eAlly = makeBattleUnit({ atk: 3, hp: 3 });
-    const player = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([player], [rev, eAlly], "LOSE");
-    runStartSkills(ctx.eBoard, ctx.pBoard, false, ctx);
-    expect(rev.atk).toBe(2); // self not buffed
-    expect(eAlly.atk).toBe(4); // +1 (Lv1)
-    expect(ctx.frames).toHaveLength(1);
-    expect(logText(ctx.frames[0]!)).toContain("敵の");
-  });
-});
+// revenant is now a shop turn-start skill, not a battle SoB — tested in shop-effects-setup.test.ts
 
 describe("runStartSkills – brains and edge cases", () => {
   it("brains doubles start-of-battle skills", () => {
@@ -222,14 +143,7 @@ describe("runStartSkills – brains and edge cases", () => {
 });
 
 describe("applyBeforeAttackSkills", () => {
-  it("parasite buffs itself +2/+2", () => {
-    const front = makeBattleUnit({ atk: 3, hp: 3 });
-    const parasite = makeBattleUnit({ id: "parasite", name: "寄生肉", atk: 1, hp: 2 });
-    const ctx = makeContext([front, parasite], [makeBattleUnit()]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(parasite.atk).toBe(3);
-    expect(parasite.hp).toBe(4);
-  });
+  // parasite is now a summon-reaction skill, not before-attack — tested in battle-deaths.test.ts and shop-effects.test.ts
 
   it("eye deals 5 damage to a random enemy", () => {
     const front = makeBattleUnit({ atk: 3, hp: 3 });
@@ -244,28 +158,6 @@ describe("applyBeforeAttackSkills", () => {
     const ctx = makeContext([front, eye], [target], null, { next: () => 0 });
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(target.hp).toBe(5);
-  });
-
-  it("parasite at index 2 does not buff itself", () => {
-    const front = makeBattleUnit({ atk: 3, hp: 3 });
-    const middle = makeBattleUnit({ atk: 2, hp: 2 });
-    const parasite = makeBattleUnit({ id: "parasite", name: "寄生肉", atk: 1, hp: 2 });
-    const ctx = makeContext([front, middle, parasite], [makeBattleUnit()]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(parasite.atk).toBe(1);
-    expect(parasite.hp).toBe(2);
-  });
-
-  it("multiple parasites each get buffed", () => {
-    const front = makeBattleUnit({ atk: 3, hp: 3 });
-    const p1 = makeBattleUnit({ id: "parasite", name: "寄生肉1", atk: 1, hp: 2, uid: "p1" });
-    const p2 = makeBattleUnit({ id: "parasite", name: "寄生肉2", atk: 1, hp: 2, uid: "p2" });
-    const ctx = makeContext([front, p1, p2], [makeBattleUnit()]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(p1.atk).toBe(3);
-    expect(p1.hp).toBe(4);
-    expect(p2.atk).toBe(1);
-    expect(p2.hp).toBe(2);
   });
 
   it("does nothing with only one unit on board", () => {
@@ -380,36 +272,32 @@ describe("runStartSkills – holy_fire", () => {
   });
 });
 
-describe("applyBeforeAttackSkills – famine_corpse", () => {
-  it("debuffs enemy front unit atk by fixed skill parameter", () => {
-    const front = makeBattleUnit({ atk: 5, hp: 10 });
+describe("runStartSkills – famine_corpse", () => {
+  it("deals damage to lowest HP enemy", () => {
     const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 3, hp: 3 });
-    const ctx = makeContext([front, famine], [makeBattleUnit({ hp: 10, atk: 4 })]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    const debuff = atLevel(FAMINE_CORPSE.debuff, 1);
-    expect(front.atk).toBe(5);
-    expect(famine.atk).toBe(3);
-    expect(ctx.eBoard[0]!.atk).toBe(Math.max(1, 4 - debuff));
+    const highHp = makeBattleUnit({ hp: 20, atk: 2 });
+    const lowHp = makeBattleUnit({ hp: 6, atk: 2 });
+    const ctx = makeContext([famine], [highHp, lowHp]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(lowHp.hp).toBe(6 - FAMINE_CORPSE.damage);
+    expect(highHp.hp).toBe(20);
   });
 
-  it("floors atk at 1", () => {
-    const front = makeBattleUnit({ atk: 5, hp: 10 });
+  it("targets lowest HP among alive enemies", () => {
     const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 3, hp: 3 });
-    const weakEnemy = makeBattleUnit({ hp: 10, atk: 1 });
-    const ctx = makeContext([front, famine], [weakEnemy]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(weakEnemy.atk).toBe(1);
+    const tough = makeBattleUnit({ id: INERT_UNIT_ID, hp: 30, atk: 2 });
+    const fragile = makeBattleUnit({ id: INERT_UNIT_ID, hp: 1, atk: 2 });
+    const ctx = makeContext([famine], [tough, fragile]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(fragile.hp).toBe(1 - FAMINE_CORPSE.damage);
+    expect(tough.hp).toBe(30);
   });
 
-  it("debuff does not scale with ATK buffs", () => {
-    const front = makeBattleUnit({ atk: 5, hp: 10 });
-    const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 20, hp: 3 });
-    const enemy = makeBattleUnit({ hp: 10, atk: 10 });
-    const ctx = makeContext([front, famine], [enemy]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    const debuff = atLevel(FAMINE_CORPSE.debuff, 1);
-    // ATK 20 でも debuff は固定パラメータ (level 1 = 2)
-    expect(enemy.atk).toBe(10 - debuff);
+  it("does nothing when enemy board is empty", () => {
+    const famine = makeBattleUnit({ id: "famine_corpse", name: "蝗", atk: 3, hp: 3 });
+    const ctx = makeContext([famine], []);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(ctx.frames.filter((f) => f.log.type === "skill")).toHaveLength(0);
   });
 });
 
@@ -424,37 +312,6 @@ describe("applyBeforeAttackSkills – relic_sword", () => {
   });
 });
 
-describe("runDeploySkills – blood_font buffs lowest HP ally", () => {
-  it("buffs the ally with the lowest HP", () => {
-    const font = makeBattleUnit({ id: "blood_font", name: "血獣", atk: 1, hp: 5 });
-    const weak = makeBattleUnit({ atk: 2, hp: 2 });
-    const strong = makeBattleUnit({ atk: 2, hp: 10 });
-    const ctx = makeContext([font, weak, strong], []);
-    runDeploySkills(ctx.pBoard, true, ctx);
-    const hpBuff = atLevel(BLOOD_FONT.hpBuff, 1);
-    expect(weak.hp).toBe(2 + hpBuff);
-    expect(strong.hp).toBe(10);
-  });
-
-  it("does not buff self", () => {
-    const font = makeBattleUnit({ id: "blood_font", name: "血獣", atk: 1, hp: 1 });
-    const ally = makeBattleUnit({ atk: 2, hp: 5 });
-    const ctx = makeContext([font, ally], []);
-    runDeploySkills(ctx.pBoard, true, ctx);
-    const hpBuff = atLevel(BLOOD_FONT.hpBuff, 1);
-    expect(font.hp).toBe(1);
-    expect(ally.hp).toBe(5 + hpBuff);
-  });
-
-  it("does not fire when blood_font is alone", () => {
-    const font = makeBattleUnit({ id: "blood_font", name: "血獣", atk: 1, hp: 5 });
-    const ctx = makeContext([font], []);
-    runDeploySkills(ctx.pBoard, true, ctx);
-    expect(font.hp).toBe(5);
-    expect(ctx.frames).toHaveLength(0);
-  });
-});
-
 describe("corroding_mold – start skill", () => {
   it("buffs the unit in front at start of battle", () => {
     const front = makeBattleUnit({ id: INERT_UNIT_ID, atk: 3, hp: 5 });
@@ -462,8 +319,9 @@ describe("corroding_mold – start skill", () => {
     const board = [front, mold];
     const ctx = makeContext(board, []);
     runStartSkills(board, [], true, ctx);
+    // 50% of ATK 2 = 1 → front gets +1 ATK only (no HP buff, %ATK skill)
     expect(front.atk).toBe(3 + 1);
-    expect(front.hp).toBe(5 + 1);
+    expect(front.hp).toBe(5);
   });
 
   it("does nothing when mold is at front (no unit ahead)", () => {
@@ -501,7 +359,7 @@ describe("needleshell_worm – 攻撃後", () => {
     expect(behind.hp).toBe(4);
   });
 
-  it("L2では後方2体に1ダメージずつ", () => {
+  it("L2では最も近い後方味方に1ダメージ×2回", () => {
     const worm = makeBattleUnit({
       id: "needleshell_worm",
       name: "針殻の蟲",
@@ -515,8 +373,26 @@ describe("needleshell_worm – 攻撃後", () => {
     const board = [worm, b1, b2];
     const ctx = makeContext(board, [enemy]);
     applyAfterAttackSkills(worm, board, [enemy], true, ctx);
-    expect(b1.hp).toBe(4);
-    expect(b2.hp).toBe(4);
+    expect(b1.hp).toBe(3); // 最も近いb1が2回被弾
+    expect(b2.hp).toBe(5); // b2は被弾しない
+  });
+
+  it("L2: b1が1回目で死んだ場合b2にリターゲット", () => {
+    const worm = makeBattleUnit({
+      id: "needleshell_worm",
+      name: "針殻の蟲",
+      atk: 3,
+      hp: 7,
+      level: 2,
+    });
+    const b1 = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 1 }); // 1撃で死ぬ
+    const b2 = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 5 });
+    const enemy = makeBattleUnit({ id: INERT_UNIT_ID, atk: 1, hp: 10 });
+    const board = [worm, b1, b2];
+    const ctx = makeContext(board, [enemy]);
+    applyAfterAttackSkills(worm, board, [enemy], true, ctx);
+    expect(b1.hp).toBe(0); // b1は死亡(0以下)
+    expect(b2.hp).toBe(4); // リターゲットでb2が1ダメ
   });
 
   it("後方の味方が被弾スキル持ちの場合チェーン発動", () => {

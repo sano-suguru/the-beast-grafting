@@ -10,14 +10,14 @@ export function applyNeedleshellWormAfterAttack(
   prefix: string,
   ctx: BattleContext,
 ) {
-  const targetCount = atLevel(NEEDLESHELL_WORM.targets, u.level);
+  const repeatCount = atLevel(NEEDLESHELL_WORM.targets, u.level);
   const dmg = 1;
   const hit: BattleUnit[] = [];
-  for (let i = 1; i <= targetCount; i++) {
-    const ally = board[i];
-    if (!ally || ally.hp <= 0) continue;
+  for (let t = 0; t < repeatCount; t++) {
+    const ally = board.slice(1).find((a) => a.hp > 0);
+    if (!ally) break;
     takeDamage(ally, dmg, u.uid);
-    hit.push(ally);
+    if (!hit.includes(ally)) hit.push(ally);
   }
   if (hit.length === 0) return;
   pushFrame(

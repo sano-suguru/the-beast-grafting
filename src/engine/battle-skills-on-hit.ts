@@ -3,15 +3,12 @@ import type { BattleUnit, BattleContext } from "./battle-context";
 import {
   pushFrame,
   getMult,
-  takeDamage,
   enemyPrefix,
   seg,
   aoeBuffActions,
   buffAction,
-  damageAction,
   skillAction,
 } from "./battle-context";
-import { mustGet } from "../shared/invariant";
 import {
   atLevel,
   TEMPLAR,
@@ -97,28 +94,27 @@ function applyStitchedTwinHit({ defender: u, prefix, ctx }: HitCtx) {
   );
 }
 
-function applyFlayedSaintHit({ defender: u, isPlayer, prefix, ctx }: HitCtx) {
-  const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
-  const alive = enemyBoard.filter((e) => e.hp > 0);
-  if (alive.length === 0) return;
-  const target = mustGet(alive, Math.floor(ctx.rng.next() * alive.length), "flayed_saint target");
-  const dmg = atLevel(FLAYED_SAINT.damage, u.level);
-  const hpBefore = target.hp;
-  takeDamage(target, dmg, u.uid);
+function applyFlayedSaintHit({ defender: u, board, idx, prefix, ctx }: HitCtx) {
+  const behind = board[idx + 1];
+  if (!behind || behind.hp <= 0) return;
+  const b = atLevel(FLAYED_SAINT.buff, u.level);
+  behind.atk += b.atk;
+  behind.hp += b.hp;
   pushFrame(
     ctx,
     "skill",
     () => [
       prefix,
       seg.u(u.name),
-      "の肉片が弾け飛ぶ。",
-      seg.u(target.name),
-      seg.hp(`${hpBefore}→${Math.max(0, target.hp)}`),
+      "の痛みが後方の",
+      seg.u(behind.name),
+      "を駆り立てる。",
+      seg.s(`+${b.atk}/+${b.hp}`),
     ],
     "skill",
     {
       [u.uid]: skillAction(),
-      [target.uid]: damageAction(dmg, u.uid),
+      [behind.uid]: buffAction(b, u.uid),
     },
   );
 }

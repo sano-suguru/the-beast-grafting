@@ -32,7 +32,7 @@ function applySellPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: 
     case "ash_fungus":
       return applyAshFungusAccumulation(unit, team, night, rng);
     case "corpse_broker":
-      return applyCorpseBrokerAccumulation(unit, night);
+      return applyCorpseBrokerAccumulation(unit, team, night, rng);
     case "bone_jaw":
       return applyBoneJawAccumulation(unit, team, night, rng);
     case "rot_feeder":

@@ -4,7 +4,7 @@ import { createUnit } from "../../engine/helpers";
 import { atLevel, TAINTED_PLACENTA, GRAFT_SCION } from "../../shared/skill-params";
 import { ITEMS } from "../../shared/data/items";
 import { isEventNight, selectEvent, buildEventShopUnits } from "../../engine/event-helpers";
-import { applyCatacombRatBuff } from "../../engine/shop-effects-setup";
+import { applyCatacombRatBuff, applyRevenantBuff } from "../../engine/shop-effects-setup";
 import type { ShopStateRow } from "./shop-state-row";
 import {
   slotsToJson,
@@ -113,6 +113,7 @@ export function executeSetup(
   const rngState = rng.getState();
   const resetBoard = prevBoard.map((bu) => (bu && bu.tempBuffAtk ? { ...bu, tempBuffAtk: 0 } : bu));
   applyCatacombRatBuff(resetBoard, lastBattleResult);
+  applyRevenantBuff(resetBoard);
   return {
     blood: 10 + (event?.bloodBonus ?? 0) + placentaBlood,
     board: resetBoard,
@@ -122,6 +123,7 @@ export function executeSetup(
     cultistUsed: false,
     rotRingUses: 0,
     boneTreeUses: 0,
+    corpseBrokerUses: 0,
     activeEvent: event,
     rngS0: rngState.s0,
     rngS1: rngState.s1,

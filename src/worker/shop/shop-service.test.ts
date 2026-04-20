@@ -33,6 +33,7 @@ function makeState(overrides: Partial<ShopStateRow> = {}): ShopStateRow {
     cultistUsed: false,
     rotRingUses: 0,
     boneTreeUses: 0,
+    corpseBrokerUses: 0,
     activeEvent: null,
     rngS0: s0,
     rngS1: s1,
@@ -350,6 +351,34 @@ describe("executeEquip", () => {
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().type).toBe("INVALID_INDEX");
   });
+
+  test("corpse_broker: 投与でHP+バフが発火する", () => {
+    const broker = makeBoardUnit("corpse_broker");
+    const target = makeBoardUnit("rat");
+    const state = makeState({
+      board: [broker, target, null, null, null],
+      shopItems: [makeItemSlot("preservative")],
+    });
+    const result = executeEquip(state, 0, 1);
+    expect(result.isOk()).toBe(true);
+    const next = result._unsafeUnwrap();
+    expect(next.corpseBrokerUses).toBe(1);
+    expect(next.board[1]!.buffHp).toBeGreaterThan(0);
+  });
+
+  test("corpse_broker: 装備品使用では発火しない", () => {
+    const broker = makeBoardUnit("corpse_broker");
+    const target = makeBoardUnit("rat");
+    const state = makeState({
+      board: [broker, target, null, null, null],
+      shopItems: [makeItemSlot("iron_plate")],
+    });
+    const result = executeEquip(state, 0, 1);
+    expect(result.isOk()).toBe(true);
+    const next = result._unsafeUnwrap();
+    expect(next.corpseBrokerUses).toBe(0);
+    expect(next.board[1]!.buffHp).toBe(0);
+  });
 });
 
 describe("executeFreeze", () => {
@@ -565,6 +594,7 @@ describe("executeUndo", () => {
       cultistUsed: false,
       rotRingUses: 0,
       boneTreeUses: 0,
+      corpseBrokerUses: 0,
       activeEvent: null,
       rngS0: 123,
       rngS1: 456,
@@ -663,6 +693,7 @@ describe("executeReady", () => {
         cultistUsed: false,
         rotRingUses: 0,
         boneTreeUses: 0,
+        corpseBrokerUses: 0,
         activeEvent: null,
         rngS0: 1,
         rngS1: 2,
