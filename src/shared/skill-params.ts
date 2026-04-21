@@ -29,8 +29,7 @@ export const INQUISITOR = {
 };
 
 export const BANSHEE = {
-  damage: [6, 12, 18] as SN,
-  selfDamage: [3, 6, 9] as SN,
+  damage: [8, 16, 24] as SN,
 };
 
 export const REVENANT = {
@@ -75,11 +74,6 @@ export const RELIC_SWORD = {
   atkBuff: [2, 4, 6] as SN,
 };
 
-export const PLAGUE_BELL = {
-  damage: [1, 1, 1] as SN, // AoE + uses がスケールするためダメージは固定
-  uses: [4, 6, 8] as SN,
-};
-
 // ── 被弾スキル ──
 
 export const TUMOR_GUARDIAN = {
@@ -115,7 +109,7 @@ export const HOWLING_GIANT = {
 };
 
 export const AMNIOTIC_ARMOR = {
-  uses: [2, 3, 4] as SN,
+  hpBuff: [2, 4, 6] as SN,
 };
 
 // ── 戦闘スキル（撃破） ──
@@ -165,7 +159,6 @@ export {
   BEAST,
   CHURCH_BEAST,
   MAIDEN,
-  HANGED_MAN,
   SERAPH,
   CATHEDRAL,
   BEELZEBUB,
@@ -198,16 +191,6 @@ export const ARCHANGEL = {
   ] as SB,
 };
 
-export const WAILING_CURSECHILD = {
-  threshold: 3,
-  buff: [
-    { atk: 1, hp: 2 },
-    { atk: 2, hp: 3 },
-    { atk: 3, hp: 4 },
-  ] as SB,
-  uses: [1, 2, 3] as SN,
-};
-
 // ── 攻撃後スキル ──
 
 export const NEEDLESHELL_WORM = {
@@ -233,11 +216,10 @@ export const CRAWLING_CORD = {
 
 export const INSATIABLE_MAW = {
   buff: [
-    { atk: 2, hp: 1 },
-    { atk: 3, hp: 2 },
-    { atk: 4, hp: 3 },
+    { atk: 2, hp: 2 },
+    { atk: 4, hp: 4 },
+    { atk: 6, hp: 6 },
   ] as SB,
-  uses: [2, 3, 4] as SN,
 };
 
 // ── 味方死亡リアクション ──
@@ -266,5 +248,8 @@ export {
   NESTING_GRUB,
   CATACOMB_RAT,
   GRAFT_SCION,
+  HANGED_MAN,
+  PLAGUE_BELL,
+  WAILING_CURSECHILD,
   sellBloodGain,
 } from "./skill-params-shop";

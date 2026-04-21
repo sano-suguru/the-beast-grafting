@@ -1,12 +1,11 @@
 import type { BattleUnit } from "./battle-context";
 import {
   pushFrame,
-  takeDamage,
   enemyPrefix,
   seg,
   aoeBuffActions,
   buffAction,
-  damageAction,
+  buffAllAlive,
 } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { applySkillDamage, type SkillContext } from "./battle-skills-util";
@@ -15,6 +14,7 @@ import {
   BAT,
   INQUISITOR,
   BANSHEE,
+  AMNIOTIC_ARMOR,
   FAMINE_CORPSE,
   PALADIN,
   HOLY_FIRE,
@@ -90,9 +90,12 @@ export function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext)
     isPlayer,
     ctx,
   );
-  const selfDmg = atLevel(BANSHEE.selfDamage, u.level);
-  const selfBefore = u.hp;
-  takeDamage(u, selfDmg);
+}
+
+export function applyAmnioticArmorSkill({ u, isPlayer, ctx }: SkillContext) {
+  const buff = { atk: 0, hp: atLevel(AMNIOTIC_ARMOR.hpBuff, u.level) };
+  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
+  const affected = buffAllAlive(allyBoard, buff);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
@@ -100,11 +103,11 @@ export function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext)
     () => [
       prefix,
       seg.u(u.name),
-      "の喉が裂ける。",
-      seg.hp(`${selfBefore}→${Math.max(0, selfBefore - selfDmg)}`),
+      "の羊膜が弾ける。濁った粘液が味方全体の肉を覆い、ひと回り厚くする。",
+      seg.s(`+0/+${buff.hp}`),
     ],
     "skill",
-    { [u.uid]: damageAction(selfDmg) },
+    aoeBuffActions(u, affected, buff),
   );
 }
 

@@ -9,7 +9,6 @@ import {
   ASH_FUNGUS,
   ALTAR,
 } from "../../shared/skill-params-shop";
-import { MARKET_VULTURE } from "../../shared/skill-params";
 import {
   activeNights,
   estimateWeightedActions,
@@ -74,28 +73,6 @@ export function applyRotRingAccumulation(
 }
 
 /**
- * market_vulture: 開戦時に味方最大HPの X% を自身HPに加算。
- * SoB 1回/戦なので activeNights 分累積。
- */
-export function applyMarketVultureAccumulation(
-  vulture: UnitInstance,
-  team: UnitInstance[],
-  night: number,
-): void {
-  const nights = activeNights(vulture.tier as Tier, night);
-  if (nights <= 0) return;
-  let maxHp = 0;
-  for (const ally of team) {
-    if (ally.uid === vulture.uid) continue;
-    const total = ally.baseHp + ally.buffHp;
-    if (total > maxHp) maxHp = total;
-  }
-  if (maxHp === 0) return;
-  const percent = atLevel(MARKET_VULTURE.percent, vulture.level);
-  vulture.buffHp += Math.max(1, Math.floor((maxHp * percent) / 100)) * nights;
-}
-
-/**
  * catacomb_rat: ターン開始時に前夜敗北なら前方3体にATKバフ。
  * 敗北確率 50% 仮定で activeNights × 0.5 回分を前方ユニットに分配。
  */
@@ -115,8 +92,8 @@ export function applyCatacombRatAccumulation(
 }
 
 /**
- * ash_fungus (Penguin): ターン開始 – Lv2以上の味方2体に+buff/+buff。
- * 対象数をチーム内Lv2+ユニット数で制限し、activeNights × targets × buff を近似分配。
+ * ash_fungus (Penguin): ターン開始 – Lv2以上の他味方から最大targets体に+buff/+buff。
+ * 各ナイトの所有確率を重みとして期待発動回数を算出し、eligible（自身除く Lv2+）に分配する。
  */
 export function applyAshFungusAccumulation(
   ashFungus: UnitInstance,
@@ -124,14 +101,17 @@ export function applyAshFungusAccumulation(
   night: number,
   rng: Rng,
 ): void {
-  const nights = activeNights(ashFungus.tier as Tier, night);
-  if (nights <= 0) return;
   const buff = atLevel(ASH_FUNGUS.buff, ashFungus.level);
   const eligible = team.filter((u) => u.uid !== ashFungus.uid && u.level >= ASH_FUNGUS.minLevel);
   const targetsPerTrigger = Math.min(ASH_FUNGUS.targets, eligible.length);
   if (targetsPerTrigger <= 0) return;
-  const totalBuff = nights * buff * targetsPerTrigger;
-  distributeBuffRandomly(team, totalBuff, totalBuff, rng);
+  let weightedNights = 0;
+  for (const action of estimateWeightedActions(ashFungus.tier as Tier, night)) {
+    weightedNights += action.ownership;
+  }
+  const totalBuff = Math.floor(weightedNights * buff * targetsPerTrigger);
+  if (totalBuff <= 0) return;
+  distributeBuffRandomly(eligible, totalBuff, totalBuff, rng);
 }
 
 /**

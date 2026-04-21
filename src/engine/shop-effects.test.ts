@@ -4,15 +4,24 @@ import {
   applyChaliceEffect,
   applySummonEffects,
   applyLevelUpEffects,
-  applyAltarEndOfTurn,
+  applyEndOfTurnEffects,
 } from "./shop-effects";
 import { applySellEffects } from "./shop-effects-sell";
-import { applyCorpseBrokerDoseBuff } from "./shop-effects-dose";
+import { applyCorpseBrokerDoseBuff, applyPlagueBellDoseBuff } from "./shop-effects-dose";
 import { ITEMS } from "../shared/data/items";
 import type { UnitInstance, ShopItemSlot } from "../shared/types";
 import { effectiveAtk, effectiveHp } from "../shared/unit-stats";
 import { createSeededRng } from "./rng";
-import { atLevel, CORPSE_BROKER, GUT_HAND, BONE_JAW, ROT_FEEDER } from "../shared/skill-params";
+import {
+  atLevel,
+  CORPSE_BROKER,
+  GUT_HAND,
+  BONE_JAW,
+  ROT_FEEDER,
+  HANGED_MAN,
+  WAILING_CURSECHILD,
+  PLAGUE_BELL,
+} from "../shared/skill-params";
 import { makeUnit } from "./test-helpers";
 
 describe("graftUnits", () => {
@@ -609,12 +618,12 @@ describe("applyCorpseBrokerDoseBuff", () => {
   });
 });
 
-describe("applyAltarEndOfTurn – altar (Bison)", () => {
+describe("applyEndOfTurnEffects – altar", () => {
   it("self-buffs altar when Lv3 ally present", () => {
     const altar = makeUnit({ id: "altar", uid: "altar1" });
     const lv3ally = makeUnit({ level: 3, uid: "ally1" });
     const board: (UnitInstance | null)[] = [altar, lv3ally, null, null, null];
-    const result = applyAltarEndOfTurn(board);
+    const result = applyEndOfTurnEffects(board);
     const buffedAltar = result.find((u) => u?.uid === "altar1");
     expect(buffedAltar?.buffAtk).toBe(1);
     expect(buffedAltar?.buffHp).toBe(2);
@@ -624,7 +633,7 @@ describe("applyAltarEndOfTurn – altar (Bison)", () => {
     const altar = makeUnit({ id: "altar", uid: "altar1" });
     const lv2ally = makeUnit({ level: 2, uid: "ally1" });
     const board: (UnitInstance | null)[] = [altar, lv2ally, null, null, null];
-    const result = applyAltarEndOfTurn(board);
+    const result = applyEndOfTurnEffects(board);
     expect(result).toBe(board);
   });
 
@@ -633,10 +642,149 @@ describe("applyAltarEndOfTurn – altar (Bison)", () => {
     const altar2 = makeUnit({ id: "altar", uid: "a2" });
     const lv3ally = makeUnit({ level: 3, uid: "ally1" });
     const board: (UnitInstance | null)[] = [altar1, altar2, lv3ally, null, null];
-    const result = applyAltarEndOfTurn(board);
+    const result = applyEndOfTurnEffects(board);
     const buffed1 = result.find((u) => u?.uid === "a1");
     const buffed2 = result.find((u) => u?.uid === "a2");
     expect(buffed1?.buffAtk).toBe(1);
     expect(buffed2?.buffAtk).toBe(1);
+  });
+});
+
+describe("applyEndOfTurnEffects – hanged_man", () => {
+  it("buffs the front-most other ally", () => {
+    const ally = makeUnit({ uid: "front", buffAtk: 0, buffHp: 0 });
+    const hanged = makeUnit({ id: "hanged_man", uid: "hanged" });
+    const board: (UnitInstance | null)[] = [ally, hanged, null, null, null];
+    const result = applyEndOfTurnEffects(board);
+    const buffedFront = result.find((u) => u?.uid === "front");
+    const b = atLevel(HANGED_MAN.buff, 1);
+    expect(buffedFront?.buffAtk).toBe(b.atk);
+    expect(buffedFront?.buffHp).toBe(b.hp);
+  });
+
+  it("buffs nearest non-self ally when hanged_man is at index 0", () => {
+    const hanged = makeUnit({ id: "hanged_man", uid: "hanged" });
+    const ally = makeUnit({ uid: "behind" });
+    const board: (UnitInstance | null)[] = [hanged, ally, null, null, null];
+    const result = applyEndOfTurnEffects(board);
+    const buffed = result.find((u) => u?.uid === "behind");
+    const b = atLevel(HANGED_MAN.buff, 1);
+    expect(buffed?.buffAtk).toBe(b.atk);
+  });
+
+  it("does nothing when hanged_man is alone on board", () => {
+    const hanged = makeUnit({ id: "hanged_man", uid: "hanged" });
+    const board: (UnitInstance | null)[] = [hanged, null, null, null, null];
+    const result = applyEndOfTurnEffects(board);
+    expect(result).toBe(board);
+  });
+
+  it("each hanged_man independently buffs its own front target", () => {
+    const ally = makeUnit({ uid: "front" });
+    const hanged1 = makeUnit({ id: "hanged_man", uid: "h1" });
+    const hanged2 = makeUnit({ id: "hanged_man", uid: "h2" });
+    const board: (UnitInstance | null)[] = [ally, hanged1, hanged2, null, null];
+    const result = applyEndOfTurnEffects(board);
+    const buffedFront = result.find((u) => u?.uid === "front");
+    const b = atLevel(HANGED_MAN.buff, 1);
+    expect(buffedFront?.buffAtk).toBe(b.atk * 2);
+    expect(buffedFront?.buffHp).toBe(b.hp * 2);
+  });
+});
+
+describe("applyEndOfTurnEffects – altar + hanged_man interaction", () => {
+  it("both handlers fire in a single pass", () => {
+    const altar = makeUnit({ id: "altar", uid: "altar" });
+    const lv3 = makeUnit({ level: 3, uid: "lv3" });
+    const hanged = makeUnit({ id: "hanged_man", uid: "hanged" });
+    const board: (UnitInstance | null)[] = [altar, lv3, hanged, null, null];
+    const result = applyEndOfTurnEffects(board);
+    const buffedAltar = result.find((u) => u?.uid === "altar");
+    expect(buffedAltar?.buffAtk).toBeGreaterThan(0);
+    const b = atLevel(HANGED_MAN.buff, 1);
+    const buffedAltarForHanged = result.find((u) => u?.uid === "altar");
+    // hanged_man buffs the front-most non-self → altar (index 0)
+    expect(buffedAltarForHanged?.buffHp).toBeGreaterThanOrEqual(b.hp);
+  });
+});
+
+describe("applyPlagueBellDoseBuff – self-dosed trigger (SAP Seal pattern)", () => {
+  it("buffs random N other allies when bell itself is dosed", () => {
+    const bell = makeUnit({ id: "plague_bell", uid: "bell" });
+    const ally1 = makeUnit({ uid: "a1" });
+    const ally2 = makeUnit({ uid: "a2" });
+    const ally3 = makeUnit({ uid: "a3" });
+    const board: (UnitInstance | null)[] = [bell, ally1, ally2, ally3, null];
+    const rng = createSeededRng(42);
+    const result = applyPlagueBellDoseBuff(board, 0, rng);
+    const buffed = result.filter((u) => u && u.id !== "plague_bell" && u.buffAtk > 0);
+    expect(buffed).toHaveLength(PLAGUE_BELL.targets);
+    const b = atLevel(PLAGUE_BELL.buff, 1);
+    for (const u of buffed) {
+      expect(u?.buffAtk).toBe(b.atk);
+      expect(u?.buffHp).toBe(b.hp);
+    }
+  });
+
+  it("does not fire when dose target is not a plague_bell", () => {
+    const bell = makeUnit({ id: "plague_bell", uid: "bell" });
+    const other = makeUnit({ uid: "other" });
+    const board: (UnitInstance | null)[] = [bell, other, null, null, null];
+    const rng = createSeededRng(42);
+    const result = applyPlagueBellDoseBuff(board, 1, rng);
+    expect(result).toBe(board);
+  });
+
+  it("does nothing when bell is alone on board", () => {
+    const bell = makeUnit({ id: "plague_bell", uid: "bell" });
+    const board: (UnitInstance | null)[] = [bell, null, null, null, null];
+    const rng = createSeededRng(42);
+    const result = applyPlagueBellDoseBuff(board, 0, rng);
+    expect(result).toBe(board);
+  });
+
+  it("buffs fewer allies when pool is smaller than targets", () => {
+    const bell = makeUnit({ id: "plague_bell", uid: "bell" });
+    const only = makeUnit({ uid: "only" });
+    const board: (UnitInstance | null)[] = [bell, only, null, null, null];
+    const rng = createSeededRng(42);
+    const result = applyPlagueBellDoseBuff(board, 0, rng);
+    const buffed = result.find((u) => u?.uid === "only");
+    const b = atLevel(PLAGUE_BELL.buff, 1);
+    expect(buffed?.buffAtk).toBe(b.atk);
+  });
+});
+
+describe("applySummonEffects – wailing_cursechild", () => {
+  it("buffs newly summoned ally", () => {
+    const cursechild = makeUnit({ id: "wailing_cursechild", uid: "child" });
+    const summoned = makeUnit({ uid: "new" });
+    const board: (UnitInstance | null)[] = [cursechild, summoned, null, null, null];
+    const result = applySummonEffects(1, board);
+    const buffed = result.find((u) => u?.uid === "new");
+    const b = atLevel(WAILING_CURSECHILD.buff, 1);
+    expect(buffed?.buffAtk).toBe(b.atk);
+    expect(buffed?.buffHp).toBe(b.hp);
+  });
+
+  it("does not buff the cursechild when it is itself the summoned unit", () => {
+    const cursechild = makeUnit({ id: "wailing_cursechild", uid: "child" });
+    const board: (UnitInstance | null)[] = [cursechild, null, null, null, null];
+    const result = applySummonEffects(0, board);
+    const resultChild = result.find((u) => u?.uid === "child");
+    expect(resultChild?.buffAtk).toBe(0);
+    expect(resultChild?.buffHp).toBe(0);
+  });
+
+  it("stacks buffs when multiple cursechildren are on board", () => {
+    const child1 = makeUnit({ id: "wailing_cursechild", uid: "c1" });
+    const child2 = makeUnit({ id: "wailing_cursechild", uid: "c2" });
+    const summoned = makeUnit({ uid: "new" });
+    const board: (UnitInstance | null)[] = [child1, child2, summoned, null, null];
+    const result = applySummonEffects(2, board);
+    const buffed = result.find((u) => u?.uid === "new");
+    const b = atLevel(WAILING_CURSECHILD.buff, 1);
+    expect(buffed?.buffAtk).toBe(b.atk * 2);
+    expect(buffed?.buffHp).toBe(b.hp * 2);
   });
 });

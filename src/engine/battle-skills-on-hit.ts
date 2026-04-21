@@ -42,7 +42,6 @@ const HIT_HANDLERS = {
   flagellant: applyFlagellantHit,
   howling_giant: applyHowlingGiantHit,
   tumor_guardian: applyTumorGuardianHit,
-  amniotic_armor: applyAmnioticArmorHit,
 } satisfies Partial<Record<UnitId, HitHandler>>;
 
 type HitHandlerUnitId = keyof typeof HIT_HANDLERS;
@@ -188,18 +187,4 @@ function applyTumorGuardianHit({ defender: u, isPlayer, ctx }: HitCtx) {
     skillDamageActions(u, target, dmg),
   );
   resolveDeaths(ctx);
-}
-
-function applyAmnioticArmorHit({ defender: u, prefix, ctx }: HitCtx) {
-  if (u.skillUses <= 0) return;
-  if (u.equip !== null) return;
-  u.skillUses -= 1;
-  u.equip = "corpse_wax";
-  pushFrame(
-    ctx,
-    "skill",
-    () => [prefix, seg.u(u.name), "の膜が硬化し、", seg.e("屍蝋"), "が纏う。"],
-    "skill",
-    { [u.uid]: { type: "buff", value: "屍蝋" } },
-  );
 }

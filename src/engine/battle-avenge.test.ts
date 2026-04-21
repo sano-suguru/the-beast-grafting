@@ -1,6 +1,6 @@
 import { processAvenge, incrementAvengeCounters } from "./battle-avenge";
-import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
-import { atLevel, GRINNING_SKULL, ARCHANGEL, WAILING_CURSECHILD } from "../shared/skill-params";
+import { makeBattleUnit, makeContext } from "./test-helpers";
+import { atLevel, GRINNING_SKULL, ARCHANGEL } from "../shared/skill-params";
 
 describe("processAvenge – grinning_skull (independent counters)", () => {
   it("buffs all allies when counter reaches threshold", () => {
@@ -123,48 +123,5 @@ describe("incrementAvengeCounters – independent per-unit", () => {
     const board = [arch];
     incrementAvengeCounters(board);
     expect(arch.avengeDeathCount).toBe(0);
-  });
-});
-
-describe("processAvenge – wailing_cursechild", () => {
-  it("buffs all allies when threshold reached", () => {
-    const child = makeBattleUnit({
-      id: "wailing_cursechild",
-      name: "啼き喚く呪い児",
-      atk: 3,
-      hp: 7,
-      avengeDeathCount: 3,
-      skillUses: 1,
-    });
-    const ally = makeBattleUnit({ id: INERT_UNIT_ID, atk: 2, hp: 3 });
-    const board = [child, ally];
-    const ctx = makeContext(board, []);
-    processAvenge(board, true, ctx);
-    const b = atLevel(WAILING_CURSECHILD.buff, 1);
-    expect(child.atk).toBe(3 + b.atk);
-    expect(child.hp).toBe(7 + b.hp);
-    expect(ally.atk).toBe(2 + b.atk);
-    expect(ally.hp).toBe(3 + b.hp);
-    expect(child.avengeDeathCount).toBe(0);
-  });
-
-  it("stops buffing after skillUses exhausted", () => {
-    const child = makeBattleUnit({
-      id: "wailing_cursechild",
-      name: "啼き喚く呪い児",
-      atk: 3,
-      hp: 20,
-      avengeDeathCount: 6,
-      skillUses: 1,
-    });
-    const ally = makeBattleUnit({ id: INERT_UNIT_ID, atk: 2, hp: 3 });
-    const board = [child, ally];
-    const ctx = makeContext(board, []);
-    processAvenge(board, true, ctx);
-    const b = atLevel(WAILING_CURSECHILD.buff, 1);
-    // skillUses=1 → 1回分のバフのみ（threshold 3を2回分消費しても1回だけ発動）
-    expect(child.atk).toBe(3 + b.atk);
-    expect(ally.atk).toBe(2 + b.atk);
-    expect(child.skillUses).toBe(0);
   });
 });

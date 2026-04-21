@@ -9,6 +9,7 @@ import {
   applyBatSkill,
   applyInquisitorSkill,
   applyBansheeSkill,
+  applyAmnioticArmorSkill,
   applyFamineCorpseSkill,
   applyPaladinSkill,
   applyHolyFireSkill,
@@ -23,7 +24,6 @@ import {
 import {
   applyEyeGaze,
   applyRelicSwordBuff,
-  applyPlagueBellToll,
   applyCrawlingCordBuff,
 } from "./battle-skills-before-attack";
 
@@ -35,6 +35,7 @@ const START_SKILL_HANDLERS = {
   bat: applyBatSkill,
   church_inquisitor: applyInquisitorSkill,
   shrieking_throat: applyBansheeSkill,
+  amniotic_armor: applyAmnioticArmorSkill,
   famine_corpse: applyFamineCorpseSkill,
   market_vulture: applyMarketVultureSkill,
   paladin: applyPaladinSkill,
@@ -89,8 +90,6 @@ const BEFORE_ATTACK_HANDLERS = {
     applyEyeGaze(u, enemyBoard, prefix, ctx),
   relic_sword: ({ u, board, prefix, ctx }: BeforeAttackArgs) =>
     applyRelicSwordBuff(u, board, prefix, ctx),
-  plague_bell: ({ u, enemyBoard, prefix, ctx }: BeforeAttackArgs) =>
-    applyPlagueBellToll(u, enemyBoard, prefix, ctx),
 } satisfies Partial<Record<UnitId, BeforeAttackHandler>>;
 
 type BeforeAttackUnitId = keyof typeof BEFORE_ATTACK_HANDLERS;

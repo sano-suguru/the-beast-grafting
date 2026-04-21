@@ -3,7 +3,6 @@ import type { Rng } from "../rng";
 import {
   applyGutHandAccumulation,
   applyRotRingAccumulation,
-  applyMarketVultureAccumulation,
   applyCatacombRatAccumulation,
   applyAshFungusAccumulation,
   applyAltarAccumulation,
@@ -21,8 +20,6 @@ function applyBuyPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: n
       return applyGutHandAccumulation(unit, team, night, rng);
     case "rot_ring":
       return applyRotRingAccumulation(unit, team, night);
-    case "market_vulture":
-      return applyMarketVultureAccumulation(unit, team, night);
     case "catacomb_rat":
       return applyCatacombRatAccumulation(unit, team, night);
   }

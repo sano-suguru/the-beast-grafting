@@ -3,12 +3,12 @@ import { runBattle } from "./battle";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID, makeEnemyTeam } from "./test-helpers";
 import {
   atLevel,
-  PLAGUE_BELL,
   EYE,
   PALADIN,
   HOLY_FIRE,
   FAMINE_CORPSE,
   RELIC_SWORD,
+  AMNIOTIC_ARMOR,
 } from "../shared/skill-params";
 describe("runStartSkills – damage skills", () => {
   it("bat deals 1 damage to enemy front", () => {
@@ -73,27 +73,74 @@ describe("runStartSkills – damage skills", () => {
     expect(back.hp).toBe(10);
   });
 
-  it("shrieking_throat deals 6 damage to enemy back", () => {
+  it("shrieking_throat deals 8 damage to enemy back at level 1", () => {
     const throat = makeBattleUnit({ id: "shrieking_throat", name: "叫喚する喉袋", atk: 7, hp: 4 });
     const front = makeBattleUnit({ hp: 10 });
     const back = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([throat], [front, back]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(front.hp).toBe(10);
-    expect(back.hp).toBe(4);
+    expect(back.hp).toBe(2);
   });
 
-  it("shrieking_throat takes self-damage recoil", () => {
-    const throat = makeBattleUnit({ id: "shrieking_throat", name: "叫喚する喉袋", atk: 7, hp: 10 });
-    const enemy = makeBattleUnit({ hp: 20 });
-    const ctx = makeContext([throat], [enemy]);
+  it("shrieking_throat scales damage to 16 at level 2", () => {
+    const throat = makeBattleUnit({
+      id: "shrieking_throat",
+      name: "叫喚する喉袋",
+      atk: 7,
+      hp: 10,
+      level: 2,
+    });
+    const front = makeBattleUnit({ hp: 20 });
+    const back = makeBattleUnit({ hp: 20 });
+    const ctx = makeContext([throat], [front, back]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(enemy.hp).toBe(14); // 20 - 6
-    expect(throat.hp).toBe(7); // 10 - 3 (selfDamage at lv1)
+    expect(front.hp).toBe(20);
+    expect(back.hp).toBe(4);
+    expect(throat.hp).toBe(10);
   });
 });
 
 // revenant is now a shop turn-start skill, not a battle SoB — tested in shop-effects-setup.test.ts
+
+describe("runStartSkills – amniotic_armor", () => {
+  it("buffs all allied HP at start of battle", () => {
+    const armor = makeBattleUnit({ id: "amniotic_armor", name: "羊膜の鎧", atk: 4, hp: 8 });
+    const ally = makeBattleUnit({ atk: 2, hp: 5 });
+    const enemy = makeBattleUnit({ atk: 3, hp: 10 });
+    const ctx = makeContext([armor, ally], [enemy]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const bonus = atLevel(AMNIOTIC_ARMOR.hpBuff, 1);
+    expect(armor.hp).toBe(8 + bonus);
+    expect(ally.hp).toBe(5 + bonus);
+    expect(enemy.hp).toBe(10);
+  });
+
+  it("does not buff enemies (SAP-consistent behavior)", () => {
+    const armor = makeBattleUnit({ id: "amniotic_armor", name: "羊膜の鎧", atk: 4, hp: 8 });
+    const e1 = makeBattleUnit({ hp: 10 });
+    const e2 = makeBattleUnit({ hp: 10 });
+    const ctx = makeContext([armor], [e1, e2]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    expect(e1.hp).toBe(10);
+    expect(e2.hp).toBe(10);
+  });
+
+  it("scales buff with level", () => {
+    const armor = makeBattleUnit({
+      id: "amniotic_armor",
+      name: "羊膜の鎧",
+      atk: 4,
+      hp: 8,
+      level: 2,
+    });
+    const ally = makeBattleUnit({ atk: 2, hp: 5 });
+    const ctx = makeContext([armor, ally], [makeBattleUnit({ hp: 10 })]);
+    runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
+    const bonus = atLevel(AMNIOTIC_ARMOR.hpBuff, 2);
+    expect(ally.hp).toBe(5 + bonus);
+  });
+});
 
 describe("runStartSkills – brains and edge cases", () => {
   it("brains doubles start-of-battle skills", () => {
@@ -175,59 +222,6 @@ describe("applyBeforeAttackSkills", () => {
     const ctx = makeContext([front], [makeBattleUnit()]);
     applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(ctx.frames).toHaveLength(0);
-  });
-});
-
-describe("applyBeforeAttackSkills – plague_bell", () => {
-  it("deals AoE damage to all enemies from SUPPORT_IDX", () => {
-    const uses = atLevel(PLAGUE_BELL.uses, 1);
-    const front = makeBattleUnit({ atk: 5, hp: 10 });
-    const bell = makeBattleUnit({
-      id: "plague_bell",
-      name: "疫病の鐘撞き",
-      atk: 3,
-      hp: 7,
-      skillUses: uses,
-    });
-    const e1 = makeBattleUnit({ hp: 10 });
-    const e2 = makeBattleUnit({ hp: 8 });
-    const ctx = makeContext([front, bell], [e1, e2]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    const dmg = atLevel(PLAGUE_BELL.damage, 1);
-    expect(e1.hp).toBe(10 - dmg);
-    expect(e2.hp).toBe(8 - dmg);
-    expect(bell.skillUses).toBe(uses - 1);
-  });
-
-  it("does not trigger when skillUses is 0", () => {
-    const front = makeBattleUnit({ atk: 5, hp: 10 });
-    const bell = makeBattleUnit({
-      id: "plague_bell",
-      name: "疫病の鐘撞き",
-      atk: 3,
-      hp: 7,
-      skillUses: 0,
-    });
-    const e1 = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([front, bell], [e1]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(e1.hp).toBe(10);
-  });
-
-  it("does not trigger when not at SUPPORT_IDX", () => {
-    const front = makeBattleUnit({ atk: 5, hp: 10 });
-    const middle = makeBattleUnit({ atk: 2, hp: 2 });
-    const bell = makeBattleUnit({
-      id: "plague_bell",
-      name: "疫病の鐘撞き",
-      atk: 3,
-      hp: 7,
-      skillUses: atLevel(PLAGUE_BELL.uses, 1),
-    });
-    const e1 = makeBattleUnit({ hp: 10 });
-    const ctx = makeContext([front, middle, bell], [e1]);
-    applyBeforeAttackSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(e1.hp).toBe(10);
   });
 });
 

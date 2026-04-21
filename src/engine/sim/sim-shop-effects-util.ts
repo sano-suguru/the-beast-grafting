@@ -51,6 +51,8 @@ function perNightAcquisitionProb(night: number): number {
 
 interface NightAction {
   readonly night: number;
+  /** 所有確率（このナイトまでにユニットを保有している確率） */
+  readonly ownership: number;
   /** 所有確率で重み付けされた推定購入回数 */
   readonly purchases: number;
   /** 所有確率で重み付けされた推定売却回数 */
@@ -83,6 +85,7 @@ export function estimateWeightedActions(tier: Tier, battleNight: number): readon
 
     result.push({
       night: n,
+      ownership: weight,
       purchases: PURCHASES_PER_NIGHT * weight,
       sells: n >= SELL_START_NIGHT ? SELLS_PER_NIGHT_LATE * weight : 0,
     });

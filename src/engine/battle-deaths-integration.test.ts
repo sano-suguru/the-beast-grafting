@@ -1,52 +1,46 @@
 import { resolveDeaths } from "./battle-deaths";
 import { INERT_UNIT_ID, makeBattleUnit, makeContext } from "./test-helpers";
-import { atLevel, HANGED_MAN } from "../shared/skill-params";
+import { atLevel, SERAPH } from "../shared/skill-params";
 import type { BattleUnit } from "./battle-context";
 import type { UnitId } from "../shared/types";
 
 describe("resolveDeaths – puppeteer doubles death skill", () => {
-  it("doubles hanged_man death effect when puppeteer is in front", () => {
+  it("doubles seraph death buff when puppeteer is in front", () => {
     const puppeteer = makeBattleUnit({ id: "puppeteer", name: "操り糸", atk: 4, hp: 6 });
-    const hanged = makeBattleUnit({
-      id: "hanged_man",
-      name: "首吊り",
-      atk: 10,
+    const seraph = makeBattleUnit({
+      id: "seraph",
+      name: "熾天使",
+      atk: 4,
       hp: 0,
-      preDeathHp: 8,
+      isChurch: true,
     });
     const ally1 = makeBattleUnit({ atk: 2, hp: 5 });
     const ally2 = makeBattleUnit({ atk: 1, hp: 3 });
-    const ctx = makeContext([puppeteer, hanged, ally1, ally2], [makeBattleUnit({ hp: 10 })]);
+    const ctx = makeContext([puppeteer, seraph, ally1, ally2], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
-    const targets = atLevel(HANGED_MAN.targets, 1);
-    const atkShare = Math.floor(10 / targets);
-    const hpShare = Math.floor(8 / targets);
-    // 2回発動 → 2倍バフ（前方targets体=3体: puppeteer, ally1, ally2）
-    expect(puppeteer.atk).toBe(4 + atkShare * 2);
-    expect(ally1.atk).toBe(2 + atkShare * 2);
-    expect(ally1.hp).toBe(5 + hpShare * 2);
+    const b = atLevel(SERAPH.deathBuff, 1);
+    expect(puppeteer.atk).toBe(4 + b.atk * 2);
+    expect(ally1.atk).toBe(2 + b.atk * 2);
+    expect(ally1.hp).toBe(5 + b.hp * 2);
   });
 
   it("does not double when puppeteer is not at deathIdx-1", () => {
-    // hanged is at index 0 → board[-1] is undefined → deathMult = 1
-    const hanged = makeBattleUnit({
-      id: "hanged_man",
-      name: "首吊り",
-      atk: 10,
+    const seraph = makeBattleUnit({
+      id: "seraph",
+      name: "熾天使",
+      atk: 4,
       hp: 0,
-      preDeathHp: 8,
+      isChurch: true,
     });
     const puppeteer = makeBattleUnit({ id: "puppeteer", name: "操り糸", atk: 4, hp: 6 });
     const ally1 = makeBattleUnit({ atk: 2, hp: 5 });
     const ally2 = makeBattleUnit({ atk: 1, hp: 3 });
-    const ctx = makeContext([hanged, puppeteer, ally1, ally2], [makeBattleUnit({ hp: 10 })]);
+    const ctx = makeContext([seraph, puppeteer, ally1, ally2], [makeBattleUnit({ hp: 10 })]);
     resolveDeaths(ctx);
-    const targets = atLevel(HANGED_MAN.targets, 1);
-    const atkShare = Math.floor(10 / targets);
-    // Only 1x, distributes to front targets体: puppeteer, ally1, ally2
-    expect(puppeteer.atk).toBe(4 + atkShare);
-    expect(ally1.atk).toBe(2 + atkShare);
-    expect(ally2.atk).toBe(1 + atkShare);
+    const b = atLevel(SERAPH.deathBuff, 1);
+    expect(puppeteer.atk).toBe(4 + b.atk);
+    expect(ally1.atk).toBe(2 + b.atk);
+    expect(ally2.atk).toBe(1 + b.atk);
   });
 });
 

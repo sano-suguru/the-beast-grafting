@@ -2,14 +2,47 @@ import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
 import type { OriginId, UnitInstance } from "../../shared/types";
 import type { BoardUnit } from "../../shared/board-unit";
-import { graftUnits, applyAltarEndOfTurn, calcAlchemyDiscount } from "../../engine/shop-effects";
-import { applyCorpseBrokerDoseBuff } from "../../engine/shop-effects-dose";
+import { graftUnits, applyEndOfTurnEffects, calcAlchemyDiscount } from "../../engine/shop-effects";
+import { applyCorpseBrokerDoseBuff, applyPlagueBellDoseBuff } from "../../engine/shop-effects-dose";
 import { isAlchemy } from "../../shared/data/items";
 import { CULTIST_LIFE_COST, CULTIST_BLOOD_GAIN } from "../../shared/constants";
 import type { ShopStateRow } from "./shop-state-row";
 import { boardToInstances, instancesToBoard, itemSlotsFromJson } from "./shop-serialization";
 import { captureUndo, withRng } from "./shop-helpers";
 import { generateLevelUpRewards } from "./shop-generation";
+
+interface DoseApplied {
+  board: (UnitInstance | null)[];
+  corpseBrokerUses: number;
+  rngS0: number;
+  rngS1: number;
+}
+
+function applyAlchemyDoseEffects(
+  state: ShopStateRow,
+  board: (UnitInstance | null)[],
+  boardIndex: number,
+  isAlchemyItem: boolean,
+): DoseApplied {
+  if (!isAlchemyItem) {
+    return {
+      board,
+      corpseBrokerUses: state.corpseBrokerUses,
+      rngS0: state.rngS0,
+      rngS1: state.rngS1,
+    };
+  }
+  const dose = applyCorpseBrokerDoseBuff(board, boardIndex, state.corpseBrokerUses);
+  const { rng, saveRng } = withRng(state);
+  const boardAfterPlague = applyPlagueBellDoseBuff(dose.board, boardIndex, rng);
+  const rngState = saveRng();
+  return {
+    board: boardAfterPlague,
+    corpseBrokerUses: dose.corpseBrokerUses,
+    rngS0: rngState.rngS0,
+    rngS1: rngState.rngS1,
+  };
+}
 
 export function executeEquip(
   state: ShopStateRow,
@@ -48,20 +81,21 @@ export function executeEquip(
     equip: item.equip ?? target.equip,
   };
 
-  const dose = isAlchemy(item)
-    ? applyCorpseBrokerDoseBuff(
-        newBoard as (UnitInstance | null)[],
-        boardIndex,
-        state.corpseBrokerUses,
-      )
-    : { board: newBoard, corpseBrokerUses: state.corpseBrokerUses };
+  const applied = applyAlchemyDoseEffects(
+    state,
+    newBoard as (UnitInstance | null)[],
+    boardIndex,
+    isAlchemy(item),
+  );
 
   return ok({
     ...state,
     blood: state.blood - effectiveCost,
-    board: instancesToBoard(dose.board as (UnitInstance | null)[]),
+    board: instancesToBoard(applied.board),
     shopItems: state.shopItems.map((u, i) => (i === shopItemIndex ? null : u)),
-    corpseBrokerUses: dose.corpseBrokerUses,
+    corpseBrokerUses: applied.corpseBrokerUses,
+    rngS0: applied.rngS0,
+    rngS1: applied.rngS1,
     undoSnapshot: captureUndo(state),
   });
 }
@@ -194,7 +228,7 @@ export function executeReady(
   if (!instances.some((u) => u !== null))
     return err({ type: "PRECONDITION_FAILED", reason: "board_empty" });
 
-  const boardAfterEot = applyAltarEndOfTurn(instances);
+  const boardAfterEot = applyEndOfTurnEffects(instances);
   const finalBoard = instancesToBoard(boardAfterEot);
 
   return ok({

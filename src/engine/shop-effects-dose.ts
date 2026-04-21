@@ -1,5 +1,6 @@
 import type { UnitInstance } from "../shared/types";
-import { atLevel, CORPSE_BROKER } from "../shared/skill-params";
+import type { Rng } from "./rng";
+import { atLevel, CORPSE_BROKER, PLAGUE_BELL } from "../shared/skill-params";
 
 interface DoseResult {
   board: (UnitInstance | null)[];
@@ -31,4 +32,49 @@ export function applyCorpseBrokerDoseBuff(
     buffHp: target.buffHp + totalHpBuff,
   };
   return { board: nextBoard, corpseBrokerUses: corpseBrokerUses + 1 };
+}
+
+/**
+ * plague_bell が自身に薬を投与された時、他のランダム味方 N 体をバフする。
+ * SAP Seal パターン（被食者本人がトリガ）準拠。
+ */
+export function applyPlagueBellDoseBuff(
+  board: (UnitInstance | null)[],
+  doseTargetIndex: number,
+  rng: Rng,
+): (UnitInstance | null)[] {
+  const bell = board[doseTargetIndex];
+  if (!bell || bell.id !== "plague_bell") return board;
+  return buffRandomOtherAllies(board, doseTargetIndex, bell.level, rng);
+}
+
+function buffRandomOtherAllies(
+  board: (UnitInstance | null)[],
+  sourceIndex: number,
+  sourceLevel: number,
+  rng: Rng,
+): (UnitInstance | null)[] {
+  const otherIndices: number[] = [];
+  for (let i = 0; i < board.length; i++) {
+    if (i === sourceIndex) continue;
+    if (board[i] !== null) otherIndices.push(i);
+  }
+  if (otherIndices.length === 0) return board;
+
+  const pool = [...otherIndices];
+  const take = Math.min(PLAGUE_BELL.targets, pool.length);
+  const chosen: number[] = [];
+  for (let i = 0; i < take; i++) {
+    const idx = Math.floor(rng.next() * pool.length);
+    chosen.push(pool.splice(idx, 1)[0]!);
+  }
+
+  const b = atLevel(PLAGUE_BELL.buff, sourceLevel);
+  const nextBoard = [...board];
+  for (const i of chosen) {
+    const u = nextBoard[i];
+    if (!u) continue;
+    nextBoard[i] = { ...u, buffAtk: u.buffAtk + b.atk, buffHp: u.buffHp + b.hp };
+  }
+  return nextBoard;
 }

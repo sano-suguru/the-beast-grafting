@@ -13,7 +13,6 @@ describe("handleInsatiableMawBuff", () => {
       name: "飽くなき咢",
       atk: 4,
       hp: 4,
-      skillUses: 2,
     });
     const board = [maw];
     const ctx = makeContext(board, []);
@@ -21,8 +20,24 @@ describe("handleInsatiableMawBuff", () => {
     const b = atLevel(INSATIABLE_MAW.buff, 1);
     expect(maw.atk).toBe(4 + b.atk);
     expect(maw.hp).toBe(4 + b.hp);
-    expect(maw.skillUses).toBe(1);
     expect(ctx.frames).toHaveLength(1);
+  });
+
+  it("fires unlimited times regardless of skillUses state", () => {
+    const maw = makeBattleUnit({
+      id: "insatiable_maw",
+      name: "飽くなき咢",
+      atk: 4,
+      hp: 4,
+      skillUses: 0,
+    });
+    const board = [maw];
+    const ctx = makeContext(board, []);
+    const b = atLevel(INSATIABLE_MAW.buff, 1);
+    for (let i = 0; i < 5; i++) handleInsatiableMawBuff(board, true, ctx);
+    expect(maw.atk).toBe(4 + b.atk * 5);
+    expect(maw.hp).toBe(4 + b.hp * 5);
+    expect(ctx.frames).toHaveLength(5);
   });
 });
 

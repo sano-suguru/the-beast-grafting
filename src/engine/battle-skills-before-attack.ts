@@ -4,13 +4,12 @@ import {
   takeDamage,
   seg,
   skillDamageActions,
-  aoeDamageActions,
   buffAction,
   skillAction,
 } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
-import { atLevel, EYE, RELIC_SWORD, PLAGUE_BELL, CRAWLING_CORD } from "../shared/skill-params";
+import { atLevel, EYE, RELIC_SWORD, CRAWLING_CORD } from "../shared/skill-params";
 
 export function applyEyeGaze(
   u: BattleUnit,
@@ -65,31 +64,6 @@ export function applyRelicSwordBuff(
     "skill",
     { [u.uid]: skillAction(), [ally.uid]: buffAction({ atk: atkGain, hp: 0 }, u.uid) },
   );
-}
-
-export function applyPlagueBellToll(
-  u: BattleUnit,
-  enemyBoard: BattleUnit[],
-  prefix: string,
-  ctx: BattleContext,
-) {
-  if (enemyBoard.length === 0 || u.skillUses <= 0) return;
-  const dmg = atLevel(PLAGUE_BELL.damage, u.level);
-  const hit: BattleUnit[] = [];
-  for (const target of enemyBoard) {
-    if (target.hp <= 0) continue;
-    takeDamage(target, dmg, u.uid);
-    hit.push(target);
-  }
-  pushFrame(
-    ctx,
-    "skill",
-    () => [prefix, seg.u(u.name), "が弔鐘を鳴らす！ 敵全体に", seg.s(`${dmg}ダメージ`)],
-    "skill",
-    aoeDamageActions(u, hit, dmg),
-  );
-  u.skillUses -= 1;
-  resolveDeaths(ctx);
 }
 
 export function applyCrawlingCordBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {

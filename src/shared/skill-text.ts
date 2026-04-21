@@ -123,8 +123,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `ターン終了: Lv${ALTAR.requiredFriendLevel}の味方がいれば自身に+${b.atk}/+${b.hp}`;
   },
   machine: (lv) => `ターン開始: 闇市場の全錬金薬を${atLevel(MACHINE.discount, lv)}血値引き`,
-  shrieking_throat: (lv) =>
-    `開戦: 最後尾の敵に${atLevel(BANSHEE.damage, lv)}ダメ(自身に${atLevel(BANSHEE.selfDamage, lv)}反動)`,
+  shrieking_throat: (lv) => `開戦: 最後尾の敵に${atLevel(BANSHEE.damage, lv)}ダメージ`,
   hundred_arms: (lv) =>
     `撃破: 先頭の敵に${atLevel(HUNDRED_ARMS.damageDefault, lv)}ダメ(Tier1に${atLevel(HUNDRED_ARMS.damageT1, lv)}ダメ)`,
   priest: (lv) => {
@@ -161,9 +160,14 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     `前の味方が死亡: 【屍蝋の盾】と攻撃+1を得る(${atLevel(CARRION_SENTINEL.uses, lv)}回/戦)`,
   ash_fungus: (lv) =>
     `ターン開始: Lv${ASH_FUNGUS.minLevel}以上の味方${ASH_FUNGUS.targets}体に+${atLevel(ASH_FUNGUS.buff, lv)}/+${atLevel(ASH_FUNGUS.buff, lv)}`,
-  plague_bell: (lv) =>
-    `直前の味方が攻撃: 敵全体に${atLevel(PLAGUE_BELL.damage, lv)}ダメージ(${atLevel(PLAGUE_BELL.uses, lv)}回/戦)`,
-  hanged_man: (lv) => `死亡: 最終スタッツを前方の味方${atLevel(HANGED_MAN.targets, lv)}体に分配`,
+  plague_bell: (lv) => {
+    const b = atLevel(PLAGUE_BELL.buff, lv);
+    return `自身が薬投与時: 他のランダム${PLAGUE_BELL.targets}体に+${b.atk}/+${b.hp}`;
+  },
+  hanged_man: (lv) => {
+    const b = atLevel(HANGED_MAN.buff, lv);
+    return `ターン終了: 最前の味方に+${b.atk}/+${b.hp}`;
+  },
   organ_grinder: (lv) => `撃破: 敵全体に${atLevel(ORGAN_GRINDER.damage, lv)}ダメージ`,
   grinning_skull: (lv) => {
     const b = atLevel(GRINNING_SKULL.buff, lv);
@@ -223,13 +227,13 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   insatiable_maw: (lv) => {
     const b = atLevel(INSATIABLE_MAW.buff, lv);
-    return `味方死亡: 自身に+${b.atk}/+${b.hp}(${atLevel(INSATIABLE_MAW.uses, lv)}回/戦)`;
+    return `味方死亡: 自身に+${b.atk}/+${b.hp}`;
   },
   wailing_cursechild: (lv) => {
     const b = atLevel(WAILING_CURSECHILD.buff, lv);
-    return `味方${WAILING_CURSECHILD.threshold}体死亡ごと: 味方全体に+${b.atk}/+${b.hp}`;
+    return `味方召喚時: その味方に+${b.atk}/+${b.hp}`;
   },
-  amniotic_armor: (lv) => `被弾: 自身に【屍蝋】を装備(${atLevel(AMNIOTIC_ARMOR.uses, lv)}回/戦)`,
+  amniotic_armor: (lv) => `開戦: 味方全体のHPに+${atLevel(AMNIOTIC_ARMOR.hpBuff, lv)}`,
   omen_womb: (lv) => {
     const t = atLevel(OMEN_WOMB.token, lv);
     return `死亡: 2体の${t.atk}/${t.hp}「忌み子」を召喚`;

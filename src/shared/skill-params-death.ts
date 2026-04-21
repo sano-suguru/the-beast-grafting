@@ -59,10 +59,6 @@ export const CHURCH_BEAST = {
   ] as SB,
 };
 
-export const HANGED_MAN = {
-  targets: [3, 4, 5] as SN,
-};
-
 export const SERAPH = {
   deathBuff: [
     { atk: 2, hp: 2 },

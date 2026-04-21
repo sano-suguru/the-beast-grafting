@@ -3,7 +3,7 @@ import type { BattleUnit, BattleContext } from "./battle-context";
 import type { Scaled, Buff } from "../shared/skill-params";
 import { buffAllAlive } from "./battle-context";
 import { pushFrame, enemyPrefix, seg, aoeBuffActions, buffAction } from "./battle-context";
-import { atLevel, GRINNING_SKULL, ARCHANGEL, WAILING_CURSECHILD } from "../shared/skill-params";
+import { atLevel, GRINNING_SKULL, ARCHANGEL } from "../shared/skill-params";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 
 type AvengeCtx = {
@@ -57,12 +57,6 @@ function handleArchangel({ u, isPlayer, ctx }: AvengeCtx) {
   );
 }
 
-function handleWailingCursechild(c: AvengeCtx) {
-  if (c.u.skillUses <= 0) return;
-  c.u.skillUses -= 1;
-  avengeAoeBuff(c, WAILING_CURSECHILD, "が泣き叫ぶ。味方全体に");
-}
-
 interface AvengeSpec {
   id: UnitId;
   threshold: number;
@@ -72,11 +66,6 @@ interface AvengeSpec {
 const AVENGE_SPECS: AvengeSpec[] = [
   { id: "grinning_skull", threshold: GRINNING_SKULL.threshold, apply: handleGrinningSkull },
   { id: "archangel", threshold: ARCHANGEL.threshold, apply: handleArchangel },
-  {
-    id: "wailing_cursechild",
-    threshold: WAILING_CURSECHILD.threshold,
-    apply: handleWailingCursechild,
-  },
 ];
 
 const AVENGE_IDS: ReadonlySet<UnitId> = new Set(AVENGE_SPECS.map((s) => s.id));

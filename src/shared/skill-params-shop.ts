@@ -111,6 +111,34 @@ export const CHALICE = {
   ] as SB,
 };
 
+/** hanged_man: Turn end – 最前の味方に buff */
+export const HANGED_MAN = {
+  buff: [
+    { atk: 2, hp: 2 },
+    { atk: 4, hp: 4 },
+    { atk: 6, hp: 6 },
+  ] as SB,
+};
+
+/** plague_bell: 自身が薬を投与された時 – ランダム味方2体に buff */
+export const PLAGUE_BELL = {
+  buff: [
+    { atk: 1, hp: 1 },
+    { atk: 2, hp: 2 },
+    { atk: 3, hp: 3 },
+  ] as SB,
+  targets: 2,
+};
+
+/** wailing_cursechild: 味方召喚時 – その味方に buff */
+export const WAILING_CURSECHILD = {
+  buff: [
+    { atk: 3, hp: 1 },
+    { atk: 6, hp: 2 },
+    { atk: 9, hp: 3 },
+  ] as SB,
+};
+
 /** 売却時の血液獲得量（beggar は 2×レベル、他はレベル） */
 export function sellBloodGain(level: number, id: UnitId): number {
   return level + (id === "beggar" ? level : 0);

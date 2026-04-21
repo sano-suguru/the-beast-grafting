@@ -9,7 +9,6 @@ import {
   handlePriestDeath,
   handleMaidenDeath,
   handleMartyrDeath,
-  handleHangedManDeath,
   handleSeraphDeath,
 } from "./battle-deaths-handlers-unit";
 import {
@@ -32,7 +31,6 @@ export const UNIT_DEATH_HANDLERS = {
   squire: handleSquireDeath,
   priest: handlePriestDeath,
   maiden: handleMaidenDeath,
-  hanged_man: handleHangedManDeath,
   seraph: handleSeraphDeath,
   cholera: handleCholeraDeath,
   spite_beast: handleSpiteBeastDeath,

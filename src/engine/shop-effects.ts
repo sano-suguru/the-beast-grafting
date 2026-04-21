@@ -13,6 +13,8 @@ import {
   MACHINE,
   NESTING_GRUB,
   PARASITE,
+  HANGED_MAN,
+  WAILING_CURSECHILD,
 } from "../shared/skill-params";
 import { getSkillText } from "../shared/skill-text";
 import { buffRandomUnit, computeZealotBuff } from "./buff-utils";
@@ -179,25 +181,93 @@ export const applySummonEffects = (
     modified = true;
   }
 
+  if (applyWailingCursechildSummonBuff(nextBoard, summonedUnitIndex)) {
+    modified = true;
+  }
+
   return modified ? nextBoard : currentBoard;
 };
 
-// TODO(end-of-turn-registry): 2件目の end-of-turn ユニット登場時に END_OF_TURN_HANDLERS レジストリ化
-export function applyAltarEndOfTurn(board: (UnitInstance | null)[]): (UnitInstance | null)[] {
-  const nextBoard = [...board];
-  let modified = false;
+function applyWailingCursechildSummonBuff(
+  nextBoard: (UnitInstance | null)[],
+  summonedUnitIndex: number,
+): boolean {
+  const target = nextBoard[summonedUnitIndex];
+  if (!target) return false;
+  let atkGain = 0;
+  let hpGain = 0;
   for (let i = 0; i < nextBoard.length; i++) {
     const u = nextBoard[i];
-    if (!u || u.id !== "altar") continue;
-    const hasHighLevelFriend = nextBoard.some(
-      (other, j) => j !== i && other !== null && other.level >= ALTAR.requiredFriendLevel,
-    );
-    if (!hasHighLevelFriend) continue;
-    const b = atLevel(ALTAR.buff, u.level);
-    nextBoard[i] = { ...u, buffAtk: u.buffAtk + b.atk, buffHp: u.buffHp + b.hp };
-    modified = true;
+    if (!u || u.id !== "wailing_cursechild" || i === summonedUnitIndex) continue;
+    const b = atLevel(WAILING_CURSECHILD.buff, u.level);
+    atkGain += b.atk;
+    hpGain += b.hp;
   }
-  return modified ? nextBoard : board;
+  if (atkGain === 0 && hpGain === 0) return false;
+  nextBoard[summonedUnitIndex] = {
+    ...target,
+    buffAtk: target.buffAtk + atkGain,
+    buffHp: target.buffHp + hpGain,
+  };
+  return true;
+}
+
+type EndOfTurnHandler = (
+  board: (UnitInstance | null)[],
+  sourceIndex: number,
+) => (UnitInstance | null)[] | null;
+
+const handleAltarEndOfTurn: EndOfTurnHandler = (board, i) => {
+  const u = board[i];
+  if (!u) return null;
+  const hasHighLevelFriend = board.some(
+    (other, j) => j !== i && other !== null && other.level >= ALTAR.requiredFriendLevel,
+  );
+  if (!hasHighLevelFriend) return null;
+  const b = atLevel(ALTAR.buff, u.level);
+  const next = [...board];
+  next[i] = { ...u, buffAtk: u.buffAtk + b.atk, buffHp: u.buffHp + b.hp };
+  return next;
+};
+
+// 自身以外の最前列(最小index)の味方にバフ。board先頭=前衛。
+const handleHangedManEndOfTurn: EndOfTurnHandler = (board, i) => {
+  const hanged = board[i];
+  if (!hanged) return null;
+  const frontIdx = board.findIndex((u, idx) => u !== null && idx !== i);
+  if (frontIdx === -1) return null;
+  const front = board[frontIdx];
+  if (!front) return null;
+  const b = atLevel(HANGED_MAN.buff, hanged.level);
+  const next = [...board];
+  next[frontIdx] = {
+    ...front,
+    buffAtk: front.buffAtk + b.atk,
+    buffHp: front.buffHp + b.hp,
+  };
+  return next;
+};
+
+const END_OF_TURN_HANDLERS = {
+  altar: handleAltarEndOfTurn,
+  hanged_man: handleHangedManEndOfTurn,
+} satisfies Partial<Record<UnitId, EndOfTurnHandler>>;
+
+type EndOfTurnUnitId = keyof typeof END_OF_TURN_HANDLERS;
+
+function isEndOfTurnUnit(id: UnitId): id is EndOfTurnUnitId {
+  return id in END_OF_TURN_HANDLERS;
+}
+
+export function applyEndOfTurnEffects(board: (UnitInstance | null)[]): (UnitInstance | null)[] {
+  let result = board;
+  for (let i = 0; i < result.length; i++) {
+    const u = result[i];
+    if (!u || !isEndOfTurnUnit(u.id)) continue;
+    const next = END_OF_TURN_HANDLERS[u.id](result, i);
+    if (next !== null) result = next;
+  }
+  return result;
 }
 
 export function calcAlchemyDiscount(

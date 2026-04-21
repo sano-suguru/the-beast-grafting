@@ -3,7 +3,7 @@ import { createSeededRng } from "./rng";
 import { makeBattleUnit, makeContext } from "./test-helpers";
 import { segmentsToPlainText } from "./test-helpers";
 import { MAX_BOARD_SIZE } from "./constants";
-import { atLevel, HANGED_MAN, SERAPH, BEELZEBUB } from "../shared/skill-params";
+import { atLevel, SERAPH, BEELZEBUB } from "../shared/skill-params";
 import type { BattleFrame } from "../shared/types";
 
 const logText = (f: BattleFrame) => segmentsToPlainText(f.log.segments);
@@ -314,32 +314,6 @@ describe("resolveDeaths – fair tiebreaker", () => {
     expect(counts[0]).toBeGreaterThan(50);
     expect(counts[1]).toBeGreaterThan(50);
     expect(counts[2]).toBeGreaterThan(50);
-  });
-});
-
-describe("resolveDeaths – hanged_man", () => {
-  it("distributes atk and preDeathHp to front allies on death", () => {
-    const hanged = makeBattleUnit({
-      id: "hanged_man",
-      name: "首吊り",
-      atk: 10,
-      hp: 0,
-      preDeathHp: 8,
-    });
-    const ally1 = makeBattleUnit({ atk: 2, hp: 5 });
-    const ally2 = makeBattleUnit({ atk: 3, hp: 4 });
-    const ally3 = makeBattleUnit({ atk: 1, hp: 3 });
-    const ctx = makeContext([hanged, ally1, ally2, ally3], [makeBattleUnit({ hp: 10 })]);
-    resolveDeaths(ctx);
-    const targets = atLevel(HANGED_MAN.targets, 1);
-    const atkShare = Math.floor(10 / targets);
-    const hpShare = Math.floor(8 / targets);
-    expect(ally1.atk).toBe(2 + atkShare);
-    expect(ally1.hp).toBe(5 + hpShare);
-    expect(ally2.atk).toBe(3 + atkShare);
-    expect(ally2.hp).toBe(4 + hpShare);
-    expect(ally3.atk).toBe(1 + atkShare);
-    expect(ally3.hp).toBe(3 + hpShare);
   });
 });
 

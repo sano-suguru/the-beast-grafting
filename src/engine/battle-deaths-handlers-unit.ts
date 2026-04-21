@@ -16,7 +16,6 @@ import {
   SQUIRE,
   MARTYR,
   PRIEST,
-  HANGED_MAN,
   SERAPH,
   type Buff,
 } from "../shared/skill-params";
@@ -237,36 +236,6 @@ export function handleMartyrDeath({ dead, isPlayer, ctx, successor, successor2 }
     if (!target) continue;
     buffSuccessor(dead, target, b, { mid: "が", tail: "へ手を伸ばす。" }, isPlayer, ctx);
   }
-}
-
-export function handleHangedManDeath({ dead, board, isPlayer, ctx }: DeathContext) {
-  if (board.length === 0) return;
-  const targets = Math.min(atLevel(HANGED_MAN.targets, dead.level), board.length);
-  // atk: 死亡時も正値のためそのまま使用。hp: 死亡時は<=0のためtakeDamageが保存した最終正値を使用
-  const atkShare = Math.floor(dead.atk / targets);
-  const hpShare = Math.floor(dead.preDeathHp / targets);
-  if (atkShare === 0 && hpShare === 0) return;
-  const prefix = enemyPrefix(isPlayer);
-  const chosen = board.slice(0, targets);
-  const actionMap: Record<string, BattleAction> = {};
-  for (const target of chosen) {
-    target.atk += atkShare;
-    target.hp += hpShare;
-    actionMap[target.uid] = buffAction({ atk: atkShare, hp: hpShare }, dead.uid);
-  }
-  pushFrame(
-    ctx,
-    "skill",
-    () => [
-      prefix,
-      seg.u(dead.name),
-      `の唇が動く。${targets}体の肉が震え、膨れ上がる。`,
-      seg.s(`+${atkShare}/+${hpShare}`),
-    ],
-    "skill",
-    actionMap,
-    FRAME_DELAY_DEATH_CHAIN,
-  );
 }
 
 export function handleSeraphDeath({ dead, board, isPlayer, ctx }: DeathContext) {

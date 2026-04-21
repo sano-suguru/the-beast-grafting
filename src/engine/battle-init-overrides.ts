@@ -4,10 +4,6 @@ import {
   atLevel,
   EYE,
   CATHEDRAL,
-  PLAGUE_BELL,
-  AMNIOTIC_ARMOR,
-  WAILING_CURSECHILD,
-  INSATIABLE_MAW,
   GRINNING_SKULL,
   BONE_TREE,
   CARRION_SENTINEL,
@@ -23,18 +19,6 @@ const INIT_OVERRIDES = {
   },
   cathedral: (bu: BattleUnit) => {
     bu.skillUses = atLevel(CATHEDRAL.uses, bu.level);
-  },
-  plague_bell: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(PLAGUE_BELL.uses, bu.level);
-  },
-  amniotic_armor: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(AMNIOTIC_ARMOR.uses, bu.level);
-  },
-  wailing_cursechild: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(WAILING_CURSECHILD.uses, bu.level);
-  },
-  insatiable_maw: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(INSATIABLE_MAW.uses, bu.level);
   },
   bone_tree: (bu: BattleUnit) => {
     bu.skillUses = atLevel(BONE_TREE.uses, bu.level);

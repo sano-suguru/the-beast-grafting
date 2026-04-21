@@ -1,8 +1,7 @@
-import type { LogSegment } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import { pushFrame, getMult, enemyPrefix, seg, buffAction, aoeBuffActions } from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import { atLevel, INSATIABLE_MAW, BONE_TREE, type Buff } from "../shared/skill-params";
+import { atLevel, INSATIABLE_MAW, BONE_TREE } from "../shared/skill-params";
 
 interface ReactorIterCtx {
   u: BattleUnit;
@@ -38,15 +37,30 @@ export function handleInsatiableMawBuff(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  applyAllyDeathReaction(board, "insatiable_maw", isPlayer, ({ u, prefix }) => {
+  const prefix = enemyPrefix(isPlayer);
+  for (let i = 0; i < board.length; i++) {
+    const u = board[i]!;
+    if (u.id !== "insatiable_maw" || u.hp <= 0) continue;
+    const mult = getMult(board, i);
     const b = atLevel(INSATIABLE_MAW.buff, u.level);
-    buffAlly(ctx, u, u, b, () => [
-      prefix,
-      seg.u(u.name),
-      "の咢が脈動する。牙の間から涎が垂れ、膨れ上がる。",
-      seg.s(`+${b.atk}/+${b.hp}`),
-    ]);
-  });
+    for (let m = 0; m < mult; m++) {
+      u.atk += b.atk;
+      u.hp += b.hp;
+      pushFrame(
+        ctx,
+        "skill",
+        () => [
+          prefix,
+          seg.u(u.name),
+          "の咢が脈動する。牙の間から涎が垂れ、膨れ上がる。",
+          seg.s(`+${b.atk}/+${b.hp}`),
+        ],
+        "skill",
+        { [u.uid]: buffAction(b, u.uid) },
+        FRAME_DELAY_DEATH_CHAIN,
+      );
+    }
+  }
 }
 
 export function handleBoneTreeAllyDeath(
@@ -112,26 +126,5 @@ export function handleCarrionSentinelAllyDeath(
       );
     },
     (i) => i === deathIdx,
-  );
-}
-
-function buffAlly(
-  ctx: BattleContext,
-  source: BattleUnit,
-  target: BattleUnit,
-  b: Buff,
-  segments: () => LogSegment[],
-) {
-  target.atk += b.atk;
-  target.hp += b.hp;
-  pushFrame(
-    ctx,
-    "skill",
-    segments,
-    "skill",
-    {
-      [target.uid]: buffAction(b, source.uid),
-    },
-    FRAME_DELAY_DEATH_CHAIN,
   );
 }
