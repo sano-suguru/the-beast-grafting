@@ -2,11 +2,10 @@ import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import {
   pushFrame,
-  getMult,
+  runWithBrainsRepeat,
   takeDamage,
   enemyPrefix,
   seg,
-  aoeBuffActions,
   buffAction,
   skillAction,
   skillDamageActions,
@@ -19,7 +18,6 @@ import {
   STITCHED_TWIN,
   FLAYED_SAINT,
   FLAGELLANT,
-  HOWLING_GIANT,
   TUMOR_GUARDIAN,
 } from "../shared/skill-params";
 
@@ -40,7 +38,7 @@ const HIT_HANDLERS = {
   stitched_twin: applyStitchedTwinHit,
   flayed_saint: applyFlayedSaintHit,
   flagellant: applyFlagellantHit,
-  howling_giant: applyHowlingGiantHit,
+  puppeteer: applyPuppeteerHit,
   tumor_guardian: applyTumorGuardianHit,
 } satisfies Partial<Record<UnitId, HitHandler>>;
 
@@ -64,9 +62,8 @@ export function applyOnHitSkills(
   const handler = getHitHandler(defender.id);
   if (!handler) return;
   const prefix = enemyPrefix(isPlayer);
-  const mult = getMult(board, idx);
   const h: HitCtx = { defender, board, idx, prefix, isPlayer, ctx, depth };
-  for (let m = 0; m < mult; m++) handler(h);
+  runWithBrainsRepeat(defender, board, idx, () => handler(h));
 }
 
 function applyTemplarHit({ defender: u, prefix, ctx }: HitCtx) {
@@ -146,20 +143,23 @@ function applyFlagellantHit({ defender: u, board, idx, prefix, ctx }: HitCtx) {
   );
 }
 
-function applyHowlingGiantHit({ defender: u, board, prefix, ctx }: HitCtx) {
-  const b = atLevel(HOWLING_GIANT.atkBuff, u.level);
-  const buffed: BattleUnit[] = [];
-  for (const ally of board) {
-    if (ally.hp <= 0) continue;
-    ally.atk += b;
-    buffed.push(ally);
-  }
+function applyPuppeteerHit({ defender: u, prefix, ctx }: HitCtx) {
+  if (u.skillUses <= 0) return;
+  if (u.equip === "corpse_wax") return;
+  u.skillUses -= 1;
+  u.equip = "corpse_wax";
   pushFrame(
     ctx,
     "skill",
-    () => [prefix, seg.u(u.name), "が吼える。味方の腕が震え、拳が白む。", seg.s(`+${b}/+0`)],
+    () => [
+      prefix,
+      seg.u(u.name),
+      "の糸が軋む。崩れた肉が蝋と化して纏いつく。",
+      " + ",
+      seg.e("屍蝋の盾"),
+    ],
     "skill",
-    aoeBuffActions(u, buffed, { atk: b, hp: 0 }),
+    { [u.uid]: skillAction() },
   );
 }
 
@@ -170,7 +170,7 @@ function applyTumorGuardianHit({ defender: u, isPlayer, ctx }: HitCtx) {
   const target = mustGet(alive, Math.floor(ctx.rng.next() * alive.length), "tumor_guardian target");
   const dmg = atLevel(TUMOR_GUARDIAN.damage, u.level);
   const hpBefore = target.hp;
-  takeDamage(target, dmg, u.uid);
+  takeDamage(target, dmg, ctx, u.uid);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,

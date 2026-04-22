@@ -2,7 +2,7 @@ import type { BattleResult } from "../../shared/types";
 import type { PreparedTrial } from "./sim-ga-types";
 import { createSeededRng } from "../rng";
 import { generateSimTeam } from "./sim-team-gen";
-import { buildProgressedUnit } from "./sim-progression";
+import { buildProgressedTeam } from "./sim-progression";
 import { applySimShopEffects } from "./sim-shop-effects";
 import { deriveSeed, makeSimEnemy } from "./sim-utils";
 
@@ -17,7 +17,7 @@ export function prepareTrials(night: number, trials: number, baseSeed: number): 
     const enemyIds = generateSimTeam(night, enemyRng);
 
     const eRng = createSeededRng(deriveSeed(baseSeed, trials * 2 + i));
-    const eTeam = enemyIds.map((id) => buildProgressedUnit(id, night, eRng));
+    const eTeam = buildProgressedTeam(enemyIds, night, eRng);
     applySimShopEffects(eTeam, night, createSeededRng(deriveSeed(baseSeed, trials * 4 + i)));
 
     prepared.push({

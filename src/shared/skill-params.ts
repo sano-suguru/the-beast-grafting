@@ -29,7 +29,8 @@ export const INQUISITOR = {
 };
 
 export const BANSHEE = {
-  damage: [8, 16, 24] as SN,
+  damage: 8,
+  uses: [1, 2, 3] as SN,
 };
 
 export const REVENANT = {
@@ -105,7 +106,11 @@ export const FLAGELLANT = {
 };
 
 export const HOWLING_GIANT = {
-  atkBuff: [1, 2, 3] as SN,
+  buff: [
+    { atk: 4, hp: 2 },
+    { atk: 8, hp: 4 },
+    { atk: 12, hp: 6 },
+  ] as SB,
 };
 
 export const AMNIOTIC_ARMOR = {
@@ -120,7 +125,8 @@ export const HUNDRED_ARMS = {
 };
 
 export const ORGAN_GRINDER = {
-  damage: [2, 4, 6] as SN,
+  targets: [1, 2, 3] as SN,
+  percent: 50,
 };
 
 export const RISEN_POPE = {
@@ -173,13 +179,20 @@ export {
 // ── Avengeスキル ──
 
 export const GRINNING_SKULL = {
-  threshold: 3,
+  threshold: 4,
+  hpReduction: [3, 6, 9] as SN,
+};
+
+export const GORILLA = {
+  uses: [1, 2, 3] as SN,
+};
+
+export const MAMMOTH = {
   buff: [
     { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-    { atk: 5, hp: 5 },
+    { atk: 4, hp: 4 },
+    { atk: 6, hp: 6 },
   ] as SB,
-  uses: [2, 3, 4] as SN,
 };
 
 export const ARCHANGEL = {
@@ -234,8 +247,7 @@ export {
   ALTAR,
   ZEALOT,
   ROT_RING,
-  BUDDING_HYDRA,
-  BONE_TREE,
+  CAT,
   ASH_FUNGUS,
   MACHINE,
   TAINTED_PLACENTA,

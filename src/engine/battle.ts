@@ -23,10 +23,11 @@ import {
   applyAfterAttackSkills,
 } from "./battle-skills";
 import { applyAcidSplash, processKnockoutEffects } from "./battle-skills-combat";
+import { processWolverine } from "./battle-avenge";
 import { CLASH_LIMIT, NUMBNESS_INITIAL_USES } from "./constants";
 import { getInitOverride } from "./battle-init-overrides";
 
-function initBattleUnit(u: UnitInstance): BattleUnit {
+function initBattleUnit(u: UnitInstance, side: "p" | "e"): BattleUnit {
   const atk = effectiveAtk(u);
   const hp = effectiveHp(u);
   const bu: BattleUnit = {
@@ -42,6 +43,8 @@ function initBattleUnit(u: UnitInstance): BattleUnit {
     uid: generateUid(),
     spawnProcessed: false,
     avengeDeathCount: 0,
+    hurtCount: 0,
+    side,
     skillUses: 0,
     equipUses: 0,
     infectionLevel: 0,
@@ -60,8 +63,8 @@ export function initBattleContext(
 ): BattleContext {
   // 全レイヤーで index 0 = 前衛, index N-1 = 後衛 の規約に統一されている
   return createBattleContext(
-    playerBoard.filter((u): u is UnitInstance => u !== null).map(initBattleUnit),
-    enemyTeam.units.map(initBattleUnit),
+    playerBoard.filter((u): u is UnitInstance => u !== null).map((u) => initBattleUnit(u, "p")),
+    enemyTeam.units.map((u) => initBattleUnit(u, "e")),
     lastBattleResult,
     rng,
   );
@@ -76,7 +79,7 @@ function resolveNecroticInstantKill(
 ) {
   if (attacker.id !== "necrotic_finger" || target.hp <= 0 || waxBlocked) return;
   const hpBefore = target.hp;
-  takeDamage(target, hpBefore, attacker.uid);
+  takeDamage(target, hpBefore, ctx, attacker.uid);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
@@ -113,8 +116,8 @@ function resolveClashDamage(
   );
   const pHpBefore = p.hp;
   const eHpBefore = e.hp;
-  takeDamage(p, pDmg, e.uid);
-  takeDamage(e, eDmg, p.uid);
+  takeDamage(p, pDmg, ctx, e.uid);
+  takeDamage(e, eDmg, ctx, p.uid);
   pushFrame(
     ctx,
     "damage",
@@ -153,6 +156,8 @@ function resolveClash(
   resolveDeaths(ctx);
   applyAcidSplash(p, ctx.eBoard, true, ctx);
   applyAcidSplash(e, ctx.pBoard, false, ctx);
+  processWolverine(ctx.pBoard, true, ctx);
+  processWolverine(ctx.eBoard, false, ctx);
   return { pKilledE: e.hp <= 0, eKilledP: p.hp <= 0 };
 }
 

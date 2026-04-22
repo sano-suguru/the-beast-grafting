@@ -15,6 +15,8 @@ import type { Rng } from "./rng";
 import type { SimMetricsCollector } from "./sim/sim-types";
 import { MAX_OPS } from "./constants";
 
+export type BattleSide = "p" | "e";
+
 export interface BattleUnit extends UnitInstance {
   atk: number;
   hp: number;
@@ -23,6 +25,8 @@ export interface BattleUnit extends UnitInstance {
   battleBaseHp: number;
   spawnProcessed: boolean;
   avengeDeathCount: number;
+  hurtCount: number;
+  side: BattleSide;
   equipUses: number;
   skillUses: number;
   infectionLevel: number;
@@ -52,6 +56,11 @@ export interface BattleContext {
   absorbedUnits: Map<string, AbsorbedData>;
   simMode: boolean;
   simCollector: SimMetricsCollector | null;
+
+  // 今ターンに各側で計上された「被弾ユニット数」。死亡で盤面から除去されたユニットも含める。
+  // Wolverine が読み取り、使用後にその側のみリセットする。
+  pHurtThisTick: number;
+  eHurtThisTick: number;
 }
 
 function cloneBattleUnit(u: BattleUnit): BattleUnit {
@@ -182,17 +191,60 @@ export function aoeBuffActions(
 
 export const enemyPrefix = (isPlayer: boolean): string => (isPlayer ? "" : "敵の");
 
-export function getMult(boardArr: BattleUnit[], idx: number): number {
-  return boardArr[idx + 1]?.id === "brains" ? 2 : 1;
+/**
+ * Tiger(brains)の「直前の味方の能力が再発動する」挙動に必要な再発動レベルを返す。
+ * idx の直後(前衛側から見て後ろ)に生存する brains がいれば、そのレベルを返す。
+ * SAP仕様上、再発動は brains のレベルで行う(元ユニットのレベルではない)。
+ */
+export function getBrainsRepeatLevel(boardArr: BattleUnit[], idx: number): number | null {
+  const behind = boardArr[idx + 1];
+  if (!behind || behind.id !== "brains" || behind.hp <= 0) return null;
+  return behind.level;
 }
 
-export function getPuppeteerDeathMult(boardArr: BattleUnit[], deathIdx: number): number {
-  const prev = boardArr[deathIdx - 1];
-  return prev?.id === "puppeteer" && prev.hp > 0 ? 2 : 1;
+/**
+ * 能力発動を通常1回+brains再発動(あれば)で包むヘルパー。
+ * 再発動時は unit.level を一時的に brains のレベルに書き換えて fn を呼び出す。
+ * fn は atLevel() 等を呼び出し時の u.level で評価する想定。
+ */
+export function runWithBrainsRepeat(
+  u: BattleUnit,
+  boardArr: BattleUnit[],
+  idx: number,
+  fn: () => void,
+): void {
+  fn();
+  if (u.hp <= 0) return;
+  const currentIdx = boardArr[idx] === u ? idx : boardArr.indexOf(u);
+  if (currentIdx === -1) return;
+  const repeatLevel = getBrainsRepeatLevel(boardArr, currentIdx);
+  if (repeatLevel === null) return;
+  const origLevel = u.level;
+  u.level = repeatLevel;
+  fn();
+  u.level = origLevel;
 }
 
-export function takeDamage(unit: BattleUnit, amount: number, source?: string): void {
-  if (unit.hp > 0) unit.preDeathHp = unit.hp;
+export function removeHp(unit: BattleUnit, amount: number): number {
+  const before = unit.hp;
+  const after = Math.max(1, before - amount);
+  unit.hp = after;
+  return before - after;
+}
+
+export function takeDamage(
+  unit: BattleUnit,
+  amount: number,
+  ctx: BattleContext,
+  source?: string,
+): void {
+  if (unit.hp > 0) {
+    unit.preDeathHp = unit.hp;
+    if (amount > 0) {
+      if (unit.side === "p") ctx.pHurtThisTick += 1;
+      else ctx.eHurtThisTick += 1;
+    }
+  }
   unit.hp -= amount;
   if (source) unit.lastDamageSource = source;
 }
@@ -216,6 +268,8 @@ export function createBattleContext(
     absorbedUnits: new Map(),
     simMode: false,
     simCollector: null,
+    pHurtThisTick: 0,
+    eHurtThisTick: 0,
   };
 }
 

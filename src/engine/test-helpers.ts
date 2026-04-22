@@ -54,6 +54,8 @@ export function makeBattleUnit(overrides: Partial<BattleUnit> = {}): BattleUnit 
     battleBaseAtk: atk,
     battleBaseHp: hp,
     avengeDeathCount: 0,
+    hurtCount: 0,
+    side: "p",
     skillUses: 0,
     equipUses: 0,
     infectionLevel: 0,

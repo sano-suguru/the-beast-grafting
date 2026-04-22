@@ -2,11 +2,10 @@ import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
 import {
   pushFrame,
-  getMult,
+  runWithBrainsRepeat,
   takeDamage,
   enemyPrefix,
   seg,
-  aoeDamageActions,
   aoeBuffActions,
   buffAction,
   damageAction,
@@ -16,13 +15,22 @@ import { resolveDeaths } from "./battle-deaths";
 import { buffAllAlive } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { HUNDRED_ARMS_SAFETY, ACID_SPLASH_DAMAGE } from "./constants";
-import {
-  atLevel,
-  HUNDRED_ARMS,
-  ORGAN_GRINDER,
-  RISEN_POPE,
-  SIN_EATER,
-} from "../shared/skill-params";
+import { atLevel, HUNDRED_ARMS, RISEN_POPE, SIN_EATER } from "../shared/skill-params";
+import type { Scaled, Buff } from "../shared/skill-params";
+
+function runKnockoutSkill(
+  attacker: BattleUnit,
+  attackerBoard: BattleUnit[],
+  expectedId: UnitId,
+  isPlayer: boolean,
+  fn: (prefix: string) => void,
+) {
+  if (attacker.id !== expectedId || attacker.hp <= 0) return;
+  const idx = attackerBoard.indexOf(attacker);
+  if (idx === -1) return;
+  const prefix = enemyPrefix(isPlayer);
+  runWithBrainsRepeat(attacker, attackerBoard, idx, () => fn(prefix));
+}
 
 export function applyAcidSplash(
   attacker: BattleUnit,
@@ -33,7 +41,7 @@ export function applyAcidSplash(
   if (attacker.equip !== "acid_blood" || targetBoard.length <= 1) return;
   const splashTarget = mustGet(targetBoard, 1, "acid splash target");
   const hpBefore = splashTarget.hp;
-  takeDamage(splashTarget, ACID_SPLASH_DAMAGE, attacker.uid);
+  takeDamage(splashTarget, ACID_SPLASH_DAMAGE, ctx, attacker.uid);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
@@ -70,8 +78,6 @@ type KnockoutHandler = (k: KnockoutContext) => void;
 const KNOCKOUT_HANDLERS = {
   hundred_arms: (k) =>
     processHundredArmsKnockout(k.attacker, k.defenderBoard, k.attackerBoard, k.isPlayer, k.ctx),
-  organ_grinder: (k) =>
-    processOrganGrinderKnockout(k.attacker, k.defenderBoard, k.attackerBoard, k.isPlayer, k.ctx),
   risen_pope: (k) => processRisenPopeKnockout(k.attacker, k.attackerBoard, k.isPlayer, k.ctx),
   sin_eater: (k) => processSinEaterKnockout(k.attacker, k.attackerBoard, k.isPlayer, k.ctx),
 } satisfies Partial<Record<UnitId, KnockoutHandler>>;
@@ -93,67 +99,49 @@ export function processKnockoutEffects(
   if (handler) handler({ attacker, defenderBoard, attackerBoard, isPlayer, ctx });
 }
 
+function runBuffKnockout(
+  attacker: BattleUnit,
+  attackerBoard: BattleUnit[],
+  unitId: UnitId,
+  isPlayer: boolean,
+  ctx: BattleContext,
+  opts: {
+    buffParam: Scaled<Buff>;
+    target: "self" | "all";
+    narrative: string;
+  },
+) {
+  runKnockoutSkill(attacker, attackerBoard, unitId, isPlayer, (prefix) => {
+    const b = atLevel(opts.buffParam, attacker.level);
+    const actions =
+      opts.target === "self"
+        ? { [attacker.uid]: buffAction(b, attacker.uid) }
+        : aoeBuffActions(attacker, buffAllAlive(attackerBoard, b), b);
+    if (opts.target === "self") {
+      attacker.atk += b.atk;
+      attacker.hp += b.hp;
+    }
+    pushFrame(
+      ctx,
+      "skill",
+      () => [prefix, seg.u(attacker.name), opts.narrative, seg.s(`+${b.atk}/+${b.hp}`)],
+      "skill",
+      actions,
+    );
+  });
+}
+
 function processSinEaterKnockout(
   attacker: BattleUnit,
   attackerBoard: BattleUnit[],
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  const mult = getKnockoutMult(attacker, "sin_eater", attackerBoard);
-  if (mult === 0) return;
-  const prefix = enemyPrefix(isPlayer);
-  for (let m = 0; m < mult; m++) {
-    const b = atLevel(SIN_EATER.buff, attacker.level);
-    attacker.atk += b.atk;
-    attacker.hp += b.hp;
-    pushFrame(
-      ctx,
-      "skill",
-      () => [
-        prefix,
-        seg.u(attacker.name),
-        "が屍を喰らい、殻が膨れる。",
-        seg.s(`+${b.atk}/+${b.hp}`),
-      ],
-      "skill",
-      { [attacker.uid]: buffAction(b, attacker.uid) },
-    );
-  }
-}
-
-function getKnockoutMult(unit: BattleUnit, id: UnitId, board: BattleUnit[]): number {
-  if (unit.id !== id || unit.hp <= 0) return 0;
-  const idx = board.indexOf(unit);
-  return idx === -1 ? 0 : getMult(board, idx);
-}
-
-function processOrganGrinderKnockout(
-  attacker: BattleUnit,
-  defenderBoard: BattleUnit[],
-  attackerBoard: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  const mult = getKnockoutMult(attacker, "organ_grinder", attackerBoard);
-  if (mult === 0) return;
-  const prefix = enemyPrefix(isPlayer);
-  for (let m = 0; m < mult; m++) {
-    const dmg = atLevel(ORGAN_GRINDER.damage, attacker.level);
-    const hit: BattleUnit[] = [];
-    for (const target of defenderBoard) {
-      if (target.hp <= 0) continue;
-      takeDamage(target, dmg, attacker.uid);
-      hit.push(target);
-    }
-    pushFrame(
-      ctx,
-      "skill",
-      () => [prefix, seg.u(attacker.name), "が肉を挽く！ 敵全体に", seg.s(`${dmg}ダメージ`)],
-      "skill",
-      aoeDamageActions(attacker, hit, dmg),
-    );
-    resolveDeaths(ctx);
-  }
+  runBuffKnockout(attacker, attackerBoard, "sin_eater", isPlayer, ctx, {
+    buffParam: SIN_EATER.buff,
+    target: "self",
+    narrative: "が屍を喰らい、殻が膨れる。",
+  });
 }
 
 function processRisenPopeKnockout(
@@ -162,25 +150,11 @@ function processRisenPopeKnockout(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  const mult = getKnockoutMult(attacker, "risen_pope", attackerBoard);
-  if (mult === 0) return;
-  const prefix = enemyPrefix(isPlayer);
-  for (let m = 0; m < mult; m++) {
-    const b = atLevel(RISEN_POPE.buff, attacker.level);
-    const buffed = buffAllAlive(attackerBoard, b);
-    pushFrame(
-      ctx,
-      "skill",
-      () => [
-        prefix,
-        seg.u(attacker.name),
-        "が血塗れの槌を掲げる。味方の目に狂気の光が灯る。",
-        seg.s(`+${b.atk}/+${b.hp}`),
-      ],
-      "skill",
-      aoeBuffActions(attacker, buffed, b),
-    );
-  }
+  runBuffKnockout(attacker, attackerBoard, "risen_pope", isPlayer, ctx, {
+    buffParam: RISEN_POPE.buff,
+    target: "all",
+    narrative: "が血塗れの槌を掲げる。味方の目に狂気の光が灯る。",
+  });
 }
 
 export function processHundredArmsKnockout(
@@ -190,13 +164,7 @@ export function processHundredArmsKnockout(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  if (attacker.id !== "hundred_arms" || attacker.hp <= 0) return;
-  const attackerIdx = attackerBoard.indexOf(attacker);
-  if (attackerIdx === -1) return;
-  const mult = getMult(attackerBoard, attackerIdx);
-  const prefix = enemyPrefix(isPlayer);
-
-  for (let m = 0; m < mult; m++) {
+  runKnockoutSkill(attacker, attackerBoard, "hundred_arms", isPlayer, (prefix) => {
     let safety = 0;
     while (defenderBoard.length > 0 && safety < HUNDRED_ARMS_SAFETY) {
       safety++;
@@ -206,7 +174,7 @@ export function processHundredArmsKnockout(
           ? atLevel(HUNDRED_ARMS.damageT1, attacker.level)
           : atLevel(HUNDRED_ARMS.damageDefault, attacker.level);
       const hpBefore = target.hp;
-      takeDamage(target, dmg, attacker.uid);
+      takeDamage(target, dmg, ctx, attacker.uid);
       pushFrame(
         ctx,
         "skill",
@@ -231,5 +199,5 @@ export function processHundredArmsKnockout(
       }
       break;
     }
-  }
+  });
 }

@@ -2,7 +2,7 @@ import type { DataUnitId } from "../shared/types";
 import type { DeathContext } from "./battle-deaths-handlers-unit";
 import type { AbsorbedData, BattleUnit, BattleContext } from "./battle-context";
 import { enemyPrefix, seg } from "./battle-context";
-import { FRAME_DELAY_DEATH_CHAIN, MAX_BOARD_SIZE } from "./constants";
+import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 import {
   spawnTokenAndNotify,
   spawnSummonedUnitAndNotify,
@@ -14,7 +14,6 @@ import {
   atLevel,
   OMEN_WOMB,
   STELLAR_COCOON,
-  BUDDING_HYDRA,
   GROANING_COFFIN,
   DEVOURING_WOUND,
 } from "../shared/skill-params";
@@ -159,34 +158,6 @@ export function handleGroaningCoffinDeath({ dead, board, idx, isPlayer, ctx }: D
     spawnerUid: dead.uid,
   });
   if (spawned) spawned.equip = "acid_blood";
-}
-
-export function handleBuddingHydraDeath({ dead, board, idx, isPlayer, ctx }: DeathContext) {
-  const divisor = atLevel(BUDDING_HYDRA.divisor, dead.level);
-  const count = Math.min(Math.floor(dead.preDeathHp / divisor), MAX_BOARD_SIZE - board.length);
-  if (count <= 0) return;
-  const t = atLevel(BUDDING_HYDRA.token, dead.level);
-  const segments = () => [
-    enemyPrefix(isPlayer),
-    seg.u(dead.name),
-    "の切り口から首が生える！ ",
-    seg.s(`${t.atk}/${t.hp} 召喚`),
-  ];
-  for (let i = 0; i < count; i++) {
-    spawnTokenAndNotify({
-      board,
-      idx,
-      name: "ヒドラの首",
-      atk: t.atk,
-      hp: t.hp,
-      isChurch: dead.isChurch,
-      segments,
-      isPlayer,
-      ctx,
-      delay: FRAME_DELAY_DEATH_CHAIN,
-      spawnerUid: dead.uid,
-    });
-  }
 }
 
 export function handleDevouringWoundDeath({ dead, isPlayer, ctx }: DeathContext) {

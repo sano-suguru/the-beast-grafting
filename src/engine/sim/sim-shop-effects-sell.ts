@@ -17,9 +17,10 @@ export function applyCorpseBrokerAccumulation(
   const hpBuff = atLevel(CORPSE_BROKER.hpBuff, broker.level);
   const maxUses = CORPSE_BROKER.maxUses;
 
-  // 投与回数はアイテム購入回数に近似（1ターン平均0.5回程度、maxUsesで上限）
-  const dosesPerNight = Math.min(0.5, maxUses);
-  const totalDoses = Math.floor(dosesPerNight * nights);
+  // maxUses はユニット生存中の総使用上限(shop-effects-dose.ts 参照)。
+  // 投与機会はアイテム購入頻度に近似(平均 0.5回/夜)するが、総量は maxUses で打ち切る。
+  const dosesPerNight = 0.5;
+  const totalDoses = Math.min(Math.floor(dosesPerNight * nights), maxUses);
   if (totalDoses <= 0) return;
 
   const totalHp = hpBuff * totalDoses;

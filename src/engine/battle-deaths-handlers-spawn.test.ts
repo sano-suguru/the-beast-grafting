@@ -12,11 +12,11 @@ import { resolveDeaths } from "./battle-deaths";
 import { runStartSkills } from "./battle-skills";
 import { MAX_BOARD_SIZE } from "./constants";
 import { atLevel } from "../shared/skill-params";
-import { BUDDING_HYDRA } from "../shared/skill-params-shop";
+import { MAMMOTH } from "../shared/skill-params";
 import { OMEN_WOMB, GROANING_COFFIN, DEVOURING_WOUND } from "../shared/skill-params-death";
 
-describe("budding_hydra – death spawns", () => {
-  it("spawns floor(HP / divisor) tokens on death", () => {
+describe("budding_hydra (Mammoth) – death buffs full board", () => {
+  it("buffs every ally on death by MAMMOTH.buff", () => {
     const hydra = makeBattleUnit({
       id: "budding_hydra",
       name: "肉芽のヒドラ",
@@ -24,78 +24,29 @@ describe("budding_hydra – death spawns", () => {
       hp: 0,
       preDeathHp: 10,
     });
-    const board: BattleUnit[] = [];
+    const a1 = makeBattleUnit({ atk: 2, hp: 3 });
+    const a2 = makeBattleUnit({ atk: 1, hp: 5 });
+    const board: BattleUnit[] = [a1, a2];
     const ctx = makeContext(board, []);
     callHandler("budding_hydra", hydra, board, 0, true, ctx);
-    const divisor = atLevel(BUDDING_HYDRA.divisor, 1);
-    const t = atLevel(BUDDING_HYDRA.token, 1);
-    const tokens = board.filter((u) => u.name === "ヒドラの首");
-    expect(tokens.length).toBe(Math.floor(10 / divisor));
-    for (const tk of tokens) {
-      expect(tk.atk).toBe(t.atk);
-      expect(tk.hp).toBe(t.hp);
-    }
+    const b = atLevel(MAMMOTH.buff, 1);
+    expect(a1.atk).toBe(2 + b.atk);
+    expect(a1.hp).toBe(3 + b.hp);
+    expect(a2.atk).toBe(1 + b.atk);
+    expect(a2.hp).toBe(5 + b.hp);
   });
 
-  it("spawns more tokens with higher HP", () => {
+  it("does nothing on empty board", () => {
     const hydra = makeBattleUnit({
       id: "budding_hydra",
-      name: "肉芽のヒドラ",
       atk: 3,
       hp: 0,
-      preDeathHp: 20,
+      preDeathHp: 10,
     });
     const board: BattleUnit[] = [];
     const ctx = makeContext(board, []);
     callHandler("budding_hydra", hydra, board, 0, true, ctx);
-    const divisor = atLevel(BUDDING_HYDRA.divisor, 1);
-    expect(board.filter((u) => u.name === "ヒドラの首").length).toBe(Math.floor(20 / divisor));
-  });
-
-  it("spawns nothing when HP < divisor", () => {
-    const hydra = makeBattleUnit({
-      id: "budding_hydra",
-      name: "肉芽のヒドラ",
-      atk: 3,
-      hp: 0,
-      preDeathHp: 3,
-    });
-    const board: BattleUnit[] = [];
-    const ctx = makeContext(board, []);
-    callHandler("budding_hydra", hydra, board, 0, true, ctx);
-    expect(board.filter((u) => u.name === "ヒドラの首")).toHaveLength(0);
-  });
-
-  it("caps spawns at MAX_BOARD_SIZE", () => {
-    const hydra = makeBattleUnit({
-      id: "budding_hydra",
-      name: "肉芽のヒドラ",
-      atk: 3,
-      hp: 0,
-      preDeathHp: 100,
-    });
-    const board: BattleUnit[] = [];
-    const ctx = makeContext(board, []);
-    callHandler("budding_hydra", hydra, board, 0, true, ctx);
-    expect(board.filter((u) => u.name === "ヒドラの首").length).toBeLessThanOrEqual(MAX_BOARD_SIZE);
-  });
-
-  it("respects remaining board capacity", () => {
-    const hydra = makeBattleUnit({
-      id: "budding_hydra",
-      name: "肉芽のヒドラ",
-      atk: 3,
-      hp: 0,
-      preDeathHp: 100,
-    });
-    const existing = Array.from({ length: 3 }, () =>
-      makeBattleUnit({ id: "token", atk: 1, hp: 1 }),
-    );
-    const board: BattleUnit[] = [...existing];
-    const ctx = makeContext(board, []);
-    callHandler("budding_hydra", hydra, board, 0, true, ctx);
-    expect(board.length).toBeLessThanOrEqual(MAX_BOARD_SIZE);
-    expect(board.filter((u) => u.name === "ヒドラの首").length).toBe(MAX_BOARD_SIZE - 3);
+    expect(ctx.frames).toHaveLength(0);
   });
 });
 

@@ -83,7 +83,7 @@ export const UNITS_TIER56 = {
     baseAtk: 4,
     baseHp: 8,
     tier: 5,
-    lore: "開戦の合図で破れ、濁った粘液が味方全体を包む。肉は等しく、ひと回り厚くなる。",
+    lore: "開戦の合図で破れ、濁った粘液が戦場を覆う。味方も敵も区別なく、肉が等しくひと回り厚くなる。",
   },
   stellar_cocoon: {
     id: "stellar_cocoon",
@@ -98,8 +98,8 @@ export const UNITS_TIER56 = {
   brains: {
     id: "brains",
     name: "結合された双子脳",
-    baseAtk: 6,
-    baseHp: 4,
+    baseAtk: 4,
+    baseHp: 3,
     tier: 6,
     lore: "異様に肥大化したふたつの脳髄。宿主の神経を強引に侵蝕し、限界を超えた異常な挙動を繰り返させる。",
     secretLore: "二つの脳はついに一つの完全な悪意となり、王都すべての人間を精神的支配下に置いた。",
@@ -135,8 +135,8 @@ export const UNITS_TIER56 = {
   organ_grinder: {
     id: "organ_grinder",
     name: "臓腑挽き",
-    baseAtk: 5,
-    baseHp: 5,
+    baseAtk: 10,
+    baseHp: 4,
     tier: 6,
     lore: "巨大な挽き機と癒着した死体。回すと血霧が出るが、機械の中に臓腑はとうに残っていない。",
     secretLore: "ハンドルを止めようとした者は、内側から回されていることに気づいた。",
@@ -144,8 +144,8 @@ export const UNITS_TIER56 = {
   grinning_skull: {
     id: "grinning_skull",
     name: "嗤う頭蓋",
-    baseAtk: 2,
-    baseHp: 8,
+    baseAtk: 5,
+    baseHp: 7,
     tier: 6,
     lore: "黒檀の箱に納められた聖人の頭蓋。十分な死者が出ると、歯列が動く。",
     secretLore: "頭蓋が嗤い終わるたび、箱の中の歯が一本ずつ増えている。",
@@ -153,7 +153,7 @@ export const UNITS_TIER56 = {
   puppeteer: {
     id: "puppeteer",
     name: "操り糸の屍",
-    baseAtk: 4,
+    baseAtk: 7,
     baseHp: 10,
     tier: 6,
     lore: "腱の糸を垂らす遺体。近くで味方が倒れると、その四肢がもう一度だけ動く。",
@@ -162,8 +162,8 @@ export const UNITS_TIER56 = {
   budding_hydra: {
     id: "budding_hydra",
     name: "肉芽のヒドラ",
-    baseAtk: 3,
-    baseHp: 10,
+    baseAtk: 4,
+    baseHp: 12,
     tier: 6,
     lore: "首を落とすたび、切り口から新しい肉芽が膨らむ。殺すほどに増える。",
     secretLore: "焼いても切っても、翌朝には傷口から小さな顔が覗いていた。",
@@ -171,8 +171,8 @@ export const UNITS_TIER56 = {
   bone_tree: {
     id: "bone_tree",
     name: "聳える骨樹",
-    baseAtk: 2,
-    baseHp: 8,
+    baseAtk: 4,
+    baseHp: 5,
     tier: 6,
     lore: "工房に捨てた骨が、ある朝枝を伸ばしていた。上等の骨を根元に埋めると、よく育つ。",
     secretLore: "骨樹の根は工房の床を突き破り、地下の墓地まで達していた。",
@@ -180,8 +180,8 @@ export const UNITS_TIER56 = {
   howling_giant: {
     id: "howling_giant",
     name: "吼える巨人",
-    baseAtk: 1,
-    baseHp: 12,
+    baseAtk: 10,
+    baseHp: 6,
     tier: 6,
     lore: "巨大な肉塊。斬りつけるたび裂け目から呻きが漏れ、聞いた者の手が震える。",
     secretLore: "巨人が吼えた夜、三つの王国の墓地で土が動いた。",

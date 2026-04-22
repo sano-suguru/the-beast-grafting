@@ -104,7 +104,7 @@ describe("runStartSkills – damage skills", () => {
 // revenant is now a shop turn-start skill, not a battle SoB — tested in shop-effects-setup.test.ts
 
 describe("runStartSkills – amniotic_armor", () => {
-  it("buffs all allied HP at start of battle", () => {
+  it("buffs both allied and enemy HP at start of battle (SAP Armadillo)", () => {
     const armor = makeBattleUnit({ id: "amniotic_armor", name: "羊膜の鎧", atk: 4, hp: 8 });
     const ally = makeBattleUnit({ atk: 2, hp: 5 });
     const enemy = makeBattleUnit({ atk: 3, hp: 10 });
@@ -113,17 +113,18 @@ describe("runStartSkills – amniotic_armor", () => {
     const bonus = atLevel(AMNIOTIC_ARMOR.hpBuff, 1);
     expect(armor.hp).toBe(8 + bonus);
     expect(ally.hp).toBe(5 + bonus);
-    expect(enemy.hp).toBe(10);
+    expect(enemy.hp).toBe(10 + bonus);
   });
 
-  it("does not buff enemies (SAP-consistent behavior)", () => {
+  it("buffs all enemies (SAP Armadillo: affects both boards)", () => {
     const armor = makeBattleUnit({ id: "amniotic_armor", name: "羊膜の鎧", atk: 4, hp: 8 });
     const e1 = makeBattleUnit({ hp: 10 });
     const e2 = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([armor], [e1, e2]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(e1.hp).toBe(10);
-    expect(e2.hp).toBe(10);
+    const bonus = atLevel(AMNIOTIC_ARMOR.hpBuff, 1);
+    expect(e1.hp).toBe(10 + bonus);
+    expect(e2.hp).toBe(10 + bonus);
   });
 
   it("scales buff with level", () => {
@@ -143,16 +144,16 @@ describe("runStartSkills – amniotic_armor", () => {
 });
 
 describe("runStartSkills – brains and edge cases", () => {
-  it("brains doubles start-of-battle skills", () => {
+  it("brains does NOT double start-of-battle skills (SAP compliant)", () => {
     const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2 });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
     const target = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([bat, brains], [target]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(target.hp).toBe(8);
+    expect(target.hp).toBe(9);
   });
 
-  it("brains does not double when not directly behind", () => {
+  it("brains does not affect ranged SoB skill when separated either", () => {
     const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2 });
     const filler = makeBattleUnit({ hp: 3 });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
@@ -162,13 +163,13 @@ describe("runStartSkills – brains and edge cases", () => {
     expect(target.hp).toBe(9);
   });
 
-  it("brains + devouring_graft: absorbs once, second invocation is no-op", () => {
+  it("brains + devouring_graft: devouring_graft runs once (no brains doubling on SoB)", () => {
     const fodder = makeBattleUnit({ id: "hound", name: "猟犬", atk: 2, hp: 3 });
     const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
     const ctx = makeContext([fodder, graft, brains], [makeBattleUnit({ hp: 10 })]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    expect(graft.atk).toBe(3); // no stat gain on SoB
+    expect(graft.atk).toBe(3);
     expect(graft.hp).toBe(6);
     expect(ctx.pBoard).toHaveLength(2);
   });
@@ -181,14 +182,14 @@ describe("runStartSkills – brains and edge cases", () => {
     expect(target.hp).toBe(5);
   });
 
-  it("brains + evangelist: HP-percent shred compounds strictly monotonically", () => {
+  it("brains + evangelist: HP-percent shred runs only once on SoB (SAP compliant)", () => {
     const ev = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 1, hp: 8, level: 1 });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
     const target = makeBattleUnit({ hp: 100 });
     const ctx = makeContext([ev, brains], [target]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
-    // Lv1=33%: 100 → 67 → floor(67*0.33)=22 damage → 45
-    expect(target.hp).toBe(45);
+    // Lv1=33%: 100 → floor(100*0.33)=33 damage → 67
+    expect(target.hp).toBe(67);
   });
 
   it("does nothing when target array is empty", () => {

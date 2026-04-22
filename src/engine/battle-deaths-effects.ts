@@ -5,7 +5,6 @@ import { spawnTokenAndNotify } from "./battle-spawn";
 import { handleBeelzebubSpawns, handleCathedralSpawns } from "./battle-deaths-effects-reactions";
 import {
   handleInsatiableMawBuff,
-  handleBoneTreeAllyDeath,
   handleCarrionSentinelAllyDeath,
 } from "./battle-deaths-effects-ally-reactions";
 
@@ -89,6 +88,5 @@ export const SPAWN_ALLY_REACTIONS: AllyReaction[] = [
 
 export const PERSISTENT_ALLY_REACTIONS: AllyReaction[] = [
   (r) => handleInsatiableMawBuff(r.board, r.isPlayer, r.ctx),
-  (r) => handleBoneTreeAllyDeath(r.board, r.isPlayer, r.ctx),
   (r) => handleCarrionSentinelAllyDeath(r.board, r.deathIdx, r.isPlayer, r.ctx),
 ];

@@ -15,6 +15,7 @@ import {
   PARASITE,
   HANGED_MAN,
   WAILING_CURSECHILD,
+  CAT,
 } from "../shared/skill-params";
 import { getSkillText } from "../shared/skill-text";
 import { buffRandomUnit, computeZealotBuff } from "./buff-utils";
@@ -294,4 +295,25 @@ export function applyLevelUpEffects(
   for (let i = 0; i < NESTING_GRUB.targets; i++) {
     buffRandomUnit(board, b.atk, b.hp, rng, leveledIndex);
   }
+}
+
+/** bone_tree (Cat): 盤上の bone_tree がアイテム装備時の attack/hp 増分を倍加する。
+ *  呼び出し側が boneTreeUses を更新すること。 */
+export function applyCatItemMultiplier(
+  board: readonly (UnitInstance | null)[],
+  itemAtk: number,
+  itemHp: number,
+  currentUses: number,
+): { atk: number; hp: number; nextUses: number } {
+  const cats = board.filter((u): u is UnitInstance => !!u && u.id === "bone_tree");
+  if (cats.length === 0) return { atk: itemAtk, hp: itemHp, nextUses: currentUses };
+  const totalUses = cats.reduce((s, c) => s + atLevel(CAT.uses, c.level), 0);
+  if (currentUses >= totalUses) return { atk: itemAtk, hp: itemHp, nextUses: currentUses };
+  const extraPerCat = cats.reduce((s, c) => s + atLevel(CAT.multPerCat, c.level), 0);
+  const multiplier = 1 + extraPerCat;
+  return {
+    atk: itemAtk * multiplier,
+    hp: itemHp * multiplier,
+    nextUses: currentUses + 1,
+  };
 }

@@ -1,6 +1,6 @@
 import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { getMult, enemyPrefix } from "./battle-context";
+import { runWithBrainsRepeat, enemyPrefix } from "./battle-context";
 import { mustGet } from "../shared/invariant";
 import { SUPPORT_IDX } from "./constants";
 import type { SkillContext, BeforeAttackArgs } from "./battle-skills-util";
@@ -14,6 +14,7 @@ import {
   applyPaladinSkill,
   applyHolyFireSkill,
   applyMarketVultureSkill,
+  applyOrganGrinderSkill,
 } from "./battle-skills-start";
 import {
   applyDevouringGraftSkill,
@@ -25,6 +26,7 @@ import {
   applyEyeGaze,
   applyRelicSwordBuff,
   applyCrawlingCordBuff,
+  applyHowlingGiantBuff,
 } from "./battle-skills-before-attack";
 
 // ── 開戦スキルレジストリ ──
@@ -43,6 +45,7 @@ const START_SKILL_HANDLERS = {
   evangelist: applyEvangelistSkill,
   devouring_graft: applyDevouringGraftSkill,
   corroding_mold: applyCorrodingMoldSkill,
+  organ_grinder: applyOrganGrinderSkill,
 } satisfies Partial<Record<UnitId, StartSkillHandler>>;
 
 type StartSkillUnitId = keyof typeof START_SKILL_HANDLERS;
@@ -62,21 +65,13 @@ export function runStartSkills(
   const snapshot = [...boardArr];
   for (const u of snapshot) {
     if (!boardArr.includes(u)) continue;
-    const idx = boardArr.indexOf(u);
-    const mult = getMult(boardArr, idx);
     if (u.id === "mimicking_flesh") {
       applyMimickingFleshSkill({ u, targetArr, isPlayer, ctx }, getStartSkillHandler);
-      for (let m = 1; m < mult; m++) {
-        const copied = getStartSkillHandler(u.id);
-        if (copied) copied({ u, targetArr, isPlayer, ctx });
-      }
       continue;
     }
     const handler = getStartSkillHandler(u.id);
     if (!handler) continue;
-    for (let m = 0; m < mult; m++) {
-      handler({ u, targetArr, isPlayer, ctx });
-    }
+    handler({ u, targetArr, isPlayer, ctx });
   }
 }
 
@@ -106,16 +101,20 @@ export function applyBeforeAttackSkills(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
+  const prefix = enemyPrefix(isPlayer);
+  const front = board[0];
+  if (front && front.hp > 0 && front.id === "howling_giant") {
+    runWithBrainsRepeat(front, board, 0, () => {
+      applyHowlingGiantBuff(front, prefix, ctx);
+    });
+  }
   if (board.length <= 1) return;
   const u = mustGet(board, SUPPORT_IDX, "before-attack board[SUPPORT_IDX]");
   const handler = getBeforeAttackHandler(u.id);
   if (!handler) return;
-  const prefix = enemyPrefix(isPlayer);
-  const mult = getMult(board, SUPPORT_IDX);
-
-  for (let m = 0; m < mult; m++) {
+  runWithBrainsRepeat(u, board, SUPPORT_IDX, () => {
     handler({ u, board, enemyBoard, prefix, ctx });
-  }
+  });
 }
 
 export { applyOnHitSkills } from "./battle-skills-on-hit";
@@ -151,8 +150,7 @@ export function applyAfterAttackSkills(
   const handler = getAfterAttackHandler(attacker.id);
   if (!handler) return;
   const prefix = enemyPrefix(isPlayer);
-  const mult = getMult(board, 0);
-  for (let m = 0; m < mult; m++) {
+  runWithBrainsRepeat(attacker, board, 0, () => {
     handler({ u: attacker, board, enemyBoard, isPlayer, prefix, ctx });
-  }
+  });
 }

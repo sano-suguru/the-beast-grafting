@@ -4,8 +4,7 @@ import {
   processKnockoutEffects,
 } from "./battle-skills-combat";
 import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
-import { atLevel, ORGAN_GRINDER, RISEN_POPE, SIN_EATER } from "../shared/skill-params";
-import { RAT } from "../shared/skill-params-death";
+import { atLevel, RISEN_POPE, SIN_EATER } from "../shared/skill-params";
 
 describe("applyAcidSplash", () => {
   it("deals 5 damage to second enemy unit", () => {
@@ -105,35 +104,6 @@ describe("processHundredArmsKnockout", () => {
     expect(defenderBoard.some((u) => u.uid === "e2")).toBe(false);
     const e3Remaining = defenderBoard.find((u) => u.uid === "e3");
     expect(e3Remaining!.hp).toBe(16);
-  });
-});
-
-describe("processKnockoutEffects – organ_grinder", () => {
-  it("deals AoE damage to all enemies on knockout", () => {
-    const grinder = makeBattleUnit({ id: "organ_grinder", name: "臓腑挽き", atk: 5, hp: 5 });
-    const enemy1 = makeBattleUnit({ hp: 10 });
-    const enemy2 = makeBattleUnit({ hp: 10 });
-    const attackerBoard = [grinder];
-    const defenderBoard = [enemy1, enemy2];
-    const ctx = makeContext(attackerBoard, defenderBoard);
-    processKnockoutEffects(grinder, defenderBoard, attackerBoard, true, ctx);
-    const dmg = atLevel(ORGAN_GRINDER.damage, 1);
-    expect(enemy1.hp).toBe(10 - dmg);
-    expect(enemy2.hp).toBe(10 - dmg);
-  });
-
-  it("AoE kill triggers enemy death handler via resolveDeaths", () => {
-    const grinder = makeBattleUnit({ id: "organ_grinder", name: "臓腑挽き", atk: 5, hp: 5 });
-    const dmg = atLevel(ORGAN_GRINDER.damage, 1);
-    const rat = makeBattleUnit({ id: "rat", name: "鼠", atk: 1, hp: dmg });
-    const survivor = makeBattleUnit({ atk: 3, hp: 10 });
-    const attackerBoard = [grinder];
-    const defenderBoard = [rat, survivor];
-    const ctx = makeContext(attackerBoard, defenderBoard, null, { next: () => 0 });
-    processKnockoutEffects(grinder, defenderBoard, attackerBoard, true, ctx);
-    const b = atLevel(RAT.deathBuff, 1);
-    expect(survivor.atk).toBe(3 + b.atk);
-    expect(survivor.hp).toBe(10 - dmg + b.hp);
   });
 });
 

@@ -26,22 +26,9 @@ export const ROT_RING = {
   ] as SB,
 };
 
-export const BUDDING_HYDRA = {
-  divisor: [5, 4, 3] as SN,
-  token: [
-    { atk: 3, hp: 3 },
-    { atk: 4, hp: 4 },
-    { atk: 5, hp: 5 },
-  ] as SB,
-};
-
-export const BONE_TREE = {
-  buff: [
-    { atk: 1, hp: 1 },
-    { atk: 2, hp: 2 },
-    { atk: 3, hp: 3 },
-  ] as SB,
-  uses: [3, 4, 5] as SN,
+export const CAT = {
+  uses: [2, 2, 2] as SN,
+  multPerCat: [1, 2, 3] as SN,
 };
 
 export const GUT_HAND = {

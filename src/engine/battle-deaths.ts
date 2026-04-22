@@ -1,8 +1,8 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
 import {
   pushFrame,
-  getMult,
-  getPuppeteerDeathMult,
+  runWithBrainsRepeat,
+  getBrainsRepeatLevel,
   enemyPrefix,
   seg,
   buffAction,
@@ -33,9 +33,8 @@ function applyParasiteSummonReaction(board: BattleUnit[], isPlayer: boolean, ctx
     for (let pIdx = 0; pIdx < board.length; pIdx++) {
       const p = board[pIdx]!;
       if (p.id !== "parasite" || p.hp <= 0) continue;
-      const b = atLevel(PARASITE.buff, p.level);
-      const mult = getMult(board, pIdx);
-      for (let m = 0; m < mult; m++) {
+      runWithBrainsRepeat(p, board, pIdx, () => {
+        const b = atLevel(PARASITE.buff, p.level);
         p.atk += b.atk;
         p.hp += b.hp;
         pushFrame(
@@ -46,7 +45,7 @@ function applyParasiteSummonReaction(board: BattleUnit[], isPlayer: boolean, ctx
           { [p.uid]: buffAction({ atk: b.atk, hp: b.hp }, p.uid) },
           FRAME_DELAY_DEATH_CHAIN,
         );
-      }
+      });
     }
   }
 }
@@ -81,20 +80,24 @@ function executeOwnDeathSkills(
   dead: BattleUnit,
   board: BattleUnit[],
   insertIdx: number,
-  unitMult: number,
-  equipMult: number,
+  repeatLevel: number | null,
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
   const handler = getDeathHandler(dead.id);
-  for (let m = 0; m < unitMult; m++) {
+  const fire = () => {
     const successor = getSuccessor(board, insertIdx);
     const successor2 = getSuccessor(board, insertIdx + 1);
     if (handler) handler({ dead, board, idx: insertIdx, isPlayer, ctx, successor, successor2 });
+  };
+  fire();
+  if (repeatLevel !== null) {
+    const origLevel = dead.level;
+    dead.level = repeatLevel;
+    fire();
+    dead.level = origLevel;
   }
-  for (let m = 0; m < equipMult; m++) {
-    handleEquipDeath(dead, board, insertIdx, isPlayer, ctx);
-  }
+  handleEquipDeath(dead, board, insertIdx, isPlayer, ctx);
 }
 
 function executeAllyReactions(
@@ -115,12 +118,11 @@ function executeDeathEffects(
   dead: BattleUnit,
   board: BattleUnit[],
   insertIdx: number,
-  mult: number,
-  deathMult: number,
+  repeatLevel: number | null,
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  executeOwnDeathSkills(dead, board, insertIdx, mult * deathMult, 1, isPlayer, ctx);
+  executeOwnDeathSkills(dead, board, insertIdx, repeatLevel, isPlayer, ctx);
   executeAllyReactions(dead, board, insertIdx, isPlayer, ctx);
 }
 
@@ -137,8 +139,8 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   const bestIdx = selectDeadUnit(deadUnits, ctx.rng.next()).idx;
   const dead = board[bestIdx];
   invariant(dead, "dead unit must exist at bestIdx");
-  const mult = getMult(board, bestIdx);
-  const deathMult = getPuppeteerDeathMult(board, bestIdx);
+  // brains の再発動レベルは splice 前に捕捉する必要がある(splice後は並び順が変わる)
+  const repeatLevel = getBrainsRepeatLevel(board, bestIdx);
 
   const prefix = enemyPrefix(isPlayer);
   pushFrame(ctx, "death", () => [prefix, seg.u(dead.name), " は無残に引き裂かれた。"], "death", {
@@ -146,7 +148,7 @@ function processSideDeaths(board: BattleUnit[], isPlayer: boolean, ctx: BattleCo
   });
 
   board.splice(bestIdx, 1);
-  executeDeathEffects(dead, board, bestIdx, mult, deathMult, isPlayer, ctx);
+  executeDeathEffects(dead, board, bestIdx, repeatLevel, isPlayer, ctx);
 
   // トークン（スポーンユニット）の死亡ではavengeカウンタを加算しない。
   // 実ユニットの死亡のみがavengeを起動し、正帰還ループを防ぐ。

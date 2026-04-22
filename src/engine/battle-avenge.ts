@@ -1,9 +1,15 @@
 import type { UnitId } from "../shared/types";
 import type { BattleUnit, BattleContext } from "./battle-context";
-import type { Scaled, Buff } from "../shared/skill-params";
-import { buffAllAlive } from "./battle-context";
-import { pushFrame, enemyPrefix, seg, aoeBuffActions, buffAction } from "./battle-context";
-import { atLevel, GRINNING_SKULL, ARCHANGEL } from "../shared/skill-params";
+import { removeHp } from "./battle-context";
+import {
+  pushFrame,
+  enemyPrefix,
+  seg,
+  buffAction,
+  skillAction,
+  damageAction,
+} from "./battle-context";
+import { atLevel, ARCHANGEL, GRINNING_SKULL } from "../shared/skill-params";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
 
 type AvengeCtx = {
@@ -13,30 +19,6 @@ type AvengeCtx = {
   isPlayer: boolean;
   ctx: BattleContext;
 };
-
-function avengeAoeBuff(
-  { u, board, isPlayer, ctx }: AvengeCtx,
-  params: { buff: Scaled<Buff> },
-  logText: string,
-) {
-  const prefix = enemyPrefix(isPlayer);
-  const b = atLevel(params.buff, u.level);
-  const buffed = buffAllAlive(board, b);
-  pushFrame(
-    ctx,
-    "skill",
-    () => [prefix, seg.u(u.name), logText, seg.s(`+${b.atk}/+${b.hp}`)],
-    "skill",
-    aoeBuffActions(u, buffed, b),
-    FRAME_DELAY_DEATH_CHAIN,
-  );
-}
-
-function handleGrinningSkull(c: AvengeCtx) {
-  if (c.u.skillUses <= 0) return;
-  c.u.skillUses -= 1;
-  avengeAoeBuff(c, GRINNING_SKULL, "が開く…味方全体に");
-}
 
 function handleArchangel({ u, isPlayer, ctx }: AvengeCtx) {
   const b = atLevel(ARCHANGEL.buff, u.level);
@@ -64,7 +46,6 @@ interface AvengeSpec {
 }
 
 const AVENGE_SPECS: AvengeSpec[] = [
-  { id: "grinning_skull", threshold: GRINNING_SKULL.threshold, apply: handleGrinningSkull },
   { id: "archangel", threshold: ARCHANGEL.threshold, apply: handleArchangel },
 ];
 
@@ -96,6 +77,59 @@ export function incrementAvengeCounters(board: BattleUnit[]): void {
   for (const u of board) {
     if (u.hp > 0 && AVENGE_IDS.has(u.id)) {
       u.avengeDeathCount++;
+    }
+  }
+}
+
+function fireWolverine(
+  u: BattleUnit,
+  enemyBoard: BattleUnit[],
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
+  const hpCut = atLevel(GRINNING_SKULL.hpReduction, u.level);
+  const affected = enemyBoard.filter((e) => e.hp > 0);
+  if (affected.length === 0) return;
+  const actions: Record<string, ReturnType<typeof skillAction>> = { [u.uid]: skillAction() };
+  for (const e of affected) {
+    const cut = removeHp(e, hpCut);
+    actions[e.uid] = damageAction(cut, u.uid);
+  }
+  const prefix = enemyPrefix(isPlayer);
+  pushFrame(
+    ctx,
+    "skill",
+    () => [prefix, seg.u(u.name), "が嗤う。敵全体の肉が削げ落ちる。", seg.s(`-${hpCut} HP`)],
+    "skill",
+    actions,
+    FRAME_DELAY_DEATH_CHAIN,
+  );
+}
+
+function consumeHurtCounter(ctx: BattleContext, isPlayer: boolean): number {
+  if (isPlayer) {
+    const v = ctx.pHurtThisTick;
+    ctx.pHurtThisTick = 0;
+    return v;
+  }
+  const v = ctx.eHurtThisTick;
+  ctx.eHurtThisTick = 0;
+  return v;
+}
+
+/** grinning_skull (Wolverine): 味方が被弾するごとにカウント+1、閾値到達で敵全体HPを削る。
+ *  死亡で board から除去されたユニット分の被弾も数えるため、カウンタは BattleContext 側に持つ。 */
+export function processWolverine(board: BattleUnit[], isPlayer: boolean, ctx: BattleContext): void {
+  const totalHurt = consumeHurtCounter(ctx, isPlayer);
+  if (totalHurt === 0) return;
+  const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
+  for (const u of board) {
+    if (u.id !== "grinning_skull" || u.hp <= 0) continue;
+    u.hurtCount += totalHurt;
+    while (u.hurtCount >= GRINNING_SKULL.threshold && u.hp > 0) {
+      u.hurtCount -= GRINNING_SKULL.threshold;
+      fireWolverine(u, enemyBoard, isPlayer, ctx);
+      if (ctx.opLimitExceeded) return;
     }
   }
 }

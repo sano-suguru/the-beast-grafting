@@ -2,7 +2,7 @@ import type { RegularUnitId, UnitInstance, EnemyTeam } from "../../shared/types"
 import { createSeededRng } from "../rng";
 import { simulateBattleResult } from "./sim-battle";
 import { generateSimTeam } from "./sim-team-gen";
-import { buildProgressedUnit } from "./sim-progression";
+import { buildProgressedTeam } from "./sim-progression";
 import { invariant } from "../../shared/invariant";
 import { deriveSeed, makeSimEnemy } from "./sim-utils";
 
@@ -28,11 +28,12 @@ function buildTrialPlayerUnits(
   baseSeed: number,
   trial: number,
 ): Map<RegularUnitId, UnitInstance> {
+  // team全体でgraft予算を共有する。ids順序は固定のためpermutation間で状態が揺れない。
+  const teamRng = createSeededRng(deriveSeed(baseSeed, 1_000_000 + trial));
+  const built = buildProgressedTeam(teamIds, night, teamRng);
   const prebuilt = new Map<RegularUnitId, UnitInstance>();
   for (let u = 0; u < teamIds.length; u++) {
-    // 個別RNGでユニットごとのRNG消費量差が他ユニットに波及しない
-    const unitRng = createSeededRng(deriveSeed(baseSeed, 1_000_000 + trial * teamIds.length + u));
-    prebuilt.set(teamIds[u]!, buildProgressedUnit(teamIds[u]!, night, unitRng));
+    prebuilt.set(teamIds[u]!, built[u]!);
   }
   return prebuilt;
 }
@@ -41,7 +42,7 @@ function buildTrialEnemy(night: number, baseSeed: number, trial: number): EnemyT
   const enemyRng = createSeededRng(deriveSeed(baseSeed, 500_000 + trial));
   const enemyIds = generateSimTeam(night, enemyRng);
   const eProgRng = createSeededRng(deriveSeed(baseSeed, 2_000_000 + trial));
-  const enemyUnits = enemyIds.map((id) => buildProgressedUnit(id, night, eProgRng));
+  const enemyUnits = buildProgressedTeam(enemyIds, night, eProgRng);
   return makeSimEnemy(enemyUnits);
 }
 

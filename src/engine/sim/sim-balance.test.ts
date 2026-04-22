@@ -133,7 +133,7 @@ describe("buildProgressedUnit", () => {
     const samples = 200;
     for (let seed = 1; seed <= samples; seed++) {
       const t1 = buildProgressedUnit("rat", 12, createSeededRng(seed)); // Tier1
-      const t6 = buildProgressedUnit("howling_giant", 12, createSeededRng(seed)); // Tier6
+      const t6 = buildProgressedUnit("beelzebub", 12, createSeededRng(seed)); // Tier6
       tier1TotalAtk += effectiveAtk(t1);
       tier6TotalAtk += effectiveAtk(t6);
     }

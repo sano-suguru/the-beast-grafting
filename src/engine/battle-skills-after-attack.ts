@@ -15,7 +15,7 @@ export function applyNeedleshellWormAfterAttack(
   for (let t = 0; t < repeatCount; t++) {
     const ally = board.slice(1).find((a) => a.hp > 0);
     if (!ally) break;
-    takeDamage(ally, dmg, u.uid);
+    takeDamage(ally, dmg, ctx, u.uid);
     pushFrame(
       ctx,
       "skill",

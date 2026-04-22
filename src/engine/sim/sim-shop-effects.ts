@@ -30,7 +30,7 @@ function applyTurnPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: 
     case "ash_fungus":
       return applyAshFungusAccumulation(unit, team, night, rng);
     case "altar":
-      return applyAltarAccumulation(unit, night);
+      return applyAltarAccumulation(unit, team, night);
   }
 }
 

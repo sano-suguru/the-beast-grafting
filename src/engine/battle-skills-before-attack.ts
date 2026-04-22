@@ -9,7 +9,7 @@ import {
 } from "./battle-context";
 import { resolveDeaths } from "./battle-deaths";
 import { mustGet } from "../shared/invariant";
-import { atLevel, EYE, RELIC_SWORD, CRAWLING_CORD } from "../shared/skill-params";
+import { atLevel, EYE, RELIC_SWORD, CRAWLING_CORD, HOWLING_GIANT } from "../shared/skill-params";
 
 export function applyEyeGaze(
   u: BattleUnit,
@@ -21,7 +21,7 @@ export function applyEyeGaze(
   const target = mustGet(enemyBoard, Math.floor(ctx.rng.next() * enemyBoard.length), "eye target");
   const dmg = atLevel(EYE.damage, u.level);
   const hpBefore = target.hp;
-  takeDamage(target, dmg, u.uid);
+  takeDamage(target, dmg, ctx, u.uid);
   pushFrame(
     ctx,
     "skill",
@@ -77,6 +77,24 @@ export function applyCrawlingCordBuff(u: BattleUnit, prefix: string, ctx: Battle
       prefix,
       seg.u(u.name),
       "が蠢き、前衛の闘争に呼応して膨れ上がる。",
+      seg.s(`+${b.atk}/+${b.hp}`),
+    ],
+    "skill",
+    { [u.uid]: buffAction(b, u.uid) },
+  );
+}
+
+export function applyHowlingGiantBuff(u: BattleUnit, prefix: string, ctx: BattleContext) {
+  const b = atLevel(HOWLING_GIANT.buff, u.level);
+  u.atk += b.atk;
+  u.hp += b.hp;
+  pushFrame(
+    ctx,
+    "skill",
+    () => [
+      prefix,
+      seg.u(u.name),
+      "が吼える。息を吸うたび、骨が軋む。",
       seg.s(`+${b.atk}/+${b.hp}`),
     ],
     "skill",

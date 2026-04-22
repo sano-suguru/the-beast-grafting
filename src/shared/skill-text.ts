@@ -43,8 +43,9 @@ import {
   GRINNING_SKULL,
   ARCHANGEL,
   CARRION_SENTINEL,
-  BUDDING_HYDRA,
-  BONE_TREE,
+  GORILLA,
+  MAMMOTH,
+  CAT,
   ASH_FUNGUS,
   TAINTED_PLACENTA,
   CORRODING_MOLD,
@@ -123,7 +124,8 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `ターン終了: Lv${ALTAR.requiredFriendLevel}の味方がいれば自身に+${b.atk}/+${b.hp}`;
   },
   machine: (lv) => `ターン開始: 闇市場の全錬金薬を${atLevel(MACHINE.discount, lv)}血値引き`,
-  shrieking_throat: (lv) => `開戦: 最後尾の敵に${atLevel(BANSHEE.damage, lv)}ダメージ`,
+  shrieking_throat: (lv) =>
+    `開戦: 最後尾の敵に${BANSHEE.damage}ダメージを${atLevel(BANSHEE.uses, lv)}回`,
   hundred_arms: (lv) =>
     `撃破: 先頭の敵に${atLevel(HUNDRED_ARMS.damageDefault, lv)}ダメ(Tier1に${atLevel(HUNDRED_ARMS.damageT1, lv)}ダメ)`,
   priest: (lv) => {
@@ -136,7 +138,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `味方死亡: ${b.atk}/${b.hp}の蠅を死亡位置に召喚(${atLevel(BEELZEBUB.uses, lv)}回/戦)`;
   },
   eye: (lv) =>
-    `直前の味方が攻撃: ランダム敵に${atLevel(EYE.damage, lv)}ダメ(${atLevel(EYE.uses, lv)}回/戦)`,
+    `攻撃前: ランダムな敵1体に${atLevel(EYE.damage, lv)}ダメ(${atLevel(EYE.uses, lv)}回/戦)`,
   rot_ring: (lv) => {
     const b = atLevel(ROT_RING.buff, lv);
     return `Tier1購入: 味方全体に+${b.atk}/+${b.hp}(${atLevel(ROT_RING.uses, lv)}回/夜)`;
@@ -168,22 +170,26 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(HANGED_MAN.buff, lv);
     return `ターン終了: 最前の味方に+${b.atk}/+${b.hp}`;
   },
-  organ_grinder: (lv) => `撃破: 敵全体に${atLevel(ORGAN_GRINDER.damage, lv)}ダメージ`,
-  grinning_skull: (lv) => {
-    const b = atLevel(GRINNING_SKULL.buff, lv);
-    return `味方${GRINNING_SKULL.threshold}体死亡ごと: 味方全体に+${b.atk}/+${b.hp}(${atLevel(GRINNING_SKULL.uses, lv)}回/戦)`;
+  organ_grinder: (lv) => {
+    const t = atLevel(ORGAN_GRINDER.targets, lv);
+    const p = ORGAN_GRINDER.percent;
+    return `開戦: ランダムな敵${t}体に自身の攻撃${p}%ダメージ`;
   },
+  grinning_skull: (lv) =>
+    `味方${GRINNING_SKULL.threshold}体被弾ごと: 敵全体のHPを${atLevel(GRINNING_SKULL.hpReduction, lv)}削る(最低1)`,
   budding_hydra: (lv) => {
-    const d = atLevel(BUDDING_HYDRA.divisor, lv);
-    const t = atLevel(BUDDING_HYDRA.token, lv);
-    return `死亡: HP÷${d}体の${t.atk}/${t.hp}ヒドラの首を召喚`;
+    const b = atLevel(MAMMOTH.buff, lv);
+    return `死亡: 味方全体に+${b.atk}/+${b.hp}`;
   },
   bone_tree: (lv) => {
-    const b = atLevel(BONE_TREE.buff, lv);
-    const u = atLevel(BONE_TREE.uses, lv);
-    return `味方死亡: 前方全体に+${b.atk}/+${b.hp}(${u}回まで)`;
+    const u = atLevel(CAT.uses, lv);
+    const m = atLevel(CAT.multPerCat, lv);
+    return `常時: アイテム装備のATK/HP増加×${1 + m}(${u}回/ターン)`;
   },
-  howling_giant: (lv) => `被弾: 味方全体の攻撃+${atLevel(HOWLING_GIANT.atkBuff, lv)}`,
+  howling_giant: (lv) => {
+    const b = atLevel(HOWLING_GIANT.buff, lv);
+    return `攻撃前: 自身に+${b.atk}/+${b.hp}(戦闘のみ)`;
+  },
   paladin: (lv) => `開戦: 味方全体のHP+${atLevel(PALADIN.hpBuff, lv)}`,
   flagellant: (lv) => {
     const b = atLevel(FLAGELLANT.buff, lv);
@@ -233,7 +239,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     const b = atLevel(WAILING_CURSECHILD.buff, lv);
     return `味方召喚時: その味方に+${b.atk}/+${b.hp}`;
   },
-  amniotic_armor: (lv) => `開戦: 味方全体のHPに+${atLevel(AMNIOTIC_ARMOR.hpBuff, lv)}`,
+  amniotic_armor: (lv) => `開戦: 敵味方全体のHPに+${atLevel(AMNIOTIC_ARMOR.hpBuff, lv)}`,
   omen_womb: (lv) => {
     const t = atLevel(OMEN_WOMB.token, lv);
     return `死亡: 2体の${t.atk}/${t.hp}「忌み子」を召喚`;
@@ -265,8 +271,8 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   necrotic_finger: () => "常時: 攻撃で対象を即死させる。内蔵: 屍蝋の盾",
   mimicking_flesh: () => "開戦: 前の味方のスキルをコピー(戦闘中のみ)",
-  brains: () => "常時: 前の味方の能力2回発動",
-  puppeteer: () => "常時: 後ろの味方の死亡能力2回発動",
+  brains: (lv) => `常時: 前の味方の能力×${1 + lv}`,
+  puppeteer: (lv) => `被弾: 【屍蝋の盾】を得る(${atLevel(GORILLA.uses, lv)}回/戦)`,
 };
 
 /** テンプレートが登録されているユニットID一覧 */

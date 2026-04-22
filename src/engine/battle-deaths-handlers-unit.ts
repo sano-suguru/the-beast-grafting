@@ -17,6 +17,7 @@ import {
   MARTYR,
   PRIEST,
   SERAPH,
+  MAMMOTH,
   type Buff,
 } from "../shared/skill-params";
 
@@ -183,8 +184,36 @@ export function handleSquireDeath({ dead, isPlayer, ctx, successor }: DeathConte
 }
 
 export function handlePriestDeath({ dead, board, isPlayer, ctx }: DeathContext) {
+  applyBoardWideDeathBuff(
+    dead,
+    board,
+    atLevel(PRIEST.deathBuff, dead.level),
+    "が崩れ落ちる。その唇がまだ動いている。味方全体",
+    isPlayer,
+    ctx,
+  );
+}
+
+export function handleMammothDeath({ dead, board, isPlayer, ctx }: DeathContext) {
+  applyBoardWideDeathBuff(
+    dead,
+    board,
+    atLevel(MAMMOTH.buff, dead.level),
+    "の巨躯が倒れる。揺れる大地が味方の骨を組み直す。味方全体",
+    isPlayer,
+    ctx,
+  );
+}
+
+function applyBoardWideDeathBuff(
+  dead: BattleUnit,
+  board: BattleUnit[],
+  b: Buff,
+  narrative: string,
+  isPlayer: boolean,
+  ctx: BattleContext,
+) {
   if (board.length === 0) return;
-  const b = atLevel(PRIEST.deathBuff, dead.level);
   board.forEach((u) => {
     u.atk += b.atk;
     u.hp += b.hp;
@@ -195,12 +224,7 @@ export function handlePriestDeath({ dead, board, isPlayer, ctx }: DeathContext) 
   pushFrame(
     ctx,
     "skill",
-    () => [
-      prefix,
-      seg.u(dead.name),
-      "が崩れ落ちる。その唇がまだ動いている。味方全体",
-      seg.s(`+${b.atk}/+${b.hp}`),
-    ],
+    () => [prefix, seg.u(dead.name), narrative, seg.s(`+${b.atk}/+${b.hp}`)],
     "skill",
     actionMap,
     FRAME_DELAY_DEATH_CHAIN,

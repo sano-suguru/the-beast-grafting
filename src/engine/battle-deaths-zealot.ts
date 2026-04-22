@@ -1,5 +1,5 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg, buffAction } from "./battle-context";
+import { pushFrame, getBrainsRepeatLevel, enemyPrefix, seg, buffAction } from "./battle-context";
 import { invariant } from "../shared/invariant";
 import { computeZealotBuff } from "./buff-utils";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
@@ -12,7 +12,7 @@ export function applyZealotBuff(
 ) {
   const buffAmount = computeZealotBuff(boardArray, {
     requireAlive: true,
-    getMultiplier: (idx) => getMult(boardArray, idx),
+    getRepeatLevel: (idx) => getBrainsRepeatLevel(boardArray, idx),
   });
   if (buffAmount <= 0) return;
   const zealot = boardArray.find((u) => u.id === "zealot" && u.hp > 0);

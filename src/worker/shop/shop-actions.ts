@@ -2,7 +2,12 @@ import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
 import type { OriginId, UnitInstance } from "../../shared/types";
 import type { BoardUnit } from "../../shared/board-unit";
-import { graftUnits, applyEndOfTurnEffects, calcAlchemyDiscount } from "../../engine/shop-effects";
+import {
+  graftUnits,
+  applyEndOfTurnEffects,
+  calcAlchemyDiscount,
+  applyCatItemMultiplier,
+} from "../../engine/shop-effects";
 import { applyCorpseBrokerDoseBuff, applyPlagueBellDoseBuff } from "../../engine/shop-effects-dose";
 import { isAlchemy } from "../../shared/data/items";
 import { CULTIST_LIFE_COST, CULTIST_BLOOD_GAIN } from "../../shared/constants";
@@ -73,11 +78,13 @@ export function executeEquip(
   const target = instances[boardIndex];
   if (!target) return err({ type: "INVALID_TARGET", reason: "no_target" });
 
+  const catResult = applyCatItemMultiplier(instances, item.atk, item.hp, state.boneTreeUses);
+
   const newBoard = [...instances];
   newBoard[boardIndex] = {
     ...target,
-    baseAtk: target.baseAtk + item.atk,
-    baseHp: target.baseHp + item.hp,
+    baseAtk: target.baseAtk + catResult.atk,
+    baseHp: target.baseHp + catResult.hp,
     equip: item.equip ?? target.equip,
   };
 
@@ -94,6 +101,7 @@ export function executeEquip(
     board: instancesToBoard(applied.board),
     shopItems: state.shopItems.map((u, i) => (i === shopItemIndex ? null : u)),
     corpseBrokerUses: applied.corpseBrokerUses,
+    boneTreeUses: catResult.nextUses,
     rngS0: applied.rngS0,
     rngS1: applied.rngS1,
     undoSnapshot: captureUndo(state),

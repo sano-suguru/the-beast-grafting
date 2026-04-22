@@ -19,6 +19,7 @@ import {
   PALADIN,
   HOLY_FIRE,
   MARKET_VULTURE,
+  ORGAN_GRINDER,
 } from "../shared/skill-params";
 
 export function applyBatSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
@@ -72,30 +73,34 @@ export function applyInquisitorSkill({ u, targetArr, isPlayer, ctx }: SkillConte
 }
 
 export function applyBansheeSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
-  const back = targetArr[targetArr.length - 1];
-  if (!back) return;
-  const dmg = atLevel(BANSHEE.damage, u.level);
-  const hpBefore = back.hp;
-  applySkillDamage(
-    u,
-    back,
-    dmg,
-    () => [
-      seg.u(u.name),
-      "が叫ぶ！ 最後尾の",
-      seg.u(back.name),
-      "に ",
-      seg.hp(`${hpBefore}→${Math.max(0, hpBefore - dmg)}`),
-    ],
-    isPlayer,
-    ctx,
-  );
+  if (targetArr.length === 0) return;
+  const dmg = BANSHEE.damage;
+  const uses = atLevel(BANSHEE.uses, u.level);
+  for (let i = 0; i < uses; i++) {
+    const alive = targetArr.filter((e) => e.hp > 0);
+    if (alive.length === 0) return;
+    const back = alive[alive.length - 1]!;
+    const hpBefore = back.hp;
+    applySkillDamage(
+      u,
+      back,
+      dmg,
+      () => [
+        seg.u(u.name),
+        "が叫ぶ！ 最後尾の",
+        seg.u(back.name),
+        "に ",
+        seg.hp(`${hpBefore}→${Math.max(0, hpBefore - dmg)}`),
+      ],
+      isPlayer,
+      ctx,
+    );
+  }
 }
 
 export function applyAmnioticArmorSkill({ u, isPlayer, ctx }: SkillContext) {
   const buff = { atk: 0, hp: atLevel(AMNIOTIC_ARMOR.hpBuff, u.level) };
-  const allyBoard = isPlayer ? ctx.pBoard : ctx.eBoard;
-  const affected = buffAllAlive(allyBoard, buff);
+  const affected = [...buffAllAlive(ctx.pBoard, buff), ...buffAllAlive(ctx.eBoard, buff)];
   const prefix = enemyPrefix(isPlayer);
   pushFrame(
     ctx,
@@ -103,7 +108,7 @@ export function applyAmnioticArmorSkill({ u, isPlayer, ctx }: SkillContext) {
     () => [
       prefix,
       seg.u(u.name),
-      "の羊膜が弾ける。濁った粘液が味方全体の肉を覆い、ひと回り厚くする。",
+      "の羊膜が弾ける。濁った粘液が戦場全体の肉を覆い、味方も敵もひと回り厚くなる。",
       seg.s(`+0/+${buff.hp}`),
     ],
     "skill",
@@ -211,4 +216,34 @@ export function applyHolyFireSkill({ u, targetArr, isPlayer, ctx }: SkillContext
     isPlayer,
     ctx,
   );
+}
+
+export function applyOrganGrinderSkill({ u, targetArr, isPlayer, ctx }: SkillContext) {
+  const targetCount = atLevel(ORGAN_GRINDER.targets, u.level);
+  const dmg = Math.floor((u.atk * ORGAN_GRINDER.percent) / 100);
+  if (dmg <= 0) return;
+  for (let i = 0; i < targetCount; i++) {
+    const alive = targetArr.filter((e) => e.hp > 0);
+    if (alive.length === 0) return;
+    const target = mustGet(
+      alive,
+      Math.floor(ctx.rng.next() * alive.length),
+      "organ_grinder target",
+    );
+    const hpBefore = target.hp;
+    applySkillDamage(
+      u,
+      target,
+      dmg,
+      () => [
+        seg.u(u.name),
+        "が臓腑を撒く！ ",
+        seg.u(target.name),
+        "に ",
+        seg.hp(`${hpBefore}→${Math.max(0, hpBefore - dmg)}`),
+      ],
+      isPlayer,
+      ctx,
+    );
+  }
 }

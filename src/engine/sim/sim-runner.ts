@@ -11,7 +11,7 @@ import { createSeededRng } from "../rng";
 import { createUnit } from "../helpers";
 import { simulateBattleSim } from "./sim-battle";
 import { generateSimTeam } from "./sim-team-gen";
-import { buildProgressedUnit } from "./sim-progression";
+import { buildProgressedTeam } from "./sim-progression";
 import { extractBattleMetricsSim } from "./sim-metrics";
 import { type PerfMap, accumulatePerformance, finalizePerformance, percentile } from "./sim-perf";
 import { deriveSeed, makeSimEnemy } from "./sim-utils";
@@ -22,7 +22,7 @@ function buildTeam(ids: readonly DataUnitId[]): UnitInstance[] {
 }
 
 function buildRealisticTeam(ids: readonly DataUnitId[], night: number, rng: Rng): UnitInstance[] {
-  return ids.map((id) => buildProgressedUnit(id, night, rng));
+  return buildProgressedTeam(ids, night, rng);
 }
 
 function accumulateTrialPerformance(

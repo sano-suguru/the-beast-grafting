@@ -4,7 +4,6 @@ import {
   atLevel,
   FLAYED_SAINT,
   STITCHED_TWIN,
-  HOWLING_GIANT,
   FLAGELLANT,
   TUMOR_GUARDIAN,
 } from "../shared/skill-params";
@@ -81,16 +80,34 @@ describe("applyOnHitSkills – stitched_twin", () => {
   });
 });
 
-describe("applyOnHitSkills – howling_giant", () => {
-  it("buffs all allies atk on hit", () => {
-    const wall = makeBattleUnit({ id: "howling_giant", name: "巨人", atk: 0, hp: 12 });
-    const ally = makeBattleUnit({ atk: 3, hp: 5 });
-    const board = [wall, ally];
+describe("applyOnHitSkills – puppeteer (Gorilla shield)", () => {
+  it("grants corpse_wax shield once on hit", () => {
+    const puppet = makeBattleUnit({
+      id: "puppeteer",
+      name: "操儡",
+      atk: 7,
+      hp: 10,
+      skillUses: 1,
+    });
+    const board = [puppet];
     const ctx = makeContext(board, []);
-    applyOnHitSkills(wall, board, true, ctx);
-    const b = atLevel(HOWLING_GIANT.atkBuff, 1);
-    expect(wall.atk).toBe(0 + b);
-    expect(ally.atk).toBe(3 + b);
+    applyOnHitSkills(puppet, board, true, ctx);
+    expect(puppet.equip).toBe("corpse_wax");
+    expect(puppet.skillUses).toBe(0);
+  });
+
+  it("does nothing when out of uses", () => {
+    const puppet = makeBattleUnit({
+      id: "puppeteer",
+      name: "操儡",
+      atk: 7,
+      hp: 10,
+      skillUses: 0,
+    });
+    const board = [puppet];
+    const ctx = makeContext(board, []);
+    applyOnHitSkills(puppet, board, true, ctx);
+    expect(puppet.equip).toBeNull();
   });
 });
 

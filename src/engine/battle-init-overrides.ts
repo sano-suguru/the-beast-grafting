@@ -1,13 +1,6 @@
 import type { UnitId } from "../shared/types";
 import type { BattleUnit } from "./battle-context";
-import {
-  atLevel,
-  EYE,
-  CATHEDRAL,
-  GRINNING_SKULL,
-  BONE_TREE,
-  CARRION_SENTINEL,
-} from "../shared/skill-params";
+import { atLevel, EYE, CATHEDRAL, CARRION_SENTINEL, GORILLA } from "../shared/skill-params";
 import { BEELZEBUB } from "../shared/skill-params-death";
 
 const INIT_OVERRIDES = {
@@ -20,11 +13,8 @@ const INIT_OVERRIDES = {
   cathedral: (bu: BattleUnit) => {
     bu.skillUses = atLevel(CATHEDRAL.uses, bu.level);
   },
-  bone_tree: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(BONE_TREE.uses, bu.level);
-  },
-  grinning_skull: (bu: BattleUnit) => {
-    bu.skillUses = atLevel(GRINNING_SKULL.uses, bu.level);
+  puppeteer: (bu: BattleUnit) => {
+    bu.skillUses = atLevel(GORILLA.uses, bu.level);
   },
   carrion_sentinel: (bu: BattleUnit) => {
     bu.skillUses = atLevel(CARRION_SENTINEL.uses, bu.level);

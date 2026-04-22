@@ -1,5 +1,5 @@
-import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
+import type { UnitInstance } from "../../shared/types";
 import type { Rng } from "../rng";
 import { TIER_APPEAR_NIGHT } from "./sim-types";
 import { getCurrentMaxTier } from "../../shared/data/tiers";
@@ -115,4 +115,29 @@ export function distributeBuffRandomly(
     target.buffAtk += remainder.atk;
     target.buffHp += remainder.hp;
   }
+}
+
+/**
+ * team強度の推定勝率(対ランダム相当)。
+ *
+ * team全体の合計ステータス(HPは0.7重み)とNight標準値をロジスティックで比較。
+ * 継続発動型の発動条件(catacomb_ratの敗北率、altarのLv3友存在率)の動的化に使う。
+ *
+ * ランダム vs ランダムで ~0.43 勝率(Night 12, sim-results/latest)に校正。
+ */
+export function estimateTeamWinRate(team: readonly UnitInstance[], night: number): number {
+  if (team.length === 0) return 0.5;
+  const power = team.reduce((s, u) => s + (u.baseAtk + u.buffAtk) + (u.baseHp + u.buffHp) * 0.7, 0);
+  // Night別の基準ライン(随時校正)。Night 12 ランダムteam ~75 を0.5付近にマップ。
+  const baseline = 45 + night * 2.5;
+  const scale = 20;
+  const z = (power - baseline) / scale;
+  return 1 / (1 + Math.exp(-z));
+}
+
+/** teamに含まれるLv>=targetLevelの比率 */
+export function levelFraction(team: readonly UnitInstance[], targetLevel: number): number {
+  if (team.length === 0) return 0;
+  const count = team.reduce((s, u) => s + (u.level >= targetLevel ? 1 : 0), 0);
+  return count / team.length;
 }

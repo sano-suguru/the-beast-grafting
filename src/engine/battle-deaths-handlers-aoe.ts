@@ -17,7 +17,7 @@ export function handleSpiteBeastDeath({ dead, board, idx, isPlayer, ctx }: Death
   if (enemyFront && enemyFront.hp > 0) targets.push(enemyFront);
   if (targets.length === 0) return;
   const snapped = targets.map((t) => ({ unit: t, hp: t.hp }));
-  for (const t of targets) takeDamage(t, dmg, dead.uid);
+  for (const t of targets) takeDamage(t, dmg, ctx, dead.uid);
   pushFrame(
     ctx,
     "skill",
@@ -43,7 +43,7 @@ export function handleCholeraDeath({ dead, board, isPlayer, ctx }: DeathContext)
   const enemyBoard = isPlayer ? ctx.eBoard : ctx.pBoard;
   const allUnits = [...board, ...enemyBoard].filter((u) => u.hp > 0);
   for (const target of allUnits) {
-    takeDamage(target, dmg, dead.uid);
+    takeDamage(target, dmg, ctx, dead.uid);
   }
   pushFrame(
     ctx,

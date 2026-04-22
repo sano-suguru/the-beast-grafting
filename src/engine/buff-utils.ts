@@ -30,20 +30,22 @@ export function buffRandomUnit(
   board[idx] = { ...target, buffAtk: target.buffAtk + atkBuff, buffHp: target.buffHp + hpBuff };
 }
 
-/** Zealot バフ量を計算する共通ロジック */
+/** Zealot バフ量を計算する共通ロジック。
+ *  getRepeatLevel を渡すと、各 zealot について brains の再発動レベルを問い合わせ、
+ *  非 null の場合はそのレベルでの buff 値を追加で加算する(SAP の Tiger 再発動準拠)。 */
 export function computeZealotBuff<T extends { id: string; level: number; hp: number }>(
   units: T[],
-  opts: { requireAlive: true; getMultiplier?: (idx: number) => number },
+  opts: { requireAlive: true; getRepeatLevel?: (idx: number) => number | null },
 ): number;
 export function computeZealotBuff<T extends { id: string; level: number }>(
   units: T[],
-  opts: { requireAlive: false; getMultiplier?: (idx: number) => number },
+  opts: { requireAlive: false; getRepeatLevel?: (idx: number) => number | null },
 ): number;
 export function computeZealotBuff<T extends { id: string; level: number; hp?: number }>(
   units: T[],
   opts: {
     requireAlive: boolean;
-    getMultiplier?: (idx: number) => number;
+    getRepeatLevel?: (idx: number) => number | null;
   },
 ): number {
   let total = 0;
@@ -54,8 +56,9 @@ export function computeZealotBuff<T extends { id: string; level: number; hp?: nu
       invariant(typeof u.hp === "number", "hp required when requireAlive is true");
       if (u.hp <= 0) continue;
     }
-    const buff = atLevel(ZEALOT.summonBuff, u.level);
-    total += buff * (opts.getMultiplier ? opts.getMultiplier(i) : 1);
+    total += atLevel(ZEALOT.summonBuff, u.level);
+    const repeatLevel = opts.getRepeatLevel?.(i);
+    if (repeatLevel != null) total += atLevel(ZEALOT.summonBuff, repeatLevel);
   }
   return total;
 }

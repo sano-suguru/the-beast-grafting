@@ -26,7 +26,7 @@ export function applySkillDamage(
   isPlayer: boolean,
   ctx: BattleContext,
 ) {
-  takeDamage(target, dmg, u.uid);
+  takeDamage(target, dmg, ctx, u.uid);
   const prefix = enemyPrefix(isPlayer);
   pushFrame(ctx, "skill", () => [prefix, ...segments()], "skill", {
     [u.uid]: skillAction(),

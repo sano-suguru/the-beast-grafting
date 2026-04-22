@@ -1,7 +1,7 @@
 import type { BattleUnit, BattleContext } from "./battle-context";
-import { pushFrame, getMult, enemyPrefix, seg, buffAction, aoeBuffActions } from "./battle-context";
+import { pushFrame, runWithBrainsRepeat, enemyPrefix, seg, buffAction } from "./battle-context";
 import { FRAME_DELAY_DEATH_CHAIN } from "./constants";
-import { atLevel, INSATIABLE_MAW, BONE_TREE } from "../shared/skill-params";
+import { atLevel, INSATIABLE_MAW } from "../shared/skill-params";
 
 interface ReactorIterCtx {
   u: BattleUnit;
@@ -21,14 +21,15 @@ function applyAllyDeathReaction(
     const u = board[i]!;
     if (u.id !== unitId || u.hp <= 0) continue;
     if (filter && !filter(i)) continue;
-    const mult = getMult(board, i);
-    for (let m = 0; m < mult && u.skillUses > 0; m++) {
+    let cancelled = false;
+    runWithBrainsRepeat(u, board, i, () => {
+      if (cancelled || u.skillUses <= 0) return;
       u.skillUses -= 1;
       if (apply({ u, idx: i, prefix }) === false) {
         u.skillUses += 1;
-        break;
+        cancelled = true;
       }
-    }
+    });
   }
 }
 
@@ -41,9 +42,8 @@ export function handleInsatiableMawBuff(
   for (let i = 0; i < board.length; i++) {
     const u = board[i]!;
     if (u.id !== "insatiable_maw" || u.hp <= 0) continue;
-    const mult = getMult(board, i);
-    const b = atLevel(INSATIABLE_MAW.buff, u.level);
-    for (let m = 0; m < mult; m++) {
+    runWithBrainsRepeat(u, board, i, () => {
+      const b = atLevel(INSATIABLE_MAW.buff, u.level);
       u.atk += b.atk;
       u.hp += b.hp;
       pushFrame(
@@ -59,41 +59,8 @@ export function handleInsatiableMawBuff(
         { [u.uid]: buffAction(b, u.uid) },
         FRAME_DELAY_DEATH_CHAIN,
       );
-    }
+    });
   }
-}
-
-export function handleBoneTreeAllyDeath(
-  board: BattleUnit[],
-  isPlayer: boolean,
-  ctx: BattleContext,
-) {
-  applyAllyDeathReaction(board, "bone_tree", isPlayer, ({ u, idx, prefix }) => {
-    const b = atLevel(BONE_TREE.buff, u.level);
-    const targets = board.slice(0, idx).filter((t): t is BattleUnit => t.hp > 0);
-    if (targets.length === 0) return false;
-    for (const t of targets) {
-      t.atk += b.atk;
-      t.hp += b.hp;
-    }
-    pushFrame(
-      ctx,
-      "skill",
-      () => [
-        prefix,
-        seg.u(u.name),
-        "の根が震え、前方の味方を強化した。",
-        seg.s(`+${b.atk}/+${b.hp}`),
-      ],
-      "skill",
-      {
-        [u.uid]: { type: "skill" },
-        ...aoeBuffActions(u, targets, b),
-      },
-      FRAME_DELAY_DEATH_CHAIN,
-    );
-    return;
-  });
 }
 
 export function handleCarrionSentinelAllyDeath(

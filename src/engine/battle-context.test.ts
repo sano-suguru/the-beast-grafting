@@ -1,47 +1,88 @@
-import { getMult, pushFrame } from "./battle-context";
+import { getBrainsRepeatLevel, runWithBrainsRepeat, pushFrame } from "./battle-context";
 import { createToken } from "./battle-spawn";
 import { makeBattleUnit, makeContext, segmentsToPlainText } from "./test-helpers";
 import { MAX_OPS } from "./constants";
 
-describe("getMult", () => {
-  it("returns 1 when brains is in front (unit is behind brains)", () => {
+describe("getBrainsRepeatLevel", () => {
+  it("returns null when brains is in front (unit is behind brains)", () => {
     const board = [makeBattleUnit({ id: "brains" }), makeBattleUnit()];
-    expect(getMult(board, 1)).toBe(1);
+    expect(getBrainsRepeatLevel(board, 1)).toBeNull();
   });
 
-  it("returns 2 when right neighbor is brains", () => {
-    const board = [makeBattleUnit(), makeBattleUnit({ id: "brains" })];
-    expect(getMult(board, 0)).toBe(2);
+  it("returns brains level when right neighbor is brains (lv1→1)", () => {
+    const board = [makeBattleUnit(), makeBattleUnit({ id: "brains", level: 1 })];
+    expect(getBrainsRepeatLevel(board, 0)).toBe(1);
   });
 
-  it("returns 1 when no adjacent brains", () => {
+  it("returns brains level when right neighbor is brains (lv3→3)", () => {
+    const board = [makeBattleUnit(), makeBattleUnit({ id: "brains", level: 3 })];
+    expect(getBrainsRepeatLevel(board, 0)).toBe(3);
+  });
+
+  it("returns null when no adjacent brains", () => {
     const board = [makeBattleUnit(), makeBattleUnit(), makeBattleUnit()];
-    expect(getMult(board, 1)).toBe(1);
+    expect(getBrainsRepeatLevel(board, 1)).toBeNull();
   });
 
-  it("returns 1 for first index with no left neighbor", () => {
+  it("returns null for last index with no right neighbor", () => {
     const board = [makeBattleUnit(), makeBattleUnit()];
-    expect(getMult(board, 0)).toBe(1);
+    expect(getBrainsRepeatLevel(board, 1)).toBeNull();
   });
 
-  it("returns 1 for last index with no right neighbor", () => {
-    const board = [makeBattleUnit(), makeBattleUnit()];
-    expect(getMult(board, 1)).toBe(1);
+  it("returns null when brains is dead", () => {
+    const board = [makeBattleUnit(), makeBattleUnit({ id: "brains", hp: 0 })];
+    expect(getBrainsRepeatLevel(board, 0)).toBeNull();
+  });
+});
+
+describe("runWithBrainsRepeat", () => {
+  it("fires fn once when no brains behind", () => {
+    const u = makeBattleUnit();
+    const board = [u];
+    let count = 0;
+    runWithBrainsRepeat(u, board, 0, () => {
+      count++;
+    });
+    expect(count).toBe(1);
   });
 
-  it("handles brains on both sides", () => {
-    const board = [
-      makeBattleUnit({ id: "brains" }),
-      makeBattleUnit(),
-      makeBattleUnit({ id: "brains" }),
-    ];
-    expect(getMult(board, 1)).toBe(2);
+  it("fires fn twice when brains is behind", () => {
+    const u = makeBattleUnit();
+    const board = [u, makeBattleUnit({ id: "brains", level: 2 })];
+    let count = 0;
+    runWithBrainsRepeat(u, board, 0, () => {
+      count++;
+    });
+    expect(count).toBe(2);
+  });
+
+  it("passes brains level to fn via u.level on the repeat call", () => {
+    const u = makeBattleUnit({ level: 1 });
+    const board = [u, makeBattleUnit({ id: "brains", level: 3 })];
+    const levels: number[] = [];
+    runWithBrainsRepeat(u, board, 0, () => {
+      levels.push(u.level);
+    });
+    expect(levels).toEqual([1, 3]);
+    // u.level is restored after
+    expect(u.level).toBe(1);
+  });
+
+  it("does not fire the repeat when u dies during the first call", () => {
+    const u = makeBattleUnit({ hp: 1 });
+    const board = [u, makeBattleUnit({ id: "brains", level: 2 })];
+    let count = 0;
+    runWithBrainsRepeat(u, board, 0, () => {
+      count++;
+      u.hp = 0;
+    });
+    expect(count).toBe(1);
   });
 });
 
 describe("createToken", () => {
   it("creates a token with correct stats", () => {
-    const token = createToken("巨大蛆虫", 1, 1);
+    const token = createToken("巨大蛆虫", 1, 1, "p");
     expect(token.name).toBe("巨大蛆虫");
     expect(token.atk).toBe(1);
     expect(token.hp).toBe(1);
@@ -50,12 +91,12 @@ describe("createToken", () => {
   });
 
   it("sets id to 'token'", () => {
-    const token = createToken("test", 3, 5);
+    const token = createToken("test", 3, 5, "p");
     expect(token.id).toBe("token");
   });
 
   it("sets default properties correctly", () => {
-    const token = createToken("test", 1, 1);
+    const token = createToken("test", 1, 1, "p");
     expect(token.equip).toBeNull();
     expect(token.level).toBe(1);
     expect(token.tier).toBe(1);
@@ -64,13 +105,13 @@ describe("createToken", () => {
   });
 
   it("sets isChurch when specified", () => {
-    const token = createToken("祝福された幼子", 2, 2, true);
+    const token = createToken("祝福された幼子", 2, 2, "p", true);
     expect(token.isChurch).toBe(true);
   });
 
   it("generates a unique uid", () => {
-    const token1 = createToken("a", 1, 1);
-    const token2 = createToken("b", 1, 1);
+    const token1 = createToken("a", 1, 1, "p");
+    const token2 = createToken("b", 1, 1, "p");
     expect(token1.uid).not.toBe(token2.uid);
   });
 });

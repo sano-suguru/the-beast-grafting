@@ -8,7 +8,13 @@ import { generateUid } from "./helpers";
 import { TOKEN_TIER } from "../shared/data/tiers";
 import { MAX_BOARD_SIZE } from "./constants";
 
-export function createToken(name: string, atk: number, hp: number, isChurch = false): BattleUnit {
+export function createToken(
+  name: string,
+  atk: number,
+  hp: number,
+  side: "p" | "e",
+  isChurch = false,
+): BattleUnit {
   return {
     name,
     atk,
@@ -32,6 +38,8 @@ export function createToken(name: string, atk: number, hp: number, isChurch = fa
     lore: "",
     exp: 0,
     avengeDeathCount: 0,
+    hurtCount: 0,
+    side,
     skillUses: 0,
     equipUses: 0,
     infectionLevel: 0,
@@ -49,6 +57,7 @@ function createSummonedUnit(
   },
   atk: number,
   hp: number,
+  side: "p" | "e",
   isChurch = false,
   level = 1,
 ): BattleUnit {
@@ -71,6 +80,8 @@ function createSummonedUnit(
     spawnProcessed: false,
     exp: 0,
     avengeDeathCount: 0,
+    hurtCount: 0,
+    side,
     skillUses: 0,
     equipUses: 0,
     infectionLevel: 0,
@@ -120,7 +131,7 @@ export function spawnTokenAndNotify(s: SpawnBase & { name: string }): BattleUnit
     notifyBoardFull(s.ctx, s.name, s.isPlayer);
     return null;
   }
-  return finalize(s, createToken(s.name, s.atk, s.hp, s.isChurch));
+  return finalize(s, createToken(s.name, s.atk, s.hp, s.isPlayer ? "p" : "e", s.isChurch));
 }
 
 export function spawnSummonedUnitAndNotify(
@@ -130,7 +141,14 @@ export function spawnSummonedUnitAndNotify(
     notifyBoardFull(s.ctx, s.unitData.name, s.isPlayer);
     return null;
   }
-  const unit = createSummonedUnit(s.unitData, s.atk, s.hp, s.isChurch, s.level);
+  const unit = createSummonedUnit(
+    s.unitData,
+    s.atk,
+    s.hp,
+    s.isPlayer ? "p" : "e",
+    s.isChurch,
+    s.level,
+  );
   getInitOverride(unit.id)?.(unit);
   return finalize(s, unit);
 }
@@ -146,7 +164,7 @@ export function spawnTokenOnEnemyBoard(s: EnemySpawnBase): BattleUnit | null {
     notifyBoardFull(s.ctx, s.name, s.isPlayer);
     return null;
   }
-  const token = createToken(s.name, s.atk, s.hp, s.isChurch);
+  const token = createToken(s.name, s.atk, s.hp, s.isPlayer ? "e" : "p", s.isChurch);
   s.enemyBoard.splice(0, 0, token);
   applyZealotBuff(s.enemyBoard, token.uid, !s.isPlayer, s.ctx);
   pushFrame(
