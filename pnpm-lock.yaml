@@ -90,11 +90,11 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
       vite-plus:
         specifier: ^0.1.19
-        version: 0.1.19(@types/node@25.6.0)(@vitest/coverage-v8@4.1.1(vitest@4.1.1(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@29.0.2)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)
+        version: 0.1.19(@types/node@25.6.0)(@vitest/coverage-v8@4.1.1(vitest@4.1.1(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@29.0.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)
       wrangler:
         specifier: ^4.81.0
         version: 4.81.0(@cloudflare/workers-types@4.20260415.1)
@@ -3797,8 +3797,8 @@ packages:
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
-  typescript@5.9.3:
-    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -5454,7 +5454,7 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@voidzero-dev/vite-plus-core@0.1.19(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)':
+  '@voidzero-dev/vite-plus-core@0.1.19(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(typescript@6.0.3)(yaml@2.8.3)':
     dependencies:
       '@oxc-project/runtime': 0.126.0
       '@oxc-project/types': 0.126.0
@@ -5466,7 +5466,7 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.6.1
       tsx: 4.21.0
-      typescript: 5.9.3
+      typescript: 6.0.3
       yaml: 2.8.3
 
   '@voidzero-dev/vite-plus-darwin-arm64@0.1.19':
@@ -5487,11 +5487,11 @@ snapshots:
   '@voidzero-dev/vite-plus-linux-x64-musl@0.1.19':
     optional: true
 
-  '@voidzero-dev/vite-plus-test@0.1.19(@types/node@25.6.0)(@vitest/coverage-v8@4.1.1(vitest@4.1.1(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@29.0.2)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)':
+  '@voidzero-dev/vite-plus-test@0.1.19(@types/node@25.6.0)(@vitest/coverage-v8@4.1.1(vitest@4.1.1(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@29.0.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@types/chai': 5.2.3
-      '@voidzero-dev/vite-plus-core': 0.1.19(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-core': 0.1.19(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(typescript@6.0.3)(yaml@2.8.3)
       es-module-lexer: 1.7.0
       obug: 2.1.1
       pixelmatch: 7.1.0
@@ -7280,7 +7280,7 @@ snapshots:
       safe-buffer: 5.2.1
     optional: true
 
-  typescript@5.9.3: {}
+  typescript@6.0.3: {}
 
   unbash@2.2.0: {}
 
@@ -7305,11 +7305,11 @@ snapshots:
   util-deprecate@1.0.2:
     optional: true
 
-  vite-plus@0.1.19(@types/node@25.6.0)(@vitest/coverage-v8@4.1.1(vitest@4.1.1(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@29.0.2)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3):
+  vite-plus@0.1.19(@types/node@25.6.0)(@vitest/coverage-v8@4.1.1(vitest@4.1.1(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@29.0.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3):
     dependencies:
       '@oxc-project/types': 0.126.0
-      '@voidzero-dev/vite-plus-core': 0.1.19(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
-      '@voidzero-dev/vite-plus-test': 0.1.19(@types/node@25.6.0)(@vitest/coverage-v8@4.1.1(vitest@4.1.1(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@29.0.2)(tsx@4.21.0)(typescript@5.9.3)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-core': 0.1.19(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(typescript@6.0.3)(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-test': 0.1.19(@types/node@25.6.0)(@vitest/coverage-v8@4.1.1(vitest@4.1.1(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@29.0.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.2(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)
       oxfmt: 0.45.0
       oxlint: 1.60.0(oxlint-tsgolint@0.21.1)
       oxlint-tsgolint: 0.21.1
