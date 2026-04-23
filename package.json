@@ -54,7 +54,7 @@
     "knip": "^6.4.1",
     "miniflare": "^4.20260405.0",
     "oxlint-plugin-eslint": "^1.60.0",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^4.2.4",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite-plus": "^0.1.18",
