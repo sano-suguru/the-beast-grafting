@@ -81,8 +81,8 @@ importers:
         specifier: ^4.20260405.0
         version: 4.20260405.0
       oxlint-plugin-eslint:
-        specifier: ^1.60.0
-        version: 1.60.0
+        specifier: ^1.61.0
+        version: 1.61.0
       tailwindcss:
         specifier: ^4.2.4
         version: 4.2.4
@@ -3340,8 +3340,8 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  oxlint-plugin-eslint@1.60.0:
-    resolution: {integrity: sha512-gAqkU8vYI1i8EoS0KSCCtrH/pCwDvDEs4Eu4Z1wnmcVMl9hSk4Dgs1udtrehw2vofW8VhrtJDbJfmkcM56TpMQ==}
+  oxlint-plugin-eslint@1.61.0:
+    resolution: {integrity: sha512-3vpLeQdH3kPQsOzALgeoodvxxLD1D7KrM8lEBPELAqfkNhS1uMvqcPA7y3pJ8rEEfhUDyQJlRU5yZRw6wq1S2A==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
   oxlint-tsgolint@0.21.1:
@@ -6723,7 +6723,7 @@ snapshots:
       '@oxfmt/binding-win32-ia32-msvc': 0.45.0
       '@oxfmt/binding-win32-x64-msvc': 0.45.0
 
-  oxlint-plugin-eslint@1.60.0: {}
+  oxlint-plugin-eslint@1.61.0: {}
 
   oxlint-tsgolint@0.21.1:
     optionalDependencies:
