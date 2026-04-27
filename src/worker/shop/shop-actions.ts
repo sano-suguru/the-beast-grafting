@@ -1,112 +1,14 @@
 import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
-import type { OriginId, UnitInstance } from "../../shared/types";
+import type { BattleResult, OriginId } from "../../shared/types";
 import type { BoardUnit } from "../../shared/board-unit";
-import {
-  graftUnits,
-  applyEndOfTurnEffects,
-  calcAlchemyDiscount,
-  applyCatItemMultiplier,
-} from "../../engine/shop-effects";
-import { applyCorpseBrokerDoseBuff, applyPlagueBellDoseBuff } from "../../engine/shop-effects-dose";
-import { isAlchemy } from "../../shared/data/items";
+import { graftUnits, applyEndOfTurnEffects } from "../../engine/shop-effects";
 import { CULTIST_LIFE_COST, CULTIST_BLOOD_GAIN } from "../../shared/constants";
 import type { ShopStateRow } from "./shop-state-row";
-import { boardToInstances, instancesToBoard, itemSlotsFromJson } from "./shop-serialization";
+import { boardToInstances, instancesToBoard } from "./shop-serialization";
 import { captureUndo, withRng } from "./shop-helpers";
 import { generateLevelUpRewards } from "./shop-generation";
-
-interface DoseApplied {
-  board: (UnitInstance | null)[];
-  corpseBrokerUses: number;
-  rngS0: number;
-  rngS1: number;
-}
-
-function applyAlchemyDoseEffects(
-  state: ShopStateRow,
-  board: (UnitInstance | null)[],
-  boardIndex: number,
-  isAlchemyItem: boolean,
-): DoseApplied {
-  if (!isAlchemyItem) {
-    return {
-      board,
-      corpseBrokerUses: state.corpseBrokerUses,
-      rngS0: state.rngS0,
-      rngS1: state.rngS1,
-    };
-  }
-  const dose = applyCorpseBrokerDoseBuff(board, boardIndex, state.corpseBrokerUses);
-  const { rng, saveRng } = withRng(state);
-  const boardAfterPlague = applyPlagueBellDoseBuff(dose.board, boardIndex, rng);
-  const rngState = saveRng();
-  return {
-    board: boardAfterPlague,
-    corpseBrokerUses: dose.corpseBrokerUses,
-    rngS0: rngState.rngS0,
-    rngS1: rngState.rngS1,
-  };
-}
-
-export function executeEquip(
-  state: ShopStateRow,
-  shopItemIndex: number,
-  boardIndex: number,
-): Result<ShopStateRow, GameError> {
-  if (shopItemIndex >= state.shopItems.length)
-    return err({ type: "INVALID_INDEX", index: shopItemIndex });
-  const itemSlotJson = state.shopItems[shopItemIndex];
-  if (!itemSlotJson) return err({ type: "INVALID_TARGET", reason: "empty_item_slot" });
-
-  const itemSlot = itemSlotsFromJson([itemSlotJson])[0];
-  if (!itemSlot) return err({ type: "INVALID_TARGET", reason: "empty_item_slot" });
-  const item = itemSlot.item;
-
-  const discount = isAlchemy(item) ? calcAlchemyDiscount(state.board) : 0;
-  const effectiveCost = Math.max(0, item.cost - discount);
-
-  if (state.blood < effectiveCost)
-    return err({
-      type: "INSUFFICIENT_RESOURCE",
-      resource: "blood",
-      minimum: effectiveCost,
-      current: state.blood,
-    });
-
-  const instances = boardToInstances(state.board);
-  const target = instances[boardIndex];
-  if (!target) return err({ type: "INVALID_TARGET", reason: "no_target" });
-
-  const catResult = applyCatItemMultiplier(instances, item.atk, item.hp, state.boneTreeUses);
-
-  const newBoard = [...instances];
-  newBoard[boardIndex] = {
-    ...target,
-    baseAtk: target.baseAtk + catResult.atk,
-    baseHp: target.baseHp + catResult.hp,
-    equip: item.equip ?? target.equip,
-  };
-
-  const applied = applyAlchemyDoseEffects(
-    state,
-    newBoard as (UnitInstance | null)[],
-    boardIndex,
-    isAlchemy(item),
-  );
-
-  return ok({
-    ...state,
-    blood: state.blood - effectiveCost,
-    board: instancesToBoard(applied.board),
-    shopItems: state.shopItems.map((u, i) => (i === shopItemIndex ? null : u)),
-    corpseBrokerUses: applied.corpseBrokerUses,
-    boneTreeUses: catResult.nextUses,
-    rngS0: applied.rngS0,
-    rngS1: applied.rngS1,
-    undoSnapshot: captureUndo(state),
-  });
-}
+export { executeEquip } from "./shop-actions-equip";
 
 function freezeSlot<T extends { frozen: boolean }>(
   slots: (T | null)[],
@@ -231,12 +133,13 @@ export function executeUndo(state: ShopStateRow): Result<ShopStateRow, GameError
 
 export function executeReady(
   state: ShopStateRow,
+  lastBattleResult: BattleResult = null,
 ): Result<{ state: ShopStateRow; finalBoard: (BoardUnit | null)[] }, GameError> {
   const instances = boardToInstances(state.board);
   if (!instances.some((u) => u !== null))
     return err({ type: "PRECONDITION_FAILED", reason: "board_empty" });
 
-  const boardAfterEot = applyEndOfTurnEffects(instances);
+  const boardAfterEot = applyEndOfTurnEffects(instances, lastBattleResult);
   const finalBoard = instancesToBoard(boardAfterEot);
 
   return ok({

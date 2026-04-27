@@ -36,6 +36,32 @@ export const createUnit = (id: DataUnitId): UnitInstance => {
 };
 
 const SHOP_POOL_CACHE = new Map<number, readonly RegularUnitId[]>();
+const BASE_ITEM_POOL: readonly ItemId[] = [
+  "preservative",
+  "iron_plate",
+  "bile",
+  "maggot",
+  "corpse_wax",
+  "numbness",
+  "acid_blood",
+  "death_curse",
+];
+const MID_ITEM_POOL: readonly ItemId[] = ["grave_pear", "canned_food"];
+const LATE_ITEM_POOL: readonly ItemId[] = ["sushi"];
+const ENDGAME_ITEM_POOL: readonly ItemId[] = ["pizza"];
+const BASE_ITEM_POOL_UNLOCKED = Object.freeze([...BASE_ITEM_POOL]);
+const MID_ITEM_POOL_UNLOCKED = Object.freeze([...BASE_ITEM_POOL, ...MID_ITEM_POOL]);
+const LATE_ITEM_POOL_UNLOCKED = Object.freeze([
+  ...BASE_ITEM_POOL,
+  ...MID_ITEM_POOL,
+  ...LATE_ITEM_POOL,
+]);
+const ENDGAME_ITEM_POOL_UNLOCKED = Object.freeze([
+  ...BASE_ITEM_POOL,
+  ...MID_ITEM_POOL,
+  ...LATE_ITEM_POOL,
+  ...ENDGAME_ITEM_POOL,
+]);
 
 export const getShopPool = (night: number): readonly RegularUnitId[] => {
   const cached = SHOP_POOL_CACHE.get(night);
@@ -57,20 +83,37 @@ for (const id of Object.keys(UNITS) as RegularUnitId[]) {
 export const getUnitsByTier = (tier: Tier): readonly RegularUnitId[] =>
   UNITS_BY_TIER.get(tier) ?? [];
 
-export const getItemPool = (): ItemId[] => [
-  "preservative",
-  "iron_plate",
-  "bile",
-  "maggot",
-  "corpse_wax",
-  "numbness",
-  "acid_blood",
-  "death_curse",
-];
+const ITEM_POOL_CACHE = new Map<number, readonly ItemId[]>();
+
+export const getItemPool = (night: number): readonly ItemId[] => {
+  const cached = ITEM_POOL_CACHE.get(night);
+  if (cached) return cached;
+  let pool = BASE_ITEM_POOL_UNLOCKED;
+  if (night >= 11) {
+    pool = ENDGAME_ITEM_POOL_UNLOCKED;
+  } else if (night >= 9) {
+    pool = LATE_ITEM_POOL_UNLOCKED;
+  } else if (night >= 7) {
+    pool = MID_ITEM_POOL_UNLOCKED;
+  }
+  ITEM_POOL_CACHE.set(night, pool);
+  return pool;
+};
 
 export const pickRandom = <T>(arr: readonly T[], rng: Rng): T => {
   invariant(arr.length > 0, "pickRandom: empty array");
   return arr[Math.floor(rng.next() * arr.length)]!;
+};
+
+export const shuffleAndTakeN = <T>(arr: readonly T[], count: number, rng: Rng): T[] => {
+  const pool = [...arr];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng.next() * (i + 1));
+    const tmp = pool[i]!;
+    pool[i] = pool[j]!;
+    pool[j] = tmp;
+  }
+  return pool.slice(0, count);
 };
 
 const generateTeamName = (faction: EnemyFaction, rng: Rng): string => {

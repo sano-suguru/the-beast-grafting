@@ -2,6 +2,7 @@ import type { UnitInstance, DataUnitId } from "../../shared/types";
 import type { EquipType } from "../../shared/equip-type";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
+import type { UnitProgressionTrace } from "./sim-types";
 import { createUnit } from "../helpers";
 import { getSkillText } from "../../shared/skill-text";
 import { CUMULATIVE_EXP, MAX_UNIT_LEVEL } from "../../shared/constants";
@@ -116,26 +117,7 @@ export function buildProgressedTeam(
   night: number,
   rng: Rng,
 ): UnitInstance[] {
-  const bases = ids.map((id) => createUnit(id));
-  const nightsArr = bases.map((b) => Math.max(0, night - TIER_APPEAR_NIGHT[b.tier as Tier] + 1));
-  const rawGrafts = nightsArr.map((nsa) => {
-    if (nsa <= 1) return 0;
-    const expected = Math.min((nsa - 1) / 3, MAX_UNIT_LEVEL + 2);
-    return poissonCapped(expected, CUMULATIVE_EXP[3], rng);
-  });
-
-  const total = rawGrafts.reduce((s, g) => s + g, 0);
-  const cap = teamGraftCap(night);
-  const scaledGrafts =
-    total <= cap
-      ? rawGrafts
-      : rawGrafts.map((g) => (g === 0 ? 0 : Math.min(g, Math.floor((g * cap) / total))));
-
-  return bases.map((b, i) => {
-    const nsa = nightsArr[i]!;
-    if (nsa <= 1) return b;
-    return applyProgressionToUnit(b, scaledGrafts[i]!, nsa, rng);
-  });
+  return buildProgressedTeamWithTrace(ids, night, rng).units;
 }
 
 /**
@@ -195,4 +177,65 @@ function poissonCapped(lambda: number, cap: number, rng: Rng): number {
     k++;
   }
   return k;
+}
+
+function applyProgressionToUnitWithTrace(
+  base: UnitInstance,
+  grafts: number,
+  nightsSinceAvailable: number,
+  rng: Rng,
+): { unit: UnitInstance; trace: UnitProgressionTrace } {
+  const unit = applyProgressionToUnit(base, grafts, nightsSinceAvailable, rng);
+  const trace: UnitProgressionTrace = {
+    graftCount: grafts,
+    ownedNights: nightsSinceAvailable,
+    hasEquip: unit.equip !== null,
+    level: unit.level,
+  };
+  return { unit, trace };
+}
+
+/** buildProgressedTeam の trace 付きバリアント。中間メトリクス収集に使用。 */
+export function buildProgressedTeamWithTrace(
+  ids: readonly DataUnitId[],
+  night: number,
+  rng: Rng,
+): { units: UnitInstance[]; traces: Map<DataUnitId, UnitProgressionTrace> } {
+  const bases = ids.map((id) => createUnit(id));
+  const nightsArr = bases.map((b) => Math.max(0, night - TIER_APPEAR_NIGHT[b.tier as Tier] + 1));
+  const rawGrafts = nightsArr.map((nsa) => {
+    if (nsa <= 1) return 0;
+    const expected = Math.min((nsa - 1) / 3, MAX_UNIT_LEVEL + 2);
+    return poissonCapped(expected, CUMULATIVE_EXP[3], rng);
+  });
+
+  const total = rawGrafts.reduce((s, g) => s + g, 0);
+  const cap = teamGraftCap(night);
+  const scaledGrafts =
+    total <= cap
+      ? rawGrafts
+      : rawGrafts.map((g) => (g === 0 ? 0 : Math.min(g, Math.floor((g * cap) / total))));
+
+  const units: UnitInstance[] = [];
+  const traces = new Map<DataUnitId, UnitProgressionTrace>();
+
+  for (let i = 0; i < bases.length; i++) {
+    const b = bases[i]!;
+    const nsa = nightsArr[i]!;
+    if (nsa <= 1) {
+      units.push(b);
+      traces.set(b.id as DataUnitId, {
+        graftCount: 0,
+        ownedNights: nsa,
+        hasEquip: false,
+        level: 1,
+      });
+    } else {
+      const { unit, trace } = applyProgressionToUnitWithTrace(b, scaledGrafts[i]!, nsa, rng);
+      units.push(unit);
+      traces.set(b.id as DataUnitId, trace);
+    }
+  }
+
+  return { units, traces };
 }

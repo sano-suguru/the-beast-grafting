@@ -148,12 +148,12 @@ describe("buildEventShopUnits", () => {
 
 describe("buildEventShopItems", () => {
   it("returns empty array for events with no itemOffers", () => {
-    const result = buildEventShopItems(EVENTS.rotting_cargo, createSeededRng(42));
+    const result = buildEventShopItems(EVENTS.rotting_cargo, 12, createSeededRng(42));
     expect(result).toHaveLength(0);
   });
 
   it("builds free item slot for patrol", () => {
-    const result = buildEventShopItems(EVENTS.patrol, createSeededRng(42));
+    const result = buildEventShopItems(EVENTS.patrol, 8, createSeededRng(42));
     expect(result).toHaveLength(1);
     const slot = result[0];
     expect(slot).not.toBeNull();

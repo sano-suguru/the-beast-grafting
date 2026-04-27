@@ -18,6 +18,7 @@ import {
   GUT_HAND,
   BONE_JAW,
   ROT_FEEDER,
+  CATACOMB_RAT,
   HANGED_MAN,
   WAILING_CURSECHILD,
   PLAGUE_BELL,
@@ -647,6 +648,39 @@ describe("applyEndOfTurnEffects – altar", () => {
     const buffed2 = result.find((u) => u?.uid === "a2");
     expect(buffed1?.buffAtk).toBe(1);
     expect(buffed2?.buffAtk).toBe(1);
+  });
+});
+
+describe("applyEndOfTurnEffects – catacomb_rat", () => {
+  it("buffs the nearest allies ahead after a loss", () => {
+    const ally1 = makeUnit({ uid: "a1", buffAtk: 0 });
+    const ally2 = makeUnit({ uid: "a2", buffAtk: 0 });
+    const rat = makeUnit({ id: "catacomb_rat", uid: "rat" });
+    const board: (UnitInstance | null)[] = [ally1, ally2, rat, null, null];
+    const result = applyEndOfTurnEffects(board, "LOSE");
+    const buff = atLevel(CATACOMB_RAT.atkBuff, 1);
+    expect(result[0]?.buffAtk).toBe(buff);
+    expect(result[1]?.buffAtk).toBe(buff);
+  });
+
+  it("does nothing when the last battle was not a loss", () => {
+    const ally = makeUnit({ uid: "ally", buffAtk: 0 });
+    const rat = makeUnit({ id: "catacomb_rat", uid: "rat" });
+    const board: (UnitInstance | null)[] = [ally, rat, null, null, null];
+    const result = applyEndOfTurnEffects(board, "WIN");
+    expect(result).toBe(board);
+    expect(result[0]?.buffAtk).toBe(0);
+  });
+
+  it("does not buff allies behind it", () => {
+    const front = makeUnit({ uid: "front", buffAtk: 0 });
+    const rat = makeUnit({ id: "catacomb_rat", uid: "rat" });
+    const back = makeUnit({ uid: "back", buffAtk: 0 });
+    const board: (UnitInstance | null)[] = [front, rat, back, null, null];
+    const result = applyEndOfTurnEffects(board, "LOSE");
+    const buff = atLevel(CATACOMB_RAT.atkBuff, 1);
+    expect(result[0]?.buffAtk).toBe(buff);
+    expect(result[2]?.buffAtk).toBe(0);
   });
 });
 

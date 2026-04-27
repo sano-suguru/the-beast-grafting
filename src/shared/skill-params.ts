@@ -153,6 +153,7 @@ export const SIN_EATER = {
     { atk: 6, hp: 6 },
     { atk: 9, hp: 9 },
   ] as SB,
+  maxUses: 3,
 };
 
 // ── 死亡スキル ──

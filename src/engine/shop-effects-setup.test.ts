@@ -1,8 +1,8 @@
-import { applyAshFungusBuff, applyCatacombRatBuff, applyRevenantBuff } from "./shop-effects-setup";
+import { applyAshFungusBuff, applyRevenantBuff } from "./shop-effects-setup";
 import { makeUnit } from "./test-helpers";
 import { createSeededRng } from "./rng";
 import type { BoardUnit } from "../shared/board-unit";
-import { CATACOMB_RAT, REVENANT, atLevel } from "../shared/skill-params";
+import { REVENANT, atLevel } from "../shared/skill-params";
 
 function makeBU(overrides: Parameters<typeof makeUnit>[0] = {}): BoardUnit {
   return makeUnit(overrides) as unknown as BoardUnit;
@@ -43,58 +43,6 @@ describe("applyAshFungusBuff – ash_fungus (Penguin)", () => {
     applyAshFungusBuff(board, createSeededRng(1));
     expect((board[1] as BoardUnit).buffAtk).toBe(0);
     expect((board[2] as BoardUnit).buffAtk).toBe(0);
-  });
-});
-
-describe("applyCatacombRatBuff – 前方方向の保証", () => {
-  const lv1Atk = atLevel(CATACOMB_RAT.atkBuff, 1);
-
-  it("rat が index 0 にいるときは前方が空なので誰にもバフしない", () => {
-    const rat = makeBU({ id: "catacomb_rat", uid: "r1" });
-    const a1 = makeBU({ uid: "a1", buffAtk: 0 });
-    const a2 = makeBU({ uid: "a2", buffAtk: 0 });
-    const a3 = makeBU({ uid: "a3", buffAtk: 0 });
-    const board: (BoardUnit | null)[] = [rat, a1, a2, a3, null];
-    applyCatacombRatBuff(board, "LOSE");
-    expect((board[1] as BoardUnit).buffAtk).toBe(0);
-    expect((board[2] as BoardUnit).buffAtk).toBe(0);
-    expect((board[3] as BoardUnit).buffAtk).toBe(0);
-  });
-
-  it("rat が index 2 にいるときは index 0,1 のみバフする（後方は無視）", () => {
-    const front1 = makeBU({ uid: "f1", buffAtk: 0 });
-    const front2 = makeBU({ uid: "f2", buffAtk: 0 });
-    const rat = makeBU({ id: "catacomb_rat", uid: "r1" });
-    const back1 = makeBU({ uid: "b1", buffAtk: 0 });
-    const back2 = makeBU({ uid: "b2", buffAtk: 0 });
-    const board: (BoardUnit | null)[] = [front1, front2, rat, back1, back2];
-    applyCatacombRatBuff(board, "LOSE");
-    expect((board[0] as BoardUnit).buffAtk).toBe(lv1Atk);
-    expect((board[1] as BoardUnit).buffAtk).toBe(lv1Atk);
-    expect((board[3] as BoardUnit).buffAtk).toBe(0);
-    expect((board[4] as BoardUnit).buffAtk).toBe(0);
-  });
-
-  it("rat が index 4 にいるときは最大 3 体（0,1,2）のみバフする", () => {
-    const f0 = makeBU({ uid: "f0", buffAtk: 0 });
-    const f1 = makeBU({ uid: "f1", buffAtk: 0 });
-    const f2 = makeBU({ uid: "f2", buffAtk: 0 });
-    const f3 = makeBU({ uid: "f3", buffAtk: 0 });
-    const rat = makeBU({ id: "catacomb_rat", uid: "r1" });
-    const board: (BoardUnit | null)[] = [f0, f1, f2, f3, rat];
-    applyCatacombRatBuff(board, "LOSE");
-    expect((board[0] as BoardUnit).buffAtk).toBe(0);
-    expect((board[1] as BoardUnit).buffAtk).toBe(lv1Atk);
-    expect((board[2] as BoardUnit).buffAtk).toBe(lv1Atk);
-    expect((board[3] as BoardUnit).buffAtk).toBe(lv1Atk);
-  });
-
-  it("前回が LOSE でないときはバフしない", () => {
-    const rat = makeBU({ id: "catacomb_rat", uid: "r1" });
-    const ally = makeBU({ uid: "a1", buffAtk: 0 });
-    const board: (BoardUnit | null)[] = [ally, rat, null, null, null];
-    applyCatacombRatBuff(board, "WIN");
-    expect((board[0] as BoardUnit).buffAtk).toBe(0);
   });
 });
 

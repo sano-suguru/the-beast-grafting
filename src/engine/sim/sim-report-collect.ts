@@ -7,6 +7,7 @@ import type {
   GaReportData,
   InsufficientSampleEntry,
   MatchupEntry,
+  MetaCandidateEntry,
   MetaAnalysis,
   NightGaEntry,
   PairSynergyEntry,
@@ -45,6 +46,7 @@ export class SimReportCollector {
   private _scaling: ScalingAnalysis | null = null;
   private _pairSynergies: readonly PairSynergyEntry[] = [];
   private _discoveredCompositions: readonly CompositionEntry[] = [];
+  private _metaCandidates: readonly MetaCandidateEntry[] = [];
   private readonly _insufficientSamples: InsufficientSampleEntry[] = [];
   private _gaDiscovery: GaReportData | null = null;
   private readonly _nightGaResults: NightGaEntry[] = [];
@@ -99,6 +101,10 @@ export class SimReportCollector {
     this._discoveredCompositions = compositions;
   }
 
+  setMetaCandidates(candidates: readonly MetaCandidateEntry[]): void {
+    this._metaCandidates = candidates;
+  }
+
   addInsufficientSample(entry: InsufficientSampleEntry): void {
     this._insufficientSamples.push(entry);
   }
@@ -135,6 +141,7 @@ export class SimReportCollector {
       scalingAnalysis: this._scaling,
       pairSynergies: this._pairSynergies,
       discoveredCompositions: this._discoveredCompositions,
+      metaCandidates: this._metaCandidates,
       insufficientSamples: this._insufficientSamples,
       gaDiscovery: this._gaDiscovery,
       nightGaResults: [...this._nightGaResults].sort((a, b) => a.night - b.night),

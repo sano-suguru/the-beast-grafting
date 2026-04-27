@@ -62,8 +62,8 @@ export function buildEventShopUnits(event: EventData, night: number, rng: Rng): 
   });
 }
 
-export function buildEventShopItems(event: EventData, rng: Rng): ShopItemSlot[] {
-  const pool = getItemPool();
+export function buildEventShopItems(event: EventData, night: number, rng: Rng): ShopItemSlot[] {
+  const pool = getItemPool(night);
   return event.itemOffers.map((offer) => {
     const itemId = offer.itemId === "random" ? pickRandom(pool, rng) : offer.itemId;
     const item = ITEMS[itemId];

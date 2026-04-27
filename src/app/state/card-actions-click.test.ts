@@ -1,4 +1,5 @@
 import { handleCardClick } from "./card-actions";
+import { ITEMS } from "../../shared/data/items";
 import {
   blood,
   board,
@@ -17,16 +18,9 @@ import { makeShopState, toBoardUnit, stubFetch, shopRoute } from "./test-helpers
 
 function makeItem(overrides: Partial<ItemData> = {}): ItemData {
   return {
-    id: "iron_plate",
-    name: "鉄板",
-    cost: 3,
-    atk: 0,
-    hp: 2,
-    equip: "iron_plate",
-    skillText: "",
-    lore: "",
+    ...ITEMS["iron_plate"],
     ...overrides,
-  } as ItemData;
+  };
 }
 
 function makeShopSlot(overrides: Partial<ReturnType<typeof makeUnit>> = {}): ShopSlot {
@@ -251,6 +245,29 @@ describe("handleCardClick – equip item onto board unit", () => {
 
     expect(se).toBe("error");
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("allows targetless items on empty slots", async () => {
+    const item = makeItem({ ...ITEMS["canned_food"] });
+    shopItems.value = [makeShopItemSlot({ ...ITEMS["canned_food"] })];
+    selection.value = { type: "SHOP_ITEM", index: 0, item };
+
+    stubFetch(
+      shopRoute(
+        makeShopState({
+          blood: 7,
+          board: [null, null, null, null, null],
+          shopItems: [null],
+        }),
+      ),
+    );
+
+    const se = await handleCardClick("BOARD_SLOT", 0, null);
+
+    expect(blood.value).toBe(7);
+    expect(shopItems.value[0]).toBeNull();
+    expect(selection.value).toBeNull();
+    expect(se).toBe("graft");
   });
 
   it("returns error when blood is insufficient", async () => {

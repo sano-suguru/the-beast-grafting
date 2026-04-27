@@ -60,22 +60,18 @@ async function loadSetupInputs(
   playerId: string,
   run: { shopSeed: number | null; night: number },
 ) {
-  const [seedResult, prevResult, lastBattleRow] = await Promise.all([
+  const [seedResult, prevResult] = await Promise.all([
     ensureShopSeed(db, runId, playerId, run.shopSeed),
     loadPrevNightShop(db, runId, run.night),
-    loadLastBattleResult(db, runId, playerId),
   ]);
   if (seedResult.isErr())
     return { ok: false, label: "[shop/setup:seed]", error: seedResult.error } as const;
   if (prevResult.isErr())
     return { ok: false, label: "[shop/setup:prev]", error: prevResult.error } as const;
-  if (lastBattleRow.isErr())
-    return { ok: false, label: "[shop/setup:battle]", error: lastBattleRow.error } as const;
   return {
     ok: true,
     shopSeed: seedResult.value,
     prev: prevResult.value,
-    lastBattleResult: lastBattleRow.value[0]?.result ?? null,
   } as const;
 }
 
@@ -107,7 +103,8 @@ shopRoutes.post("/setup", requireAuth, jsonBody(), async (c) => {
     useTutorialShop,
     inputs.prev.shopUnits,
     inputs.prev.shopItems,
-    inputs.lastBattleResult,
+    inputs.prev.shopBuffAtk,
+    inputs.prev.shopBuffHp,
   );
 
   const insertResult = await upsertShopState(db, runId, state);
@@ -227,9 +224,18 @@ shopRoutes.post("/undo", requireAuth, jsonBody(), (c) =>
   shopAction(c, (state) => executeUndo(state)),
 );
 
-shopRoutes.post("/ready", requireAuth, jsonBody(), (c) =>
-  shopAction(c, (state) => executeReady(state)),
-);
+shopRoutes.post("/ready", requireAuth, jsonBody(), async (c) => {
+  const db = c.get("db");
+  const playerId = c.get("playerId") as string;
+  const body = getParsedBody(c);
+  const runId = validateRunId(body);
+  if (!runId) return c.json(preconditionFailed("invalid_run_id"), 400);
+
+  const battleResult = await loadLastBattleResult(db, runId, playerId);
+  if (battleResult.isErr()) return internalError(c, "[shop/ready:battle]", battleResult.error);
+
+  return shopAction(c, (state) => executeReady(state, battleResult.value[0]?.result ?? null));
+});
 
 shopRoutes.get("/state", requireAuth, async (c) => {
   const db = c.get("db");

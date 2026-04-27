@@ -1,6 +1,13 @@
 import type { UnitId } from "../shared/types";
 import type { BattleUnit } from "./battle-context";
-import { atLevel, EYE, CATHEDRAL, CARRION_SENTINEL, GORILLA } from "../shared/skill-params";
+import {
+  atLevel,
+  EYE,
+  CATHEDRAL,
+  CARRION_SENTINEL,
+  GORILLA,
+  SIN_EATER,
+} from "../shared/skill-params";
 import { BEELZEBUB } from "../shared/skill-params-death";
 
 const INIT_OVERRIDES = {
@@ -18,6 +25,9 @@ const INIT_OVERRIDES = {
   },
   carrion_sentinel: (bu: BattleUnit) => {
     bu.skillUses = atLevel(CARRION_SENTINEL.uses, bu.level);
+  },
+  sin_eater: (bu: BattleUnit) => {
+    bu.skillUses = SIN_EATER.maxUses;
   },
   necrotic_finger: (bu: BattleUnit) => {
     if (!bu.equip) bu.equip = "corpse_wax";

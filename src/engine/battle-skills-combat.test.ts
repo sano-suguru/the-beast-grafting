@@ -3,7 +3,15 @@ import {
   processHundredArmsKnockout,
   processKnockoutEffects,
 } from "./battle-skills-combat";
-import { makeBattleUnit, makeContext, INERT_UNIT_ID } from "./test-helpers";
+import { initBattleContext } from "./battle";
+import { createSeededRng } from "./rng";
+import {
+  makeBattleUnit,
+  makeContext,
+  makeEnemyTeam,
+  makeUnit,
+  INERT_UNIT_ID,
+} from "./test-helpers";
 import { atLevel, RISEN_POPE, SIN_EATER } from "../shared/skill-params";
 
 describe("applyAcidSplash", () => {
@@ -122,29 +130,70 @@ describe("processKnockoutEffects – risen_pope", () => {
 });
 
 describe("processKnockoutEffects – sin_eater (Hippo)", () => {
-  it("self-buffs +3/+3 on knockout (Lv1)", () => {
-    const sinner = makeBattleUnit({ id: "sin_eater", name: "罪喰い", atk: 4, hp: 7 });
-    const board = [sinner];
-    const ctx = makeContext(board, [makeBattleUnit()]);
-    processKnockoutEffects(sinner, [], board, true, ctx);
+  it("initializes with 3 uses and self-buffs +3/+3 on knockout (Lv1)", () => {
+    const ctx = initBattleContext(
+      [makeUnit({ id: "sin_eater", name: "罪喰い", baseAtk: 4, baseHp: 6, tier: 4 })],
+      makeEnemyTeam([makeUnit()]),
+      null,
+      createSeededRng(42),
+    );
+    const sinner = ctx.pBoard[0]!;
+    processKnockoutEffects(sinner, [], ctx.pBoard, true, ctx);
     const b = atLevel(SIN_EATER.buff, 1);
+    expect(sinner.skillUses).toBe(SIN_EATER.maxUses - 1);
     expect(sinner.atk).toBe(4 + b.atk);
-    expect(sinner.hp).toBe(7 + b.hp);
+    expect(sinner.hp).toBe(6 + b.hp);
   });
 
-  it("doubles with brains behind (×2 activation)", () => {
-    const sinner = makeBattleUnit({ id: "sin_eater", name: "罪喰い", atk: 4, hp: 7 });
+  it("doubles with brains behind while uses remain", () => {
+    const sinner = makeBattleUnit({
+      id: "sin_eater",
+      name: "罪喰い",
+      atk: 4,
+      hp: 6,
+      skillUses: SIN_EATER.maxUses,
+    });
     const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const board = [sinner, brains];
     const ctx = makeContext(board, [makeBattleUnit()]);
     processKnockoutEffects(sinner, [], board, true, ctx);
     const b = atLevel(SIN_EATER.buff, 1);
+    expect(sinner.skillUses).toBe(1);
     expect(sinner.atk).toBe(4 + b.atk * 2);
-    expect(sinner.hp).toBe(7 + b.hp * 2);
+    expect(sinner.hp).toBe(6 + b.hp * 2);
+  });
+
+  it("stops buffing after the third knockout", () => {
+    const sinner = makeBattleUnit({
+      id: "sin_eater",
+      name: "罪喰い",
+      atk: 4,
+      hp: 6,
+      skillUses: SIN_EATER.maxUses,
+    });
+    const board = [sinner];
+    const ctx = makeContext(board, [makeBattleUnit()]);
+    for (let i = 0; i < 4; i++) processKnockoutEffects(sinner, [], board, true, ctx);
+    const b = atLevel(SIN_EATER.buff, 1);
+    expect(sinner.skillUses).toBe(0);
+    expect(sinner.atk).toBe(4 + b.atk * SIN_EATER.maxUses);
+    expect(sinner.hp).toBe(6 + b.hp * SIN_EATER.maxUses);
+  });
+
+  it("does not spend a brains repeat when only one use remains", () => {
+    const sinner = makeBattleUnit({ id: "sin_eater", name: "罪喰い", atk: 4, hp: 6, skillUses: 1 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
+    const board = [sinner, brains];
+    const ctx = makeContext(board, [makeBattleUnit()]);
+    processKnockoutEffects(sinner, [], board, true, ctx);
+    const b = atLevel(SIN_EATER.buff, 1);
+    expect(sinner.skillUses).toBe(0);
+    expect(sinner.atk).toBe(4 + b.atk);
+    expect(sinner.hp).toBe(6 + b.hp);
   });
 
   it("does not trigger when unit is dead", () => {
-    const sinner = makeBattleUnit({ id: "sin_eater", name: "罪喰い", atk: 4, hp: 0 });
+    const sinner = makeBattleUnit({ id: "sin_eater", name: "罪喰い", atk: 4, hp: 0, skillUses: 1 });
     const board = [sinner];
     const ctx = makeContext(board, [makeBattleUnit()]);
     processKnockoutEffects(sinner, [], board, true, ctx);

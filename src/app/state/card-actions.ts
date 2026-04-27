@@ -10,6 +10,7 @@ import type {
 } from "../types";
 import type { ShopStateResponse } from "../../shared/api-types";
 import type { Result, InfraError } from "../../shared/errors";
+import { itemNeedsBoardTarget } from "../../shared/data/items";
 import { NO_SOUND, SE_SELECT, SE_ERROR } from "../sound-results";
 import {
   blood,
@@ -79,7 +80,7 @@ function handleShopItemToSlot(
   index: number,
   targetUnit: UnitInstance | null,
 ): SoundResult {
-  if (!targetUnit) return rejectInvalidAction();
+  if (itemNeedsBoardTarget(sel.item) && !targetUnit) return rejectInvalidAction();
   if (blood.value < sel.item.cost) return rejectWithResourceError("blood");
 
   if (shopLocked.value) return NO_SOUND;
@@ -210,7 +211,9 @@ function canHighlightForItem(
   sel: Extract<Selection, { type: "SHOP_ITEM" }>,
   unit: UnitInstance | null,
 ): HighlightKind {
-  return blood.value >= sel.item.cost && !!unit ? "graft" : false;
+  if (blood.value < sel.item.cost) return false;
+  if (itemNeedsBoardTarget(sel.item)) return unit ? "graft" : false;
+  return "graft";
 }
 
 function canHighlightForUnit(

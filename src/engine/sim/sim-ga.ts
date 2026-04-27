@@ -15,6 +15,7 @@ import type {
 import { createSeededRng } from "../rng";
 import { getShopPool } from "../helpers";
 import { generateSimTeam } from "./sim-team-gen";
+import { adjustFitnessForViability, estimateTeamViability } from "./sim-run-viability";
 import { deriveSeed } from "./sim-utils";
 import { wilsonCI } from "./sim-perf";
 import { TEAM_SIZE } from "./sim-types";
@@ -256,9 +257,23 @@ async function refineTopTeams(
   const teams: GaRankedTeam[] = unique.map((ind, i) => {
     const wins = Math.round(winRates[i]! * config.refinementTrials);
     const ci = wilsonCI(wins, config.refinementTrials);
-    return { teamIds: [...ind.teamIds], fitness: winRates[i]!, fitnessCI95: ci, novelty: false };
+    const viability = estimateTeamViability(
+      ind.teamIds,
+      config.night,
+      deriveSeed(trialBaseSeed, i + 1),
+      { samples: 10 },
+    );
+    return {
+      teamIds: [...ind.teamIds],
+      fitness: winRates[i]!,
+      adjustedFitness: adjustFitnessForViability(winRates[i]!, viability),
+      fitnessCI95: ci,
+      viability,
+      novelty: false,
+    };
   });
 
+  teams.sort((a, b) => b.adjustedFitness - a.adjustedFitness || b.fitness - a.fitness);
   return { teams, battles };
 }
 

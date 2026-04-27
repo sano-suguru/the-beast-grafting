@@ -7,7 +7,7 @@ import type { UnitId, EventData } from "../../shared/types";
 import { UNIT_COST } from "../../shared/constants";
 import { effectiveAtk } from "../../shared/unit-stats";
 import { ITEMS } from "../../shared/data/items";
-import { atLevel, CATACOMB_RAT } from "../../shared/skill-params";
+import { atLevel, CATACOMB_RAT, ROT_FEEDER } from "../../shared/skill-params";
 import type { ShopSlotJson, ShopItemSlotJson } from "../../db/shop-state-types";
 import type { ShopStateRow } from "./shop-state-row";
 import { executeSetup } from "./shop-service";
@@ -29,6 +29,8 @@ function makeState(overrides: Partial<ShopStateRow> = {}): ShopStateRow {
     board: [null, null, null, null, null],
     shopUnits: [],
     shopItems: [],
+    shopBuffAtk: 0,
+    shopBuffHp: 0,
     freeRoll: false,
     cultistUsed: false,
     rotRingUses: 0,
@@ -86,6 +88,53 @@ describe("executeSetup", () => {
     expect(hasHigherTier).toBe(true);
   });
 
+  test("inquisitor keeps persistent shop buffs in tutorial shop", () => {
+    const persistentBuff = { atk: 2, hp: 3 };
+    const results: ReturnType<typeof executeSetup>[] = [];
+    for (let i = 1; i <= 20; i++) {
+      results.push(
+        executeSetup(
+          1,
+          5,
+          "inquisitor",
+          i,
+          [null, null, null, null, null],
+          true,
+          [],
+          [],
+          persistentBuff.atk,
+          persistentBuff.hp,
+        ),
+      );
+    }
+    const upgraded = results
+      .flatMap((result) => result.shopUnits)
+      .find((slot) => slot !== null && slot.unit.tier > 1);
+    expect(upgraded).toBeDefined();
+    expect(upgraded!.unit.buffAtk).toBe(persistentBuff.atk);
+    expect(upgraded!.unit.buffHp).toBe(persistentBuff.hp);
+  });
+
+  test("inquisitor keeps persistent shop buffs in normal shop", () => {
+    const persistentBuff = { atk: 2, hp: 3 };
+    const result = executeSetup(
+      1,
+      5,
+      "inquisitor",
+      42,
+      [null, null, null, null, null],
+      false,
+      [],
+      [],
+      persistentBuff.atk,
+      persistentBuff.hp,
+    );
+    const upgraded = result.shopUnits.find((slot) => slot !== null && slot.unit.tier > 1);
+    expect(upgraded).toBeDefined();
+    expect(upgraded!.unit.buffAtk).toBe(persistentBuff.atk);
+    expect(upgraded!.unit.buffHp).toBe(persistentBuff.hp);
+  });
+
   test("non-tutorial generates shop units appropriate for night", () => {
     const result = executeSetup(3, 5, null, 42, [null, null, null, null, null], false, [], []);
     const nonNull = result.shopUnits.filter(Boolean);
@@ -116,27 +165,16 @@ describe("executeSetup", () => {
     expect(result.blood).toBe(10);
   });
 
-  test("catacomb_rat buffs front allies at setup when last battle was LOSE", () => {
+  test("catacomb_rat does not buff at setup", () => {
     const catacombRat = unitInstanceToBoardUnit(
       makeUnit({ id: "catacomb_rat" as UnitId, uid: "cr-1" }),
     );
     const ally1 = unitInstanceToBoardUnit(makeUnit({ id: "rat", uid: "a-1" }));
     const ally2 = unitInstanceToBoardUnit(makeUnit({ id: "bat", uid: "a-2" }));
     const board: (BoardUnit | null)[] = [ally1, ally2, catacombRat, null, null];
-    const result = executeSetup(2, 5, null, 42, board, false, [], [], "LOSE");
-    const b = atLevel(CATACOMB_RAT.atkBuff, 1);
-    expect((result.board[0] as BoardUnit).buffAtk).toBe(b);
-    expect((result.board[1] as BoardUnit).buffAtk).toBe(b);
-  });
-
-  test("catacomb_rat does not buff when last battle was WIN", () => {
-    const catacombRat = unitInstanceToBoardUnit(
-      makeUnit({ id: "catacomb_rat" as UnitId, uid: "cr-1" }),
-    );
-    const ally = unitInstanceToBoardUnit(makeUnit({ id: "rat", uid: "a-1" }));
-    const board: (BoardUnit | null)[] = [ally, catacombRat, null, null, null];
-    const result = executeSetup(2, 5, null, 42, board, false, [], [], "WIN");
+    const result = executeSetup(2, 5, null, 42, board, false, [], []);
     expect((result.board[0] as BoardUnit).buffAtk).toBe(0);
+    expect((result.board[1] as BoardUnit).buffAtk).toBe(0);
   });
 });
 
@@ -288,6 +326,40 @@ describe("executeSell", () => {
     expect(remaining.buffHp).toBe(unit1.buffHp + 1);
   });
 
+  test("rot_feeder sell updates current shop and future persistent shop buff", () => {
+    const hpBuff = atLevel(ROT_FEEDER.hpBuff, 1);
+    const shopUnit = makeShopSlot("rat");
+    const state = makeState({
+      board: [makeBoardUnit("rot_feeder"), null, null, null, null],
+      shopUnits: [shopUnit],
+      night: 1,
+      life: 5,
+    });
+    const result = executeSell(state, 0, null);
+    expect(result.isOk()).toBe(true);
+    const next = result._unsafeUnwrap();
+    expect(next.shopUnits[0]!.unit.buffHp).toBe(shopUnit.unit.buffHp + hpBuff);
+    expect(next.shopBuffAtk).toBe(0);
+    expect(next.shopBuffHp).toBe(hpBuff);
+
+    const nextSetup = executeSetup(
+      2,
+      next.life,
+      null,
+      42,
+      next.board,
+      true,
+      next.shopUnits,
+      next.shopItems,
+      next.shopBuffAtk,
+      next.shopBuffHp,
+    );
+    const shopBuffs = nextSetup.shopUnits
+      .filter((slot) => slot !== null)
+      .map((slot) => slot!.unit.buffHp);
+    expect(shopBuffs).toEqual([hpBuff, hpBuff, hpBuff]);
+  });
+
   test("fails on empty slot", () => {
     const state = makeState();
     const result = executeSell(state, 0, null);
@@ -340,6 +412,101 @@ describe("executeEquip", () => {
     const next = result._unsafeUnwrap();
     expect(next.shopItems[0]).toBeNull();
     expect(next.shopItems[1]).not.toBeNull();
+  });
+
+  test("sushi buffs three allies without requiring a direct target", () => {
+    const unitA = makeBoardUnit("rat");
+    const unitB = makeBoardUnit("bat");
+    const unitC = makeBoardUnit("hound");
+    const state = makeState({
+      board: [unitA, unitB, unitC, null, null],
+      shopItems: [makeItemSlot("sushi")],
+    });
+    const result = executeEquip(state, 0, 0);
+    expect(result.isOk()).toBe(true);
+    const next = result._unsafeUnwrap();
+    const totalAtkGain =
+      next.board[0]!.baseAtk +
+      next.board[1]!.baseAtk +
+      next.board[2]!.baseAtk -
+      (unitA.baseAtk + unitB.baseAtk + unitC.baseAtk);
+    const totalHpGain =
+      next.board[0]!.baseHp +
+      next.board[1]!.baseHp +
+      next.board[2]!.baseHp -
+      (unitA.baseHp + unitB.baseHp + unitC.baseHp);
+    expect(totalAtkGain).toBe(3);
+    expect(totalHpGain).toBe(3);
+  });
+
+  test("pizza buffs two distinct allies", () => {
+    const unitA = makeBoardUnit("rat");
+    const unitB = makeBoardUnit("bat");
+    const unitC = makeBoardUnit("hound");
+    const state = makeState({
+      board: [unitA, unitB, unitC, null, null],
+      shopItems: [makeItemSlot("pizza")],
+    });
+    const result = executeEquip(state, 0, 0);
+    expect(result.isOk()).toBe(true);
+    const next = result._unsafeUnwrap();
+    const buffedUnits = next.board
+      .slice(0, 3)
+      .filter(
+        (unit, index) =>
+          !!unit &&
+          (unit.baseAtk !== [unitA, unitB, unitC][index]!.baseAtk ||
+            unit.baseHp !== [unitA, unitB, unitC][index]!.baseHp),
+      );
+    expect(buffedUnits).toHaveLength(2);
+  });
+
+  test("canned_food buffs current shop units and future shop buff state", () => {
+    const shopUnit = makeShopSlot("rat");
+    const state = makeState({
+      board: [makeBoardUnit("rat"), null, null, null, null],
+      shopUnits: [shopUnit],
+      shopItems: [makeItemSlot("canned_food")],
+    });
+    const result = executeEquip(state, 0, 0);
+    expect(result.isOk()).toBe(true);
+    const next = result._unsafeUnwrap();
+    expect(next.shopBuffAtk).toBe(1);
+    expect(next.shopBuffHp).toBe(1);
+    expect(next.shopUnits[0]!.unit.buffAtk).toBe(shopUnit.unit.buffAtk + 1);
+    expect(next.shopUnits[0]!.unit.buffHp).toBe(shopUnit.unit.buffHp + 1);
+  });
+
+  test("bone_tree multiplies sushi and canned_food once per use", () => {
+    const boneTree = makeBoardUnit("bone_tree");
+    const allyA = makeBoardUnit("rat");
+    const allyB = makeBoardUnit("bat");
+    const shopUnit = makeShopSlot("hound");
+    const state = makeState({
+      board: [boneTree, allyA, allyB, null, null],
+      shopUnits: [shopUnit],
+      shopItems: [makeItemSlot("sushi"), makeItemSlot("canned_food")],
+    });
+
+    const sushiResult = executeEquip(state, 0, 0);
+    expect(sushiResult.isOk()).toBe(true);
+    const afterSushi = sushiResult._unsafeUnwrap();
+    expect(afterSushi.boneTreeUses).toBe(1);
+    const sushiTotalAtkGain =
+      afterSushi.board[0]!.baseAtk +
+      afterSushi.board[1]!.baseAtk +
+      afterSushi.board[2]!.baseAtk -
+      (boneTree.baseAtk + allyA.baseAtk + allyB.baseAtk);
+    expect(sushiTotalAtkGain).toBe(6);
+
+    const cannedFoodResult = executeEquip(afterSushi, 1, 0);
+    expect(cannedFoodResult.isOk()).toBe(true);
+    const afterCannedFood = cannedFoodResult._unsafeUnwrap();
+    expect(afterCannedFood.boneTreeUses).toBe(2);
+    expect(afterCannedFood.shopBuffAtk).toBe(2);
+    expect(afterCannedFood.shopBuffHp).toBe(2);
+    expect(afterCannedFood.shopUnits[0]!.unit.buffAtk).toBe(shopUnit.unit.buffAtk + 2);
+    expect(afterCannedFood.shopUnits[0]!.unit.buffHp).toBe(shopUnit.unit.buffHp + 2);
   });
 
   test("fails with INVALID_INDEX for out-of-bounds shopItemIndex", () => {
@@ -592,6 +759,8 @@ describe("executeUndo", () => {
       shopItems: [] as (ShopItemSlotJson | null)[],
       freeRoll: false,
       cultistUsed: false,
+      shopBuffAtk: 0,
+      shopBuffHp: 0,
       rotRingUses: 0,
       boneTreeUses: 0,
       corpseBrokerUses: 0,
@@ -625,6 +794,8 @@ describe("executeUndo", () => {
       shopItems: [] as (ShopItemSlotJson | null)[],
       freeRoll: false,
       cultistUsed: false,
+      shopBuffAtk: 0,
+      shopBuffHp: 0,
       rotRingUses: 2,
       boneTreeUses: 3,
       corpseBrokerUses: 1,
@@ -721,6 +892,8 @@ describe("executeReady", () => {
         shopItems: [],
         freeRoll: false,
         cultistUsed: false,
+        shopBuffAtk: 0,
+        shopBuffHp: 0,
         rotRingUses: 0,
         boneTreeUses: 0,
         corpseBrokerUses: 0,
@@ -734,6 +907,40 @@ describe("executeReady", () => {
     const result = executeReady(state);
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().state.undoSnapshot).toBeNull();
+  });
+
+  test("catacomb_rat buffs front allies at end of turn when last battle was LOSE", () => {
+    const state = makeState({
+      board: [
+        makeBoardUnit("rat"),
+        makeBoardUnit("bat"),
+        unitInstanceToBoardUnit(makeUnit({ id: "catacomb_rat" as UnitId, uid: "cr-1" })),
+        null,
+        null,
+      ],
+    });
+    const result = executeReady(state, "LOSE");
+    expect(result.isOk()).toBe(true);
+    const { finalBoard } = result._unsafeUnwrap();
+    const buff = atLevel(CATACOMB_RAT.atkBuff, 1);
+    expect(finalBoard[0]?.buffAtk).toBe(buff);
+    expect(finalBoard[1]?.buffAtk).toBe(buff);
+  });
+
+  test("catacomb_rat does not buff at end of turn when last battle was not LOSE", () => {
+    const state = makeState({
+      board: [
+        makeBoardUnit("rat"),
+        unitInstanceToBoardUnit(makeUnit({ id: "catacomb_rat" as UnitId, uid: "cr-1" })),
+        null,
+        null,
+        null,
+      ],
+    });
+    const result = executeReady(state, "WIN");
+    expect(result.isOk()).toBe(true);
+    const { finalBoard } = result._unsafeUnwrap();
+    expect(finalBoard[0]?.buffAtk).toBe(0);
   });
 });
 

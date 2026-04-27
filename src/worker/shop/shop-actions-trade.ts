@@ -1,9 +1,10 @@
 import { ok, err } from "../../shared/errors";
 import type { Result, GameError } from "../../shared/errors";
-import type { UnitInstance, ShopSlot, ShopItemSlot, OriginId, ItemData } from "../../shared/types";
+import type { UnitInstance, ShopItemSlot, OriginId, ItemData } from "../../shared/types";
 import type { ShopSlotJson } from "../../db/shop-state-types";
 import { UNIT_COST } from "../../shared/constants";
 import { sellBloodGain, type Buff } from "../../shared/skill-params";
+import { applyShopBuffToSlots } from "../../engine/shop-buff";
 import {
   applyBuyEffects,
   applyChaliceEffect,
@@ -21,7 +22,8 @@ import {
   itemSlotsToJson,
   itemSlotsFromJson,
 } from "./shop-serialization";
-import { buildShopForNight, generateLevelUpRewards } from "./shop-generation";
+import { generateLevelUpRewards } from "./shop-generation";
+import { buildRolledShop } from "./shop-service";
 import { captureUndo, placeUnitOnBoard, withRng } from "./shop-helpers";
 
 export function executeRoll(
@@ -39,25 +41,21 @@ export function executeRoll(
     });
 
   const { rng, saveRng } = withRng(state);
-  const allPrev = slotsFromJson(state.shopUnits);
-  const normalPrev = allPrev.map((s) => (s?.eventSourced ? null : s));
-  const frozenEventSlots = allPrev.filter((s): s is ShopSlot => !!s?.eventSourced && s.frozen);
-  const prevItems = itemSlotsFromJson(state.shopItems);
-  const { units, items } = buildShopForNight(
+  const { units, items } = buildRolledShop(
     state.night,
     state.activeEvent,
     originId,
-    normalPrev,
-    prevItems,
+    slotsFromJson(state.shopUnits),
+    itemSlotsFromJson(state.shopItems),
+    { atk: state.shopBuffAtk, hp: state.shopBuffHp },
     rng,
   );
-  const finalUnits: (ShopSlot | null)[] = [...units, ...frozenEventSlots];
 
   return ok({
     ...state,
     blood: state.freeRoll ? state.blood : state.blood - 1,
     freeRoll: false,
-    shopUnits: slotsToJson(finalUnits),
+    shopUnits: slotsToJson(units),
     shopItems: itemSlotsToJson(items),
     rewardSlots: state.rewardSlots.filter((s) => s?.frozen),
     ...saveRng(),
@@ -148,26 +146,6 @@ function finalizeBuy(
   });
 }
 
-function applyShopBuffAll(
-  shopSlots: ShopStateRow["shopUnits"],
-  buff: Buff,
-): ShopStateRow["shopUnits"] {
-  return slotsToJson(
-    slotsFromJson(shopSlots).map((s) =>
-      s
-        ? {
-            ...s,
-            unit: {
-              ...s.unit,
-              buffAtk: s.unit.buffAtk + buff.atk,
-              buffHp: s.unit.buffHp + buff.hp,
-            },
-          }
-        : null,
-    ),
-  );
-}
-
 function stockItemsToShop(
   slots: (ShopItemSlot | null)[],
   items: ItemData[],
@@ -199,25 +177,13 @@ export function executeSell(
   const { rng, saveRng } = withRng(state);
   const sellResult = applySellEffects(unit, newBoard, rng);
   newBoard = sellResult.board;
-  const shopUnits = sellResult.shopBuff
-    ? applyShopBuffAll(state.shopUnits, sellResult.shopBuff)
-    : state.shopUnits;
+  const shopBuff: Buff = sellResult.shopBuff ?? { atk: 0, hp: 0 };
+  const shopUnits = applyShopBuffToSlots(state.shopUnits, shopBuff);
   const shopItems = sellResult.stockItems
     ? itemSlotsToJson(stockItemsToShop(itemSlotsFromJson(state.shopItems), sellResult.stockItems))
     : state.shopItems;
 
-  if (originId === "surgeon") {
-    buffRandomUnit(newBoard, 1, 1, rng);
-    return ok({
-      ...state,
-      blood: state.blood + bloodGain,
-      board: instancesToBoard(newBoard),
-      shopUnits,
-      shopItems,
-      undoSnapshot: captureUndo(state),
-      ...saveRng(),
-    });
-  }
+  if (originId === "surgeon") buffRandomUnit(newBoard, 1, 1, rng);
 
   return ok({
     ...state,
@@ -225,6 +191,8 @@ export function executeSell(
     board: instancesToBoard(newBoard),
     shopUnits,
     shopItems,
+    shopBuffAtk: state.shopBuffAtk + shopBuff.atk,
+    shopBuffHp: state.shopBuffHp + shopBuff.hp,
     undoSnapshot: captureUndo(state),
     ...saveRng(),
   });

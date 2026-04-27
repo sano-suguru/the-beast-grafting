@@ -30,6 +30,7 @@ import {
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
 import { makeShopState, toBoardUnit, stubFetch, shopRoute } from "./test-helpers";
+import { ITEMS } from "../../shared/data/items";
 
 beforeEach(() => {
   phase.value = "SHOP";
@@ -199,16 +200,7 @@ describe("handleFreezeClick", () => {
   });
 
   it("calls API for item freeze", async () => {
-    const item = {
-      id: "iron_plate" as const,
-      name: "鉄板",
-      cost: 3,
-      atk: 0,
-      hp: 2,
-      equip: "iron_plate" as const,
-      skillText: "",
-      lore: "",
-    };
+    const item = ITEMS["iron_plate"];
     stubFetch(shopRoute(makeShopState({ shopItems: [{ item, frozen: true }] })));
     await handleFreezeClick("item", 0, true);
     expect(shopItems.value[0]!.frozen).toBe(true);

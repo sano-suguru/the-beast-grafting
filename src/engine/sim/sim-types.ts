@@ -89,6 +89,22 @@ export interface UnitPerformance {
   readonly tierNormalizedWinRate: number;
   readonly impactScore: number;
   readonly winRateCI95: readonly [number, number];
+  // ── fidelity メトリクス (Phase 1) ──
+  readonly avgLevel: number;
+  readonly levelDistribution: readonly [number, number, number];
+  readonly equipRate: number;
+  readonly avgOwnedTurns: number;
+  readonly avgGraftCount: number;
+  readonly shopTriggerCount: number;
+  readonly survivedToFinalNight: number;
+}
+
+/** buildProgressedTeamWithTrace が返す試行ごとのユニット進行記録 */
+export interface UnitProgressionTrace {
+  readonly graftCount: number;
+  readonly ownedNights: number;
+  readonly hasEquip: boolean;
+  readonly level: number;
 }
 
 // ── Runner の戻り値型 ──
@@ -124,7 +140,31 @@ export interface RandomTrialResult extends SimResult {
 
 export const TEAM_SIZE = 5;
 
+export interface TeamViability {
+  readonly arrivalNight: number;
+  readonly stabilizeNight: number;
+  readonly lifeSpentBeforeStabilize: number;
+  readonly pivotRiskScore: number;
+  readonly economyPressureScore: number;
+  readonly correlatedReachabilityScore: number;
+  readonly requiredSupportMissingRate: number;
+  readonly viabilityScore: number;
+}
+
 export interface TeamTrial {
   readonly teamIds: readonly RegularUnitId[];
   readonly won: boolean;
+}
+
+export type MetaCandidateSource = "greedy" | "ga" | "night-ga";
+
+export interface MetaCandidate {
+  readonly name: string;
+  readonly unitIds: readonly RegularUnitId[];
+  readonly sources: readonly MetaCandidateSource[];
+  readonly greedyRank: number | null;
+  readonly gaFitness: number | null;
+  readonly nightGaFitness: number | null;
+  readonly reachabilityScore: number;
+  readonly viability: TeamViability;
 }

@@ -94,7 +94,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `開戦: ランダムな敵${n}体に${d}ダメージ`;
   },
   church_inquisitor: (lv) => `開戦: 敵前衛に${atLevel(INQUISITOR.damage, lv)}ダメージ`,
-  zealot: (lv) => `味方召喚時: 現れた味方の攻撃+${atLevel(ZEALOT.summonBuff, lv)}`,
+  zealot: (lv) => `味方召喚時: 現れた味方の攻撃+${atLevel(ZEALOT.summonBuff, lv)}(次のターンまで)`,
   squire: (lv) => {
     const b = atLevel(SQUIRE.deathBuff, lv);
     return `死亡: 後ろの味方に+${b.atk}/+${b.hp}`;
@@ -144,7 +144,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
     return `Tier1購入: 味方全体に+${b.atk}/+${b.hp}(${atLevel(ROT_RING.uses, lv)}回/夜)`;
   },
   catacomb_rat: (lv) =>
-    `ターン開始: 前夜敗北なら前方${CATACOMB_RAT.targets}体の攻撃+${atLevel(CATACOMB_RAT.atkBuff, lv)}`,
+    `ターン終了: 前回敗北なら前方${CATACOMB_RAT.targets}体の攻撃+${atLevel(CATACOMB_RAT.atkBuff, lv)}`,
   stitched_twin: (lv) => `被弾: 自身の攻撃+${atLevel(STITCHED_TWIN.atkBuff, lv)}`,
   market_vulture: (lv) =>
     `開戦: 最もHPの高い味方のHP×${atLevel(MARKET_VULTURE.percent, lv)}%を自身に獲得`,
@@ -156,7 +156,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   spite_beast: (lv) => `死亡: 攻撃の${atLevel(SPITE_BEAST.percent, lv)}%ダメージを隣接ユニットに`,
   sin_eater: (lv) => {
     const b = atLevel(SIN_EATER.buff, lv);
-    return `撃破: 自身に+${b.atk}/+${b.hp}`;
+    return `撃破: 自身に+${b.atk}/+${b.hp}(${SIN_EATER.maxUses}回/戦)`;
   },
   carrion_sentinel: (lv) =>
     `前の味方が死亡: 【屍蝋の盾】と攻撃+1を得る(${atLevel(CARRION_SENTINEL.uses, lv)}回/戦)`,

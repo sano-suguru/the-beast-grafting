@@ -12,17 +12,11 @@ import {
 } from "./game-store";
 import { makeUnit } from "../../engine/test-helpers";
 import type { ItemData } from "../types";
+import { ITEMS } from "../../shared/data/items";
 
 function makeItem(overrides: Partial<ItemData> = {}): ItemData {
   return {
-    id: "iron_plate",
-    name: "鉄板",
-    cost: 3,
-    atk: 0,
-    hp: 2,
-    equip: "iron_plate",
-    skillText: "",
-    lore: "",
+    ...ITEMS["iron_plate"],
     ...overrides,
   };
 }
@@ -67,6 +61,16 @@ describe("checkHighlight – SHOP_ITEM selected", () => {
     blood.value = 10;
     selection.value = { type: "SHOP_ITEM", index: 0, item: makeItem() };
     expect(checkHighlight("BOARD_SLOT", 0, null)).toBe(false);
+  });
+
+  it("returns 'graft' for targetless items on empty slots", () => {
+    blood.value = 10;
+    selection.value = {
+      type: "SHOP_ITEM",
+      index: 0,
+      item: makeItem({ ...ITEMS["canned_food"] }),
+    };
+    expect(checkHighlight("BOARD_SLOT", 0, null)).toBe("graft");
   });
 });
 

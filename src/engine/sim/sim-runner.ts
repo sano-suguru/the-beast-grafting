@@ -5,13 +5,14 @@ import type {
   RandomTrialResult,
   TeamTrial,
   UnitPerformance,
+  UnitProgressionTrace,
 } from "./sim-types";
 import type { Rng } from "../rng";
 import { createSeededRng } from "../rng";
 import { createUnit } from "../helpers";
 import { simulateBattleSim } from "./sim-battle";
 import { generateSimTeam } from "./sim-team-gen";
-import { buildProgressedTeam } from "./sim-progression";
+import { buildProgressedTeam, buildProgressedTeamWithTrace } from "./sim-progression";
 import { extractBattleMetricsSim } from "./sim-metrics";
 import { type PerfMap, accumulatePerformance, finalizePerformance, percentile } from "./sim-perf";
 import { deriveSeed, makeSimEnemy } from "./sim-utils";
@@ -29,12 +30,18 @@ function accumulateTrialPerformance(
   perfMap: PerfMap,
   metrics: BattleMetrics,
   result: BattleResult,
+  pTraces?: ReadonlyMap<DataUnitId, UnitProgressionTrace>,
+  eTraces?: ReadonlyMap<DataUnitId, UnitProgressionTrace>,
 ): void {
   for (const tally of metrics.unitActions.values()) {
     const won =
       (tally.side === "player" && result === "WIN") ||
       (tally.side === "enemy" && result === "LOSE");
-    accumulatePerformance(perfMap, tally, won);
+    const trace =
+      tally.side === "player"
+        ? pTraces?.get(tally.unitId as DataUnitId)
+        : eTraces?.get(tally.unitId as DataUnitId);
+    accumulatePerformance(perfMap, tally, won, trace);
   }
 }
 
@@ -145,8 +152,8 @@ export function runRandomTrials(
     const eIds = generateSimTeam(night, eRng);
     const pProgRng = createSeededRng(deriveSeed(baseSeed, trials * 3 + i));
     const eProgRng = createSeededRng(deriveSeed(baseSeed, trials * 4 + i));
-    const pTeam = buildRealisticTeam(pIds, night, pProgRng);
-    const eTeam = buildRealisticTeam(eIds, night, eProgRng);
+    const { units: pTeam, traces: pTraces } = buildProgressedTeamWithTrace(pIds, night, pProgRng);
+    const { units: eTeam, traces: eTraces } = buildProgressedTeamWithTrace(eIds, night, eProgRng);
     const pShopRng = createSeededRng(deriveSeed(baseSeed, trials * 5 + i));
     const eShopRng = createSeededRng(deriveSeed(baseSeed, trials * 6 + i));
     applySimShopEffects(pTeam, night, pShopRng);
@@ -156,7 +163,7 @@ export function runRandomTrials(
 
     const m = extractBattleMetricsSim(sim);
     totalFrames += m.frameCount;
-    accumulateTrialPerformance(perfMap, m, sim.result);
+    accumulateTrialPerformance(perfMap, m, sim.result, pTraces, eTraces);
 
     teamTrials.push({ teamIds: pIds, won: sim.result === "WIN" });
     teamTrials.push({ teamIds: eIds, won: sim.result === "LOSE" });

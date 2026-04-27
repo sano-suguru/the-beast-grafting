@@ -1,4 +1,5 @@
 import type { RegularUnitId, BattleResult, EnemyTeam } from "../../shared/types";
+import type { TeamViability } from "./sim-types";
 
 export interface GaConfig {
   readonly populationSize: number;
@@ -28,7 +29,9 @@ export interface GaGenerationStats {
 export interface GaRankedTeam {
   readonly teamIds: readonly RegularUnitId[];
   readonly fitness: number;
+  readonly adjustedFitness: number;
   readonly fitnessCI95: readonly [number, number];
+  readonly viability: TeamViability;
   readonly novelty: boolean;
 }
 

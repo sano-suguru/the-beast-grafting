@@ -135,7 +135,7 @@ export const UNITS_TIER34 = {
     id: "sin_eater",
     name: "喰い太る黒蟲",
     baseAtk: 4,
-    baseHp: 7,
+    baseHp: 6,
     tier: 4,
     lore: "死体に群がる黒い甲虫。仲間の屍を喰うたびに殻が硬く、脚が太くなる。",
     secretLore: "最後の一匹になった屍蟲は、城門を顎で砕いた。",

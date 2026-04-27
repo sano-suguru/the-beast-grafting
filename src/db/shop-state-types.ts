@@ -18,6 +18,8 @@ export interface ShopUndoSnapshot {
   board: (BoardUnit | null)[];
   shopUnits: (ShopSlotJson | null)[];
   shopItems: (ShopItemSlotJson | null)[];
+  shopBuffAtk: number;
+  shopBuffHp: number;
   freeRoll: boolean;
   cultistUsed: boolean;
   rotRingUses: number;

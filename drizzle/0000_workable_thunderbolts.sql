@@ -105,6 +105,8 @@ CREATE TABLE `shop_states` (
 	`blood` integer DEFAULT 10 NOT NULL,
 	`free_roll` integer DEFAULT false NOT NULL,
 	`cultist_used` integer DEFAULT false NOT NULL,
+	`shop_buff_atk` integer DEFAULT 0 NOT NULL,
+	`shop_buff_hp` integer DEFAULT 0 NOT NULL,
 	`rot_ring_uses` integer DEFAULT 0 NOT NULL,
 	`bone_tree_uses` integer DEFAULT 0 NOT NULL,
 	`corpse_broker_uses` integer DEFAULT 0 NOT NULL,

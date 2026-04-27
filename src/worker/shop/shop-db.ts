@@ -8,8 +8,7 @@ import { isOriginId } from "../../shared/origin-id";
 import type { BoardUnit } from "../../shared/board-unit";
 import type { ShopStateResponse } from "../../shared/api-types";
 import { runs, shopStates } from "../../db/schema";
-import type { ShopSlotJson, ShopItemSlotJson, ShopUndoSnapshot } from "../../db/shop-state-types";
-import type { EventData } from "../../shared/types";
+import type { ShopSlotJson, ShopItemSlotJson } from "../../db/shop-state-types";
 import { ITEMS } from "../../shared/data/items";
 import { generateId } from "../auth/crypto";
 import { generateShopSeed } from "../utils/seed";
@@ -69,26 +68,7 @@ export function parseOriginId(value: string | null): OriginId | null {
   return value;
 }
 
-function dbRowToState(
-  row: {
-    night: number;
-    blood: number;
-    freeRoll: boolean;
-    cultistUsed: boolean;
-    rotRingUses: number;
-    boneTreeUses: number;
-    corpseBrokerUses: number;
-    shopUnits: (ShopSlotJson | null)[];
-    shopItems: (ShopItemSlotJson | null)[];
-    board: (BoardUnit | null)[];
-    activeEvent: EventData | null;
-    rngS0: number;
-    rngS1: number;
-    rewardSlots: (ShopSlotJson | null)[];
-    undoSnapshot: ShopUndoSnapshot | null;
-  },
-  life: number,
-): ShopStateRow {
+function dbRowToState(row: Omit<ShopStateRow, "life">, life: number): ShopStateRow {
   return {
     blood: row.blood,
     board: row.board,
@@ -96,6 +76,8 @@ function dbRowToState(
     shopItems: row.shopItems,
     freeRoll: row.freeRoll,
     cultistUsed: row.cultistUsed,
+    shopBuffAtk: row.shopBuffAtk,
+    shopBuffHp: row.shopBuffHp,
     rotRingUses: row.rotRingUses,
     boneTreeUses: row.boneTreeUses,
     corpseBrokerUses: row.corpseBrokerUses,
@@ -127,6 +109,8 @@ function stateToColumns(state: ShopStateRow) {
     blood: state.blood,
     freeRoll: state.freeRoll,
     cultistUsed: state.cultistUsed,
+    shopBuffAtk: state.shopBuffAtk,
+    shopBuffHp: state.shopBuffHp,
     rotRingUses: state.rotRingUses,
     boneTreeUses: state.boneTreeUses,
     corpseBrokerUses: state.corpseBrokerUses,
@@ -276,9 +260,11 @@ export function normalizePrevBoard(board: (BoardUnit | null)[]): (BoardUnit | nu
 interface PrevShopSlots {
   shopUnits: (ShopSlotJson | null)[];
   shopItems: (ShopItemSlotJson | null)[];
+  shopBuffAtk: number;
+  shopBuffHp: number;
 }
 
-const EMPTY_PREV: PrevShopSlots = { shopUnits: [], shopItems: [] };
+const EMPTY_PREV: PrevShopSlots = { shopUnits: [], shopItems: [], shopBuffAtk: 0, shopBuffHp: 0 };
 
 export async function loadPrevNightShop(
   db: DrizzleD1Database,
@@ -290,7 +276,12 @@ export async function loadPrevNightShop(
   const result = await safeAsync(
     () =>
       db
-        .select({ shopUnits: shopStates.shopUnits, shopItems: shopStates.shopItems })
+        .select({
+          shopUnits: shopStates.shopUnits,
+          shopItems: shopStates.shopItems,
+          shopBuffAtk: shopStates.shopBuffAtk,
+          shopBuffHp: shopStates.shopBuffHp,
+        })
         .from(shopStates)
         .where(and(eq(shopStates.runId, runId), eq(shopStates.night, prevNight)))
         .limit(1),

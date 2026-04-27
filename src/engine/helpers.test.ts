@@ -92,8 +92,8 @@ describe("getShopPool", () => {
 });
 
 describe("getItemPool", () => {
-  it("returns all item ids", () => {
-    const pool = getItemPool();
+  it("returns the early item ids before late stat items unlock", () => {
+    const pool = getItemPool(1);
     expect(pool).toEqual([
       "preservative",
       "iron_plate",
@@ -106,8 +106,15 @@ describe("getItemPool", () => {
     ]);
   });
 
+  it("adds grave_pear from item-shop expansion night onward", () => {
+    expect(getItemPool(7)).toContain("grave_pear");
+    expect(getItemPool(7)).toContain("canned_food");
+    expect(getItemPool(9)).toContain("sushi");
+    expect(getItemPool(11)).toContain("pizza");
+  });
+
   it("does not include pure_blood", () => {
-    expect(getItemPool()).not.toContain("pure_blood");
+    expect(getItemPool(12)).not.toContain("pure_blood");
   });
 });
 

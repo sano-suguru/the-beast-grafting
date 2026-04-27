@@ -27,6 +27,8 @@ export function captureUndo(state: ShopStateRow): ShopUndoSnapshot {
     board: state.board,
     shopUnits: state.shopUnits,
     shopItems: state.shopItems,
+    shopBuffAtk: state.shopBuffAtk,
+    shopBuffHp: state.shopBuffHp,
     freeRoll: state.freeRoll,
     cultistUsed: state.cultistUsed,
     rotRingUses: state.rotRingUses,

@@ -33,6 +33,10 @@ function itemSlotFromJson(json: ShopItemSlotJson): ShopItemSlot {
   return { item, frozen: json.frozen };
 }
 
+export function singleItemSlotFromJson(json: ShopItemSlotJson): ShopItemSlot {
+  return itemSlotFromJson(json);
+}
+
 export function boardToInstances(b: (BoardUnit | null)[]): (UnitInstance | null)[] {
   return b.map((bu) => (bu ? boardUnitToUnitInstance(bu) : null));
 }

@@ -89,6 +89,10 @@ export type UnitId = DataUnitId | TokenId;
 
 export type ItemId =
   | "preservative"
+  | "grave_pear"
+  | "sushi"
+  | "pizza"
+  | "canned_food"
   | "iron_plate"
   | "bile"
   | "maggot"
@@ -145,9 +149,34 @@ export interface ItemData {
   atk: number;
   hp: number;
   equip: EquipType | null;
+  effect: ItemEffect;
   skillText: string;
   lore: string;
 }
+
+export type ItemEffect =
+  | {
+      kind: "single_target_stat";
+      atk: number;
+      hp: number;
+    }
+  | {
+      kind: "single_target_equip";
+      atk: number;
+      hp: number;
+      equip: EquipType;
+    }
+  | {
+      kind: "random_team_stat";
+      atk: number;
+      hp: number;
+      count: number;
+    }
+  | {
+      kind: "shop_current_and_future_stat";
+      atk: number;
+      hp: number;
+    };
 
 export interface OriginData {
   id: OriginId;

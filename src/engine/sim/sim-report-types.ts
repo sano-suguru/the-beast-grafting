@@ -1,4 +1,5 @@
 import type { MatchupResult, UnitPerformance } from "./sim-types";
+import type { MetaCandidate } from "./sim-types";
 import type { GaGenerationStats, GaRankedTeam } from "./sim-ga-types";
 
 /** UnitPerformance の JSON-safe 版（winRateCI95 を mutable tuple に） */
@@ -75,6 +76,10 @@ export interface CompositionEntry {
   readonly name: string;
   readonly unitIds: readonly string[];
   readonly totalSynergyDelta: number;
+}
+
+export interface MetaCandidateEntry extends MetaCandidate {
+  readonly reachabilityScore: number;
 }
 
 export interface InsufficientSampleEntry {
@@ -157,6 +162,7 @@ export interface SimReportData {
   readonly scalingAnalysis: ScalingAnalysis | null;
   readonly pairSynergies: readonly PairSynergyEntry[];
   readonly discoveredCompositions: readonly CompositionEntry[];
+  readonly metaCandidates: readonly MetaCandidateEntry[];
   readonly insufficientSamples: readonly InsufficientSampleEntry[];
   readonly gaDiscovery: GaReportData | null;
   readonly nightGaResults: readonly NightGaEntry[];

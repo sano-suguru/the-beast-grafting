@@ -109,9 +109,14 @@ function runBuffKnockout(
     buffParam: Scaled<Buff>;
     target: "self" | "all";
     narrative: string;
+    consumeSkillUse?: boolean;
   },
 ) {
   runKnockoutSkill(attacker, attackerBoard, unitId, isPlayer, (prefix) => {
+    if (opts.consumeSkillUse) {
+      if (attacker.skillUses <= 0) return;
+      attacker.skillUses -= 1;
+    }
     const b = atLevel(opts.buffParam, attacker.level);
     const actions =
       opts.target === "self"
@@ -141,6 +146,7 @@ function processSinEaterKnockout(
     buffParam: SIN_EATER.buff,
     target: "self",
     narrative: "が屍を喰らい、殻が膨れる。",
+    consumeSkillUse: true,
   });
 }
 

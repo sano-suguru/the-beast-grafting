@@ -80,6 +80,8 @@ describe("POST /setup", () => {
     expect(body.shop.night).toBe(1);
     expect(body.shop.blood).toBe(10);
     expect(body.shop.board).toHaveLength(5);
+    expect("shopBuffAtk" in body.shop).toBe(false);
+    expect("shopBuffHp" in body.shop).toBe(false);
   });
 
   it("returns 404 for non-existent run", async () => {

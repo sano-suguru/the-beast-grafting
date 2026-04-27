@@ -88,8 +88,8 @@ describe("CHURCH_UNITS data integrity", () => {
 describe("ITEMS data integrity", () => {
   const entries = Object.entries(ITEMS);
 
-  it("contains exactly 15 items", () => {
-    expect(entries).toHaveLength(15);
+  it("contains exactly 19 items", () => {
+    expect(entries).toHaveLength(19);
   });
 
   it("every item has non-negative cost", () => {
@@ -183,9 +183,11 @@ describe("Cross-reference integrity", () => {
   });
 
   it("getItemPool returns valid ITEMS IDs", () => {
-    const pool = getItemPool();
-    for (const id of pool) {
-      expect(id in ITEMS, `getItemPool returned "${id}" not in ITEMS`).toBe(true);
+    for (const night of [1, 7, 12]) {
+      const pool = getItemPool(night);
+      for (const id of pool) {
+        expect(id in ITEMS, `getItemPool(${night}) returned "${id}" not in ITEMS`).toBe(true);
+      }
     }
   });
 

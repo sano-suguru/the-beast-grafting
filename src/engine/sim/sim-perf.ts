@@ -1,5 +1,5 @@
 import type { DataUnitId } from "../../shared/types";
-import type { UnitActionTally, UnitPerformance } from "./sim-types";
+import type { UnitActionTally, UnitPerformance, UnitProgressionTrace } from "./sim-types";
 import { lookupUnitData } from "../../shared/data/unit-lookup";
 
 interface MutablePerf {
@@ -19,38 +19,58 @@ interface MutablePerf {
   totalSkillActivations: number;
   deathFrameSum: number;
   deathCount: number;
+  // fidelity メトリクス
+  totalLevels: number;
+  lv1Count: number;
+  lv2Count: number;
+  lv3Count: number;
+  equipCount: number;
+  totalOwnedNights: number;
+  totalGraftCount: number;
 }
 
 export type PerfMap = Map<DataUnitId, MutablePerf>;
+
+function makeMutablePerf(): MutablePerf {
+  return {
+    appearances: 0,
+    wins: 0,
+    totalDamage: 0,
+    totalDamageReceived: 0,
+    totalBuffAtk: 0,
+    totalBuffHp: 0,
+    totalBuffAtkGiven: 0,
+    totalBuffHpGiven: 0,
+    totalHealingDone: 0,
+    totalHealingReceived: 0,
+    totalKills: 0,
+    totalSpawnsProduced: 0,
+    survivalCount: 0,
+    totalSkillActivations: 0,
+    deathFrameSum: 0,
+    deathCount: 0,
+    totalLevels: 0,
+    lv1Count: 0,
+    lv2Count: 0,
+    lv3Count: 0,
+    equipCount: 0,
+    totalOwnedNights: 0,
+    totalGraftCount: 0,
+  };
+}
 
 /** 1戦闘分の UnitActionTally を DataUnitId 別に蓄積する（トークンはスキップ） */
 export function accumulatePerformance(
   map: Map<DataUnitId, MutablePerf>,
   tally: UnitActionTally,
   won: boolean,
+  trace?: UnitProgressionTrace,
 ): void {
   if (tally.unitId === "token") return;
   const unitId: DataUnitId = tally.unitId;
   let p = map.get(unitId);
   if (!p) {
-    p = {
-      appearances: 0,
-      wins: 0,
-      totalDamage: 0,
-      totalDamageReceived: 0,
-      totalBuffAtk: 0,
-      totalBuffHp: 0,
-      totalBuffAtkGiven: 0,
-      totalBuffHpGiven: 0,
-      totalHealingDone: 0,
-      totalHealingReceived: 0,
-      totalKills: 0,
-      totalSpawnsProduced: 0,
-      survivalCount: 0,
-      totalSkillActivations: 0,
-      deathFrameSum: 0,
-      deathCount: 0,
-    };
+    p = makeMutablePerf();
     map.set(unitId, p);
   }
   p.appearances++;
@@ -70,6 +90,15 @@ export function accumulatePerformance(
   if (tally.deathFrame !== null) {
     p.deathFrameSum += tally.deathFrame;
     p.deathCount++;
+  }
+  if (trace) {
+    p.totalLevels += trace.level;
+    if (trace.level === 1) p.lv1Count++;
+    else if (trace.level === 2) p.lv2Count++;
+    else p.lv3Count++;
+    p.totalOwnedNights += trace.ownedNights;
+    p.totalGraftCount += trace.graftCount;
+    if (trace.hasEquip) p.equipCount++;
   }
 }
 
@@ -119,6 +148,13 @@ function toBasePerf(id: DataUnitId, p: MutablePerf): BasePerf {
     tier,
     impactScore: a.avgDmg + a.avgBag + a.avgBhg + a.avgK * 3 + a.avgSp * 2,
     winRateCI95: wilsonCI(p.wins, a.n),
+    avgLevel: avg(p.totalLevels, a.n),
+    levelDistribution: [avg(p.lv1Count, a.n), avg(p.lv2Count, a.n), avg(p.lv3Count, a.n)] as const,
+    equipRate: avg(p.equipCount, a.n),
+    avgOwnedTurns: avg(p.totalOwnedNights, a.n),
+    avgGraftCount: avg(p.totalGraftCount, a.n),
+    shopTriggerCount: 0,
+    survivedToFinalNight: a.n,
   };
 }
 

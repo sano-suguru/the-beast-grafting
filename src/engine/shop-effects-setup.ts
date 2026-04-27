@@ -1,8 +1,8 @@
-import type { BattleResult, UnitId } from "../shared/types";
+import type { UnitId } from "../shared/types";
 import type { BoardUnit } from "../shared/board-unit";
 import type { Buff } from "../shared/skill-params";
 import type { Rng } from "./rng";
-import { atLevel, CATACOMB_RAT, REVENANT } from "../shared/skill-params";
+import { atLevel, REVENANT } from "../shared/skill-params";
 import { ASH_FUNGUS } from "../shared/skill-params-shop";
 
 function buffNAlliesInFront(
@@ -21,19 +21,6 @@ function buffNAlliesInFront(
       buffHp: target.buffHp + buff.hp,
     };
     buffed++;
-  }
-}
-
-export function applyCatacombRatBuff(
-  board: (BoardUnit | null)[],
-  lastBattleResult: BattleResult,
-): void {
-  if (lastBattleResult !== "LOSE") return;
-  for (let i = 0; i < board.length; i++) {
-    const rat = board[i];
-    if (!rat || (rat.id as UnitId) !== "catacomb_rat") continue;
-    const atk = atLevel(CATACOMB_RAT.atkBuff, rat.level);
-    buffNAlliesInFront(board, i, CATACOMB_RAT.targets, { atk, hp: 0 });
   }
 }
 

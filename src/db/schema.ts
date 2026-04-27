@@ -151,6 +151,8 @@ export const shopStates = sqliteTable(
     blood: integer("blood").notNull().default(10),
     freeRoll: integer("free_roll", { mode: "boolean" }).notNull().default(false),
     cultistUsed: integer("cultist_used", { mode: "boolean" }).notNull().default(false),
+    shopBuffAtk: integer("shop_buff_atk").notNull().default(0),
+    shopBuffHp: integer("shop_buff_hp").notNull().default(0),
     rotRingUses: integer("rot_ring_uses").notNull().default(0),
     boneTreeUses: integer("bone_tree_uses").notNull().default(0),
     corpseBrokerUses: integer("corpse_broker_uses").notNull().default(0),

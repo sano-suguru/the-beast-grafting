@@ -7,8 +7,11 @@ import { generateSimTeam } from "./sim-team-gen";
 import { getShopPool } from "../helpers";
 import { findOptimalPositioning, positionArchetypes } from "./sim-position";
 import { runMatchup, runRandomTrials } from "./sim-runner";
-import { analyzePairSynergies, discoverArchetypes } from "./sim-archetype-discovery";
-import type { DiscoveredArchetype, PairSynergy } from "./sim-archetype-discovery";
+import { analyzePairSynergies, jaccardSimilarity } from "./sim-pair-synergy";
+import type { DiscoveredArchetype, PairSynergy } from "./sim-pair-synergy";
+import { discoverArchetypes } from "./sim-archetype-greedy";
+import { buildMetaCandidateFrontier } from "./sim-meta-frontier";
+import type { MetaCandidate } from "./sim-types";
 import { createUnit } from "../helpers";
 import { simulateBattleResult } from "./sim-battle";
 import { buildProgressedUnit } from "./sim-progression";
@@ -23,6 +26,9 @@ import { analyzeMetaHealth } from "./sim-meta-analysis";
 
 const collector = new SimReportCollector();
 const allMatchupEntries: MatchupEntry[] = [];
+let latestGreedyArchetypes: readonly DiscoveredArchetype[] = [];
+let latestGaTopTeams: readonly GaRankedTeam[] = [];
+let latestNightGaTopTeams: readonly GaRankedTeam[] = [];
 
 const workerCount = process.env["SIM_WORKERS"] ? Number(process.env["SIM_WORKERS"]) : undefined;
 let gaWorkerPool: Worker[];
@@ -252,6 +258,7 @@ describe("archetype discovery pipeline", () => {
       trialResult.winRate,
     );
     archetypes = discoverArchetypes(pairSynergies, trialResult.unitPerformance);
+    latestGreedyArchetypes = archetypes;
     positioned = positionArchetypes(archetypes, 12, 200, 30);
   }, 120_000);
 
@@ -342,50 +349,15 @@ describe("archetype discovery pipeline", () => {
     }
   });
 
-  it("runs all-vs-all without crashing", { timeout: 30_000 }, () => {
-    const names = [...positioned.keys()];
-    const TRIALS = 1_000;
-
-    for (let i = 0; i < names.length; i++) {
-      for (let j = i + 1; j < names.length; j++) {
-        const a = names[i]!;
-        const b = names[j]!;
-        const r = runMatchup(
-          positioned.get(a)!,
-          positioned.get(b)!,
-          TRIALS,
-          (i + 1) * 1000 + j,
-          12,
-          true,
-        );
-        const aRate = r.aWins / r.trials;
-        expect(r.trials).toBe(TRIALS);
-        expect(r.aWins + r.bWins + r.draws).toBe(TRIALS);
-
-        const warnings: string[] = [];
-        if (aRate > 0.8 || aRate < 0.2)
-          warnings.push(`IMBALANCE: ${aRate > 0.5 ? a : b} dominates`);
-        if (r.avgFrameCount < 5) warnings.push("STOMP: battles too short");
-        if (r.avgFrameCount > 80) warnings.push("STALL: battles too long");
-
-        const entry: MatchupEntry = {
-          teamA: a,
-          teamB: b,
-          aWins: r.aWins,
-          bWins: r.bWins,
-          draws: r.draws,
-          trials: r.trials,
-          avgFrameCount: r.avgFrameCount,
-          avgWinnerRemainingHp: r.avgWinnerRemainingHp,
-          winMarginMedian: r.winMarginMedian,
-          frameCountP25: r.frameCountP25,
-          frameCountP75: r.frameCountP75,
-          unitPerformance: perfMapToRecord(r.unitPerformance),
-          warnings,
-        };
-        collector.addMatchup(entry);
-        allMatchupEntries.push(entry);
-      }
+  it("positions discovered compositions without crashing", { timeout: 30_000 }, () => {
+    expect(positioned.size).toBe(archetypes.length);
+    for (const arch of archetypes) {
+      const positionedIds = positioned.get(arch.name);
+      expect(positionedIds, `${arch.name} missing positioned result`).toBeDefined();
+      expect(positionedIds).toHaveLength(arch.unitIds.length);
+      expect(new Set(positionedIds).size, `${arch.name} positioned duplicates`).toBe(
+        arch.unitIds.length,
+      );
     }
   });
 });
@@ -474,13 +446,62 @@ describe("scaling & durability analysis", () => {
 
 // ── GA構成発見 ──
 
-function jaccardSim(a: readonly RegularUnitId[], b: readonly RegularUnitId[]): number {
-  const setA = new Set(a);
-  const setB = new Set(b);
-  let inter = 0;
-  for (const id of setA) if (setB.has(id)) inter++;
-  const union = setA.size + setB.size - inter;
-  return union === 0 ? 1 : inter / union;
+function collectNightGaAlerts(night: number, topTeams: readonly GaRankedTeam[]): string[] {
+  const breakageAlerts: string[] = [];
+  for (const team of topTeams) {
+    if (team.fitness > 0.9) {
+      breakageAlerts.push(
+        `Night ${night} CRITICAL: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
+      );
+    } else if (team.fitness > 0.8) {
+      breakageAlerts.push(
+        `Night ${night} WARNING: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
+      );
+    }
+  }
+  return breakageAlerts;
+}
+
+function gaTeamScore(team: GaRankedTeam): number {
+  return team.adjustedFitness;
+}
+
+async function runNightGaCheckpoint(night: number): Promise<{
+  poolSize: number;
+  topTeams: GaRankedTeam[];
+  breakageAlerts: string[];
+}> {
+  const poolSize = new Set(getShopPool(night)).size;
+  const seeds = [night * 1000 + 42, night * 1000 + 137];
+  const allTeams: GaRankedTeam[] = [];
+
+  for (const seed of seeds) {
+    const result = await runGeneticAlgorithm(
+      {
+        populationSize: 100,
+        generations: 50,
+        trialsPerEval: 50,
+        eliteCount: 10,
+        mutationRate: 0.15,
+        tournamentSize: 5,
+        refinementTrials: 500,
+        refinementTopK: 5,
+        night,
+        baseSeed: seed,
+      },
+      gaWorkerPool,
+    );
+    allTeams.push(...result.topTeams);
+  }
+
+  const seen = new Map<string, GaRankedTeam>();
+  for (const team of allTeams) {
+    const key = [...team.teamIds].sort().join(",");
+    const existing = seen.get(key);
+    if (!existing || gaTeamScore(team) > gaTeamScore(existing)) seen.set(key, team);
+  }
+  const topTeams = [...seen.values()].sort((a, b) => gaTeamScore(b) - gaTeamScore(a)).slice(0, 5);
+  return { poolSize, topTeams, breakageAlerts: collectNightGaAlerts(night, topTeams) };
 }
 
 describe("GA composition discovery", () => {
@@ -515,7 +536,9 @@ describe("GA composition discovery", () => {
 
     // Novelty判定: グリーディ構成との Jaccard > 0.6 で既知とみなす
     const topTeams = gaResult.topTeams.map((team) => {
-      const isKnown = greedyArchetypes.some((arch) => jaccardSim(team.teamIds, arch.unitIds) > 0.6);
+      const isKnown = greedyArchetypes.some(
+        (arch) => jaccardSimilarity(team.teamIds, arch.unitIds) > 0.6,
+      );
       return { ...team, novelty: !isKnown };
     });
 
@@ -539,7 +562,9 @@ describe("GA composition discovery", () => {
       topTeams: topTeams.map((t) => ({
         teamIds: [...t.teamIds],
         fitness: t.fitness,
+        adjustedFitness: t.adjustedFitness,
         fitnessCI95: [t.fitnessCI95[0], t.fitnessCI95[1]],
+        viability: { ...t.viability },
         novelty: t.novelty,
       })),
       generationStats: gaResult.generationStats.map((s) => ({ ...s })),
@@ -547,6 +572,7 @@ describe("GA composition discovery", () => {
       convergenceGeneration: convergenceGen,
       breakageAlerts,
     });
+    latestGaTopTeams = topTeams;
   }, 300_000);
 
   it("GA converges: best fitness improves over generations", () => {
@@ -595,53 +621,8 @@ describe("cross-night GA", () => {
 
   it("discovers strongest compositions at each night checkpoint", async () => {
     for (const night of NIGHT_CHECKPOINTS) {
-      const poolSize = new Set(getShopPool(night)).size;
-      const seeds = [night * 1000 + 42, night * 1000 + 137];
-      const allTeams: GaRankedTeam[] = [];
-
-      for (const seed of seeds) {
-        const result = await runGeneticAlgorithm(
-          {
-            populationSize: 100,
-            generations: 50,
-            trialsPerEval: 50,
-            eliteCount: 10,
-            mutationRate: 0.15,
-            tournamentSize: 5,
-            refinementTrials: 500,
-            refinementTopK: 5,
-            night,
-            baseSeed: seed,
-          },
-          gaWorkerPool,
-        );
-        allTeams.push(...result.topTeams);
-      }
-
-      // 重複除去: teamIds (sorted) が同じものを統合（最高fitnessを採用）
-      const seen = new Map<string, GaRankedTeam>();
-      for (const t of allTeams) {
-        const key = [...t.teamIds].sort().join(",");
-        const existing = seen.get(key);
-        if (!existing || t.fitness > existing.fitness) seen.set(key, t);
-      }
-      const uniqueTeams = [...seen.values()].sort((a, b) => b.fitness - a.fitness).slice(0, 5);
-
-      const result = { topTeams: uniqueTeams };
-
-      const breakageAlerts: string[] = [];
-      for (const team of result.topTeams) {
-        if (team.fitness > 0.9) {
-          breakageAlerts.push(
-            `Night ${night} CRITICAL: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
-          );
-        } else if (team.fitness > 0.8) {
-          breakageAlerts.push(
-            `Night ${night} WARNING: ${team.teamIds.join(",")} fitness=${(team.fitness * 100).toFixed(1)}%`,
-          );
-        }
-      }
-
+      const { poolSize, topTeams, breakageAlerts } = await runNightGaCheckpoint(night);
+      if (night === 12) latestNightGaTopTeams = topTeams;
       if (breakageAlerts.length > 0) {
         console.warn(`Night ${night} GA breakage:`, breakageAlerts);
       }
@@ -649,16 +630,18 @@ describe("cross-night GA", () => {
       collector.addNightGa({
         night,
         poolSize,
-        topTeams: result.topTeams.map((t) => ({
+        topTeams: topTeams.map((t) => ({
           teamIds: [...t.teamIds],
           fitness: t.fitness,
+          adjustedFitness: t.adjustedFitness,
           fitnessCI95: [t.fitnessCI95[0], t.fitnessCI95[1]],
+          viability: { ...t.viability },
           novelty: t.novelty,
         })),
         breakageAlerts,
       });
 
-      expect(result.topTeams.length).toBeGreaterThan(0);
+      expect(topTeams.length).toBeGreaterThan(0);
     }
   }, 300_000);
 });
@@ -666,31 +649,109 @@ describe("cross-night GA", () => {
 // ── メタ健全性分析 ──
 
 describe("meta health analysis", () => {
-  it("produces valid meta analysis from archetype matchups", () => {
-    expect(allMatchupEntries.length).toBeGreaterThan(0);
+  function metaCandidateToEntry(candidate: MetaCandidate) {
+    return {
+      name: candidate.name,
+      unitIds: [...candidate.unitIds],
+      sources: [...candidate.sources],
+      greedyRank: candidate.greedyRank,
+      gaFitness: candidate.gaFitness,
+      nightGaFitness: candidate.nightGaFitness,
+      reachabilityScore: candidate.reachabilityScore,
+      viability: { ...candidate.viability },
+    };
+  }
 
-    const meta = analyzeMetaHealth(allMatchupEntries);
-    collector.setMetaAnalysis(meta);
+  it(
+    "produces valid meta analysis from the integrated candidate frontier",
+    { timeout: 120_000 },
+    () => {
+      expect(latestGreedyArchetypes.length).toBeGreaterThan(0);
+      expect(latestGaTopTeams.length).toBeGreaterThan(0);
+      expect(latestNightGaTopTeams.length).toBeGreaterThan(0);
 
-    expect(meta.teamLabels.length).toBeGreaterThan(0);
-    expect(meta.payoffMatrix.length).toBe(meta.teamLabels.length);
-    for (const row of meta.payoffMatrix) {
-      expect(row.length).toBe(meta.teamLabels.length);
-    }
+      const candidates = buildMetaCandidateFrontier({
+        greedyArchetypes: latestGreedyArchetypes,
+        gaTopTeams: latestGaTopTeams,
+        nightGaTopTeams: latestNightGaTopTeams,
+      });
+      collector.setMetaCandidates(candidates.map(metaCandidateToEntry));
 
-    expect(meta.nashEquilibrium.length).toBe(meta.teamLabels.length);
-    const probSum = meta.nashEquilibrium.reduce((s, e) => s + e.probability, 0);
-    expect(probSum).toBeCloseTo(1, 2);
+      expect(candidates.length).toBeGreaterThan(0);
+      expect(candidates.some((candidate) => candidate.sources.includes("greedy"))).toBe(true);
+      expect(candidates.some((candidate) => candidate.sources.includes("ga"))).toBe(true);
+      expect(candidates.some((candidate) => candidate.sources.includes("night-ga"))).toBe(true);
 
-    expect(meta.cyclicityScore).toBeGreaterThanOrEqual(0);
-    expect(meta.cyclicityScore).toBeLessThanOrEqual(1);
+      const positioned = positionArchetypes(candidates, 12, 900, 20);
+      allMatchupEntries.length = 0;
 
-    expect(meta.equilibriumEntropy).toBeGreaterThanOrEqual(0);
-    expect(meta.equilibriumEntropy).toBeLessThanOrEqual(meta.maxEntropy + 0.01);
+      const names = [...positioned.keys()];
+      const TRIALS = 500;
 
-    expect(["healthy", "slightly_skewed", "dominant_meta", "degenerate"]).toContain(
-      meta.healthVerdict,
-    );
-    expect(meta.verdictReasons.length).toBeGreaterThan(0);
-  });
+      for (let i = 0; i < names.length; i++) {
+        for (let j = i + 1; j < names.length; j++) {
+          const a = names[i]!;
+          const b = names[j]!;
+          const r = runMatchup(
+            positioned.get(a)!,
+            positioned.get(b)!,
+            TRIALS,
+            (i + 1) * 10_000 + j,
+            12,
+            true,
+          );
+          const aRate = r.aWins / r.trials;
+          const warnings: string[] = [];
+          if (aRate > 0.8 || aRate < 0.2)
+            warnings.push(`IMBALANCE: ${aRate > 0.5 ? a : b} dominates`);
+          if (r.avgFrameCount < 5) warnings.push("STOMP: battles too short");
+          if (r.avgFrameCount > 80) warnings.push("STALL: battles too long");
+
+          const entry: MatchupEntry = {
+            teamA: a,
+            teamB: b,
+            aWins: r.aWins,
+            bWins: r.bWins,
+            draws: r.draws,
+            trials: r.trials,
+            avgFrameCount: r.avgFrameCount,
+            avgWinnerRemainingHp: r.avgWinnerRemainingHp,
+            winMarginMedian: r.winMarginMedian,
+            frameCountP25: r.frameCountP25,
+            frameCountP75: r.frameCountP75,
+            unitPerformance: perfMapToRecord(r.unitPerformance),
+            warnings,
+          };
+          collector.addMatchup(entry);
+          allMatchupEntries.push(entry);
+        }
+      }
+
+      expect(allMatchupEntries.length).toBeGreaterThan(0);
+
+      const meta = analyzeMetaHealth(allMatchupEntries);
+      collector.setMetaAnalysis(meta);
+
+      expect(meta.teamLabels.length).toBeGreaterThan(0);
+      expect(meta.payoffMatrix.length).toBe(meta.teamLabels.length);
+      for (const row of meta.payoffMatrix) {
+        expect(row.length).toBe(meta.teamLabels.length);
+      }
+
+      expect(meta.nashEquilibrium.length).toBe(meta.teamLabels.length);
+      const probSum = meta.nashEquilibrium.reduce((s, e) => s + e.probability, 0);
+      expect(probSum).toBeCloseTo(1, 2);
+
+      expect(meta.cyclicityScore).toBeGreaterThanOrEqual(0);
+      expect(meta.cyclicityScore).toBeLessThanOrEqual(1);
+
+      expect(meta.equilibriumEntropy).toBeGreaterThanOrEqual(0);
+      expect(meta.equilibriumEntropy).toBeLessThanOrEqual(meta.maxEntropy + 0.01);
+
+      expect(["healthy", "slightly_skewed", "dominant_meta", "degenerate"]).toContain(
+        meta.healthVerdict,
+      );
+      expect(meta.verdictReasons.length).toBeGreaterThan(0);
+    },
+  );
 });
