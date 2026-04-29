@@ -58,7 +58,7 @@
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vite-plus": "^0.1.19",
-    "wrangler": "^4.81.0"
+    "wrangler": "^4.84.1"
   },
   "packageManager": "pnpm@10.28.2"
 }
