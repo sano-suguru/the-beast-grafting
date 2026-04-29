@@ -148,20 +148,39 @@ export function applyFoodPurchasesFromBlood(
   applyFoodPurchasesByCount(state, excludedUid, spendableBlood / effectiveCost, "full", foodPool);
 }
 
-export function applySpecificFoodPurchases(
+function getAverageFoodStats(night: number): Buff {
+  const pool = getFoodPool(night);
+  if (pool.length === 0) return { atk: 0, hp: 0 };
+  const total = pool.reduce((acc, item) => ({ atk: acc.atk + item.atk, hp: acc.hp + item.hp }), {
+    atk: 0,
+    hp: 0,
+  });
+  return { atk: total.atk / pool.length, hp: total.hp / pool.length };
+}
+
+/**
+ * ショップ補充アイテム（worm_apple・pure_blood等）を「3-blood食料の置き換え」として差分適用する。
+ * SAP "use-it-all" 経済でショップ枠を占有する cost != 3 のアイテムに使用する。
+ */
+export function applyReplacementFoodPurchases(
   state: SimShopState,
   excludedUid: string,
   item: ItemData,
   purchaseCount: number,
 ): void {
-  if (purchaseCount <= 0 || !isSimFood(item)) return;
+  if (purchaseCount <= 0 || item.effect.kind === "single_target_equip") return;
+  const avg = getAverageFoodStats(state.night);
+  const deltaAtk = item.atk - avg.atk;
+  const deltaHp = item.hp - avg.hp;
+  if (deltaAtk <= 0 && deltaHp <= 0) return;
+  const syntheticItem: ItemData = { ...item, atk: Math.max(0, deltaAtk), hp: Math.max(0, deltaHp) };
   const wholePurchases = Math.floor(purchaseCount);
   for (let i = 0; i < wholePurchases; i++) {
-    applyDescriptorToTeam(state, item, excludedUid, "full");
+    applyDescriptorToTeam(state, syntheticItem, excludedUid, "full");
   }
   const remainder = purchaseCount - wholePurchases;
   if (remainder > 0 && state.rng.next() < remainder) {
-    applyDescriptorToTeam(state, item, excludedUid, "full");
+    applyDescriptorToTeam(state, syntheticItem, excludedUid, "full");
   }
 }
 

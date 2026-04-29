@@ -1,6 +1,10 @@
 import type { UnitInstance } from "../../shared/types";
 import type { Rng } from "../rng";
-import { applyGutHandAccumulation, applyRotRingAccumulation } from "./sim-shop-effects-buy";
+import {
+  applyChaliceAccumulation,
+  applyGutHandAccumulation,
+  applyRotRingAccumulation,
+} from "./sim-shop-effects-buy";
 import {
   applyBeggarAccumulation,
   applyBoneJawAccumulation,
@@ -23,12 +27,20 @@ import {
   materializeShopBuff,
 } from "./sim-shop-effects-util";
 
-function applyBuyPhaseEffects(unit: UnitInstance, team: UnitInstance[], night: number, rng: Rng) {
+function applyBuyPhaseEffects(
+  unit: UnitInstance,
+  team: UnitInstance[],
+  night: number,
+  rng: Rng,
+  state: ReturnType<typeof createSimShopState>,
+) {
   switch (unit.id) {
     case "gut_hand":
       return applyGutHandAccumulation(unit, team, night, rng);
     case "rot_ring":
       return applyRotRingAccumulation(unit, team, night, rng);
+    case "chalice":
+      return applyChaliceAccumulation(unit, state);
   }
 }
 
@@ -91,7 +103,7 @@ export function applySimShopEffects(team: UnitInstance[], night: number, rng: Rn
   const state = createSimShopState(team, night, rng);
   for (const unit of team) {
     applyStartOfTurnEffects(unit, team, night, rng, state);
-    applyBuyPhaseEffects(unit, team, night, rng);
+    applyBuyPhaseEffects(unit, team, night, rng, state);
     applySellPhaseEffects(unit, team, night, rng, state);
     applyEndOfTurnEffects(unit, team, night, rng);
   }

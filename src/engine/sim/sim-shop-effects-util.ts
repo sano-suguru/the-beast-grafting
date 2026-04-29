@@ -20,7 +20,7 @@ export {
 
 export {
   applyFoodPurchasesFromBlood,
-  applySpecificFoodPurchases,
+  applyReplacementFoodPurchases,
   applyBoneTreeBaselineDelta,
   materializeShopBuff,
 } from "./sim-shop-food";

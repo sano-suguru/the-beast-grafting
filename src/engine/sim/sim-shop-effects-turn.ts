@@ -13,7 +13,7 @@ import {
 } from "../../shared/skill-params-shop";
 import {
   applyFoodPurchasesFromBlood,
-  applySpecificFoodPurchases,
+  applyReplacementFoodPurchases,
   type SimShopState,
   distributeBuffRandomly,
   estimateTeamWinRate,
@@ -42,13 +42,18 @@ export function applyRevenantAccumulation(
   }
 }
 
+const WORM_APPLE_COST = 2;
+const STANDARD_FOOD_COST = 3;
+
 export function applyGraftScionAccumulation(graftScion: UnitInstance, state: SimShopState): void {
   const ownedNights = sampleOwnedNights(graftScion.tier as Tier, state.night, state.rng);
   if (ownedNights.length === 0) return;
   const stockedItem = ITEMS[atLevel(GRAFT_SCION.itemId, graftScion.level)];
   const consumedCount = Math.floor(ownedNights.length * 0.75);
   if (consumedCount <= 0) return;
-  applySpecificFoodPurchases(state, graftScion.uid, stockedItem, consumedCount);
+  applyReplacementFoodPurchases(state, graftScion.uid, stockedItem, consumedCount);
+  const savedBlood = consumedCount * (STANDARD_FOOD_COST - WORM_APPLE_COST);
+  applyFoodPurchasesFromBlood(state, graftScion.uid, savedBlood);
 }
 
 export function applyCatacombRatAccumulation(

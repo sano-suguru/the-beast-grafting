@@ -2,11 +2,15 @@ import type { UnitInstance } from "../../shared/types";
 import type { Tier } from "../../shared/data/tiers";
 import type { Rng } from "../rng";
 import { atLevel } from "../../shared/skill-params";
-import { GUT_HAND, ROT_RING } from "../../shared/skill-params-shop";
+import { CHALICE, GUT_HAND, ROT_RING } from "../../shared/skill-params-shop";
+import { ITEMS } from "../../shared/data/items";
 import {
+  applyFoodPurchasesFromBlood,
+  applyReplacementFoodPurchases,
   distributeBuffRandomly,
   PURCHASES_PER_NIGHT,
   sampleOwnedNights,
+  type SimShopState,
 } from "./sim-shop-effects-util";
 
 /** Night N のショッププール内でTier 1が占める割合 (全Tier 10体ずつ均等) */
@@ -65,4 +69,15 @@ export function applyRotRingAccumulation(
     u.buffAtk += buffAtk;
     u.buffHp += buffHp;
   }
+}
+
+const CHALICE_REPLACED_SLOTS = 2;
+const PURE_BLOOD_COST = 0;
+const STANDARD_FOOD_COST = 3;
+
+export function applyChaliceAccumulation(chalice: UnitInstance, state: SimShopState): void {
+  const item = ITEMS[atLevel(CHALICE.itemId, chalice.level)];
+  applyReplacementFoodPurchases(state, chalice.uid, item, CHALICE_REPLACED_SLOTS);
+  const savedBlood = CHALICE_REPLACED_SLOTS * (STANDARD_FOOD_COST - PURE_BLOOD_COST);
+  applyFoodPurchasesFromBlood(state, chalice.uid, savedBlood);
 }

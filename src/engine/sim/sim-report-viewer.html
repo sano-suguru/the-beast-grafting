@@ -168,6 +168,369 @@
         padding: 4px 0;
         font-size: 0.85rem;
       }
+      .health-hero {
+        background: #1e0c0c;
+        border: 2px solid rgba(231, 76, 60, 0.3);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .health-hero.ok-hero {
+        background: #0c1e0c;
+        border-color: rgba(46, 204, 113, 0.3);
+      }
+      .hero-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .hero-cell-label {
+        color: #888;
+        font-size: 0.78rem;
+        margin-bottom: 4px;
+      }
+      .hero-cell-count {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 4px;
+      }
+      .alert-item {
+        font-size: 0.78rem;
+        margin: 2px 0;
+      }
+      .nerf-candidates {
+        background: #16213e;
+        border: 1px solid rgba(196, 168, 130, 0.3);
+        border-radius: 6px;
+        padding: 14px;
+        margin-bottom: 16px;
+      }
+      .nerf-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 4px;
+        border-bottom: 1px solid #2a2a3e;
+        cursor: pointer;
+        font-size: 0.84rem;
+      }
+      .nerf-row:hover {
+        background: #1e1e3a;
+      }
+      .nerf-row:last-child {
+        border-bottom: none;
+      }
+      .tier-badge {
+        background: #2a3a5a;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-size: 0.78em;
+        min-width: 28px;
+        text-align: center;
+      }
+      .action-label.nerf {
+        color: #e74c3c;
+        font-weight: 700;
+        font-size: 0.78em;
+      }
+      .action-label.buff {
+        color: #3498db;
+        font-weight: 700;
+        font-size: 0.78em;
+      }
+      .filter-bar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+        padding: 8px;
+        background: #16213e;
+        border-radius: 6px;
+        font-size: 0.82rem;
+      }
+      .filter-bar input[type="text"] {
+        background: #0f1a30;
+        border: 1px solid #444;
+        color: #e0e0e0;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.82rem;
+        width: 180px;
+      }
+      .filter-bar label {
+        color: #aaa;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        cursor: pointer;
+      }
+      .filter-sep {
+        color: #444;
+      }
+      .row-hi {
+        border-left: 3px solid #e74c3c;
+      }
+      .row-lo {
+        border-left: 3px solid #3498db;
+      }
+      .row-ci {
+        background: rgba(230, 126, 34, 0.08);
+      }
+      .hint {
+        color: #666;
+        font-size: 0.8em;
+        cursor: help;
+        margin-left: 4px;
+      }
+      .hint:hover {
+        color: #aaa;
+      }
+      .drill-panel {
+        background: #16213e;
+        border: 1px solid #333;
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 8px;
+        font-size: 0.82rem;
+      }
+      .drill-panel h4 {
+        color: #c4a882;
+        margin-bottom: 6px;
+        font-size: 0.88rem;
+      }
+      .kpi-label {
+        color: #888;
+        font-size: 0.82rem;
+        margin: 12px 0 6px;
+        font-weight: 600;
+      }
+      dl.glossary {
+        display: grid;
+        grid-template-columns: minmax(180px, auto) 1fr;
+        gap: 8px 16px;
+        font-size: 0.85rem;
+      }
+      dl.glossary dt {
+        color: #c4a882;
+        font-weight: 600;
+        padding-top: 4px;
+        border-top: 1px solid #2a2a3e;
+      }
+      dl.glossary dd {
+        color: #aaa;
+        margin: 0;
+        padding-top: 4px;
+        border-top: 1px solid #2a2a3e;
+      }
+      .threshold {
+        font-family: monospace;
+        background: #2a2a3e;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 0.82em;
+        color: #e0e0e0;
+      }
+      /* ── Sticky Nav ── */
+      nav {
+        position: sticky;
+        top: 0;
+        background: #1a1a2e;
+        z-index: 10;
+        padding: 8px 0;
+        border-bottom: 1px solid #2a2a3e;
+        margin-bottom: 16px !important;
+      }
+      /* ── Tab Badge ── */
+      .tab-badge {
+        font-size: 0.65em;
+        background: #e74c3c;
+        color: #fff;
+        border-radius: 8px;
+        padding: 1px 5px;
+        margin-left: 4px;
+        vertical-align: top;
+        font-weight: 700;
+      }
+      .tab-badge.warn {
+        background: #e67e22;
+      }
+      /* ── WR Inline Bar ── */
+      .wr-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+      }
+      .wr-cell-num {
+        min-width: 36px;
+        text-align: right;
+      }
+      .wr-track {
+        display: inline-block;
+        width: 50px;
+        height: 5px;
+        background: #1e1e3a;
+        border-radius: 3px;
+        vertical-align: middle;
+        position: relative;
+        overflow: hidden;
+      }
+      .wr-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 5px;
+        border-radius: 3px;
+      }
+      .wr-marker {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+      /* ── TNorm Inline Bar ── */
+      .tnorm-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+      }
+      .tnorm-cell-num {
+        min-width: 52px;
+        text-align: right;
+      }
+      .tnorm-track {
+        display: inline-block;
+        width: 50px;
+        height: 5px;
+        background: #1e1e3a;
+        border-radius: 3px;
+        vertical-align: middle;
+        position: relative;
+        overflow: hidden;
+      }
+      /* ── Mini Bar (general) ── */
+      .mini-bar-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+      }
+      .mini-bar-track {
+        display: inline-block;
+        width: 40px;
+        height: 5px;
+        background: #1e1e3a;
+        border-radius: 3px;
+        vertical-align: middle;
+        overflow: hidden;
+      }
+      .mini-bar-fill {
+        display: block;
+        height: 5px;
+        border-radius: 3px;
+      }
+      /* ── WR Legend ── */
+      .wr-legend {
+        display: flex;
+        gap: 2px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        overflow: hidden;
+        font-size: 0.72rem;
+      }
+      .wr-legend-cell {
+        flex: 1;
+        text-align: center;
+        padding: 3px 0;
+        color: #ddd;
+      }
+      /* ── Chip ── */
+      .chip {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.78em;
+        margin: 2px;
+        font-weight: 600;
+      }
+      /* ── Scaling Grid ── */
+      .scaling-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      .scaling-grid-item {
+      }
+      /* ── Canvas chart ── */
+      .chart-canvas {
+        background: #16213e;
+        border-radius: 6px;
+        display: block;
+        margin-bottom: 16px;
+        max-width: 100%;
+      }
+      /* ── Tier badge colors ── */
+      .tier-1 {
+        background: #0f2d4a;
+        color: #5dade2;
+      }
+      .tier-2 {
+        background: #0a2e28;
+        color: #48c9b0;
+      }
+      .tier-3 {
+        background: #2e2406;
+        color: #f5cba7;
+      }
+      .tier-4 {
+        background: #2e1a06;
+        color: #f0b27a;
+      }
+      .tier-5 {
+        background: #2e1006;
+        color: #e59866;
+      }
+      .tier-6 {
+        background: #2e0606;
+        color: #cd6155;
+      }
+      /* ── Source chips ── */
+      .src-badge {
+        display: inline-block;
+        border-radius: 3px;
+        padding: 1px 5px;
+        font-size: 0.75em;
+        margin-right: 3px;
+        background: #2a3a5a;
+        color: #c4a882;
+      }
+      /* ── Glossary groups ── */
+      .glossary-group {
+        margin-bottom: 20px;
+      }
+      .glossary-group-title {
+        color: #c4a882;
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin: 16px 0 8px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #333;
+      }
+      /* ── Overview verdict big ── */
+      .verdict-big {
+        font-size: 1.6rem;
+        font-weight: 800;
+        padding: 8px 20px;
+        border-radius: 8px;
+        border-width: 2px;
+        border-style: solid;
+      }
     </style>
   </head>
   <body>
@@ -182,7 +545,9 @@
     <section id="s-crossnight"></section>
     <section id="s-scaling"></section>
     <section id="s-ga"></section>
+    <section id="s-metacandidates"></section>
     <section id="s-meta"></section>
+    <section id="s-glossary"></section>
 
     <script type="application/json" id="sim-data">
       { "_placeholder": true }
@@ -203,10 +568,31 @@
           return (v * 100).toFixed(1);
         }
 
+        // 7-zone WR color: clearly separates healthy center from outliers
         function wrColor(rate) {
-          if (rate >= 0.55) return rate >= 0.65 ? "#e74c3c" : "#e67e22";
-          if (rate <= 0.45) return rate <= 0.35 ? "#3498db" : "#2ecc71";
+          if (rate >= 0.7) return "#c0392b";
+          if (rate >= 0.6) return "#e74c3c";
+          if (rate >= 0.55) return "#e67e22";
+          if (rate <= 0.3) return "#1a5276";
+          if (rate <= 0.4) return "#2980b9";
+          if (rate <= 0.45) return "#16a085";
           return "#2ecc71";
+        }
+
+        // Synergy-specific palette — avoids conflating with WR color semantics
+        function synergyColor(deltaPp) {
+          if (deltaPp > 8) return "#9b59b6";
+          if (deltaPp > 3) return "#a569bd";
+          if (deltaPp < -8) return "#c0ca33";
+          if (deltaPp < -3) return "#d4e157";
+          return "#888";
+        }
+
+        // Buff/nerf urgency: |tierNorm| × log(impact+1)
+        function actionScore(p) {
+          var tnorm = p.tierNormalizedWinRate || 0;
+          var impact = p.impactScore || 0;
+          return Math.abs(tnorm) * Math.log(impact + 1);
         }
 
         function esc(s) {
@@ -215,6 +601,141 @@
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;");
+        }
+
+        // ── Visual Helpers ──
+
+        var TIER_COLORS = {
+          1: { bg: "#0f2d4a", fg: "#5dade2" },
+          2: { bg: "#0a2e28", fg: "#48c9b0" },
+          3: { bg: "#2e2406", fg: "#f5cba7" },
+          4: { bg: "#2e1a06", fg: "#f0b27a" },
+          5: { bg: "#2e1006", fg: "#e59866" },
+          6: { bg: "#2e0606", fg: "#cd6155" },
+        };
+
+        function makeTierBadge(tier) {
+          var c = TIER_COLORS[tier] || { bg: "#2a3a5a", fg: "#c4a882" };
+          return el("span", {
+            textContent: "T" + tier,
+            style:
+              "background:" +
+              c.bg +
+              ";color:" +
+              c.fg +
+              ";border-radius:3px;padding:2px 6px;font-size:0.78em;min-width:28px;display:inline-block;text-align:center;font-weight:600",
+          });
+        }
+
+        function makeWrBar(rate) {
+          var c = wrColor(rate);
+          var wrap = el("span", { className: "wr-cell" });
+          wrap.appendChild(
+            el("span", {
+              className: "wr-cell-num",
+              textContent: wr(rate) + "%",
+              style: "color:" + c,
+            }),
+          );
+          var track = el("span", { className: "wr-track" });
+          var fill = el("span", {
+            className: "wr-fill",
+            style: "background:" + c + ";width:" + rate * 100 + "%",
+          });
+          var marker = el("span", { className: "wr-marker" });
+          track.appendChild(fill);
+          track.appendChild(marker);
+          wrap.appendChild(track);
+          return wrap;
+        }
+
+        function makeTnormBar(tnorm) {
+          var c = Math.abs(tnorm) > 0.15 ? (tnorm > 0 ? "#e74c3c" : "#3498db") : "#2ecc71";
+          var wrap = el("span", { className: "tnorm-cell" });
+          wrap.appendChild(
+            el("span", {
+              className: "tnorm-cell-num",
+              textContent: (tnorm >= 0 ? "+" : "") + pct(tnorm) + "pp",
+              style: "color:" + c,
+            }),
+          );
+          var track = el("span", { className: "tnorm-track" });
+          var norm = Math.min(Math.abs(tnorm) / 0.3, 1);
+          var center = el("span", {
+            style:
+              "position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.2)",
+          });
+          var fill;
+          if (tnorm >= 0) {
+            fill = el("span", {
+              style:
+                "position:absolute;left:50%;top:0;height:5px;border-radius:0 3px 3px 0;background:" +
+                c +
+                ";width:" +
+                norm * 50 +
+                "%",
+            });
+          } else {
+            fill = el("span", {
+              style:
+                "position:absolute;right:50%;top:0;height:5px;border-radius:3px 0 0 3px;background:" +
+                c +
+                ";width:" +
+                norm * 50 +
+                "%",
+            });
+          }
+          track.appendChild(center);
+          track.appendChild(fill);
+          wrap.appendChild(track);
+          return wrap;
+        }
+
+        function makeMiniBar(value, max, color) {
+          var p = max > 0 ? Math.min(value / max, 1) : 0;
+          var c = color || "#c4a882";
+          var wrap = el("span", { className: "mini-bar-cell" });
+          wrap.appendChild(el("span", { textContent: String(value) }));
+          var track = el("span", { className: "mini-bar-track" });
+          var fill = el("span", {
+            className: "mini-bar-fill",
+            style: "background:" + c + ";width:" + p * 100 + "%",
+          });
+          track.appendChild(fill);
+          wrap.appendChild(track);
+          return wrap;
+        }
+
+        function makeChip(text, bg, fg) {
+          return el("span", {
+            className: "chip",
+            textContent: text,
+            style: "background:" + (bg || "#2a3a5a") + ";color:" + (fg || "#ccc"),
+          });
+        }
+
+        function makeWrLegend() {
+          var zones = [
+            { label: "<30%", rate: 0.15 },
+            { label: "30-40%", rate: 0.35 },
+            { label: "40-45%", rate: 0.425 },
+            { label: "45-55%", rate: 0.5 },
+            { label: "55-60%", rate: 0.575 },
+            { label: "60-70%", rate: 0.65 },
+            { label: "70+%", rate: 0.75 },
+          ];
+          var legend = el("div", { className: "wr-legend" });
+          zones.forEach(function (z) {
+            var c = wrColor(z.rate);
+            legend.appendChild(
+              el("div", {
+                className: "wr-legend-cell",
+                textContent: z.label,
+                style: "background:" + c + "33;border-top:3px solid " + c,
+              }),
+            );
+          });
+          return legend;
         }
 
         function el(tag, attrs, children) {
@@ -244,13 +765,54 @@
           ["s-crossnight", "Cross-Night"],
           ["s-scaling", "Scaling"],
           ["s-ga", "GA Discovery"],
+          ["s-metacandidates", "Meta Candidates"],
           ["s-meta", "Meta Health"],
+          ["s-glossary", "Glossary"],
         ];
 
-        function initTabs() {
+        function initTabs(data) {
           var nav = document.getElementById("tabs");
+
+          var imbalanceCount = data
+            ? data.archetypeMatchups.filter(function (m) {
+                return (
+                  m.warnings &&
+                  m.warnings.some(function (w) {
+                    return w.indexOf("IMBALANCE") >= 0;
+                  })
+                );
+              }).length
+            : 0;
+          var crossNightOutliers = data
+            ? data.crossNight.reduce(function (s, c) {
+                return s + c.outliers.length;
+              }, 0)
+            : 0;
+          var dominantCount =
+            data && data.metaAnalysis ? data.metaAnalysis.dominantTeams.length : 0;
+          var gaAlerts = data
+            ? (data.gaDiscovery ? data.gaDiscovery.breakageAlerts.length : 0) +
+              (data.nightGaResults || []).reduce(function (s, n) {
+                return s + n.breakageAlerts.length;
+              }, 0)
+            : 0;
+
+          var TAB_BADGES = {
+            "s-matchups": { count: imbalanceCount, cls: "tab-badge" },
+            "s-crossnight": { count: crossNightOutliers, cls: "tab-badge warn" },
+            "s-meta": { count: dominantCount, cls: "tab-badge" },
+            "s-ga": { count: gaAlerts, cls: "tab-badge" },
+          };
+
           TABS.forEach(function (t, i) {
-            var btn = el("button", { "data-target": t[0], textContent: t[1] });
+            var btn = el("button", { "data-target": t[0] });
+            btn.appendChild(document.createTextNode(t[1]));
+            var badgeInfo = TAB_BADGES[t[0]];
+            if (badgeInfo && badgeInfo.count > 0) {
+              btn.appendChild(
+                el("sup", { className: badgeInfo.cls, textContent: String(badgeInfo.count) }),
+              );
+            }
             if (i === 0) btn.classList.add("active");
             btn.addEventListener("click", function () {
               nav.querySelectorAll("button").forEach(function (b) {
@@ -267,40 +829,59 @@
           });
         }
 
+        function switchTab(id) {
+          document.querySelectorAll("nav button").forEach(function (b) {
+            b.classList.toggle("active", b.getAttribute("data-target") === id);
+          });
+          document.querySelectorAll("section").forEach(function (s) {
+            s.classList.toggle("active", s.id === id);
+          });
+        }
+
         // ── Sortable Table ──
 
         function makeSortable(table) {
           var ths = table.querySelectorAll("thead th");
+          function doSort(th, idx, asc) {
+            var tbody = table.querySelector("tbody");
+            var rows = Array.from(tbody.querySelectorAll("tr"));
+            ths.forEach(function (t) {
+              t.classList.remove("sorted", "desc");
+            });
+            th.classList.add("sorted");
+            if (!asc) th.classList.add("desc");
+            rows.sort(function (a, b) {
+              var ac = a.children[idx];
+              var bc = b.children[idx];
+              var av =
+                ac.getAttribute("data-sort-value") ||
+                ac.textContent.replace(/%/g, "").replace(/\+/g, "");
+              var bv =
+                bc.getAttribute("data-sort-value") ||
+                bc.textContent.replace(/%/g, "").replace(/\+/g, "");
+              var an = parseFloat(av),
+                bn = parseFloat(bv);
+              if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
+              return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+            });
+            rows.forEach(function (r) {
+              tbody.appendChild(r);
+            });
+          }
           ths.forEach(function (th, idx) {
             var arrow = document.createElement("span");
             arrow.className = "arrow";
-            arrow.textContent = "\u25B2";
+            arrow.textContent = "▲";
             th.appendChild(arrow);
             th.addEventListener("click", function () {
-              var tbody = table.querySelector("tbody");
-              var rows = Array.from(tbody.querySelectorAll("tr"));
               var asc = th.classList.contains("sorted") && !th.classList.contains("desc");
-              ths.forEach(function (t) {
-                t.classList.remove("sorted", "desc");
-              });
-              th.classList.add("sorted");
-              if (!asc) th.classList.add("desc");
-              rows.sort(function (a, b) {
-                var av = a.children[idx].textContent.replace(/%/g, "").replace(/\+/g, "");
-                var bv = b.children[idx].textContent.replace(/%/g, "").replace(/\+/g, "");
-                var an = parseFloat(av),
-                  bn = parseFloat(bv);
-                if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
-                return asc ? av.localeCompare(bv) : bv.localeCompare(av);
-              });
-              rows.forEach(function (r) {
-                tbody.appendChild(r);
-              });
+              doSort(th, idx, asc);
             });
           });
         }
 
         // ── Unit Performance Table ──
+        // col format: [header, isNum, displayFn, sortValueFn?, tooltip?, domFn?]
 
         var PERF_COLS = [
           [
@@ -309,12 +890,19 @@
             function (id) {
               return id;
             },
+            null,
+            null,
           ],
           [
             "T",
             true,
             function (_, p) {
               return p.tier;
+            },
+            null,
+            "Tier",
+            function (_, p) {
+              return makeTierBadge(p.tier);
             },
           ],
           [
@@ -323,6 +911,13 @@
             function (_, p) {
               return wr(p.wins / p.appearances);
             },
+            function (_, p) {
+              return String(p.wins / p.appearances);
+            },
+            "出場時の勝率",
+            function (_, p) {
+              return makeWrBar(p.wins / p.appearances);
+            },
           ],
           [
             "CI95",
@@ -330,12 +925,23 @@
             function (_, p) {
               return wr(p.winRateCI95[0]) + "-" + wr(p.winRateCI95[1]);
             },
+            function (_, p) {
+              return String((p.winRateCI95[0] + p.winRateCI95[1]) / 2);
+            },
+            "95%信頼区間。幅が広いほどサンプル不足",
           ],
           [
             "TNorm",
             true,
             function (_, p) {
               return (p.tierNormalizedWinRate >= 0 ? "+" : "") + pct(p.tierNormalizedWinRate);
+            },
+            function (_, p) {
+              return String(p.tierNormalizedWinRate);
+            },
+            "tier平均勝率からのずれ(pp)。±0.2超でテスト警告",
+            function (_, p) {
+              return makeTnormBar(p.tierNormalizedWinRate || 0);
             },
           ],
           [
@@ -344,6 +950,8 @@
             function (_, p) {
               return num(p.avgDamage);
             },
+            null,
+            "平均与ダメージ",
           ],
           [
             "Recv",
@@ -351,6 +959,8 @@
             function (_, p) {
               return num(p.avgDamageReceived);
             },
+            null,
+            "平均被ダメージ",
           ],
           [
             "Kill",
@@ -358,6 +968,8 @@
             function (_, p) {
               return num(p.avgKills, 1);
             },
+            null,
+            "平均キル数",
           ],
           [
             "Spawn",
@@ -365,20 +977,44 @@
             function (_, p) {
               return num(p.avgSpawnsProduced, 1);
             },
+            null,
+            "平均スポーン生産数",
           ],
           [
-            "Buff+",
+            "+BufATK",
             true,
             function (_, p) {
-              return num(p.avgBuffAtk, 1) + "/" + num(p.avgBuffHp, 1);
+              return num(p.avgBuffAtk, 1);
             },
+            null,
+            "自身が受けた平均ATKバフ",
           ],
           [
-            "Gave+",
+            "+BufHP",
             true,
             function (_, p) {
-              return num(p.avgBuffAtkGiven, 1) + "/" + num(p.avgBuffHpGiven, 1);
+              return num(p.avgBuffHp, 1);
             },
+            null,
+            "自身が受けた平均HPバフ",
+          ],
+          [
+            "+GvATK",
+            true,
+            function (_, p) {
+              return num(p.avgBuffAtkGiven, 1);
+            },
+            null,
+            "他ユニットへ付与した平均ATKバフ",
+          ],
+          [
+            "+GvHP",
+            true,
+            function (_, p) {
+              return num(p.avgBuffHpGiven, 1);
+            },
+            null,
+            "他ユニットへ付与した平均HPバフ",
           ],
           [
             "Surv%",
@@ -386,6 +1022,8 @@
             function (_, p) {
               return pct(p.survivalRate);
             },
+            null,
+            "生存率",
           ],
           [
             "DeathF",
@@ -393,6 +1031,10 @@
             function (_, p) {
               return p.avgDeathFrame !== null ? num(p.avgDeathFrame, 1) : "-";
             },
+            function (_, p) {
+              return p.avgDeathFrame !== null ? String(p.avgDeathFrame) : "9999";
+            },
+            "平均死亡フレーム(小さいほど早死)",
           ],
           [
             "Skill/b",
@@ -400,6 +1042,8 @@
             function (_, p) {
               return num(p.totalSkillActivations / p.appearances, 1);
             },
+            null,
+            "1バトル当たりスキル発火回数",
           ],
           [
             "Impact",
@@ -407,6 +1051,8 @@
             function (_, p) {
               return num(p.impactScore, 1);
             },
+            null,
+            "チーム勝率への寄与スコア。buff/nerf判断の主指標",
           ],
           [
             "n",
@@ -414,25 +1060,37 @@
             function (_, p) {
               return p.appearances;
             },
+            null,
+            "出場試合数",
           ],
         ];
 
-        function renderPerfTable(container, perfs) {
+        function renderPerfTable(container, perfs, opts) {
           var entries = Object.entries(perfs);
           if (entries.length === 0) {
             container.innerHTML = "<p>No unit data</p>";
             return;
           }
+          var sortByAction = opts && opts.sortByAction;
+          var withDrill = opts && opts.drillData;
 
-          entries.sort(function (a, b) {
-            return b[1].wins / b[1].appearances - a[1].wins / a[1].appearances;
-          });
+          if (sortByAction) {
+            entries.sort(function (a, b) {
+              return actionScore(b[1]) - actionScore(a[1]);
+            });
+          } else {
+            entries.sort(function (a, b) {
+              return b[1].wins / b[1].appearances - a[1].wins / a[1].appearances;
+            });
+          }
 
           var table = el("table", { className: "sortable" });
           var thead = el("thead");
           var headRow = el("tr");
           PERF_COLS.forEach(function (col) {
-            headRow.appendChild(el("th", { className: col[1] ? "num" : "" }, [col[0]]));
+            var thEl = el("th", { className: col[1] ? "num" : "", textContent: col[0] });
+            if (col[4]) thEl.title = col[4];
+            headRow.appendChild(thEl);
           });
           thead.appendChild(headRow);
           table.appendChild(thead);
@@ -442,13 +1100,47 @@
             var id = entry[0],
               p = entry[1];
             var winRate = p.wins / p.appearances;
+            var ciWidth = p.winRateCI95[1] - p.winRateCI95[0];
+            var tnorm = p.tierNormalizedWinRate || 0;
             var row = el("tr");
+            row.setAttribute("data-unit-id", id);
+            row.setAttribute("data-tier", String(p.tier));
+            row.setAttribute("data-ci-width", String(ciWidth));
+            if (p.winRateCI95[0] > 0.55) row.classList.add("row-hi");
+            else if (p.winRateCI95[1] < 0.45) row.classList.add("row-lo");
+            if (ciWidth > 0.1 || p.appearances < 30) row.classList.add("row-ci");
             PERF_COLS.forEach(function (col, ci) {
-              var val = col[2](id, p);
-              var td = el("td", { className: col[1] ? "num" : "", textContent: String(val) });
-              if (ci === 2) td.style.color = wrColor(winRate);
+              var td = el("td", { className: col[1] ? "num" : "" });
+              if (col[3]) td.setAttribute("data-sort-value", col[3](id, p));
+              if (col[5]) {
+                td.appendChild(col[5](id, p));
+              } else {
+                var val = col[2](id, p);
+                td.textContent = String(val);
+                if (ci === 2) td.style.color = wrColor(winRate);
+                if (ci === 4)
+                  td.style.color =
+                    Math.abs(tnorm) > 0.15 ? (tnorm > 0 ? "#e74c3c" : "#3498db") : "";
+              }
               row.appendChild(td);
             });
+            if (withDrill) {
+              row.style.cursor = "pointer";
+              row.addEventListener("click", function () {
+                var existing = container.querySelector(".drill-panel[data-for='" + id + "']");
+                if (existing) {
+                  existing.remove();
+                  return;
+                }
+                container.querySelectorAll(".drill-panel").forEach(function (d) {
+                  d.remove();
+                });
+                var panel = el("div", { className: "drill-panel" });
+                panel.setAttribute("data-for", id);
+                buildDrillPanel(panel, id, withDrill);
+                row.insertAdjacentElement("afterend", panel);
+              });
+            }
             tbody.appendChild(row);
           });
           table.appendChild(tbody);
@@ -456,54 +1148,499 @@
           makeSortable(table);
         }
 
+        function buildDrillPanel(panel, unitId, drillData) {
+          panel.appendChild(el("h4", { textContent: unitId + " ― cross-section" }));
+          var matchups = (drillData.archetypeMatchups || []).filter(function (m) {
+            return (m.unitIds || []).indexOf(unitId) >= 0;
+          });
+          if (matchups.length > 0) {
+            var mDiv = el("div", { style: "margin-bottom:8px" });
+            mDiv.appendChild(
+              el("strong", {
+                textContent: "Matchups (" + matchups.length + "):",
+                style: "color:#aaa",
+              }),
+            );
+            var mList = el("ul", { style: "margin:4px 0 0 16px" });
+            matchups.slice(0, 8).forEach(function (m) {
+              var aRate = m.aWins / m.trials;
+              var hasWarn = m.warnings && m.warnings.length > 0;
+              mList.appendChild(
+                el("li", {
+                  textContent:
+                    m.teamA +
+                    " vs " +
+                    m.teamB +
+                    ": " +
+                    wr(aRate) +
+                    "% (n=" +
+                    m.trials +
+                    ")" +
+                    (hasWarn ? " ⚠" : ""),
+                }),
+              );
+            });
+            if (matchups.length > 8)
+              mList.appendChild(
+                el("li", {
+                  textContent: "...+" + (matchups.length - 8) + " more",
+                  style: "color:#666",
+                }),
+              );
+            mDiv.appendChild(mList);
+            panel.appendChild(mDiv);
+          }
+          var synergies = (drillData.pairSynergies || []).filter(function (s) {
+            return s.unitA === unitId || s.unitB === unitId;
+          });
+          if (synergies.length > 0) {
+            var sDiv = el("div", { style: "margin-bottom:8px" });
+            sDiv.appendChild(el("strong", { textContent: "Synergies:", style: "color:#aaa" }));
+            var sList = el("ul", { style: "margin:4px 0 0 16px" });
+            synergies.slice(0, 5).forEach(function (s) {
+              var partner = s.unitA === unitId ? s.unitB : s.unitA;
+              var delta = s.synergyDelta * 100;
+              sList.appendChild(
+                el("li", {
+                  textContent:
+                    "w/ " + partner + ": δ" + (delta >= 0 ? "+" : "") + num(delta, 1) + "pp",
+                  style: "color:" + synergyColor(delta),
+                }),
+              );
+            });
+            sDiv.appendChild(sList);
+            panel.appendChild(sDiv);
+          }
+          var outliers = [];
+          (drillData.crossNight || []).forEach(function (c) {
+            c.outliers.forEach(function (o) {
+              if (o.unitId === unitId) outliers.push({ night: c.night, o: o });
+            });
+          });
+          if (outliers.length > 0) {
+            var oDiv = el("div");
+            oDiv.appendChild(
+              el("strong", { textContent: "Cross-Night outliers:", style: "color:#e67e22" }),
+            );
+            var oList = el("ul", { style: "margin:4px 0 0 16px" });
+            outliers.forEach(function (entry) {
+              oList.appendChild(
+                el("li", {
+                  textContent:
+                    "Night " +
+                    entry.night +
+                    ": WR " +
+                    wr(entry.o.winRate) +
+                    "% (n=" +
+                    entry.o.appearances +
+                    ")",
+                  style: "color:#f39c12",
+                }),
+              );
+            });
+            oDiv.appendChild(oList);
+            panel.appendChild(oDiv);
+          }
+        }
+
+        // ── Overview Helpers ──
+
+        function renderWrHistogram(container, unitPerformance) {
+          var entries = Object.entries(unitPerformance).filter(function (e) {
+            return e[1].appearances >= 30;
+          });
+          if (entries.length === 0) return;
+          container.appendChild(el("h3", { textContent: "Win Rate Distribution (n≥30)" }));
+          var canvas = el("canvas", { width: 600, height: 120, className: "chart-canvas" });
+          container.appendChild(canvas);
+          var ctx = canvas.getContext("2d");
+          var W = 600,
+            H = 120;
+          var pad = { t: 10, r: 10, b: 26, l: 30 };
+          var buckets = {};
+          for (var b = 0; b <= 95; b += 5) buckets[b] = 0;
+          entries.forEach(function (e) {
+            var rate = (e[1].wins / e[1].appearances) * 100;
+            var key = Math.min(95, Math.floor(rate / 5) * 5);
+            buckets[key]++;
+          });
+          var keys = Object.keys(buckets)
+            .map(Number)
+            .sort(function (a, bc) {
+              return a - bc;
+            });
+          var maxCount =
+            Math.max.apply(
+              null,
+              keys.map(function (k) {
+                return buckets[k];
+              }),
+            ) || 1;
+          var gw = W - pad.l - pad.r,
+            gh = H - pad.t - pad.b;
+          var bw = gw / keys.length;
+          // healthy band
+          var i45 = keys.indexOf(45),
+            i55 = keys.indexOf(55);
+          if (i45 >= 0 && i55 >= 0) {
+            ctx.fillStyle = "rgba(46,204,113,0.12)";
+            ctx.fillRect(pad.l + i45 * bw, pad.t, (i55 - i45 + 1) * bw, gh);
+          }
+          keys.forEach(function (key, i) {
+            var count = buckets[key];
+            var h = gh * (count / maxCount);
+            var x = pad.l + i * bw;
+            var y = pad.t + gh - h;
+            var c = wrColor((key + 2.5) / 100);
+            ctx.fillStyle = c + "bb";
+            ctx.fillRect(x + 1, y, bw - 2, h);
+            if (count > 0 && h > 14) {
+              ctx.fillStyle = "#fff";
+              ctx.font = "9px sans-serif";
+              ctx.textAlign = "center";
+              ctx.fillText(String(count), x + bw / 2, y + 10);
+            }
+            if (key % 10 === 0) {
+              ctx.fillStyle = "#888";
+              ctx.font = "9px sans-serif";
+              ctx.textAlign = "center";
+              ctx.fillText(key + "%", x + bw / 2, H - 3);
+            }
+          });
+          ctx.fillStyle = "#666";
+          ctx.font = "9px sans-serif";
+          ctx.textAlign = "right";
+          ctx.fillText(String(maxCount), pad.l - 3, pad.t + 9);
+        }
+
+        function renderTierDistribution(container, unitPerformance) {
+          var tiers = {};
+          Object.entries(unitPerformance).forEach(function (e) {
+            var p = e[1];
+            var t = p.tier;
+            if (!tiers[t]) tiers[t] = { wins: 0, appearances: 0, warning: 0 };
+            tiers[t].wins += p.wins;
+            tiers[t].appearances += p.appearances;
+            if (Math.abs(p.tierNormalizedWinRate || 0) > 0.15) tiers[t].warning++;
+          });
+          container.appendChild(el("h3", { textContent: "Tier Balance" }));
+          var grid = el("div", {
+            style: "display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px",
+          });
+          [1, 2, 3, 4, 5, 6].forEach(function (t) {
+            var td = tiers[t];
+            if (!td || td.appearances === 0) return;
+            var avgWr = td.wins / td.appearances;
+            var c = TIER_COLORS[t] || { bg: "#2a3a5a", fg: "#c4a882" };
+            var card = el("div", {
+              style:
+                "background:" +
+                c.bg +
+                ";border:1px solid " +
+                c.fg +
+                "44;border-radius:6px;padding:10px;text-align:center",
+            });
+            card.appendChild(
+              el("div", {
+                textContent: "T" + t,
+                style: "color:" + c.fg + ";font-weight:700;font-size:1rem;margin-bottom:2px",
+              }),
+            );
+            card.appendChild(
+              el("div", {
+                textContent: wr(avgWr) + "%",
+                style: "color:" + wrColor(avgWr) + ";font-size:0.9rem;font-weight:600",
+              }),
+            );
+            card.appendChild(
+              el("div", {
+                textContent: "avg WR",
+                style: "color:#555;font-size:0.7rem;margin-bottom:6px",
+              }),
+            );
+            var track = el("div", {
+              style:
+                "height:4px;background:#1e1e3a;border-radius:2px;overflow:hidden;margin-bottom:5px",
+            });
+            track.appendChild(
+              el("div", {
+                style:
+                  "height:4px;background:" +
+                  wrColor(avgWr) +
+                  ";width:" +
+                  avgWr * 100 +
+                  "%;border-radius:2px",
+              }),
+            );
+            card.appendChild(track);
+            card.appendChild(
+              el("div", {
+                textContent: td.warning > 0 ? td.warning + " ⚠" : "✓",
+                style: "font-size:0.72rem;color:" + (td.warning > 0 ? "#e67e22" : "#2ecc71"),
+              }),
+            );
+            grid.appendChild(card);
+          });
+          container.appendChild(grid);
+        }
+
         // ── Overview ──
 
         function renderOverview(data) {
           var sec = document.getElementById("s-overview");
           sec.innerHTML = "<h2>Overview</h2>";
-          var grid = el("div", { className: "overview-grid" });
 
-          function addCard(label, value) {
-            grid.appendChild(
-              el("div", {
-                className: "stat-card",
-                innerHTML:
-                  '<div class="label">' +
-                  esc(label) +
-                  '</div><div class="value">' +
-                  esc(String(value)) +
-                  "</div>",
-              }),
+          // Section 1: Health Hero Banner
+          var heroHealthy = data.metaAnalysis && data.metaAnalysis.healthVerdict === "healthy";
+          var hero = el("div", { className: "health-hero" + (heroHealthy ? " ok-hero" : "") });
+
+          var heroTop = el("div", {
+            style: "display:flex;align-items:center;gap:12px;margin-bottom:10px",
+          });
+          if (data.metaAnalysis) {
+            heroTop.appendChild(verdictBadge(data.metaAnalysis.healthVerdict));
+            if (data.metaAnalysis.verdictReasons.length > 0) {
+              heroTop.appendChild(
+                el("span", {
+                  textContent: data.metaAnalysis.verdictReasons[0],
+                  style: "color:#aaa;font-size:0.85rem",
+                }),
+              );
+            }
+          } else {
+            heroTop.appendChild(
+              el("span", { textContent: "No meta analysis data", style: "color:#888" }),
             );
           }
+          hero.appendChild(heroTop);
 
+          var heroGrid = el("div", { className: "hero-grid" });
+
+          // GA breakage alerts
+          var breakageAlerts = [];
+          if (data.gaDiscovery)
+            breakageAlerts = breakageAlerts.concat(data.gaDiscovery.breakageAlerts || []);
+          if (data.nightGaResults) {
+            data.nightGaResults.forEach(function (n) {
+              breakageAlerts = breakageAlerts.concat(n.breakageAlerts || []);
+            });
+          }
+          var gaCell = el("div");
+          gaCell.appendChild(
+            el("div", { textContent: "GA Breakage Alerts", className: "hero-cell-label" }),
+          );
+          gaCell.appendChild(
+            el("div", {
+              textContent: breakageAlerts.length + " alert(s)",
+              className: "hero-cell-count",
+              style: "color:" + (breakageAlerts.length > 0 ? "#ff4444" : "#2ecc71"),
+            }),
+          );
+          breakageAlerts.slice(0, 3).forEach(function (msg) {
+            gaCell.appendChild(
+              el("div", { textContent: msg, className: "alert-item", style: "color:#ffaaaa" }),
+            );
+          });
+          if (breakageAlerts.length > 3)
+            gaCell.appendChild(
+              el("div", {
+                textContent: "...+" + (breakageAlerts.length - 3) + " more",
+                style: "color:#666;font-size:0.75rem",
+              }),
+            );
+          heroGrid.appendChild(gaCell);
+
+          // Dangerous matchups (IMBALANCE or STOMP)
+          var imbalanced = data.archetypeMatchups.filter(function (m) {
+            return (
+              m.warnings &&
+              m.warnings.some(function (w) {
+                return w.indexOf("IMBALANCE") >= 0 || w.indexOf("STOMP") >= 0;
+              })
+            );
+          });
+          var imCell = el("div");
+          imCell.appendChild(
+            el("div", { textContent: "Dangerous Matchups", className: "hero-cell-label" }),
+          );
+          imCell.appendChild(
+            el("div", {
+              textContent: imbalanced.length + " matchup(s)",
+              className: "hero-cell-count",
+              style: "color:" + (imbalanced.length > 0 ? "#e74c3c" : "#2ecc71"),
+            }),
+          );
+          imbalanced.slice(0, 3).forEach(function (m) {
+            var aRate = m.aWins / m.trials;
+            imCell.appendChild(
+              el("div", {
+                textContent:
+                  m.teamA + " vs " + m.teamB + " " + wr(aRate) + "% [" + m.warnings.join(",") + "]",
+                className: "alert-item",
+                style: "color:#ffaaaa",
+              }),
+            );
+          });
+          heroGrid.appendChild(imCell);
+
+          // Insufficient samples
+          var insCount = data.insufficientSamples ? data.insufficientSamples.length : 0;
+          var insuffCell = el("div");
+          insuffCell.appendChild(
+            el("div", { textContent: "Low-Sample Units", className: "hero-cell-label" }),
+          );
+          insuffCell.appendChild(
+            el("div", {
+              textContent: insCount + " unit(s)",
+              className: "hero-cell-count",
+              style: "color:" + (insCount > 0 ? "#e67e22" : "#2ecc71"),
+            }),
+          );
+          if (data.insufficientSamples) {
+            data.insufficientSamples.slice(0, 3).forEach(function (s) {
+              insuffCell.appendChild(
+                el("div", {
+                  textContent:
+                    s.unitId + " (n=" + s.appearances + ", CI±" + num(s.ciWidth * 50, 1) + "pp)",
+                  className: "alert-item",
+                  style: "color:#f39c12",
+                }),
+              );
+            });
+          }
+          heroGrid.appendChild(insuffCell);
+          hero.appendChild(heroGrid);
+          sec.appendChild(hero);
+
+          // Section 2: Buff/Nerf candidates Top5
+          var main = data.randomBalance.find(function (r) {
+            return r.trials >= 1000;
+          });
+          if (main && main.unitPerformance) {
+            var cands = Object.entries(main.unitPerformance)
+              .filter(function (e) {
+                return e[1].winRateCI95[1] - e[1].winRateCI95[0] < 0.1;
+              })
+              .map(function (e) {
+                return { id: e[0], p: e[1], score: actionScore(e[1]) };
+              })
+              .sort(function (a, b) {
+                return b.score - a.score;
+              })
+              .slice(0, 5);
+            if (cands.length > 0) {
+              var nerfSection = el("div", { className: "nerf-candidates" });
+              var nerfTitle = el("div", {
+                style: "display:flex;align-items:center;gap:6px;margin-bottom:10px",
+              });
+              nerfTitle.appendChild(
+                el("span", {
+                  textContent: "Buff/Nerf 候補 Top5",
+                  style: "color:#c4a882;font-weight:600;font-size:0.95rem",
+                }),
+              );
+              nerfTitle.appendChild(
+                el("span", {
+                  textContent: "(?)",
+                  className: "hint",
+                  title:
+                    "要対応スコア = |tierNorm| × log(impact+1)。CI95幅 < 10ppの統計的に確実なユニットのみ。クリックで Unit Balance タブに移動",
+                }),
+              );
+              nerfSection.appendChild(nerfTitle);
+              cands.forEach(function (c) {
+                var p = c.p;
+                var tnorm = p.tierNormalizedWinRate || 0;
+                var isNerf = tnorm > 0;
+                var row = el("div", { className: "nerf-row" });
+                row.appendChild(makeTierBadge(p.tier));
+                row.appendChild(el("strong", { textContent: c.id, style: "flex:1" }));
+                row.appendChild(makeWrBar(p.wins / p.appearances));
+                row.appendChild(makeTnormBar(tnorm));
+                row.appendChild(
+                  el("span", {
+                    textContent: isNerf ? "NERF" : "BUFF",
+                    className: "action-label " + (isNerf ? "nerf" : "buff"),
+                  }),
+                );
+                row.addEventListener("click", function () {
+                  switchTab("s-balance");
+                  var targetRow = document.querySelector("tr[data-unit-id='" + c.id + "']");
+                  if (targetRow) {
+                    targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+                    targetRow.style.outline = "2px solid #c4a882";
+                    setTimeout(function () {
+                      targetRow.style.outline = "";
+                    }, 3000);
+                  }
+                });
+                nerfSection.appendChild(row);
+              });
+              sec.appendChild(nerfSection);
+            }
+          }
+
+          // Section 3: KPI cards
+          sec.appendChild(el("p", { textContent: "KPI", className: "kpi-label" }));
+          var grid = el("div", { className: "overview-grid" });
+          function addCard(label, value, sub) {
+            var card = el("div", { className: "stat-card" });
+            card.innerHTML =
+              '<div class="label">' +
+              esc(label) +
+              '</div><div class="value">' +
+              esc(String(value)) +
+              "</div>";
+            if (sub)
+              card.innerHTML +=
+                '<div style="font-size:0.78em;color:#aaa;margin-top:4px">' + esc(sub) + "</div>";
+            grid.appendChild(card);
+          }
           if (data.positionOptimization) {
-            addCard("Position Opt Delta", "+" + num(data.positionOptimization.deltaPp, 1) + "pp");
+            var po = data.positionOptimization;
+            addCard(
+              "Position Opt Δ",
+              "+" + num(po.deltaPp, 1) + "pp",
+              "Opt " +
+                wr(po.optimizedWinRate) +
+                "% vs Rand " +
+                wr(po.shuffledWinRate) +
+                "% (" +
+                po.trials +
+                " trials)",
+            );
           }
           if (data.randomBalance.length > 0) {
-            var main =
+            var main2 =
               data.randomBalance.find(function (r) {
                 return r.trials >= 1000;
               }) || data.randomBalance[0];
-            addCard("Mirror Win Rate", wr(main.winRate) + "%");
-            addCard("Avg Frame Count", num(main.avgFrameCount, 0));
+            addCard(
+              "Mirror Win Rate",
+              wr(main2.winRate) + "%",
+              main2.trials + " trials, night " + main2.night,
+            );
+            addCard("Avg Frame Count", num(main2.avgFrameCount, 0));
           }
-          var totalMatchups = data.archetypeMatchups.length;
-          var imbalanced = data.archetypeMatchups.filter(function (m) {
-            return m.warnings.some(function (w) {
-              return w.indexOf("IMBALANCE") >= 0;
-            });
+          var imbalancedCount = data.archetypeMatchups.filter(function (m) {
+            return (
+              m.warnings &&
+              m.warnings.some(function (w) {
+                return w.indexOf("IMBALANCE") >= 0;
+              })
+            );
           }).length;
-          addCard("Archetype Matchups", totalMatchups + " (" + imbalanced + " imbalanced)");
+          addCard(
+            "Archetype Matchups",
+            data.archetypeMatchups.length,
+            imbalancedCount + " IMBALANCE",
+          );
           if (data.pairSynergies && data.pairSynergies.length > 0) {
-            var topDelta = data.pairSynergies[0].synergyDelta;
             addCard(
               "Pair Synergies",
-              data.pairSynergies.length + " (top δ=" + num(topDelta * 100, 1) + "pp)",
+              data.pairSynergies.length,
+              "top δ=" + num(data.pairSynergies[0].synergyDelta * 100, 1) + "pp",
             );
-          }
-          if (data.discoveredCompositions && data.discoveredCompositions.length > 0) {
-            addCard("Discovered Compositions", data.discoveredCompositions.length);
           }
           if (data.crossNight.length > 0) {
             var totalOutliers = data.crossNight.reduce(function (s, c) {
@@ -511,7 +1648,23 @@
             }, 0);
             addCard("Cross-Night Outliers", totalOutliers);
           }
+          if (data.discoveredCompositions && data.discoveredCompositions.length > 0) {
+            addCard("Discovered Compositions", data.discoveredCompositions.length);
+          }
+          if (data.metaCandidates && data.metaCandidates.length > 0) {
+            addCard("Meta Candidates", data.metaCandidates.length);
+          }
           sec.appendChild(grid);
+
+          // Section 4: WR histogram + Tier distribution
+          var main3 =
+            data.randomBalance.find(function (r) {
+              return r.trials >= 1000;
+            }) || (data.randomBalance.length > 0 ? data.randomBalance[0] : null);
+          if (main3 && main3.unitPerformance) {
+            renderTierDistribution(sec, main3.unitPerformance);
+            renderWrHistogram(sec, main3.unitPerformance);
+          }
         }
 
         // ── Matchups ──
@@ -524,6 +1677,62 @@
             return;
           }
 
+          // Summary chips
+          var totalTrials = data.archetypeMatchups.reduce(function (s, m) {
+            return s + m.trials;
+          }, 0);
+          var imbalCount = data.archetypeMatchups.filter(function (m) {
+            return (
+              m.warnings &&
+              m.warnings.some(function (w) {
+                return w.indexOf("IMBALANCE") >= 0;
+              })
+            );
+          }).length;
+          var stompCount = data.archetypeMatchups.filter(function (m) {
+            return (
+              m.warnings &&
+              m.warnings.some(function (w) {
+                return w.indexOf("STOMP") >= 0;
+              })
+            );
+          }).length;
+          var stallCount = data.archetypeMatchups.filter(function (m) {
+            return (
+              m.warnings &&
+              m.warnings.some(function (w) {
+                return w.indexOf("STALL") >= 0;
+              })
+            );
+          }).length;
+          var chips = el("div", {
+            style: "display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px",
+          });
+          chips.appendChild(makeChip("n=" + totalTrials.toLocaleString(), "#2a3a5a", "#ccc"));
+          chips.appendChild(
+            makeChip(
+              "IMBALANCE: " + imbalCount,
+              imbalCount > 0 ? "#7a1a1a" : "#1a3a1a",
+              imbalCount > 0 ? "#ff8888" : "#88cc88",
+            ),
+          );
+          chips.appendChild(
+            makeChip(
+              "STOMP: " + stompCount,
+              stompCount > 0 ? "#7a3a1a" : "#1a3a1a",
+              stompCount > 0 ? "#ffaa88" : "#88cc88",
+            ),
+          );
+          chips.appendChild(
+            makeChip(
+              "STALL: " + stallCount,
+              stallCount > 0 ? "#5a4a1a" : "#1a3a1a",
+              stallCount > 0 ? "#ffdd88" : "#88cc88",
+            ),
+          );
+          sec.appendChild(chips);
+          sec.appendChild(makeWrLegend());
+
           var names = [];
           var lookup = {};
           data.archetypeMatchups.forEach(function (m) {
@@ -532,7 +1741,6 @@
             lookup[m.teamA + ":" + m.teamB] = m;
           });
 
-          // Matrix
           var wrap = el("div", { className: "matrix" });
           var table = el("table");
           var headRow = el("tr");
@@ -541,7 +1749,6 @@
             headRow.appendChild(el("th", { textContent: n }));
           });
           table.appendChild(headRow);
-
           names.forEach(function (row) {
             var tr = el("tr");
             tr.appendChild(el("th", { textContent: row }));
@@ -557,10 +1764,11 @@
               }
               var rate = m.teamA === row ? m.aWins / m.trials : m.bWins / m.trials;
               var c = wrColor(rate);
+              var hasWarn = m.warnings && m.warnings.length > 0;
               tr.appendChild(
                 el("td", {
-                  style: "background:" + c + "22;color:" + c,
-                  textContent: wr(rate) + "%",
+                  style: "background:" + c + "22;color:" + c + (hasWarn ? ";font-weight:bold" : ""),
+                  textContent: wr(rate) + "%" + (hasWarn ? " ⚠" : ""),
                 }),
               );
             });
@@ -569,7 +1777,6 @@
           wrap.appendChild(table);
           sec.appendChild(wrap);
 
-          // Details
           sec.appendChild(el("h3", { textContent: "Matchup Details" }));
           data.archetypeMatchups.forEach(function (m) {
             var aRate = m.aWins / m.trials;
@@ -591,13 +1798,15 @@
               num(m.avgFrameCount) +
               "f" +
               warn;
-
             var details = document.createElement("details");
-            var sumEl = el("summary", { className: cls, innerHTML: summary });
-            details.appendChild(sumEl);
-            var perfDiv = el("div");
-            renderPerfTable(perfDiv, m.unitPerformance);
-            details.appendChild(perfDiv);
+            details.appendChild(el("summary", { className: cls, innerHTML: summary }));
+            if (m.unitIds && m.unitIds.length > 0) {
+              var unitListDiv = el("div", {
+                style: "padding:6px 12px;color:#888;font-size:0.85em",
+                textContent: "Units: " + m.unitIds.join(", "),
+              });
+              details.appendChild(unitListDiv);
+            }
             sec.appendChild(details);
           });
         }
@@ -614,10 +1823,75 @@
             return;
           }
           sec.innerHTML =
-            "<h2>Unit Balance (Night " + main.night + ", " + main.trials + " trials)</h2>";
+            "<h2>Unit Balance (Night " +
+            main.night +
+            ", " +
+            main.trials +
+            " trials)" +
+            " <span class='hint' title='クリックでユニット詳細を展開。赤=勝率高すぎ、青=低すぎ。橙=CI幅かサンプル不足'>(?)</span></h2>";
+
+          // Filter bar
+          var filterBar = el("div", { className: "filter-bar" });
+
+          var searchInput = el("input", { type: "text", placeholder: "unit name..." });
+          filterBar.appendChild(el("label", { textContent: "検索:" }));
+          filterBar.appendChild(searchInput);
+
+          filterBar.appendChild(el("span", { textContent: "|", className: "filter-sep" }));
+          filterBar.appendChild(el("span", { textContent: "Tier:" }));
+          var tierChecks = {};
+          [1, 2, 3, 4, 5, 6].forEach(function (t) {
+            var lbl = el("label");
+            var cb = el("input", { type: "checkbox" });
+            cb.checked = true;
+            tierChecks[t] = cb;
+            lbl.appendChild(cb);
+            lbl.appendChild(document.createTextNode("T" + t));
+            filterBar.appendChild(lbl);
+          });
+
+          filterBar.appendChild(el("span", { textContent: "|", className: "filter-sep" }));
+          var sampleLbl = el("label");
+          var sampleCb = el("input", { type: "checkbox" });
+          sampleCb.checked = false;
+          sampleLbl.appendChild(sampleCb);
+          sampleLbl.appendChild(document.createTextNode("サンプル不足を隠す"));
+          filterBar.appendChild(sampleLbl);
+
+          sec.appendChild(filterBar);
+          sec.appendChild(makeWrLegend());
+
+          var rowCounter = el("div", { style: "font-size:0.78rem;color:#888;margin-bottom:4px" });
+          sec.appendChild(rowCounter);
+
           var wrap = el("div", { className: "scroll-wrap" });
-          renderPerfTable(wrap, main.unitPerformance);
+          renderPerfTable(wrap, main.unitPerformance, { sortByAction: true, drillData: data });
           sec.appendChild(wrap);
+
+          function applyFilter() {
+            var q = searchInput.value.toLowerCase();
+            var hideLowSample = sampleCb.checked;
+            var rows = wrap.querySelectorAll("tr[data-unit-id]");
+            var shown = 0;
+            rows.forEach(function (row) {
+              var uid = row.getAttribute("data-unit-id").toLowerCase();
+              var tier = parseInt(row.getAttribute("data-tier"), 10);
+              var ciWidth = parseFloat(row.getAttribute("data-ci-width"));
+              var matchQ = !q || uid.indexOf(q) >= 0;
+              var matchTier = tierChecks[tier] ? tierChecks[tier].checked : true;
+              var matchSample = !hideLowSample || ciWidth <= 0.1;
+              var visible = matchQ && matchTier && matchSample;
+              row.style.display = visible ? "" : "none";
+              if (visible) shown++;
+            });
+            rowCounter.textContent = shown + " / " + rows.length + " units";
+          }
+
+          searchInput.addEventListener("input", applyFilter);
+          sampleCb.addEventListener("change", applyFilter);
+          Object.values(tierChecks).forEach(function (cb) {
+            cb.addEventListener("change", applyFilter);
+          });
         }
 
         // ── Cross-Night ──
@@ -628,6 +1902,66 @@
           if (data.crossNight.length === 0) {
             sec.innerHTML += "<p>No data</p>";
             return;
+          }
+
+          // Trend chart
+          if (data.crossNight.length >= 2) {
+            sec.appendChild(el("h3", { textContent: "Win Rate Trend" }));
+            var canvas = el("canvas", { width: 700, height: 180, className: "chart-canvas" });
+            sec.appendChild(canvas);
+            var ctx = canvas.getContext("2d");
+            var W = 700,
+              H = 180;
+            var pad = { t: 20, r: 20, b: 30, l: 46 };
+            var gw = W - pad.l - pad.r,
+              gh = H - pad.t - pad.b;
+            var nights = data.crossNight;
+            function gx(i) {
+              return pad.l + (i / (nights.length - 1)) * gw;
+            }
+            function gy(f) {
+              return pad.t + gh - f * gh;
+            }
+            // healthy band
+            ctx.fillStyle = "rgba(46,204,113,0.07)";
+            ctx.fillRect(pad.l, gy(0.6), gw, gy(0.4) - gy(0.6));
+            // grid + y labels
+            [0, 0.25, 0.5, 0.75, 1].forEach(function (f) {
+              ctx.strokeStyle = "#2a2a3e";
+              ctx.lineWidth = 0.5;
+              ctx.beginPath();
+              ctx.moveTo(pad.l, gy(f));
+              ctx.lineTo(W - pad.r, gy(f));
+              ctx.stroke();
+              ctx.fillStyle = "#666";
+              ctx.font = "10px sans-serif";
+              ctx.textAlign = "right";
+              ctx.fillText((f * 100).toFixed(0) + "%", pad.l - 4, gy(f) + 3);
+            });
+            // WR line
+            ctx.strokeStyle = "#c4a882";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            nights.forEach(function (c, i) {
+              i === 0 ? ctx.moveTo(gx(i), gy(c.winRate)) : ctx.lineTo(gx(i), gy(c.winRate));
+            });
+            ctx.stroke();
+            // dots — red if outliers
+            nights.forEach(function (c, i) {
+              ctx.fillStyle = c.outliers.length > 0 ? "#e74c3c" : "#c4a882";
+              ctx.beginPath();
+              ctx.arc(gx(i), gy(c.winRate), c.outliers.length > 0 ? 5 : 3, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            // x labels
+            ctx.fillStyle = "#888";
+            ctx.font = "10px sans-serif";
+            ctx.textAlign = "center";
+            nights.forEach(function (c, i) {
+              if (nights.length <= 12 || i % Math.ceil(nights.length / 10) === 0) {
+                ctx.fillText("N" + c.night, gx(i), H - 3);
+              }
+            });
           }
 
           var table = el("table");
@@ -693,20 +2027,98 @@
           var sec = document.getElementById("s-synergies");
           sec.innerHTML = "<h2>Pair Synergies &amp; Discovered Compositions</h2>";
 
-          // Pair Synergies Table
           if (!data.pairSynergies || data.pairSynergies.length === 0) {
             sec.appendChild(el("p", { textContent: "No pair synergy data" }));
           } else {
+            // δ distribution histogram
+            sec.appendChild(el("h3", { textContent: "Synergy δ Distribution" }));
+            (function () {
+              var STEP = 2,
+                MIN = -16,
+                MAX = 16;
+              var buckets = {};
+              for (var b = MIN; b <= MAX; b += STEP) buckets[b] = 0;
+              data.pairSynergies.forEach(function (s) {
+                var d = s.synergyDelta * 100;
+                var key = Math.max(MIN, Math.min(MAX - STEP, Math.floor(d / STEP) * STEP));
+                buckets[key] = (buckets[key] || 0) + 1;
+              });
+              var keys = Object.keys(buckets)
+                .map(Number)
+                .sort(function (a, b) {
+                  return a - b;
+                });
+              var maxC =
+                Math.max.apply(
+                  null,
+                  keys.map(function (k) {
+                    return buckets[k];
+                  }),
+                ) || 1;
+              var canvas = el("canvas", { width: 600, height: 100, className: "chart-canvas" });
+              sec.appendChild(canvas);
+              var ctx = canvas.getContext("2d");
+              var W = 600,
+                H = 100,
+                pad = { t: 8, r: 10, b: 24, l: 30 };
+              var gw = W - pad.l - pad.r,
+                gh = H - pad.t - pad.b;
+              var bw = gw / keys.length;
+              keys.forEach(function (key, i) {
+                var count = buckets[key];
+                var h = (gh * count) / maxC;
+                var x = pad.l + i * bw;
+                var color = key > 3 ? "#9b59b6" : key < -3 ? "#c0ca33" : "#555";
+                ctx.fillStyle = color + "cc";
+                ctx.fillRect(x + 1, pad.t + gh - h, bw - 2, h);
+                if (key % 4 === 0) {
+                  ctx.fillStyle = "#888";
+                  ctx.font = "9px sans-serif";
+                  ctx.textAlign = "center";
+                  ctx.fillText((key >= 0 ? "+" : "") + key, x + bw / 2, H - 3);
+                }
+              });
+              // zero line
+              var zi = keys.indexOf(0);
+              if (zi >= 0) {
+                ctx.strokeStyle = "#aaa";
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]);
+                ctx.beginPath();
+                ctx.moveTo(pad.l + zi * bw + bw / 2, pad.t);
+                ctx.lineTo(pad.l + zi * bw + bw / 2, pad.t + gh);
+                ctx.stroke();
+                ctx.setLineDash([]);
+              }
+              ctx.fillStyle = "#9b59b6";
+              ctx.fillRect(W - 120, 8, 10, 8);
+              ctx.fillStyle = "#888";
+              ctx.font = "9px sans-serif";
+              ctx.textAlign = "left";
+              ctx.fillText("synergy", W - 106, 16);
+              ctx.fillStyle = "#c0ca33";
+              ctx.fillRect(W - 55, 8, 10, 8);
+              ctx.fillText("anti", W - 41, 16);
+            })();
+
             sec.appendChild(el("h3", { textContent: "Top Pair Synergies (by CI lower bound)" }));
             var wrap = el("div", { className: "scroll-wrap" });
             var table = el("table", { className: "sortable" });
             var thead = el("thead");
             var headRow = el("tr");
-            ["Unit A", "Unit B", "Co-Win%", "Expected%", "δ (pp)", "CI95 (pp)", "Samples"].forEach(
-              function (h) {
-                headRow.appendChild(el("th", { className: "num", textContent: h }));
-              },
-            );
+            [
+              ["Unit A", null],
+              ["Unit B", null],
+              ["Co-Win%", "共起勝率"],
+              ["Expected%", "両者の独立勝率の積から推定した期待勝率"],
+              ["δ (pp)", "シナジー差 = Co-Win% − Expected%。紫=シナジー、黄=アンチシナジー"],
+              ["CI95 (pp)", "95%信頼区間"],
+              ["Samples", "出現回数"],
+            ].forEach(function (h) {
+              var thEl = el("th", { className: "num", textContent: h[0] });
+              if (h[1]) thEl.title = h[1];
+              headRow.appendChild(thEl);
+            });
             thead.appendChild(headRow);
             table.appendChild(thead);
 
@@ -714,7 +2126,10 @@
             data.pairSynergies.forEach(function (s) {
               var tr = el("tr");
               var delta = s.synergyDelta * 100;
-              var deltaColor = delta > 0 ? "#e74c3c" : delta < 0 ? "#3498db" : "#888";
+              var deltaColor = synergyColor(delta);
+              var ciDelta = el("td", { className: "num", style: "color:" + deltaColor });
+              ciDelta.textContent = (delta >= 0 ? "+" : "") + num(delta, 1);
+              ciDelta.setAttribute("data-sort-value", String(delta));
               tr.innerHTML =
                 "<td>" +
                 esc(s.unitA) +
@@ -727,21 +2142,19 @@
                 "%</td>" +
                 '<td class="num">' +
                 wr(s.expectedWinRate) +
-                "%</td>" +
-                '<td class="num" style="color:' +
-                deltaColor +
-                '">' +
-                (delta >= 0 ? "+" : "") +
-                num(delta, 1) +
-                "</td>" +
-                '<td class="num">' +
-                (s.ciLower != null
+                "%</td>";
+              tr.appendChild(ciDelta);
+              var ciCell = el("td", { className: "num" });
+              ciCell.textContent =
+                s.ciLower != null
                   ? "[" + num(s.ciLower * 100, 1) + ", " + num(s.ciUpper * 100, 1) + "]"
-                  : "—") +
-                "</td>" +
-                '<td class="num">' +
-                s.sampleCount +
-                "</td>";
+                  : "—";
+              ciCell.setAttribute(
+                "data-sort-value",
+                s.ciLower != null ? String(s.ciLower) : "-9999",
+              );
+              tr.appendChild(ciCell);
+              tr.innerHTML += '<td class="num">' + s.sampleCount + "</td>";
               tbody.appendChild(tr);
             });
             table.appendChild(tbody);
@@ -750,20 +2163,13 @@
             makeSortable(table);
           }
 
-          // Discovered Compositions
           if (!data.discoveredCompositions || data.discoveredCompositions.length === 0) {
             sec.appendChild(el("p", { textContent: "No discovered compositions" }));
           } else {
             sec.appendChild(el("h3", { textContent: "Discovered Compositions" }));
             var cTable = el("table");
-            var cThead = el("thead");
-            var cHeadRow = el("tr");
-            ["#", "Name", "Members", "Total δ (pp)"].forEach(function (h) {
-              cHeadRow.appendChild(el("th", { className: "num", textContent: h }));
-            });
-            cThead.appendChild(cHeadRow);
-            cTable.appendChild(cThead);
-
+            cTable.innerHTML =
+              "<thead><tr><th>#</th><th>Name</th><th>Members</th><th>Σδ (pp)</th></tr></thead>";
             var cTbody = el("tbody");
             data.discoveredCompositions.forEach(function (c, i) {
               var tr = el("tr");
@@ -792,39 +2198,39 @@
         function renderRankingTable(container, title, units, metricFn) {
           if (units.length === 0) return;
           container.appendChild(el("h3", { textContent: title }));
+          var maxVal = Math.max.apply(
+            null,
+            units.map(function (u) {
+              return parseFloat(metricFn(u.perf)) || 0;
+            }),
+          );
           var table = el("table");
           table.innerHTML =
-            "<tr><th>#</th><th>Unit</th><th>Tier</th><th>Value</th><th>Win%</th><th>Impact</th><th>n</th></tr>";
+            "<thead><tr><th>#</th><th>Unit</th><th>T</th><th>Value</th><th>Win%</th><th>n</th></tr></thead>";
+          var tbody = el("tbody");
           units.forEach(function (u, i) {
             var p = u.perf;
             var winRate = p.wins / p.appearances;
+            var valRaw = parseFloat(metricFn(p)) || 0;
             var tr = el("tr");
-            tr.innerHTML =
-              '<td class="num">' +
-              (i + 1) +
-              "</td>" +
-              "<td>" +
-              esc(u.unitId) +
-              "</td>" +
-              '<td class="num">' +
-              p.tier +
-              "</td>" +
-              '<td class="num">' +
-              metricFn(p) +
-              "</td>" +
-              '<td class="num" style="color:' +
-              wrColor(winRate) +
-              '">' +
-              wr(winRate) +
-              "%</td>" +
-              '<td class="num">' +
-              num(p.impactScore, 1) +
-              "</td>" +
-              '<td class="num">' +
-              p.appearances +
-              "</td>";
-            table.appendChild(tr);
+            var rankTd = el("td", { className: "num", textContent: String(i + 1) });
+            var nameTd = el("td", { textContent: u.unitId });
+            var tierTd = el("td", { className: "num" });
+            tierTd.appendChild(makeTierBadge(p.tier));
+            var valTd = el("td", { className: "num" });
+            valTd.appendChild(makeMiniBar(num(valRaw, 1), maxVal, "#c4a882"));
+            var wrTd = el("td", { className: "num" });
+            wrTd.appendChild(makeWrBar(winRate));
+            var nTd = el("td", { className: "num", textContent: String(p.appearances) });
+            tr.appendChild(rankTd);
+            tr.appendChild(nameTd);
+            tr.appendChild(tierTd);
+            tr.appendChild(valTd);
+            tr.appendChild(wrTd);
+            tr.appendChild(nTd);
+            tbody.appendChild(tr);
           });
+          table.appendChild(tbody);
           container.appendChild(table);
         }
 
@@ -836,18 +2242,30 @@
             return;
           }
           var s = data.scalingAnalysis;
-          renderRankingTable(sec, "Top Buff Receivers", s.topBuffReceivers, function (p) {
+          var row1 = el("div", { className: "scaling-grid" });
+          var col1a = el("div"),
+            col1b = el("div");
+          renderRankingTable(col1a, "Top Buff Receivers", s.topBuffReceivers, function (p) {
             return num(p.avgBuffAtk + p.avgBuffHp, 1);
           });
-          renderRankingTable(sec, "Earliest Deaths", s.earliestDeaths, function (p) {
+          renderRankingTable(col1b, "Earliest Deaths", s.earliestDeaths, function (p) {
             return p.avgDeathFrame !== null ? num(p.avgDeathFrame, 1) : "-";
           });
-          renderRankingTable(sec, "Top Damage Sponges", s.topDamageSponges, function (p) {
+          row1.appendChild(col1a);
+          row1.appendChild(col1b);
+          sec.appendChild(row1);
+          var row2 = el("div", { className: "scaling-grid" });
+          var col2a = el("div"),
+            col2b = el("div");
+          renderRankingTable(col2a, "Top Damage Sponges", s.topDamageSponges, function (p) {
             return num(p.avgDamageReceived);
           });
-          renderRankingTable(sec, "Top Killers", s.topKillers, function (p) {
+          renderRankingTable(col2b, "Top Killers", s.topKillers, function (p) {
             return num(p.avgKills, 1);
           });
+          row2.appendChild(col2a);
+          row2.appendChild(col2b);
+          sec.appendChild(row2);
           renderRankingTable(sec, "Top Spawners", s.topSpawners, function (p) {
             return num(p.avgSpawnsProduced, 1);
           });
@@ -864,7 +2282,6 @@
           }
           sec.innerHTML = "<h2>GA Discovery</h2>";
 
-          // Alerts
           if (ga.breakageAlerts.length > 0) {
             var alertBox = el("div", {
               style:
@@ -881,7 +2298,6 @@
             sec.appendChild(alertBox);
           }
 
-          // Summary cards
           var grid = el("div", { className: "overview-grid" });
           function addCard(label, value) {
             grid.appendChild(
@@ -914,7 +2330,6 @@
           );
           sec.appendChild(grid);
 
-          // Top teams table
           sec.appendChild(el("h2", { textContent: "Top Compositions" }));
           var table = el("table", { className: "sortable" });
           var thead = el("thead");
@@ -926,18 +2341,18 @@
           });
           thead.appendChild(headRow);
           table.appendChild(thead);
-
           var tbody = el("tbody");
           ga.topTeams.forEach(function (team, i) {
             var row = el("tr");
             row.appendChild(el("td", { className: "num", textContent: String(i + 1) }));
             row.appendChild(el("td", { textContent: team.teamIds.join(", ") }));
-            var wrTd = el("td", {
-              className: "num",
-              textContent: wr(team.fitness) + "%",
-              style: "color:" + wrColor(team.fitness),
-            });
-            row.appendChild(wrTd);
+            row.appendChild(
+              el("td", {
+                className: "num",
+                textContent: wr(team.fitness) + "%",
+                style: "color:" + wrColor(team.fitness),
+              }),
+            );
             row.appendChild(
               el("td", {
                 className: "num",
@@ -947,7 +2362,7 @@
             row.appendChild(
               el("td", {
                 className: "num",
-                textContent: team.novelty ? "✦ NEW" : "—",
+                textContent: team.novelty ? "❆ NEW" : "—",
                 style: team.novelty ? "color:#ffcc00;font-weight:bold" : "",
               }),
             );
@@ -957,7 +2372,6 @@
           sec.appendChild(table);
           makeSortable(table);
 
-          // Convergence curve (canvas)
           if (ga.generationStats.length > 1) {
             sec.appendChild(el("h2", { textContent: "Convergence Curve" }));
             var canvas = el("canvas", { width: 700, height: 280 });
@@ -966,7 +2380,6 @@
             canvas.style.display = "block";
             canvas.style.marginBottom = "16px";
             sec.appendChild(canvas);
-
             var ctx = canvas.getContext("2d");
             var W = canvas.width,
               H = canvas.height;
@@ -988,15 +2401,12 @@
               }),
             );
             var fRange = maxF - minF || 0.01;
-
             function gx(gen) {
               return pad.l + (gen / (maxGen || 1)) * gw;
             }
             function gy(f) {
               return pad.t + gh - ((f - minF) / fRange) * gh;
             }
-
-            // Grid
             ctx.strokeStyle = "#333";
             ctx.lineWidth = 0.5;
             for (var g = 0; g <= 4; g++) {
@@ -1006,8 +2416,6 @@
               ctx.lineTo(W - pad.r, yy);
               ctx.stroke();
             }
-
-            // Best fitness line
             ctx.strokeStyle = "#c4a882";
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -1018,8 +2426,6 @@
               else ctx.lineTo(x, y);
             });
             ctx.stroke();
-
-            // Avg fitness line
             ctx.strokeStyle = "#6a9bc3";
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -1030,8 +2436,6 @@
               else ctx.lineTo(x, y);
             });
             ctx.stroke();
-
-            // Labels
             ctx.fillStyle = "#999";
             ctx.font = "11px sans-serif";
             ctx.textAlign = "center";
@@ -1039,25 +2443,22 @@
             ctx.textAlign = "left";
             ctx.fillText(wr(maxF) + "%", pad.l + 4, pad.t - 4);
             ctx.fillText(wr(minF) + "%", pad.l + 4, H - pad.b + 14);
-
-            // Legend
             ctx.fillStyle = "#c4a882";
             ctx.fillText("■ Best", W - pad.r - 120, pad.t + 14);
             ctx.fillStyle = "#6a9bc3";
             ctx.fillText("■ Avg", W - pad.r - 60, pad.t + 14);
           }
 
-          // Night-varying GA results
           var nightGa = data.nightGaResults;
           if (nightGa && nightGa.length > 0) {
             sec.appendChild(el("h2", { textContent: "Cross-Night GA" }));
             nightGa.forEach(function (entry) {
-              var hdr = el("h3", {
-                textContent: "Night " + entry.night + " (pool: " + entry.poolSize + " units)",
-                style: "color:#c4a882;margin:16px 0 8px",
-              });
-              sec.appendChild(hdr);
-
+              sec.appendChild(
+                el("h3", {
+                  textContent: "Night " + entry.night + " (pool: " + entry.poolSize + " units)",
+                  style: "color:#c4a882;margin:16px 0 8px",
+                }),
+              );
               if (entry.breakageAlerts.length > 0) {
                 var ab = el("div", {
                   style:
@@ -1068,7 +2469,6 @@
                 });
                 sec.appendChild(ab);
               }
-
               if (entry.topTeams.length > 0) {
                 var ntable = el("table");
                 var nth = el("thead");
@@ -1139,6 +2539,103 @@
           return "transparent";
         }
 
+        function renderMetaCandidates(data) {
+          var sec = document.getElementById("s-metacandidates");
+          var candidates = data.metaCandidates;
+          if (!candidates || candidates.length === 0) {
+            sec.innerHTML = "<h2>Meta Candidates</h2><p>No data</p>";
+            return;
+          }
+          sec.innerHTML =
+            "<h2>Meta Candidates <small style='font-size:0.7em;color:#888'>(" +
+            candidates.length +
+            " compositions)</small></h2>";
+
+          // Source summary chips
+          var srcCounts = {};
+          candidates.forEach(function (c) {
+            (c.sources || []).forEach(function (s) {
+              srcCounts[s] = (srcCounts[s] || 0) + 1;
+            });
+          });
+          var srcChips = el("div", {
+            style: "display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px",
+          });
+          Object.keys(srcCounts).forEach(function (s) {
+            srcChips.appendChild(makeChip(s + ": " + srcCounts[s], "#2a3a5a", "#c4a882"));
+          });
+          sec.appendChild(srcChips);
+
+          var wrap = el("div", { className: "scroll-wrap" });
+          var table = el("table", { className: "sortable" });
+          table.innerHTML =
+            "<thead><tr><th>#</th><th>Composition</th>" +
+            "<th title='発見源(greedy/GA/nightGA)'>ソース</th>" +
+            "<th title='GA適応度スコア'>GA Fit</th>" +
+            "<th title='各Night GAの適応度'>Night GA Fit</th>" +
+            "<th title='ショップで入手できる確率'>Reachability</th>" +
+            "<th title='ショップフロー経由の実現可能性'>Viability</th>" +
+            "<th title='到達可能 Night'>Arrival N</th>" +
+            "<th title='安定化 Night'>Stabilize N</th>" +
+            "<th title='構成変更リスク'>Pivot Risk</th>" +
+            "<th title='経済圧迫スコア'>Economy</th></tr></thead>";
+          var tbody = el("tbody");
+          candidates.forEach(function (c, i) {
+            var v = c.viability;
+            var tr = el("tr");
+            var sourcesBadges = c.sources
+              .map(function (s) {
+                return (
+                  '<span style="background:#2a3a5a;border-radius:3px;padding:1px 5px;font-size:0.78em;margin-right:3px">' +
+                  esc(s) +
+                  "</span>"
+                );
+              })
+              .join("");
+            tr.innerHTML =
+              '<td class="num">' +
+              (c.greedyRank !== null && c.greedyRank !== undefined ? c.greedyRank : i + 1) +
+              "</td>" +
+              "<td>" +
+              esc(c.unitIds.join(", ")) +
+              "</td>" +
+              "<td>" +
+              sourcesBadges +
+              "</td>" +
+              '<td class="num">' +
+              (c.gaFitness !== null && c.gaFitness !== undefined ? pct(c.gaFitness) + "%" : "—") +
+              "</td>" +
+              '<td class="num">' +
+              (c.nightGaFitness !== null && c.nightGaFitness !== undefined
+                ? pct(c.nightGaFitness) + "%"
+                : "—") +
+              "</td>" +
+              '<td class="num">' +
+              num(c.reachabilityScore * 100, 1) +
+              "</td>" +
+              '<td class="num">' +
+              (v ? pct(v.viabilityScore) + "%" : "—") +
+              "</td>" +
+              '<td class="num">' +
+              (v ? num(v.arrivalNight, 1) : "—") +
+              "</td>" +
+              '<td class="num">' +
+              (v ? num(v.stabilizeNight, 1) : "—") +
+              "</td>" +
+              '<td class="num">' +
+              (v ? pct(v.pivotRiskScore) + "%" : "—") +
+              "</td>" +
+              '<td class="num">' +
+              (v ? pct(v.economyPressureScore) + "%" : "—") +
+              "</td>";
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          makeSortable(table);
+          wrap.appendChild(table);
+          sec.appendChild(wrap);
+        }
+
         function renderMeta(data) {
           var sec = document.getElementById("s-meta");
           var meta = data.metaAnalysis;
@@ -1147,13 +2644,9 @@
             return;
           }
           sec.innerHTML = "<h2>Meta Health Analysis</h2>";
-
-          // Verdict badge
           var verdictDiv = el("div", { style: "margin-bottom:16px" });
           verdictDiv.appendChild(verdictBadge(meta.healthVerdict));
           sec.appendChild(verdictDiv);
-
-          // Reasons
           if (meta.verdictReasons.length > 0) {
             var reasons = el("ul", { style: "margin-bottom:16px;padding-left:20px" });
             meta.verdictReasons.forEach(function (r) {
@@ -1161,8 +2654,6 @@
             });
             sec.appendChild(reasons);
           }
-
-          // Summary cards
           var grid = el("div", { className: "overview-grid" });
           function addCard(label, value) {
             grid.appendChild(
@@ -1182,8 +2673,6 @@
           addCard("Nash Converged", meta.nashConverged ? "Yes" : "No");
           addCard("Dominant Teams", meta.dominantTeams.length);
           sec.appendChild(grid);
-
-          // Payoff matrix heatmap
           sec.appendChild(el("h2", { textContent: "Payoff Matrix (Win Rate)" }));
           var table = el("table", { className: "sortable" });
           var thead = el("thead");
@@ -1194,7 +2683,6 @@
           });
           thead.appendChild(headRow);
           table.appendChild(thead);
-
           var tbody = el("tbody");
           meta.payoffMatrix.forEach(function (row, i) {
             var tr = el("tr");
@@ -1202,19 +2690,18 @@
               el("td", { textContent: meta.teamLabels[i], style: "font-weight:bold" }),
             );
             row.forEach(function (cell, j) {
-              var td = el("td", {
-                className: "num",
-                textContent: i === j ? "—" : wr(cell.winRate) + "%",
-                style: i === j ? "color:#666" : "background:" + payoffColor(cell.winRate),
-              });
-              tr.appendChild(td);
+              tr.appendChild(
+                el("td", {
+                  className: "num",
+                  textContent: i === j ? "—" : wr(cell.winRate) + "%",
+                  style: i === j ? "color:#666" : "background:" + payoffColor(cell.winRate),
+                }),
+              );
             });
             tbody.appendChild(tr);
           });
           table.appendChild(tbody);
           sec.appendChild(table);
-
-          // Nash equilibrium
           sec.appendChild(el("h2", { textContent: "Nash Equilibrium (Mixed Strategy)" }));
           var nashDiv = el("div", { style: "margin-bottom:16px" });
           var sorted = meta.nashEquilibrium.slice().sort(function (a, b) {
@@ -1222,14 +2709,9 @@
           });
           sorted.forEach(function (entry) {
             var barWidth = Math.max(entry.probability * 400, 2);
-            var bar = el("div", {
-              style: "display:flex;align-items:center;margin:4px 0",
-            });
+            var bar = el("div", { style: "display:flex;align-items:center;margin:4px 0" });
             bar.appendChild(
-              el("span", {
-                textContent: entry.team,
-                style: "width:80px;font-size:0.85em",
-              }),
+              el("span", { textContent: entry.team, style: "width:80px;font-size:0.85em" }),
             );
             bar.appendChild(
               el("div", {
@@ -1248,8 +2730,6 @@
             nashDiv.appendChild(bar);
           });
           sec.appendChild(nashDiv);
-
-          // Dominance alerts
           if (meta.dominantTeams.length > 0) {
             var alertBox = el("div", {
               style:
@@ -1273,6 +2753,89 @@
           }
         }
 
+        // ── Glossary ──
+
+        function renderGlossary() {
+          var sec = document.getElementById("s-glossary");
+          sec.innerHTML =
+            "<h2>Glossary</h2><p style='color:#888;font-size:0.85rem;margin-bottom:16px'>用語・閾値リファレンス</p>";
+
+          var groups = [
+            {
+              title: "基本指標",
+              terms: [
+                ["Win%", "シミュレーション試合での勝率。出場回数ベースで集計。"],
+                [
+                  "CI95",
+                  "95%信頼区間。幅が広いほどサンプル不足。このレポートでは幅 > 10pp で変動が大きいと判断。",
+                ],
+                [
+                  "TNorm (TierNorm)",
+                  "Tier 内平均勝率からのズレ (pp)。Tier をまたいで強弱を比較する指標。閾値: ±0.2 超でテスト失敗。",
+                ],
+                ["Impact", "チーム勝率への寄与スコア。高いほど buff/nerf の影響が大きい。"],
+                [
+                  "要対応スコア",
+                  "|TNorm| × log(Impact+1)。勝率偏差と影響度を組み合わせた buff/nerf 優先度スコア。",
+                ],
+              ],
+            },
+            {
+              title: "マッチアップ警告",
+              terms: [
+                ["IMBALANCE", "aRate > 0.8 または < 0.2。一方が圧倒的に有利な偏ったマッチアップ。"],
+                ["STOMP", "avgFrame < 5。戦闘が瞬時に終わる一方的な展開。"],
+                ["STALL", "avgFrame > 80。戦闘が異常に長引く膠着状態。"],
+              ],
+            },
+            {
+              title: "GA・構成発見",
+              terms: [
+                [
+                  "GA (Genetic Algorithm)",
+                  "進化計算による構成発見。fitness > 0.9 は CRITICAL、> 0.8 は WARNING レベルの breakage alert。",
+                ],
+                ["Reachability", "ショップフローにおいてその構成を実際に組み上げられる確率。"],
+                [
+                  "Viability",
+                  "ショップフロー経由で安定して運用できる構成かどうかの総合スコア。arrivalNight / stabilizeNight は初到達・安定する Night 数。",
+                ],
+              ],
+            },
+            {
+              title: "メタ健全性",
+              terms: [
+                [
+                  "healthVerdict",
+                  "healthy / slightly_skewed / dominant_meta / degenerate の 4 段階。degenerate は minWR > 0.7、dominant_meta は > 0.6。",
+                ],
+                [
+                  "Nash Equilibrium",
+                  "ナッシュ均衡混合戦略。各構成の最適使用確率。均等に分散しているほど健全なメタ。",
+                ],
+                [
+                  "Cyclicity",
+                  "メタ内の相互カウンター関係の強さを 0〜1 で表現。> 0.3 でじゃんけん性のある健全なメタ。",
+                ],
+              ],
+            },
+          ];
+
+          groups.forEach(function (g) {
+            var groupDiv = el("div", { className: "glossary-group" });
+            groupDiv.appendChild(
+              el("div", { className: "glossary-group-title", textContent: g.title }),
+            );
+            var dl = el("dl", { className: "glossary" });
+            g.terms.forEach(function (t) {
+              dl.appendChild(el("dt", { textContent: t[0] }));
+              dl.appendChild(el("dd", { textContent: t[1] }));
+            });
+            groupDiv.appendChild(dl);
+            sec.appendChild(groupDiv);
+          });
+        }
+
         // ── Init ──
 
         var DATA = JSON.parse(document.getElementById("sim-data").textContent);
@@ -1284,7 +2847,7 @@
         }
 
         document.getElementById("generated-at").textContent = "Generated: " + DATA.generatedAt;
-        initTabs();
+        initTabs(DATA);
         renderOverview(DATA);
         renderSynergies(DATA);
         renderMatchups(DATA);
@@ -1292,7 +2855,9 @@
         renderCrossNight(DATA);
         renderScaling(DATA);
         renderGA(DATA);
+        renderMetaCandidates(DATA);
         renderMeta(DATA);
+        renderGlossary();
       })();
     </script>
   </body>
