@@ -39,7 +39,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.30.2",
     "@cloudflare/workers-types": "^4.20260422.1",
-    "@libsql/client": "^0.17.2",
+    "@libsql/client": "^0.17.3",
     "@playwright/test": "^1.59.1",
     "@preact/preset-vite": "^2.10.5",
     "@tailwindcss/vite": "^4.2.4",
