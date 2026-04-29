@@ -20,8 +20,8 @@ importers:
         specifier: ^0.45.2
         version: 0.45.2(@cloudflare/workers-types@4.20260422.1)(@libsql/client@0.17.2)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.8.0)
       hono:
-        specifier: ^4.12.14
-        version: 4.12.14
+        specifier: ^4.12.15
+        version: 4.12.15
       lucide-preact:
         specifier: ^1.8.0
         version: 1.8.0(preact@10.29.1)
@@ -2892,8 +2892,8 @@ packages:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
 
-  hono@4.12.14:
-    resolution: {integrity: sha512-am5zfg3yu6sqn5yjKBNqhnTX7Cv+m00ox+7jbaKkrLMRJ4rAdldd1xPd/JzbBWspqaQv6RSTrgFN95EsfhC+7w==}
+  hono@4.12.15:
+    resolution: {integrity: sha512-qM0jDhFEaCBb4TxoW7f53Qrpv9RBiayUHo0S52JudprkhvpjIrGoU1mnnr29Fvd1U335ZFPZQY1wlkqgfGXyLg==}
     engines: {node: '>=16.9.0'}
 
   html-encoding-sniffer@6.0.0:
@@ -6253,7 +6253,7 @@ snapshots:
 
   he@1.2.0: {}
 
-  hono@4.12.14: {}
+  hono@4.12.15: {}
 
   html-encoding-sniffer@6.0.0:
     dependencies:
