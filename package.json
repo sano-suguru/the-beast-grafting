@@ -53,7 +53,7 @@
     "jsdom": "^29.0.2",
     "knip": "^6.6.1",
     "miniflare": "^4.20260426.0",
-    "oxlint-plugin-eslint": "^1.61.0",
+    "oxlint-plugin-eslint": "^1.62.0",
     "tailwindcss": "^4.2.4",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
