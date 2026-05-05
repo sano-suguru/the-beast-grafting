@@ -7,6 +7,7 @@ import { createUnit } from "../helpers";
 import { getSkillText } from "../../shared/skill-text";
 import { CUMULATIVE_EXP, MAX_UNIT_LEVEL } from "../../shared/constants";
 import { TIER_APPEAR_NIGHT } from "./sim-types";
+import { estimateTeamEconomyExtraBlood } from "./sim-team-economy";
 
 /**
  * Night進行に応じた装備の重みテーブル。
@@ -53,23 +54,6 @@ function computeLevel(exp: number): number {
  */
 function teamGraftCap(night: number): number {
   return Math.max(0, Math.floor((night - 1) * 0.55));
-}
-
-/**
- * Night進行を統計的に近似したユニット状態を生成する(単体API、後方互換用)。
- *
- * team全体の予算制約を無視するため、`buildProgressedTeam` の利用を推奨。
- * 本関数は個別ユニットの独立サンプリングしか行わず、Lv2/Lv3達成コストが
- * team他ユニットのgraft予算を食うモデルを表現できない。
- */
-export function buildProgressedUnit(id: DataUnitId, night: number, rng: Rng): UnitInstance {
-  const base = createUnit(id);
-  const tier = base.tier as Tier;
-  const nightsSinceAvailable = Math.max(0, night - TIER_APPEAR_NIGHT[tier] + 1);
-  if (nightsSinceAvailable <= 1) return base;
-  const expectedGrafts = Math.min((nightsSinceAvailable - 1) / 3, MAX_UNIT_LEVEL + 2);
-  const grafts = poissonCapped(expectedGrafts, CUMULATIVE_EXP[3], rng);
-  return applyProgressionToUnit(base, grafts, nightsSinceAvailable, rng);
 }
 
 function applyProgressionToUnit(
@@ -195,6 +179,9 @@ function applyProgressionToUnitWithTrace(
   return { unit, trace };
 }
 
+const EXTRA_BLOOD_GRAFT_SHARE = 0.1;
+const AVERAGE_GRAFT_COST = 4;
+
 /** buildProgressedTeam の trace 付きバリアント。中間メトリクス収集に使用。 */
 export function buildProgressedTeamWithTrace(
   ids: readonly DataUnitId[],
@@ -203,6 +190,7 @@ export function buildProgressedTeamWithTrace(
 ): { units: UnitInstance[]; traces: Map<DataUnitId, UnitProgressionTrace> } {
   const bases = ids.map((id) => createUnit(id));
   const nightsArr = bases.map((b) => Math.max(0, night - TIER_APPEAR_NIGHT[b.tier as Tier] + 1));
+
   const rawGrafts = nightsArr.map((nsa) => {
     if (nsa <= 1) return 0;
     const expected = Math.min((nsa - 1) / 3, MAX_UNIT_LEVEL + 2);
@@ -211,10 +199,28 @@ export function buildProgressedTeamWithTrace(
 
   const total = rawGrafts.reduce((s, g) => s + g, 0);
   const cap = teamGraftCap(night);
-  const scaledGrafts =
+  const scaledGrafts: number[] =
     total <= cap
-      ? rawGrafts
+      ? [...rawGrafts]
       : rawGrafts.map((g) => (g === 0 ? 0 : Math.min(g, Math.floor((g * cap) / total))));
+
+  // economy bonus は rawGrafts に比例して分配する。
+  // Math.floor で決定論的に整数化し seeded RNG に影響を与えないようにする。
+  // 実ゲームでの graft 対象はショップに出やすい lower-tier 寄りなので proportional 分配が妥当。
+  const economyBlood = estimateTeamEconomyExtraBlood(ids, night);
+  const economyExtraGrafts = (economyBlood * EXTRA_BLOOD_GRAFT_SHARE) / AVERAGE_GRAFT_COST;
+  const totalBonus = Math.floor(economyExtraGrafts);
+  const totalRaw = rawGrafts.reduce((s, g) => s + g, 0);
+  if (totalBonus > 0 && totalRaw > 0) {
+    for (let i = 0; i < rawGrafts.length; i++) {
+      if (rawGrafts[i]! === 0) continue;
+      const share = rawGrafts[i]! / totalRaw;
+      const unitBonus = Math.floor(totalBonus * share);
+      if (unitBonus > 0) {
+        scaledGrafts[i] = Math.min(CUMULATIVE_EXP[3], scaledGrafts[i]! + unitBonus);
+      }
+    }
+  }
 
   const units: UnitInstance[] = [];
   const traces = new Map<DataUnitId, UnitProgressionTrace>();

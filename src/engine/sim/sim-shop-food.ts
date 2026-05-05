@@ -11,10 +11,11 @@ import {
 } from "./sim-shop-targeting";
 import { STAT_ITEM_UNLOCK_NIGHT } from "./sim-shop-acquisition";
 
-// buildProgressedUnit 側で通常プレイ分の緩やかな stat 蓄積はすでに近似している。
+// buildProgressedTeam 側で通常プレイ分の緩やかな stat 蓄積はすでに近似している。
 // Cat はそこに上乗せされる「フード重視の終盤運用」のみを薄く追加で表現する。
 const BASE_STAT_ITEM_PURCHASES_PER_TURN = 0.08;
 const SIM_RECRUITS_PER_LATE_TURN = 0.5;
+// 残り 0.10 は接合経路として buildProgressedTeam の expectedGrafts に注入済み (低頻度)
 const EXTRA_BLOOD_TO_FOOD_SHARE = 0.55;
 const AVERAGE_STAT_FOOD_COST = 3;
 const foodPoolCache = new Map<number, readonly ItemData[]>();

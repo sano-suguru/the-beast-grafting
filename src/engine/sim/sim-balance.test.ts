@@ -14,7 +14,7 @@ import { buildMetaCandidateFrontier } from "./sim-meta-frontier";
 import type { MetaCandidate } from "./sim-types";
 import { createUnit } from "../helpers";
 import { simulateBattleResult } from "./sim-battle";
-import { buildProgressedUnit } from "./sim-progression";
+import { buildProgressedTeam } from "./sim-progression";
 import { SimReportCollector, perfMapToRecord, perfToRecord } from "./sim-report-collect";
 import type { MatchupEntry } from "./sim-report-types";
 import { writeSimReport } from "./sim-report-write";
@@ -91,18 +91,18 @@ describe("findOptimalPositioning", () => {
 
 // ── 現実的チーム生成 ──
 
-describe("buildProgressedUnit", () => {
+describe("buildProgressedTeam (unit progression)", () => {
   it("Night 1 produces level 1 base-stat units", () => {
     const rng = createSeededRng(42);
-    const u = buildProgressedUnit("rat", 1, rng);
-    expect(u.level).toBe(1);
-    expect(u.exp).toBe(0);
-    expect(u.equip).toBeNull();
-    expect(u.buffAtk).toBe(0);
-    expect(u.buffHp).toBe(0);
+    const [u] = buildProgressedTeam(["rat"], 1, rng);
+    expect(u!.level).toBe(1);
+    expect(u!.exp).toBe(0);
+    expect(u!.equip).toBeNull();
+    expect(u!.buffAtk).toBe(0);
+    expect(u!.buffHp).toBe(0);
     const base = createUnit("rat");
-    expect(u.baseAtk).toBe(base.baseAtk);
-    expect(u.baseHp).toBe(base.baseHp);
+    expect(u!.baseAtk).toBe(base.baseAtk);
+    expect(u!.baseHp).toBe(base.baseHp);
   });
 
   it("Night 12 produces stronger units with possible level-ups and equips", () => {
@@ -111,11 +111,11 @@ describe("buildProgressedUnit", () => {
     let hasStatGain = false;
     for (let seed = 1; seed <= 100; seed++) {
       const rng = createSeededRng(seed);
-      const u = buildProgressedUnit("rat", 12, rng);
+      const [u] = buildProgressedTeam(["rat"], 12, rng);
       const base = createUnit("rat");
-      if (u.equip !== null) hasEquip = true;
-      if (u.level > 1) hasLevelUp = true;
-      if (u.baseAtk > base.baseAtk || u.baseHp > base.baseHp) hasStatGain = true;
+      if (u!.equip !== null) hasEquip = true;
+      if (u!.level > 1) hasLevelUp = true;
+      if (u!.baseAtk > base.baseAtk || u!.baseHp > base.baseHp) hasStatGain = true;
     }
     expect(hasEquip).toBe(true);
     expect(hasLevelUp).toBe(true);
@@ -123,51 +123,46 @@ describe("buildProgressedUnit", () => {
   });
 
   it("is deterministic with same seed", () => {
-    const a = buildProgressedUnit("insatiable_maw", 10, createSeededRng(99));
-    const b = buildProgressedUnit("insatiable_maw", 10, createSeededRng(99));
-    expect(a.baseAtk).toBe(b.baseAtk);
-    expect(a.baseHp).toBe(b.baseHp);
-    expect(a.level).toBe(b.level);
-    expect(a.equip).toBe(b.equip);
+    const [a] = buildProgressedTeam(["insatiable_maw"], 10, createSeededRng(99));
+    const [b] = buildProgressedTeam(["insatiable_maw"], 10, createSeededRng(99));
+    expect(a!.baseAtk).toBe(b!.baseAtk);
+    expect(a!.baseHp).toBe(b!.baseHp);
+    expect(a!.level).toBe(b!.level);
+    expect(a!.equip).toBe(b!.equip);
   });
 
   it("Tier6 unit at Night 12 is weaker than Tier1 unit at Night 12 (tier-aware progression)", () => {
-    // Tier6(Night11〜)はnightsSinceAvailable=2、Tier1(Night1〜)は12
-    // 多数サンプルで平均ステータスを比較
     let tier1TotalAtk = 0;
     let tier6TotalAtk = 0;
     const samples = 200;
     for (let seed = 1; seed <= samples; seed++) {
-      const t1 = buildProgressedUnit("rat", 12, createSeededRng(seed)); // Tier1
-      const t6 = buildProgressedUnit("beelzebub", 12, createSeededRng(seed)); // Tier6
-      tier1TotalAtk += effectiveAtk(t1);
-      tier6TotalAtk += effectiveAtk(t6);
+      const [t1] = buildProgressedTeam(["rat"], 12, createSeededRng(seed)); // Tier1
+      const [t6] = buildProgressedTeam(["beelzebub"], 12, createSeededRng(seed)); // Tier6
+      tier1TotalAtk += effectiveAtk(t1!);
+      tier6TotalAtk += effectiveAtk(t6!);
     }
-    // Tier1のほうが平均ステータスが高いこと（接合・バフが多く蓄積されている）
     expect(tier1TotalAtk).toBeGreaterThan(tier6TotalAtk);
   });
 
   it("Tier3 unit on its first available night (Night 5) returns exact base stats", () => {
-    // nightsSinceAvailable=1 → ベースそのまま返す
     const base = createUnit("parasite"); // Tier3
     for (let seed = 1; seed <= 20; seed++) {
-      const u = buildProgressedUnit("parasite", 5, createSeededRng(seed));
-      expect(u.level).toBe(1);
-      expect(u.exp).toBe(0);
-      expect(u.equip).toBeNull();
-      expect(u.buffAtk).toBe(0);
-      expect(u.buffHp).toBe(0);
-      expect(u.baseAtk).toBe(base.baseAtk);
-      expect(u.baseHp).toBe(base.baseHp);
+      const [u] = buildProgressedTeam(["parasite"], 5, createSeededRng(seed));
+      expect(u!.level).toBe(1);
+      expect(u!.exp).toBe(0);
+      expect(u!.equip).toBeNull();
+      expect(u!.buffAtk).toBe(0);
+      expect(u!.buffHp).toBe(0);
+      expect(u!.baseAtk).toBe(base.baseAtk);
+      expect(u!.baseHp).toBe(base.baseHp);
     }
   });
 
   it("Tier6 unit at Night 12 mostly stays at level 1 (few grafts)", () => {
-    // nightsSinceAvailable=2 → lambda=(2-1)/3≈0.33 → ほぼLv1
     let lv1Count = 0;
     for (let seed = 1; seed <= 100; seed++) {
-      const u = buildProgressedUnit("howling_giant", 12, createSeededRng(seed)); // Tier6
-      if (u.level === 1) lv1Count++;
+      const [u] = buildProgressedTeam(["howling_giant"], 12, createSeededRng(seed)); // Tier6
+      if (u!.level === 1) lv1Count++;
     }
     // 70%以上がLv1のはず（lambda≈0.33）
     expect(lv1Count).toBeGreaterThan(70);
