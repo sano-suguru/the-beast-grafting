@@ -98,8 +98,8 @@ export const UNITS_TIER56 = {
   brains: {
     id: "brains",
     name: "結合された双子脳",
-    baseAtk: 4,
-    baseHp: 3,
+    baseAtk: 6,
+    baseHp: 4,
     tier: 6,
     lore: "異様に肥大化したふたつの脳髄。宿主の神経を強引に侵蝕し、限界を超えた異常な挙動を繰り返させる。",
     secretLore: "二つの脳はついに一つの完全な悪意となり、王都すべての人間を精神的支配下に置いた。",

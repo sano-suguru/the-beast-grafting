@@ -271,7 +271,7 @@ const TEMPLATES: Record<RegularUnitId | ChurchUnitId, SkillTemplate> = {
   },
   necrotic_finger: () => "常時: 攻撃で対象を即死させる。内蔵: 屍蝋の盾",
   mimicking_flesh: () => "開戦: 前の味方のスキルをコピー(戦闘中のみ)",
-  brains: (lv) => `常時: 前の味方の能力×${1 + lv}`,
+  brains: (lv) => `常時: 前の味方の能力を再発動 (Lv${lv}扱い)`,
   puppeteer: (lv) => `被弾: 【屍蝋の盾】を得る(${atLevel(GORILLA.uses, lv)}回/戦)`,
 };
 

@@ -146,7 +146,7 @@ describe("runStartSkills – amniotic_armor", () => {
 describe("runStartSkills – brains and edge cases", () => {
   it("brains does NOT double start-of-battle skills (SAP compliant)", () => {
     const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2 });
-    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const target = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([bat, brains], [target]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
@@ -156,7 +156,7 @@ describe("runStartSkills – brains and edge cases", () => {
   it("brains does not affect ranged SoB skill when separated either", () => {
     const bat = makeBattleUnit({ id: "bat", name: "蝙蝠", atk: 1, hp: 2 });
     const filler = makeBattleUnit({ hp: 3 });
-    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const target = makeBattleUnit({ hp: 10 });
     const ctx = makeContext([bat, filler, brains], [target]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
@@ -166,7 +166,7 @@ describe("runStartSkills – brains and edge cases", () => {
   it("brains + devouring_graft: devouring_graft runs once (no brains doubling on SoB)", () => {
     const fodder = makeBattleUnit({ id: "hound", name: "猟犬", atk: 2, hp: 3 });
     const graft = makeBattleUnit({ id: "devouring_graft", name: "貪る接合体", atk: 3, hp: 6 });
-    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const ctx = makeContext([fodder, graft, brains], [makeBattleUnit({ hp: 10 })]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
     expect(graft.atk).toBe(3);
@@ -184,7 +184,7 @@ describe("runStartSkills – brains and edge cases", () => {
 
   it("brains + evangelist: HP-percent shred runs only once on SoB (SAP compliant)", () => {
     const ev = makeBattleUnit({ id: "evangelist", name: "伝道師", atk: 1, hp: 8, level: 1 });
-    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 4, hp: 3 });
+    const brains = makeBattleUnit({ id: "brains", name: "双子脳", atk: 6, hp: 4 });
     const target = makeBattleUnit({ hp: 100 });
     const ctx = makeContext([ev, brains], [target]);
     runStartSkills(ctx.pBoard, ctx.eBoard, true, ctx);
