@@ -50,7 +50,7 @@
     "dependency-cruiser": "^17.3.10",
     "drizzle-kit": "^0.31.10",
     "jscpd": "^4.0.9",
-    "jsdom": "^29.0.2",
+    "jsdom": "^29.1.1",
     "knip": "^6.6.1",
     "miniflare": "^4.20260426.0",
     "oxlint-plugin-eslint": "^1.61.0",
