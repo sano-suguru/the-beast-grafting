@@ -9,7 +9,8 @@
   ],
   "project": ["src/**/*.{ts,tsx}", "e2e/**/*.{ts,tsx}"],
   "ignoreDependencies": ["tailwindcss", "@vitest/coverage-v8", "oxlint-plugin-eslint"],
-  "ignoreBinaries": ["similarity-ts", "wait", "trap"],
+  "ignoreBinaries": ["similarity-ts", "wait"],
+  "ignoreExportsUsedInFile": true,
   "vitest": {
     "entry": ["src/**/*.test.{ts,tsx}"]
   },
