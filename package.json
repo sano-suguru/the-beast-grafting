@@ -34,7 +34,7 @@
     "hono": "^4.12.18",
     "lucide-preact": "^1.14.0",
     "neverthrow": "^8.2.0",
-    "preact": "^10.29.1"
+    "preact": "^10.29.2"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.30.2",
