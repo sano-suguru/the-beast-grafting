@@ -49,7 +49,7 @@
     "@vitest/coverage-v8": "^4.1.1",
     "dependency-cruiser": "^17.4.0",
     "drizzle-kit": "^0.31.10",
-    "jscpd": "^4.0.9",
+    "jscpd": "^4.2.3",
     "jsdom": "^29.1.1",
     "knip": "^6.12.0",
     "miniflare": "^4.20260504.0",
