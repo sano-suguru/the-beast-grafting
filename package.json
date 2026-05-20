@@ -55,7 +55,7 @@
     "miniflare": "^4.20260504.0",
     "oxlint-plugin-eslint": "^1.63.0",
     "tailwindcss": "^4.2.4",
-    "tsx": "^4.21.0",
+    "tsx": "^4.22.3",
     "typescript": "^6.0.3",
     "vite-plus": "^0.1.20",
     "wrangler": "^4.84.1"
