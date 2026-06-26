@@ -2,6 +2,3 @@ ignoredBuiltDependencies:
   - esbuild
   - sharp
   - workerd
-
-patchedDependencies:
-  undici@7.24.4: patches/undici@7.24.4.patch
