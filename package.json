@@ -52,7 +52,7 @@
     "jscpd": "^4.2.5",
     "jsdom": "^29.1.1",
     "knip": "^6.20.0",
-    "miniflare": "^4.20260625.0",
+    "miniflare": "^4.20260630.0",
     "oxlint-plugin-eslint": "^1.71.0",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.22.4",
